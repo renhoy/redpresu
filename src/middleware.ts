@@ -2,98 +2,82 @@ import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
+export async function middleware(req: NextRequest) {
   try {
-    const response = NextResponse.next()
-    const supabase = createMiddlewareClient({ req: request, res: response })
+    // CRÍTICO: Crear response de Next.js ANTES de obtener la sesión
+    const res = NextResponse.next()
 
-    // Obtener la sesión actual desde las cookies
-    const {
-      data: { session },
-      error: sessionError
-    } = await supabase.auth.getSession()
+    // Crear cliente de Supabase pasando req y res para manejo correcto de cookies
+    const supabase = createMiddlewareClient({ req, res })
 
-    const url = request.nextUrl.clone()
-    const pathname = url.pathname
+    // Obtener sesión actual desde cookies
+    const { data: { session }, error } = await supabase.auth.getSession()
+
+    const pathname = req.nextUrl.pathname
 
     // Definir rutas públicas que no requieren autenticación
-    const publicRoutes = [
-      '/login',
-      '/forgot-password',
-      '/reset-password',
-      '/signup'
-    ]
+    const publicRoutes = ['/login', '/forgot-password', '/reset-password', '/signup']
+    const isPublicRoute = publicRoutes.some(path => pathname.startsWith(path))
 
-    // Verificar si es una ruta pública
-    const isPublicRoute = publicRoutes.includes(pathname)
+    // Verificar si hay sesión válida
+    const isAuthenticated = !error && !!session
 
-    // Verificar si es una ruta de API o archivo estático (ya excluidos por matcher)
-    const isApiRoute = pathname.startsWith('/api/')
-    const isStaticFile = pathname.startsWith('/_next/') ||
-                        pathname.includes('/favicon.ico') ||
-                        /\.(svg|png|jpg|jpeg|gif|webp)$/.test(pathname)
+    console.log(`[Middleware] Path: ${pathname}, Auth: ${isAuthenticated}, Public: ${isPublicRoute}`)
 
-    // Si hay error en la sesión o no hay sesión válida
-    const isAuthenticated = !sessionError && !!session
-
-    // Lógica de redirects
-    if (!isAuthenticated) {
-      // Usuario NO autenticado
-      if (!isPublicRoute && !isApiRoute && !isStaticFile) {
-        // Intentando acceder a ruta privada sin autenticación → redirect a login
-        console.log(`[Middleware] Usuario no autenticado intentando acceder a: ${pathname} → redirect a /login`)
-        url.pathname = '/login'
-        return NextResponse.redirect(url)
-      }
-    } else {
-      // Usuario SÍ autenticado
-      if (isPublicRoute) {
-        // Intentando acceder a ruta pública estando autenticado → redirect a dashboard
-        console.log(`[Middleware] Usuario autenticado intentando acceder a: ${pathname} → redirect a /dashboard`)
-        url.pathname = '/dashboard'
-        return NextResponse.redirect(url)
-      }
-
-      if (pathname === '/') {
-        // Accediendo a home estando autenticado → redirect a dashboard
-        console.log(`[Middleware] Usuario autenticado en home → redirect a /dashboard`)
-        url.pathname = '/dashboard'
-        return NextResponse.redirect(url)
-      }
+    // Usuario NO autenticado intentando acceder a ruta privada
+    if (!isAuthenticated && !isPublicRoute) {
+      console.log(`[Middleware] Redirect no autenticado: ${pathname} → /login`)
+      const redirectUrl = req.nextUrl.clone()
+      redirectUrl.pathname = '/login'
+      redirectUrl.searchParams.delete('redirectedFrom') // Limpiar parámetros previos
+      return NextResponse.redirect(redirectUrl)
     }
 
-    // Continuar con la request normal
-    return response
+    // Usuario autenticado intentando acceder a ruta pública
+    if (isAuthenticated && isPublicRoute) {
+      console.log(`[Middleware] Redirect autenticado: ${pathname} → /dashboard`)
+      const redirectUrl = req.nextUrl.clone()
+      redirectUrl.pathname = '/dashboard'
+      redirectUrl.searchParams.delete('redirectedFrom') // Limpiar parámetros previos
+      return NextResponse.redirect(redirectUrl)
+    }
+
+    // Usuario autenticado accediendo a home
+    if (isAuthenticated && pathname === '/') {
+      console.log(`[Middleware] Redirect home: / → /dashboard`)
+      const redirectUrl = req.nextUrl.clone()
+      redirectUrl.pathname = '/dashboard'
+      return NextResponse.redirect(redirectUrl)
+    }
+
+    // CRÍTICO: Retornar siempre la response de Supabase para preservar cookies
+    return res
 
   } catch (error) {
-    // Error en el middleware - permitir continuar pero loggear el error
-    console.error('[Middleware] Error procesando request:', error)
+    console.error('[Middleware] Error crítico:', error)
 
-    const url = request.nextUrl.clone()
-    const pathname = url.pathname
-
-    // Si hay error crítico y no es una ruta pública, redirect a login como seguridad
+    // En caso de error, crear response limpia y redirect a login por seguridad
+    const pathname = req.nextUrl.pathname
     const publicRoutes = ['/login', '/forgot-password', '/reset-password', '/signup']
-    const isPublicRoute = publicRoutes.includes(pathname)
-    const isApiRoute = pathname.startsWith('/api/')
+    const isPublicRoute = publicRoutes.some(path => pathname.startsWith(path))
 
-    if (!isPublicRoute && !isApiRoute) {
-      console.log(`[Middleware] Error crítico, redirecting a /login por seguridad`)
-      url.pathname = '/login'
-      return NextResponse.redirect(url)
+    if (!isPublicRoute) {
+      console.log(`[Middleware] Error fallback: ${pathname} → /login`)
+      const redirectUrl = req.nextUrl.clone()
+      redirectUrl.pathname = '/login'
+      return NextResponse.redirect(redirectUrl)
     }
 
-    // Para rutas públicas o APIs, continuar normalmente
+    // Para rutas públicas, continuar normalmente
     return NextResponse.next()
   }
 }
 
 // Configuración del matcher optimizado
-// Excluye archivos estáticos, _next, y archivos de imagen automáticamente
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
+     * Match all request paths except:
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
