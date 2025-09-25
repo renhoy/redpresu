@@ -1,29 +1,29 @@
 # Tareas - MÓDULO: Auth
 
 ## MÓDULO ACTIVO: Auth
-**Tareas Activas:** 0/5
+**Tareas Activas:** 4/5
 
 ## BACKLOG
 ### Críticas (obligatorias para completar módulo):
-1. **Configuración Supabase Auth** - 1 día
-   - Helpers de autenticación con Supabase
-   - Manejo de sesiones y refresh tokens
-   - Funciones getUser(), signIn(), signOut()
+1. **[x] Configuración Supabase Auth** - 1 día ✅
+   - [x] Helpers de autenticación con Supabase
+   - [x] Manejo de sesiones y refresh tokens
+   - [x] Funciones getUser(), signIn(), signOut()
 
-2. **Sistema de Login** - 1 día
-   - Página /login con formulario
-   - Validación credenciales
-   - Redirect según rol después login
+2. **[x] Sistema de Login** - 1 día ✅
+   - [x] Página /login con formulario
+   - [x] Validación credenciales
+   - [x] Redirect según rol después login
 
-3. **Middleware protección rutas** - 1 día
-   - middleware.ts para proteger rutas privadas
-   - Verificación de sesión y rol
-   - Redirect a /login si no autenticado
+3. **[x] Middleware protección rutas** - 1 día ✅
+   - [x] middleware.ts para proteger rutas privadas
+   - [x] Verificación de sesión y rol
+   - [x] Redirect a /login si no autenticado
 
-4. **Manejo de roles** - 1 día
-   - HOC o hook para verificar rol en componentes
-   - Restricciones UI según permisos
-   - User switching para superadmin
+4. **[x] Manejo de roles** - 1 día ✅
+   - [x] HOC o hook para verificar rol en componentes
+   - [x] Restricciones UI según permisos
+   - [x] User switching para superadmin
 
 5. **Logout y sesión** - 0.5 días
    - Botón logout en header
