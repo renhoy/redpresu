@@ -1,7 +1,7 @@
 # Tareas - MÓDULO: Auth
 
 ## MÓDULO ACTIVO: Auth
-**Tareas Activas:** 4/5
+**Tareas Activas:** 5/5
 
 ## BACKLOG
 ### Críticas (obligatorias para completar módulo):
@@ -25,10 +25,10 @@
    - [x] Restricciones UI según permisos
    - [x] User switching para superadmin
 
-5. **Logout y sesión** - 0.5 días
-   - Botón logout en header
-   - Limpieza de sesión
-   - Redirect a /login
+5. **[x] Logout y sesión** - 0.5 días ✅
+   - [x] Botón logout en header
+   - [x] Limpieza de sesión
+   - [x] Redirect a /login
 
 ### Alta (importantes pero no críticas):
 1. **Recuperación password** - 0.5 días
@@ -50,12 +50,14 @@
 - auth.config.ts
 
 ## CRITERIOS COMPLETADO AUTH:
-- [ ] Login funcional con validación
-- [ ] Middleware protegiendo rutas privadas
-- [ ] Redirect automático según rol
-- [ ] Logout limpiando sesión
-- [ ] User switching para superadmin
-- [ ] Tests de autenticación funcionando
+- [x] Login funcional con validación
+- [x] Middleware protegiendo rutas privadas
+- [x] Redirect automático según rol
+- [x] Logout limpiando sesión
+- [x] User switching para superadmin
+- [x] Tests de autenticación funcionando
+
+✅ **MÓDULO COMPLETADO - Ready for READ-ONLY**
 
 ## NOTAS TÉCNICAS:
 - **Roles**: superadmin (acceso total), admin (su empresa), vendedor (sus presupuestos)
