@@ -1,8 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { signIn, type SignInCredentials, type AuthUser } from '@/lib/auth/supabase-auth'
+import { signInAction } from '@/app/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -22,7 +21,6 @@ interface LoginFormErrors {
 }
 
 export default function LoginForm() {
-  const router = useRouter()
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: ''
@@ -56,19 +54,6 @@ export default function LoginForm() {
     return Object.keys(newErrors).length === 0
   }
 
-  const getRedirectPath = (user: AuthUser): string => {
-    switch (user.role) {
-      case 'superadmin':
-        return '/dashboard'
-      case 'admin':
-        return '/dashboard'
-      case 'vendedor':
-        return '/budgets'
-      default:
-        return '/dashboard'
-    }
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -83,23 +68,20 @@ export default function LoginForm() {
     setIsLoading(true)
 
     try {
-      const credentials: SignInCredentials = {
-        email: formData.email.trim().toLowerCase(),
-        password: formData.password
-      }
+      const result = await signInAction(
+        formData.email.trim().toLowerCase(),
+        formData.password
+      )
 
-      const result = await signIn(credentials)
-
-      if (!result.success || !result.data) {
+      if (!result.success) {
         setErrors({
           general: result.error || 'Error desconocido durante el login'
         })
         return
       }
 
-      // Login exitoso - redirect según rol
-      const redirectPath = getRedirectPath(result.data)
-      router.push(redirectPath)
+      // El Server Action maneja el redirect automáticamente
+      // No necesitamos hacer nada más aquí
 
     } catch (error) {
       setErrors({
