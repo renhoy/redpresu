@@ -1,19 +1,24 @@
 # Claude Code - jeyca-presu
 
-## MÓDULO ACTUAL: Auth
+## MÓDULO ACTUAL: Common
 
 ## ARCHIVOS PERMITIDOS (puedes modificar):
-- src/lib/auth/*
-- src/components/auth/*
-- src/app/(auth)/*
-- src/app/api/auth/*
-- src/middleware.ts
-- auth.config.ts
+- src/lib/utils/*
+- src/lib/validators/*
+- src/lib/helpers/*
+- src/lib/constants/*
 
 ## ARCHIVOS PROHIBIDOS (NO tocar):
 - src/lib/database/* (Database - READ-ONLY)
 - src/lib/types/* (Database - READ-ONLY)
 - src/lib/supabase/* (Database - READ-ONLY)
+- src/lib/auth/* (Auth - READ-ONLY)
+- src/components/auth/* (Auth - READ-ONLY)
+- src/app/(auth)/* (Auth - READ-ONLY)
+- src/app/api/auth/* (Auth - READ-ONLY)
+- src/app/actions/auth.ts (Auth - READ-ONLY)
+- src/middleware.ts (Auth - READ-ONLY)
+- auth.config.ts (Auth - READ-ONLY)
 - migrations/* (Database - READ-ONLY)
 - database.types.ts (Database - READ-ONLY)
 - schema.sql (Database - READ-ONLY)
@@ -30,14 +35,13 @@
 ## REGLA CRÍTICA
 ⚠️ Antes de modificar cualquier archivo, verificar que está en PERMITIDOS.
 ⚠️ Si necesitas tocar archivos PROHIBIDOS = PARAR inmediatamente y escalar.
-⚠️ Solo trabajar en el módulo Auth hasta que esté READ-ONLY.
+⚠️ Solo trabajar en el módulo Common hasta que esté READ-ONLY.
 
-## CONFIGURACIÓN ESPECÍFICA AUTH
-- Supabase Auth con extensión custom en public.users
-- Roles: superadmin, admin, vendedor con permisos diferenciados
-- Middleware para protección de rutas por rol
-- Login/logout con redirect automático según rol
-- Sesión persistente con refresh automático
+## CONFIGURACIÓN ESPECÍFICA COMMON
+- Utilidades compartidas entre módulos
+- Validadores para CSV y datos de negocio
+- Helpers para cálculos y formateo
+- Constantes del sistema centralizadas
 
 ## RESTRICCIONES TÉCNICAS
 - No localStorage/sessionStorage en artifacts
