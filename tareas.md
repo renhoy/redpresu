@@ -1,74 +1,72 @@
-# Tareas - MÓDULO: Database
+# Tareas - MÓDULO: Auth
 
-## MÓDULO ACTIVO: Database
-**Tareas Activas:** 5/5
+## MÓDULO ACTIVO: Auth
+**Tareas Activas:** 0/5
 
 ## BACKLOG
 ### Críticas (obligatorias para completar módulo):
-1. **[x] Configuración Supabase inicial** - 1 día ✅
-   - [x] Setup proyecto Supabase
-   - [x] Configuración variables entorno
-   - [x] Conexión desde Next.js
+1. **Configuración Supabase Auth** - 1 día
+   - Helpers de autenticación con Supabase
+   - Manejo de sesiones y refresh tokens
+   - Funciones getUser(), signIn(), signOut()
 
-2. **[x] Esquema base de datos** - 1 día ✅
-   - [x] Tabla users (auth + roles personalizados)
-   - [x] Tabla tariffs (empresa_id=1, json_tariff_data, configuración)
-   - [x] Tabla budgets (referencia tariff, datos cliente, json_budget_data, estados)
+2. **Sistema de Login** - 1 día
+   - Página /login con formulario
+   - Validación credenciales
+   - Redirect según rol después login
 
-3. **[x] Tipos TypeScript** - 1 día ✅
-   - [x] Interfaces para tariffs, budgets, users
-   - [x] Tipos para JSON structures (tariff_data, budget_data)
-   - [x] Enums para estados y roles
+3. **Middleware protección rutas** - 1 día
+   - middleware.ts para proteger rutas privadas
+   - Verificación de sesión y rol
+   - Redirect a /login si no autenticado
 
-4. **[x] Políticas RLS** - 1 día ✅
-   - [x] Políticas por rol: superadmin (todo), admin (su empresa), vendedor (sus presupuestos)
-   - [x] Restricciones empresa_id = 1 en MVP
-   - [x] Testing de permisos por rol
+4. **Manejo de roles** - 1 día
+   - HOC o hook para verificar rol en componentes
+   - Restricciones UI según permisos
+   - User switching para superadmin
 
-5. **[x] Migraciones y seeds** - 1 día ✅
-   - [x] Scripts SQL para estructura inicial
-   - [x] Datos semilla: usuario admin inicial, empresa base
-   - [x] Validation helpers para constraints
+5. **Logout y sesión** - 0.5 días
+   - Botón logout en header
+   - Limpieza de sesión
+   - Redirect a /login
 
 ### Alta (importantes pero no críticas):
-1. **Índices optimización** - 0.5 días
-   - Índices para queries frecuentes (listados, filtros)
-   - Optimización para búsquedas por estado, fecha
+1. **Recuperación password** - 0.5 días
+   - Página forgot-password
+   - Envío email recuperación
+   - Reset password workflow
 
-2. **Helpers database** - 0.5 días
-   - Funciones reutilizables para queries comunes
-   - Wrappers con manejo errores
+2. **Cambio password** - 0.5 días
+   - Formulario cambio password
+   - Validación password actual
+   - Confirmación password nueva
 
 ## ARCHIVOS DE ESTE MÓDULO:
-- lib/database/supabase.ts
-- lib/database/types.ts  
-- lib/database/helpers.ts
-- lib/types/index.ts
-- lib/types/database.ts
-- migrations/001_initial_schema.sql
-- migrations/002_rls_policies.sql
-- database.types.ts (generado por Supabase)
+- src/lib/auth/supabase-auth.ts
+- src/lib/auth/session.ts
+- src/components/auth/LoginForm.tsx
+- src/app/(auth)/login/page.tsx
+- src/middleware.ts
+- auth.config.ts
 
-## CRITERIOS COMPLETADO DATABASE:
-- [x] Conexión Supabase funcionando
-- [x] Esquema completo desplegado
-- [x] Tipos TypeScript generados y validados
-- [x] RLS funcionando por rol
-- [x] Seeds con datos iniciales
-- [x] Tests básicos de conexión y permisos
-- [x] Documentación schema y relaciones
-
-✅ **MÓDULO COMPLETADO - Ready for READ-ONLY**
+## CRITERIOS COMPLETADO AUTH:
+- [ ] Login funcional con validación
+- [ ] Middleware protegiendo rutas privadas
+- [ ] Redirect automático según rol
+- [ ] Logout limpiando sesión
+- [ ] User switching para superadmin
+- [ ] Tests de autenticación funcionando
 
 ## NOTAS TÉCNICAS:
-- **JSON Fields**: json_tariff_data y json_budget_data para estructura flexible
-- **Estados**: usar enums SQL para estados de presupuesto
-- **Empresa**: empresa_id siempre = 1 en MVP, preparado para multi-tenant futuro
-- **Fechas**: usar timestamptz para start_date, end_date, created_at, updated_at
-- **Cálculos**: campos total, iva, base como DECIMAL(10,2) para listados rápidos
+- **Roles**: superadmin (acceso total), admin (su empresa), vendedor (sus presupuestos)
+- **Sesiones**: Persistencia con refresh automático de tokens
+- **Middleware**: Protección a nivel Next.js con matcher patterns
+- **Redirects**: /login → /dashboard según rol, /dashboard → /login si no auth
+- **User switching**: Solo superadmin puede impersonar otros usuarios
 
 ## TESTING MÍNIMO:
-- Conexión a Supabase exitosa
-- CRUD básico en cada tabla
-- RLS bloqueando accesos incorrectos por rol
-- Validación constraints (empresa_id, estados válidos)
+- Login exitoso con credenciales válidas
+- Redirect correcto según rol después login
+- Middleware bloqueando rutas no autenticadas
+- Logout limpiando sesión correctamente
+- User switching funcionando para superadmin
