@@ -1,38 +1,15 @@
-'use client'
-
-import { useAuth } from '@/hooks/useAuth'
+import { redirect } from 'next/navigation'
+import { getServerUser } from '@/lib/auth/server'
 import LogoutButton from '@/components/auth/LogoutButton'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { User, Building2, Shield, Loader2 } from 'lucide-react'
+import { User, Building2, Shield } from 'lucide-react'
 
-export default function DashboardPage() {
-  const { user, loading, error, isAuthenticated } = useAuth()
+export default async function DashboardPage() {
+  const user = await getServerUser()
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Cargando dashboard...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (error || !isAuthenticated || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-red-600">Error</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>{error || 'No se pudo cargar el usuario'}</p>
-          </CardContent>
-        </Card>
-      </div>
-    )
+  if (!user) {
+    redirect('/login')
   }
 
   const getRoleBadgeColor = (role: string) => {
