@@ -1,34 +1,34 @@
 # Tareas - MÓDULO: Database
 
 ## MÓDULO ACTIVO: Database
-**Tareas Activas:** 0/5
+**Tareas Activas:** 5/5
 
 ## BACKLOG
 ### Críticas (obligatorias para completar módulo):
-1. **Configuración Supabase inicial** - 1 día
-   - Setup proyecto Supabase
-   - Configuración variables entorno
-   - Conexión desde Next.js
+1. **[x] Configuración Supabase inicial** - 1 día ✅
+   - [x] Setup proyecto Supabase
+   - [x] Configuración variables entorno
+   - [x] Conexión desde Next.js
 
-2. **Esquema base de datos** - 1 día  
-   - Tabla users (auth + roles personalizados)
-   - Tabla tariffs (empresa_id=1, json_tariff_data, configuración)
-   - Tabla budgets (referencia tariff, datos cliente, json_budget_data, estados)
+2. **[x] Esquema base de datos** - 1 día ✅
+   - [x] Tabla users (auth + roles personalizados)
+   - [x] Tabla tariffs (empresa_id=1, json_tariff_data, configuración)
+   - [x] Tabla budgets (referencia tariff, datos cliente, json_budget_data, estados)
 
-3. **Tipos TypeScript** - 1 día
-   - Interfaces para tariffs, budgets, users
-   - Tipos para JSON structures (tariff_data, budget_data)
-   - Enums para estados y roles
+3. **[x] Tipos TypeScript** - 1 día ✅
+   - [x] Interfaces para tariffs, budgets, users
+   - [x] Tipos para JSON structures (tariff_data, budget_data)
+   - [x] Enums para estados y roles
 
-4. **Políticas RLS** - 1 día
-   - Políticas por rol: superadmin (todo), admin (su empresa), vendedor (sus presupuestos)
-   - Restricciones empresa_id = 1 en MVP
-   - Testing de permisos por rol
+4. **[x] Políticas RLS** - 1 día ✅
+   - [x] Políticas por rol: superadmin (todo), admin (su empresa), vendedor (sus presupuestos)
+   - [x] Restricciones empresa_id = 1 en MVP
+   - [x] Testing de permisos por rol
 
-5. **Migraciones y seeds** - 1 día
-   - Scripts SQL para estructura inicial
-   - Datos semilla: usuario admin inicial, empresa base
-   - Validation helpers para constraints
+5. **[x] Migraciones y seeds** - 1 día ✅
+   - [x] Scripts SQL para estructura inicial
+   - [x] Datos semilla: usuario admin inicial, empresa base
+   - [x] Validation helpers para constraints
 
 ### Alta (importantes pero no críticas):
 1. **Índices optimización** - 0.5 días
@@ -50,13 +50,15 @@
 - database.types.ts (generado por Supabase)
 
 ## CRITERIOS COMPLETADO DATABASE:
-- [ ] Conexión Supabase funcionando
-- [ ] Esquema completo desplegado
-- [ ] Tipos TypeScript generados y validados
-- [ ] RLS funcionando por rol
-- [ ] Seeds con datos iniciales
-- [ ] Tests básicos de conexión y permisos
-- [ ] Documentación schema y relaciones
+- [x] Conexión Supabase funcionando
+- [x] Esquema completo desplegado
+- [x] Tipos TypeScript generados y validados
+- [x] RLS funcionando por rol
+- [x] Seeds con datos iniciales
+- [x] Tests básicos de conexión y permisos
+- [x] Documentación schema y relaciones
+
+✅ **MÓDULO COMPLETADO - Ready for READ-ONLY**
 
 ## NOTAS TÉCNICAS:
 - **JSON Fields**: json_tariff_data y json_budget_data para estructura flexible
