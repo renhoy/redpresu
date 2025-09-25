@@ -11,6 +11,7 @@ if (!supabaseAnonKey) {
   throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY')
 }
 
+// Cliente público para uso en navegador y componentes cliente
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
@@ -18,15 +19,3 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true
   }
 })
-
-// Cliente para operaciones server-side con service role
-export const supabaseAdmin = createClient(
-  supabaseUrl,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-)
