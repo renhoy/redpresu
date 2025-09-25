@@ -8,7 +8,7 @@
 ## Módulos del Sistema
 
 ### SHARED (Desarrollar primero - orden obligatorio)
-- **Database** - Estado: No iniciado - Modelos de datos, migraciones y configuración Supabase
+- **Database** - Estado: READ-ONLY ✅ - Modelos de datos, migraciones y configuración Supabase
 - **Auth** - Estado: No iniciado - Sistema de autenticación con roles (superadmin, admin, vendedor)
 - **Common** - Estado: No iniciado - Utilidades compartidas, validaciones y helpers
 
