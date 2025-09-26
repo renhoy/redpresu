@@ -1,12 +1,11 @@
 # Claude Code - jeyca-presu
 
-## MÓDULO ACTUAL: Common
+## MÓDULO ACTUAL: Tariff Management
 
 ## ARCHIVOS PERMITIDOS (puedes modificar):
-- src/lib/utils/*
-- src/lib/validators/*
-- src/lib/helpers/*
-- src/lib/constants/*
+- src/app/(dashboard)/tariffs/*
+- src/components/tariffs/*
+- src/app/actions/tariffs.ts
 
 ## ARCHIVOS PROHIBIDOS (NO tocar):
 - src/lib/database/* (Database - READ-ONLY)
@@ -23,6 +22,10 @@
 - database.types.ts (Database - READ-ONLY)
 - schema.sql (Database - READ-ONLY)
 - seed.sql (Database - READ-ONLY)
+- src/lib/utils/* (Common - READ-ONLY)
+- src/lib/validators/* (Common - READ-ONLY)
+- src/lib/helpers/* (Common - READ-ONLY)
+- src/lib/constants/* (Common - READ-ONLY)
 
 ## STACK TÉCNICO CONFIRMADO
 - **Frontend:** Next.js 14 + TypeScript + Tailwind CSS + shadcn/ui
@@ -35,13 +38,14 @@
 ## REGLA CRÍTICA
 ⚠️ Antes de modificar cualquier archivo, verificar que está en PERMITIDOS.
 ⚠️ Si necesitas tocar archivos PROHIBIDOS = PARAR inmediatamente y escalar.
-⚠️ Solo trabajar en el módulo Common hasta que esté READ-ONLY.
+⚠️ Solo trabajar en el módulo Tariff Management hasta que esté READ-ONLY.
 
-## CONFIGURACIÓN ESPECÍFICA COMMON
-- Utilidades compartidas entre módulos
-- Validadores para CSV y datos de negocio
-- Helpers para cálculos y formateo
-- Constantes del sistema centralizadas
+## CONFIGURACIÓN ESPECÍFICA TARIFF MANAGEMENT
+- Gestión completa de tarifas (CRUD)
+- Procesamiento de CSV con validación en tiempo real
+- Formularios dinámicos para crear/editar tarifas
+- Integración con validador CSV del módulo Common
+- Estados de tarifa (activa, inactiva, archivada)
 
 ## RESTRICCIONES TÉCNICAS
 - No localStorage/sessionStorage en artifacts

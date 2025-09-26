@@ -1,57 +1,44 @@
-# Tareas - MÓDULO: Common
+# Tareas - MÓDULO: Tariff Management
 
-## MÓDULO ACTIVO: Common
-**Tareas Activas:** 0/4
+## MÓDULO ACTIVO: Tariff Management
+**Tareas Activas:** 0/5
 
 ## BACKLOG
-### Críticas (obligatorias para completar módulo):
-1. **Validadores CSV** - 1 día
-   - Validador estructura CSV tarifas
-   - Esquemas Zod para validación datos
-   - Transformación CSV a JSON
 
-2. **Utilidades cálculo** - 1 día
-   - Helpers matemáticos para presupuestos
-   - Cálculos de descuentos y ofertas
-   - Funciones agregación de totales
+### Críticas:
+1. **Página listado tarifas** - 1 día
+   - Tabla con tarifas activas/inactivas
+   - Acciones: ver, editar, activar/desactivar
+   - Filtros y búsqueda
 
-3. **Helpers formato** - 0.5 días
-   - Formateo moneda y números
-   - Formateo fechas localizadas
-   - Normalización strings y emails
+2. **Formulario crear/editar tarifa** - 1 día
+   - Campos básicos (title, description, validity, etc.)
+   - Upload CSV con validación en tiempo real
+   - Preview jerarquía procesada
+   - Upload logo empresa
 
-4. **Constantes** - 0.5 días
-   - Constantes del sistema centralizadas
-   - Configuraciones por defecto
-   - Mensajes de error y validación
+3. **Integración validador CSV** - 1 día
+   - Server Action para procesar CSV
+   - Mostrar errores de validación
+   - Guardar json_tariff_data en BD
 
-### Alta (importantes pero no críticas):
-1. **Utilidades generales** - 0.5 días
-   - Helpers para arrays y objetos
-   - Funciones de debounce/throttle
-   - Utilitarios para URLs
+4. **Gestión estados tarifa** - 0.5 días
+   - Activar/desactivar tarifas
+   - Solo activas permiten crear presupuestos
+   - Validaciones de estado
+
+5. **CRUD completo con RLS** - 0.5 días
+   - Crear tarifa (admin, superadmin)
+   - Editar tarifa (admin, superadmin)
+   - Eliminar tarifa (solo superadmin)
+   - Listar tarifas (todos los roles)
 
 ## ARCHIVOS DE ESTE MÓDULO:
-- src/lib/utils/*
-- src/lib/validators/*
-- src/lib/helpers/*
-- src/lib/constants/*
+- src/app/(dashboard)/tariffs/*
+- src/components/tariffs/*
+- src/app/actions/tariffs.ts
 
-## CRITERIOS COMPLETADO COMMON:
-- [ ] Validadores CSV funcionando
-- [ ] Helpers de cálculo testeados
-- [ ] Formateo consistente implementado
-- [ ] Constantes centralizadas
-- [ ] Tests básicos pasando
-
-## NOTAS TÉCNICAS:
-- **Validadores**: Usar Zod para esquemas robustos
-- **Cálculos**: Precisión decimal con library dedicada
-- **Formato**: Internacionalización preparada
-- **Constantes**: TypeScript const assertions
-
-## TESTING MÍNIMO:
-- Validación CSV con datos reales
-- Cálculos matemáticos precisos
-- Formateo en diferentes locales
-- Constantes accesibles desde otros módulos
+## DEPENDENCIAS:
+- ✅ Database (tablas tariffs)
+- ✅ Auth (roles y permisos)
+- ✅ Common (validador CSV, formateo)

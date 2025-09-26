@@ -10,7 +10,7 @@
 ### SHARED (Desarrollar primero - orden obligatorio)
 - **Database** - Estado: READ-ONLY ✅ - Modelos de datos, migraciones y configuración Supabase
 - **Auth** - Estado: READ-ONLY ✅ - Sistema de autenticación con roles (superadmin, admin, vendedor)
-- **Common** - Estado: No iniciado - Utilidades compartidas, validaciones y helpers
+- **Common** - Estado: READ-ONLY ✅ - Utilidades compartidas, validaciones y helpers
 
 ### FEATURES (Desarrollar después - uno por vez)
 - **Tariff Management** - Estado: Pendiente - CRUD tarifas, procesamiento CSV a JSON, validaciones jerárquicas
