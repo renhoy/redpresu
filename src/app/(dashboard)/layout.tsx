@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { getServerUser } from '@/lib/auth/server'
+import { Header } from '@/components/layout/Header'
 
 export default async function DashboardLayout({
   children,
@@ -14,6 +15,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-background">
+      <Header />
       <main className="container mx-auto py-6 px-4">
         {children}
       </main>

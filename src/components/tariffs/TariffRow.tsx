@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Eye, Edit, Power, Trash2, MoreHorizontal, Building2 } from 'lucide-react'
+import { Eye, Edit, Power, Trash2, MoreHorizontal, FileText, Plus } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -90,31 +90,52 @@ export function TariffRow({ tariff, onStatusChange, onDelete }: TariffRowProps) 
   return (
     <>
       <TableRow className="hover:bg-muted/50">
+        {/* Columna Tarifa (Nombre + Descripción) */}
         <TableCell className="font-medium">
-          <div className="flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-            {tariff.title}
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">{tariff.title}</span>
+            </div>
+            <div className="text-sm text-muted-foreground max-w-xs truncate">
+              {tariff.description || 'Sin descripción'}
+            </div>
           </div>
         </TableCell>
 
-        <TableCell className="hidden md:table-cell">
-          <div className="max-w-xs truncate text-muted-foreground">
-            {tariff.description || 'Sin descripción'}
-          </div>
+        {/* Columna Presupuesto */}
+        <TableCell>
+          <button
+            className="flex items-center gap-1 text-primary hover:text-primary/80 transition-colors"
+            onClick={() => console.log('Crear presupuesto con tarifa:', tariff.id)}
+            title="Crear presupuesto con esta tarifa"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline text-sm">Crear</span>
+          </button>
         </TableCell>
 
+        {/* Columna Estado */}
         <TableCell>
           {getStatusBadge()}
         </TableCell>
 
-        <TableCell className="hidden lg:table-cell">
-          {tariff.validity_start ? formatDate(tariff.validity_start) : '-'}
+        {/* Columna Validez (Fechas combinadas) */}
+        <TableCell className="hidden md:table-cell">
+          <div className="text-sm space-y-1">
+            {tariff.validity_start && (
+              <div>Desde: {formatDate(tariff.validity_start)}</div>
+            )}
+            {tariff.validity_end && (
+              <div>Hasta: {formatDate(tariff.validity_end)}</div>
+            )}
+            {!tariff.validity_start && !tariff.validity_end && (
+              <span className="text-muted-foreground">Sin límites</span>
+            )}
+          </div>
         </TableCell>
 
-        <TableCell className="hidden lg:table-cell">
-          {tariff.validity_end ? formatDate(tariff.validity_end) : '-'}
-        </TableCell>
-
+        {/* Columna Fecha */}
         <TableCell className="hidden sm:table-cell text-muted-foreground">
           {formatDate(tariff.created_at)}
         </TableCell>

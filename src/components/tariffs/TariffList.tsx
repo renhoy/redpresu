@@ -135,12 +135,11 @@ export function TariffList({ empresaId, initialTariffs = [] }: TariffListProps) 
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Título</TableHead>
-                    <TableHead className="hidden md:table-cell">Descripción</TableHead>
+                    <TableHead>Tarifa</TableHead>
+                    <TableHead className="w-24">Presupuesto</TableHead>
                     <TableHead>Estado</TableHead>
-                    <TableHead className="hidden lg:table-cell">Válida desde</TableHead>
-                    <TableHead className="hidden lg:table-cell">Válida hasta</TableHead>
-                    <TableHead className="hidden sm:table-cell">Creada</TableHead>
+                    <TableHead className="hidden md:table-cell">Validez</TableHead>
+                    <TableHead className="hidden sm:table-cell">Fecha</TableHead>
                     <TableHead className="w-12">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
