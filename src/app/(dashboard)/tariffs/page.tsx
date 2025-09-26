@@ -33,17 +33,15 @@ export default async function TariffsPage() {
   }
 
   return (
-    <div className="container mx-auto py-6 px-4">
-      <Suspense fallback={
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      }>
-        <TariffList
-          empresaId={userData.empresa_id}
-          initialTariffs={initialTariffs}
-        />
-      </Suspense>
-    </div>
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    }>
+      <TariffList
+        empresaId={userData.empresa_id}
+        initialTariffs={initialTariffs}
+      />
+    </Suspense>
   )
 }
