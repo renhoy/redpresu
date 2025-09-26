@@ -35,18 +35,18 @@ export async function middleware(req: NextRequest) {
 
     // Usuario autenticado intentando acceder a ruta pública
     if (isAuthenticated && isPublicRoute) {
-      console.log(`[Middleware] Redirect autenticado: ${pathname} → /dashboard`)
+      console.log(`[Middleware] Redirect autenticado: ${pathname} → /tariffs`)
       const redirectUrl = req.nextUrl.clone()
-      redirectUrl.pathname = '/dashboard'
+      redirectUrl.pathname = '/tariffs'
       redirectUrl.searchParams.delete('redirectedFrom') // Limpiar parámetros previos
       return NextResponse.redirect(redirectUrl)
     }
 
     // Usuario autenticado accediendo a home
     if (isAuthenticated && pathname === '/') {
-      console.log(`[Middleware] Redirect home: / → /dashboard`)
+      console.log(`[Middleware] Redirect home: / → /tariffs`)
       const redirectUrl = req.nextUrl.clone()
-      redirectUrl.pathname = '/dashboard'
+      redirectUrl.pathname = '/tariffs'
       return NextResponse.redirect(redirectUrl)
     }
 

@@ -1,33 +1,21 @@
 import { Suspense } from 'react'
+import { getServerUser } from '@/lib/auth/server'
 import { redirect } from 'next/navigation'
-import { supabaseAdmin } from '@/lib/supabase/server'
 import { TariffList } from '@/components/tariffs/TariffList'
 import { getTariffs } from '@/app/actions/tariffs'
 
 export default async function TariffsPage() {
-  const supabase = supabaseAdmin
+  // El layout ya maneja la autenticación, solo obtenemos el usuario
+  const user = await getServerUser()
 
-  // Verificar autenticación
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  if (authError || !user) {
-    redirect('/login')
-  }
-
-  // Obtener datos del usuario y empresa
-  const { data: userData, error: userError } = await supabase
-    .from('users')
-    .select('empresa_id, role')
-    .eq('id', user.id)
-    .single()
-
-  if (userError || !userData || !userData.empresa_id) {
+  if (!user || !user.empresa_id) {
     redirect('/login')
   }
 
   // Cargar tarifas iniciales
   let initialTariffs = []
   try {
-    initialTariffs = await getTariffs(userData.empresa_id)
+    initialTariffs = await getTariffs(user.empresa_id)
   } catch (error) {
     console.error('Error loading initial tariffs:', error)
   }
@@ -39,7 +27,7 @@ export default async function TariffsPage() {
       </div>
     }>
       <TariffList
-        empresaId={userData.empresa_id}
+        empresaId={user.empresa_id}
         initialTariffs={initialTariffs}
       />
     </Suspense>
