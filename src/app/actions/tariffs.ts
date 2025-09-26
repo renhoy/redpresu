@@ -1,8 +1,7 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { supabaseAdmin } from '@/lib/supabase/server'
 import { Database } from '@/lib/types/database.types'
-import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 
 type Tariff = Database['public']['Tables']['tariffs']['Row']
@@ -14,7 +13,7 @@ export async function getTariffs(
     search?: string
   }
 ): Promise<Tariff[]> {
-  const supabase = createClient()
+  const supabase = supabaseAdmin
 
   let query = supabase
     .from('tariffs')
@@ -47,7 +46,7 @@ export async function toggleTariffStatus(
   tariffId: number,
   currentStatus: 'Activa' | 'Inactiva'
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = createClient()
+  const supabase = supabaseAdmin
 
   const newStatus = currentStatus === 'Activa' ? 'Inactiva' : 'Activa'
 
@@ -74,7 +73,7 @@ export async function toggleTariffStatus(
 export async function deleteTariff(
   tariffId: number
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = createClient()
+  const supabase = supabaseAdmin
 
   // Verificar si la tarifa tiene presupuestos asociados
   const { data: budgets, error: budgetError } = await supabase
@@ -118,7 +117,7 @@ export async function deleteTariff(
 export async function getTariffById(
   tariffId: number
 ): Promise<Tariff | null> {
-  const supabase = createClient()
+  const supabase = supabaseAdmin
 
   const { data, error } = await supabase
     .from('tariffs')

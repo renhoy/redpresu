@@ -163,7 +163,7 @@ export function TariffRow({ tariff, onStatusChange, onDelete }: TariffRowProps) 
             <AlertDialogTitle>¿Eliminar tarifa?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acción no se puede deshacer. Se eliminará permanentemente la tarifa
-              <strong> "{tariff.title}"</strong> y todos sus datos asociados.
+              <strong> &quot;{tariff.title}&quot;</strong> y todos sus datos asociados.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

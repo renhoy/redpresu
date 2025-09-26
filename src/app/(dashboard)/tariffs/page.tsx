@@ -1,11 +1,11 @@
 import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { supabaseAdmin } from '@/lib/supabase/server'
 import { TariffList } from '@/components/tariffs/TariffList'
 import { getTariffs } from '@/app/actions/tariffs'
 
 export default async function TariffsPage() {
-  const supabase = createClient()
+  const supabase = supabaseAdmin
 
   // Verificar autenticación
   const { data: { user }, error: authError } = await supabase.auth.getUser()
