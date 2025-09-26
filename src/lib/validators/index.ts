@@ -23,6 +23,14 @@ export {
 // Exportar utilidades para casos avanzados
 export { ErrorFactory, ErrorUtils } from '../helpers/csv-errors';
 export { CSVUtils } from '../helpers/csv-utils';
+export { NormalizationUtils } from '../helpers/normalization-utils';
+export {
+  TransformationUtils,
+  type HierarchicalItem,
+  type ValidationResult,
+  type HierarchyMetrics,
+  type TransformationSummary
+} from '../helpers/transformation-utils';
 
 // Exportar componentes individuales para casos específicos
 export { CSVParser } from './csv-parser';

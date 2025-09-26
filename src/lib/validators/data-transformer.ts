@@ -1,5 +1,6 @@
 import { ProcessedRow, BudgetItem, TransformationResult } from './csv-types';
 import { CSVUtils } from '../helpers/csv-utils';
+import { NormalizationUtils } from '../helpers/normalization-utils';
 import { LEVEL_MAP } from '../constants/csv';
 
 /**
@@ -31,46 +32,46 @@ export class DataTransformer {
   }
 
   /**
-   * Transforma un item individual
+   * Transforma un item individual aplicando normalización completa
    */
   private transformItem(item: ProcessedRow): BudgetItem {
     const normalizedLevel = item.normalizedLevel as keyof typeof LEVEL_MAP;
     const level = LEVEL_MAP[normalizedLevel];
 
+    // Crear objeto base con campos comunes
     const transformed: BudgetItem = {
       level,
       id: item.id || '',
-      name: item.nombre || '',
+      name: NormalizationUtils.normalizeText(item.nombre || ''),
       amount: '0.00'
     };
 
-    // Para partidas (items), incluir campos adicionales
+    // Para partidas (items), incluir campos adicionales con normalización completa
     if (item.normalizedLevel === 'partida') {
-      transformed.description = this.normalizeDescription(item.descripcion);
-      transformed.unit = item.ud || '';
+      transformed.description = NormalizationUtils.normalizeDescription(item.descripcion);
+      transformed.unit = NormalizationUtils.normalizeUnit(item.ud);
       transformed.quantity = '0.00';
-      transformed.iva_percentage = this.formatNumber(item['%iva']);
-      transformed.pvp = this.formatNumber(item.pvp);
+      transformed.iva_percentage = this.formatAndValidateNumber(item['%iva'], 0, 100);
+      transformed.pvp = this.formatAndValidateNumber(item.pvp, 0);
     }
 
     return transformed;
   }
 
   /**
-   * Normaliza descripciones (maneja valores vacíos)
+   * Formatea y valida números con rango opcional
    */
-  private normalizeDescription(description?: string): string {
-    if (!description || description.trim() === '') {
-      return ' '; // Espacio en blanco para mantener compatibilidad
-    }
-    return description.trim();
+  private formatAndValidateNumber(value?: string, min?: number, max?: number): string {
+    const validation = NormalizationUtils.validateAndFormatNumber(value || '', min, max);
+    return validation.formattedValue;
   }
 
   /**
-   * Formatea números a formato inglés con 2 decimales
+   * Formatea números a formato inglés con 2 decimales (compatibilidad)
+   * @deprecated Use formatAndValidateNumber instead
    */
   private formatNumber(value?: string): string {
-    return CSVUtils.formatNumber(value || '');
+    return NormalizationUtils.formatNumberToEnglish(value || '');
   }
 
   /**
@@ -117,7 +118,7 @@ export class DataTransformer {
    * Formatea números para CSV (formato español con comas)
    */
   private formatForCSV(value: string): string {
-    return value.replace('.', ',');
+    return NormalizationUtils.formatNumberToSpanish(value);
   }
 
   /**
@@ -200,5 +201,111 @@ export class DataTransformer {
       const pvp = parseFloat(item.pvp || '0');
       return sum + (isNaN(pvp) ? 0 : pvp);
     }, 0);
+  }
+
+  /**
+   * Transforma datos con normalización completa aplicando todas las especificaciones
+   */
+  transformWithFullNormalization(data: ProcessedRow[]): TransformationResult {
+    try {
+      const transformedItems = data.map(item => this.transformItemWithFullNormalization(item));
+
+      return {
+        success: true,
+        data: transformedItems,
+        errors: []
+      };
+    } catch (error) {
+      return {
+        success: false,
+        errors: [{
+          code: 'TRANSFORMATION_ERROR',
+          severity: 'error',
+          message: `Error al transformar datos: ${error instanceof Error ? error.message : 'Error desconocido'}`
+        }]
+      };
+    }
+  }
+
+  /**
+   * Transformación completa con todas las especificaciones de normalización
+   */
+  private transformItemWithFullNormalization(item: ProcessedRow): BudgetItem {
+    // 1. Normalización de campos base
+    const rawData: Record<string, any> = {
+      nivel: item.nivel,
+      id: item.id,
+      nombre: item.nombre,
+      descripcion: item.descripcion,
+      ud: item.ud,
+      '%iva': item['%iva'],
+      pvp: item.pvp
+    };
+
+    // 2. Crear objeto normalizado con traducción
+    const normalized = NormalizationUtils.createNormalizedObject(rawData);
+
+    // 3. Aplicar traducción de niveles
+    const normalizedLevel = item.normalizedLevel as keyof typeof LEVEL_MAP;
+    const level = LEVEL_MAP[normalizedLevel];
+
+    // 4. Construir objeto final
+    const transformed: BudgetItem = {
+      level,
+      id: normalized.id || '',
+      name: normalized.name || '',
+      amount: '0.00'
+    };
+
+    // 5. Agregar campos adicionales para items
+    if (level === 'item') {
+      transformed.description = normalized.description;
+      transformed.unit = normalized.unit;
+      transformed.quantity = '0.00';
+      transformed.iva_percentage = normalized.iva_percentage;
+      transformed.pvp = normalized.pvp;
+    }
+
+    return transformed;
+  }
+
+  /**
+   * Valida la estructura del objeto transformado
+   */
+  validateTransformedItem(item: BudgetItem): { isValid: boolean; errors: string[] } {
+    const errors: string[] = [];
+
+    if (!item.level || !['chapter', 'subchapter', 'section', 'item'].includes(item.level)) {
+      errors.push('Nivel inválido');
+    }
+
+    if (!item.id || !CSVUtils.isValidIdFormat(item.id)) {
+      errors.push('ID inválido');
+    }
+
+    if (!item.name || item.name.trim() === '') {
+      errors.push('Nombre requerido');
+    }
+
+    if (item.level === 'item') {
+      if (!item.unit || item.unit.trim() === '') {
+        errors.push('Unidad requerida para items');
+      }
+
+      const ivaValidation = NormalizationUtils.validateAndFormatNumber(item.iva_percentage || '', 0, 100);
+      if (!ivaValidation.isValid) {
+        errors.push(`IVA inválido: ${ivaValidation.error}`);
+      }
+
+      const pvpValidation = NormalizationUtils.validateAndFormatNumber(item.pvp || '', 0);
+      if (!pvpValidation.isValid) {
+        errors.push(`PVP inválido: ${pvpValidation.error}`);
+      }
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
   }
 }

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<!-- {"_META_file_path_": "csv.html"} -->
+<!-- Conversor CSV a JSON con visualización jerárquica -->
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Conversor CSV a JSON - Vista Jerárquica</title>
+    <link rel="stylesheet" href="csv.css" />
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Conversor CSV a JSON</h1>
+        <div class="controls">
+          <div class="file-input-container">
+            <input type="file" id="csvFile" accept=".csv" />
+            <label for="csvFile">Seleccionar archivo CSV</label>
+          </div>
+          <div class="color-controls">
+            <div class="color-input-group">
+              <label for="primaryColor">Color Primario:</label>
+              <input type="color" id="primaryColor" value="#10b981" />
+            </div>
+            <div class="color-input-group">
+              <label for="secondaryColor">Color Secundario:</label>
+              <input type="color" id="secondaryColor" value="#f59e0b" />
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="content">
+        <div class="panel left-panel">
+          <h2>JSON Generado</h2>
+          <div class="json-container">
+            <pre id="jsonOutput"></pre>
+          </div>
+          <button id="downloadJson" class="download-btn" disabled>
+            Descargar JSON
+          </button>
+          <button id="downloadCsv" class="download-btn" disabled>
+            Descargar CSV
+          </button>
+        </div>
+
+        <div class="panel right-panel">
+          <h2>Vista Jerárquica</h2>
+          <div class="hierarchy-container" id="hierarchyOutput">
+            <p class="placeholder">
+              Selecciona un archivo CSV para ver la estructura jerárquica
+            </p>
+          </div>
+        </div>
+      </main>
+
+      <!-- Modal para mostrar descripción -->
+      <div id="descriptionModal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Descripción de la Partida</h3>
+            <span class="close-modal">&times;</span>
+          </div>
+          <div class="modal-body">
+            <p id="modalDescription"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="csv2json.js"></script>
+    <script src="csv.js"></script>
+  </body>
+</html>

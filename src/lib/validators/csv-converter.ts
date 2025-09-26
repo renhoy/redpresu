@@ -59,8 +59,8 @@ export class CSV2JSONConverter {
         };
       }
 
-      // 4. Transformar a JSON
-      const transformResult = this.transformer.transform(dataResult.data!);
+      // 4. Transformar a JSON con normalización completa
+      const transformResult = this.transformer.transformWithFullNormalization(dataResult.data!);
       if (!transformResult.success) {
         return {
           success: false,
@@ -160,5 +160,86 @@ export class CSV2JSONConverter {
    */
   getItemsOnly(data: BudgetItem[]): BudgetItem[] {
     return this.transformer.filterItemsOnly(data);
+  }
+
+  /**
+   * Convierte CSV a JSON usando transformación básica (compatibilidad)
+   */
+  async convertCSVToJSONBasic(csvContent: string): Promise<OperationResult<BudgetItem[]>> {
+    try {
+      // 1. Parsear CSV
+      const parseResult = this.parser.parse(csvContent);
+      if (!parseResult.success) {
+        return {
+          success: false,
+          data: undefined,
+          errors: parseResult.errors
+        };
+      }
+
+      // 2. Validar estructura
+      const structureResult = this.validator.validateStructure(parseResult.data!);
+      if (!structureResult.success) {
+        return {
+          success: false,
+          data: undefined,
+          errors: structureResult.errors
+        };
+      }
+
+      // 3. Validar datos
+      const dataResult = this.validator.validateData(
+        parseResult.data!,
+        structureResult.fieldMap!
+      );
+      if (!dataResult.success) {
+        return {
+          success: false,
+          data: undefined,
+          errors: dataResult.errors
+        };
+      }
+
+      // 4. Transformar a JSON (método básico)
+      const transformResult = this.transformer.transform(dataResult.data!);
+      if (!transformResult.success) {
+        return {
+          success: false,
+          data: undefined,
+          errors: transformResult.errors
+        };
+      }
+
+      return {
+        success: true,
+        data: transformResult.data!,
+        errors: []
+      };
+
+    } catch (error) {
+      return {
+        success: false,
+        data: undefined,
+        errors: [{
+          code: 'UNKNOWN_ERROR',
+          severity: 'fatal',
+          message: `Error inesperado: ${error instanceof Error ? error.message : 'Error desconocido'}`
+        }]
+      };
+    }
+  }
+
+  /**
+   * Valida un objeto BudgetItem transformado
+   */
+  validateTransformedItem(item: BudgetItem): { isValid: boolean; errors: string[] } {
+    return this.transformer.validateTransformedItem(item);
+  }
+
+  /**
+   * Agrupa items por su contenedor padre
+   */
+  groupItemsByParent(data: BudgetItem[]): Record<string, BudgetItem[]> {
+    return this.transformer.groupByParent(data);
   }
 }
