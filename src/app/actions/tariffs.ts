@@ -310,8 +310,10 @@ export async function processCSV(formData: FormData): Promise<{
       return { success: false, errors: [{ message: 'El archivo debe ser de tipo CSV' }] }
     }
 
-    // Leer contenido del archivo
-    const csvContent = await file.text()
+    // Leer contenido del archivo con codificación UTF-8
+    const arrayBuffer = await file.arrayBuffer()
+    const decoder = new TextDecoder('utf-8')
+    const csvContent = decoder.decode(arrayBuffer)
 
     // Procesar con validador de Common
     const converter = new CSV2JSONConverter()

@@ -67,7 +67,7 @@ export function CSVUploadPreview({ data, error, onChange }: CSVUploadPreviewProp
   // Estado inicial: sin datos CSV cargados
   if (!data) {
     return (
-      <Card className="sticky top-24">
+      <Card>
         <CardHeader>
           <CardTitle>Estructura Tarifa</CardTitle>
         </CardHeader>
@@ -159,7 +159,7 @@ export function CSVUploadPreview({ data, error, onChange }: CSVUploadPreviewProp
 
   // Estado con datos CSV cargados: mostrar preview
   return (
-    <Card className="sticky top-24">
+    <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Previsualización Tarifa</CardTitle>

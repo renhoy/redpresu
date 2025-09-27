@@ -215,7 +215,7 @@ export function HierarchyPreview({ data }: HierarchyPreviewProps) {
   const hierarchyData = buildHierarchy(data)
 
   return (
-    <div className="max-h-96 overflow-y-auto">
+    <div>
       <div className="space-y-1">
         {hierarchyData.map((item, index) => (
           <HierarchyItem
