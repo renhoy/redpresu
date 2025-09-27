@@ -96,7 +96,7 @@ function HierarchyItem({ item, depth }: HierarchyItemProps) {
         </div>
 
         {/* Contenido del header */}
-        <div className="flex-1 flex items-center justify-between">
+        <div className="flex-1">
           <div className="flex items-center gap-2">
             <span className="font-medium">{item.name}</span>
 
@@ -123,12 +123,12 @@ function HierarchyItem({ item, depth }: HierarchyItemProps) {
             )}
           </div>
 
-          {/* Información adicional para items */}
+          {/* Línea 2: Información adicional solo para items */}
           {item.level === 'item' && (
-            <div className="flex items-center gap-4 text-sm">
-              {item.quantity && (
+            <div className="flex items-center gap-4 text-xs mt-1 opacity-90">
+              {item.unit && (
                 <span className="font-mono">
-                  {item.quantity} {item.unit || ''}
+                  Unidad: {item.unit}
                 </span>
               )}
               {item.iva_percentage && (
@@ -138,7 +138,7 @@ function HierarchyItem({ item, depth }: HierarchyItemProps) {
               )}
               {item.pvp && (
                 <span className="font-mono font-bold">
-                  {formatCurrency(parseFloat(item.pvp))}
+                  Precio: {formatCurrency(parseFloat(item.pvp))}
                 </span>
               )}
             </div>
