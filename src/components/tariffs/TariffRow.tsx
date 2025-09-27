@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Eye, Edit, Power, Trash2, MoreHorizontal, FileText, Plus } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -153,9 +154,11 @@ export function TariffRow({ tariff, onStatusChange, onDelete }: TariffRowProps) 
                 <Eye className="mr-2 h-4 w-4" />
                 Ver detalles
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Edit className="mr-2 h-4 w-4" />
-                Editar
+              <DropdownMenuItem asChild>
+                <Link href={`/tariffs/edit/${tariff.id}`}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Editar
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Plus, FileText } from 'lucide-react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -86,9 +87,11 @@ export function TariffList({ empresaId, initialTariffs = [] }: TariffListProps) 
             Administra las tarifas de tu empresa
           </p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Nueva Tarifa
+        <Button asChild>
+          <Link href="/tariffs/create">
+            <Plus className="mr-2 h-4 w-4" />
+            Nueva Tarifa
+          </Link>
         </Button>
       </div>
 
@@ -124,9 +127,11 @@ export function TariffList({ empresaId, initialTariffs = [] }: TariffListProps) 
                 }
               </p>
               {(!filters.status || filters.status === 'all') && !filters.search?.trim() && (
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Crear primera tarifa
+                <Button asChild>
+                  <Link href="/tariffs/create">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Crear primera tarifa
+                  </Link>
                 </Button>
               )}
             </div>
