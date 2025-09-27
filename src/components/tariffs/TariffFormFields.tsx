@@ -89,32 +89,34 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
             />
           </div>
 
-          <div>
-            <Label htmlFor="validity">Validez (días) *</Label>
-            <Input
-              id="validity"
-              type="number"
-              value={data.validity}
-              onChange={(e) => handleInputChange('validity', parseInt(e.target.value) || 30)}
-              min="1"
-              max="365"
-            />
-          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="validity">Validez (días) *</Label>
+              <Input
+                id="validity"
+                type="number"
+                value={data.validity}
+                onChange={(e) => handleInputChange('validity', parseInt(e.target.value) || 30)}
+                min="1"
+                max="365"
+              />
+            </div>
 
-          <div>
-            <Label htmlFor="status">Estado *</Label>
-            <Select
-              value={data.status}
-              onValueChange={(value: 'Activa' | 'Inactiva') => handleInputChange('status', value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Activa">Activa</SelectItem>
-                <SelectItem value="Inactiva">Inactiva</SelectItem>
-              </SelectContent>
-            </Select>
+            <div>
+              <Label htmlFor="status">Estado *</Label>
+              <Select
+                value={data.status}
+                onValueChange={(value: 'Activa' | 'Inactiva') => handleInputChange('status', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Activa">Activa</SelectItem>
+                  <SelectItem value="Inactiva">Inactiva</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -181,42 +183,43 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
             )}
           </div>
 
-          <div>
-            <Label htmlFor="name">Nombre empresa/autónomo *</Label>
-            <Input
-              id="name"
-              value={data.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
-              placeholder="Nombre completo de la empresa"
-              className={errors.name ? 'border-destructive' : ''}
-            />
-            {errors.name && (
-              <p className="text-sm text-destructive mt-1">{errors.name}</p>
-            )}
-          </div>
+          <div className="grid grid-cols-4 gap-4">
+            <div className="col-span-3">
+              <Label htmlFor="name">Nombre *</Label>
+              <Input
+                id="name"
+                value={data.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                placeholder="Nombre completo de la empresa"
+                className={errors.name ? 'border-destructive' : ''}
+              />
+              {errors.name && (
+                <p className="text-sm text-destructive mt-1">{errors.name}</p>
+              )}
+            </div>
 
-          <div>
-            <Label htmlFor="nif">NIF empresa/autónomo *</Label>
-            <Input
-              id="nif"
-              value={data.nif}
-              onChange={(e) => handleInputChange('nif', e.target.value.toUpperCase())}
-              placeholder="12345678A"
-              className={errors.nif ? 'border-destructive' : ''}
-            />
-            {errors.nif && (
-              <p className="text-sm text-destructive mt-1">{errors.nif}</p>
-            )}
+            <div className="col-span-1">
+              <Label htmlFor="nif">NIF *</Label>
+              <Input
+                id="nif"
+                value={data.nif}
+                onChange={(e) => handleInputChange('nif', e.target.value.toUpperCase())}
+                placeholder="12345678A"
+                className={errors.nif ? 'border-destructive' : ''}
+              />
+              {errors.nif && (
+                <p className="text-sm text-destructive mt-1">{errors.nif}</p>
+              )}
+            </div>
           </div>
 
           <div>
             <Label htmlFor="address">Dirección fiscal completa *</Label>
-            <Textarea
+            <Input
               id="address"
               value={data.address}
               onChange={(e) => handleInputChange('address', e.target.value)}
               placeholder="Dirección, código postal, ciudad, provincia"
-              rows={3}
               className={errors.address ? 'border-destructive' : ''}
             />
             {errors.address && (
@@ -226,12 +229,11 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
 
           <div>
             <Label htmlFor="contact">Teléfono, email, web *</Label>
-            <Textarea
+            <Input
               id="contact"
               value={data.contact}
               onChange={(e) => handleInputChange('contact', e.target.value)}
               placeholder="Información de contacto"
-              rows={2}
               className={errors.contact ? 'border-destructive' : ''}
             />
             {errors.contact && (
@@ -247,17 +249,17 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
           <CardTitle>Configuración Visual</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="template">Plantilla Rapid-PDF *</Label>
-            <Input
-              id="template"
-              value={data.template}
-              onChange={(e) => handleInputChange('template', e.target.value)}
-              placeholder="41200-00001"
-            />
-          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="template">Plantilla *</Label>
+              <Input
+                id="template"
+                value={data.template}
+                onChange={(e) => handleInputChange('template', e.target.value)}
+                placeholder="41200-00001"
+              />
+            </div>
 
-          <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="primary_color">Color Primario *</Label>
               <div className="flex items-center gap-2 mt-1">
@@ -266,13 +268,13 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                   type="color"
                   value={data.primary_color}
                   onChange={(e) => handleInputChange('primary_color', e.target.value)}
-                  className="w-16 h-10 p-1 border rounded cursor-pointer"
+                  className="w-10 h-10 p-1 border rounded cursor-pointer"
                 />
                 <Input
                   value={data.primary_color}
                   onChange={(e) => handleInputChange('primary_color', e.target.value)}
                   placeholder="#e8951c"
-                  className="flex-1"
+                  className="flex-1 text-xs"
                 />
               </div>
             </div>
@@ -285,13 +287,13 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                   type="color"
                   value={data.secondary_color}
                   onChange={(e) => handleInputChange('secondary_color', e.target.value)}
-                  className="w-16 h-10 p-1 border rounded cursor-pointer"
+                  className="w-10 h-10 p-1 border rounded cursor-pointer"
                 />
                 <Input
                   value={data.secondary_color}
                   onChange={(e) => handleInputChange('secondary_color', e.target.value)}
                   placeholder="#109c61"
-                  className="flex-1"
+                  className="flex-1 text-xs"
                 />
               </div>
             </div>

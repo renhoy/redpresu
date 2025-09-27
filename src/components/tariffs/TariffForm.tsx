@@ -172,9 +172,9 @@ export function TariffForm({ mode, initialData }: TariffFormProps) {
 
       {/* Línea 3: Contenido (scroll) */}
       <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* Columna izquierda - Formulario (60%) */}
-          <div className="lg:col-span-3">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Columna izquierda - Formulario (50%) */}
+          <div>
             <TariffFormFields
               data={formData}
               errors={errors}
@@ -182,8 +182,8 @@ export function TariffForm({ mode, initialData }: TariffFormProps) {
             />
           </div>
 
-          {/* Columna derecha - CSV y Preview (40%) */}
-          <div className="lg:col-span-2">
+          {/* Columna derecha - CSV y Preview (50%) */}
+          <div>
             <CSVUploadPreview
               data={csvData}
               error={errors.csv}
