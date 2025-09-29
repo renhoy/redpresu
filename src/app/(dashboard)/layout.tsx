@@ -16,7 +16,7 @@ export default async function DashboardLayout({
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto py-6 px-4">
+      <main className="pt-16">
         {children}
       </main>
     </div>

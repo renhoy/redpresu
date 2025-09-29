@@ -192,7 +192,7 @@ export function TariffForm({ mode, initialData }: TariffFormProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* Línea 2: Título + Botones (sticky) */}
-      <div className="sticky top-16 z-10 bg-background border-b shadow-sm">
+      <div className="sticky top-16 z-40 bg-background border-b shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
