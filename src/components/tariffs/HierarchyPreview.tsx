@@ -56,9 +56,9 @@ function HierarchyItem({
         };
       case "subchapter":
         return {
-          backgroundColor: secondaryColor,
+          backgroundColor: primaryColor,
           color: "white",
-          borderColor: secondaryColor,
+          borderColor: primaryColor,
           opacity: 0.9,
         };
       case "section":
@@ -231,6 +231,15 @@ export function HierarchyPreview({
 
   return (
     <div>
+      {/* Resumen */}
+      <div className="mb-4 pb-3 border-b border-gray-200">
+        <div className="text-xs text-gray-500">
+          <p>
+            Capítulos: {data.filter((i) => i.level === "chapter").length}, Subcapítulos: {data.filter((i) => i.level === "subchapter").length}, Secciones: {data.filter((i) => i.level === "section").length}, Partidas: {data.filter((i) => i.level === "item").length}, Total items: {data.length}
+          </p>
+        </div>
+      </div>
+
       <div className="space-y-1">
         {hierarchyData.map((item, index) => (
           <HierarchyItem
@@ -241,31 +250,6 @@ export function HierarchyPreview({
             secondaryColor={secondaryColor}
           />
         ))}
-      </div>
-
-      {/* Estadísticas */}
-      <div className="mt-4 pt-4 border-t border-gray-200">
-        <div className="text-xs text-gray-500 space-y-1">
-          <p>
-            <strong>Total items:</strong> {data.length}
-          </p>
-          <p>
-            <strong>Capítulos:</strong>{" "}
-            {data.filter((i) => i.level === "chapter").length}
-          </p>
-          <p>
-            <strong>Subcapítulos:</strong>{" "}
-            {data.filter((i) => i.level === "subchapter").length}
-          </p>
-          <p>
-            <strong>Secciones:</strong>{" "}
-            {data.filter((i) => i.level === "section").length}
-          </p>
-          <p>
-            <strong>Partidas:</strong>{" "}
-            {data.filter((i) => i.level === "item").length}
-          </p>
-        </div>
       </div>
     </div>
   );
