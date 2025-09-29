@@ -1,5 +1,7 @@
 'use server'
 
+import { cookies } from 'next/headers'
+import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { Database } from '@/lib/types/database.types'
 import { revalidatePath } from 'next/cache'
@@ -214,7 +216,8 @@ export async function createTariff(data: TariffFormData): Promise<{
   tariffId?: number
   error?: string
 }> {
-  const supabase = supabaseAdmin
+  const cookieStore = await cookies()
+  const supabase = createServerActionClient({ cookies: () => cookieStore })
 
   // Obtener empresa_id del usuario actual
   const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -269,7 +272,14 @@ export async function updateTariff(id: number, data: TariffFormData): Promise<{
   success: boolean
   error?: string
 }> {
-  const supabase = supabaseAdmin
+  const cookieStore = await cookies()
+  const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+  // Verificar autenticación
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) {
+    return { success: false, error: 'Usuario no autenticado' }
+  }
 
   const { error } = await supabase
     .from('tariffs')
