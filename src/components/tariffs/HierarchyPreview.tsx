@@ -88,9 +88,9 @@ function HierarchyItem({
     <div className="mb-1">
       {/* Header del item */}
       <div
-        className="flex items-center p-3 border cursor-pointer transition-all hover:brightness-95"
+        className="flex items-center p-0 border cursor-pointer transition-all hover:brightness-95"
         style={{
-          marginLeft: `${depth * 16}px`,
+          marginLeft: `${depth * 2}px`,
           ...styles,
         }}
         onClick={() => hasChildren && setIsExpanded(!isExpanded)}
@@ -235,7 +235,11 @@ export function HierarchyPreview({
       <div className="mb-4 pb-3 border-b border-gray-200">
         <div className="text-xs text-gray-500">
           <p>
-            Capítulos: {data.filter((i) => i.level === "chapter").length}, Subcapítulos: {data.filter((i) => i.level === "subchapter").length}, Secciones: {data.filter((i) => i.level === "section").length}, Partidas: {data.filter((i) => i.level === "item").length}, Total items: {data.length}
+            Capítulos: {data.filter((i) => i.level === "chapter").length},
+            Subcapítulos: {data.filter((i) => i.level === "subchapter").length},
+            Secciones: {data.filter((i) => i.level === "section").length},
+            Partidas: {data.filter((i) => i.level === "item").length}, Total
+            items: {data.length}
           </p>
         </div>
       </div>

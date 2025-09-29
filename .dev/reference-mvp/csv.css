@@ -140,7 +140,7 @@ label[for="csvFile"]:hover {
 }
 
 #jsonOutput {
-  font-family: "Courier New", monospace;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   font-size: 14px;
   line-height: 1.4;
   white-space: pre-wrap;

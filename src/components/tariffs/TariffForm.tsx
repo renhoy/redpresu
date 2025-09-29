@@ -47,54 +47,93 @@ export function TariffForm({ mode, initialData }: TariffFormProps) {
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const isFormValid = () => {
-    const requiredFields = [
-      "title",
-      "validity",
-      "status",
-      "logo_url",
-      "name",
-      "nif",
-      "address",
-      "contact",
-      "template",
-      "primary_color",
-      "secondary_color",
-      "summary_note",
-      "conditions_note",
-      "legal_note",
-    ];
+  const validateForm = (): { isValid: boolean, errors: Record<string, string> } => {
+    const newErrors: Record<string, string> = {}
 
-    const hasRequiredFields = requiredFields.every(
-      (field) => formData[field as keyof TariffFormData]
-    );
+    // Datos Tarifa
+    if (!formData.title || formData.title.trim() === '') {
+      newErrors.title = 'El título es obligatorio'
+    }
+    if (!formData.validity || formData.validity < 1) {
+      newErrors.validity = 'La validez debe ser al menos 1 día'
+    }
+    if (!formData.status) {
+      newErrors.status = 'El estado es obligatorio'
+    }
 
-    const hasCSVData = csvData !== null;
+    // Datos Empresa
+    if (!formData.logo_url || formData.logo_url.trim() === '') {
+      newErrors.logo_url = 'El logo es obligatorio'
+    }
+    if (!formData.name || formData.name.trim() === '') {
+      newErrors.name = 'El nombre de empresa es obligatorio'
+    }
+    if (!formData.nif || formData.nif.trim() === '') {
+      newErrors.nif = 'El NIF es obligatorio'
+    }
+    if (!formData.address || formData.address.trim() === '') {
+      newErrors.address = 'La dirección es obligatoria'
+    }
+    if (!formData.contact || formData.contact.trim() === '') {
+      newErrors.contact = 'El contacto es obligatorio'
+    }
 
-    return hasRequiredFields && hasCSVData;
+    // Configuración Visual
+    if (!formData.template || formData.template.trim() === '') {
+      newErrors.template = 'La plantilla es obligatoria'
+    }
+    if (!formData.primary_color || formData.primary_color.trim() === '') {
+      newErrors.primary_color = 'El color primario es obligatorio'
+    }
+    if (!formData.secondary_color || formData.secondary_color.trim() === '') {
+      newErrors.secondary_color = 'El color secundario es obligatorio'
+    }
+
+    // Notas PDF
+    if (!formData.summary_note || formData.summary_note.trim() === '') {
+      newErrors.summary_note = 'La nota resumen es obligatoria'
+    }
+    if (!formData.conditions_note || formData.conditions_note.trim() === '') {
+      newErrors.conditions_note = 'Las condiciones son obligatorias'
+    }
+
+    // Notas Formulario
+    if (!formData.legal_note || formData.legal_note.trim() === '') {
+      newErrors.legal_note = 'Las notas legales son obligatorias'
+    }
+
+    // CSV Data
+    if (!csvData) {
+      newErrors.csv = 'Debe cargar un archivo CSV válido'
+    }
+
+    return {
+      isValid: Object.keys(newErrors).length === 0,
+      errors: newErrors
+    }
   };
 
   const handleSave = async () => {
-    if (!isFormValid()) {
-      // Mostrar errores de validación
-      const newErrors: Record<string, string> = {};
-      if (!formData.title) newErrors.title = "El título es obligatorio";
-      if (!formData.logo_url) newErrors.logo_url = "El logo es obligatorio";
-      if (!formData.name)
-        newErrors.name = "El nombre de empresa es obligatorio";
-      if (!formData.nif) newErrors.nif = "El NIF es obligatorio";
-      if (!formData.address) newErrors.address = "La dirección es obligatoria";
-      if (!formData.contact) newErrors.contact = "El contacto es obligatorio";
-      if (!formData.summary_note)
-        newErrors.summary_note = "La nota resumen es obligatoria";
-      if (!formData.conditions_note)
-        newErrors.conditions_note = "Las condiciones son obligatorias";
-      if (!formData.legal_note)
-        newErrors.legal_note = "Las notas legales son obligatorias";
-      if (!csvData) newErrors.csv = "Debe cargar un archivo CSV válido";
+    // Validar formulario
+    const validation = validateForm()
 
-      setErrors(newErrors);
-      return;
+    if (!validation.isValid) {
+      setErrors(validation.errors)
+
+      // Mostrar mensaje general
+      setErrors(prev => ({
+        ...prev,
+        general: `Por favor, complete todos los campos obligatorios (${Object.keys(validation.errors).length} errores encontrados)`
+      }))
+
+      // Scroll al primer error
+      const firstErrorField = Object.keys(validation.errors)[0]
+      const element = document.querySelector(`[name="${firstErrorField}"]`)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+
+      return
     }
 
     setIsLoading(true);
@@ -174,7 +213,7 @@ export function TariffForm({ mode, initialData }: TariffFormProps) {
               </Button>
               <Button
                 onClick={handleSave}
-                disabled={isLoading || !isFormValid()}
+                disabled={isLoading}
                 className="min-w-[100px]"
               >
                 {isLoading ? "Guardando..." : "Guardar"}
