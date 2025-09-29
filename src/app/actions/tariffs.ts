@@ -9,6 +9,60 @@ import { join } from 'path'
 
 type Tariff = Database['public']['Tables']['tariffs']['Row']
 
+/**
+ * Restaura acentos perdidos durante la normalización del CSV
+ */
+function restoreAccents(processedData: unknown[], originalCSV: string): unknown[] {
+  // Extraer todas las palabras con acentos del CSV original
+  const originalWords = extractWordsWithAccents(originalCSV)
+
+  // Crear mapeo de palabras sin acento → palabras con acento
+  const accentMap = new Map<string, string>()
+
+  originalWords.forEach(word => {
+    const normalized = word.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    if (normalized !== word) {
+      accentMap.set(normalized.toLowerCase(), word)
+    }
+  })
+
+  // Restaurar acentos en los datos procesados
+  return processedData.map(item => {
+    if (typeof item === 'object' && item !== null) {
+      const processedItem = { ...item } as Record<string, unknown>
+
+      // Restaurar acentos en campos de texto
+      if (typeof processedItem.name === 'string') {
+        processedItem.name = restoreWordAccents(processedItem.name, accentMap)
+      }
+      if (typeof processedItem.description === 'string') {
+        processedItem.description = restoreWordAccents(processedItem.description, accentMap)
+      }
+
+      return processedItem
+    }
+    return item
+  })
+}
+
+/**
+ * Extrae palabras que contienen acentos del texto original
+ */
+function extractWordsWithAccents(text: string): string[] {
+  const words = text.match(/[a-zA-ZñÑáéíóúÁÉÍÓÚüÜ]+/g) || []
+  return words.filter(word => /[áéíóúÁÉÍÓÚüÜ]/.test(word))
+}
+
+/**
+ * Restaura acentos en una cadena usando el mapeo
+ */
+function restoreWordAccents(text: string, accentMap: Map<string, string>): string {
+  return text.replace(/\b[a-zA-ZñÑ]+\b/g, (word) => {
+    const restored = accentMap.get(word.toLowerCase())
+    return restored || word
+  })
+}
+
 export interface TariffFormData {
   title: string
   description?: string
@@ -310,10 +364,28 @@ export async function processCSV(formData: FormData): Promise<{
       return { success: false, errors: [{ message: 'El archivo debe ser de tipo CSV' }] }
     }
 
-    // Leer contenido del archivo con codificación UTF-8
+    // Leer contenido del archivo con manejo de BOM y codificación
     const arrayBuffer = await file.arrayBuffer()
+
+    // Detectar y manejar BOM UTF-8
+    const uint8Array = new Uint8Array(arrayBuffer)
+    let startIndex = 0
+
+    // Verificar BOM UTF-8 (EF BB BF)
+    if (uint8Array.length >= 3 &&
+        uint8Array[0] === 0xEF &&
+        uint8Array[1] === 0xBB &&
+        uint8Array[2] === 0xBF) {
+      startIndex = 3
+    }
+
+    // Crear buffer sin BOM si existe
+    const cleanBuffer = startIndex > 0 ?
+      arrayBuffer.slice(startIndex) : arrayBuffer
+
+    // Decodificar con UTF-8
     const decoder = new TextDecoder('utf-8')
-    const csvContent = decoder.decode(arrayBuffer)
+    const csvContent = decoder.decode(cleanBuffer)
 
     // Procesar con validador de Common
     const converter = new CSV2JSONConverter()
@@ -326,9 +398,12 @@ export async function processCSV(formData: FormData): Promise<{
       }
     }
 
+    // Post-procesar para restaurar acentos perdidos por normalización
+    const restoredData = restoreAccents(result.data!, csvContent)
+
     return {
       success: true,
-      jsonData: result.data
+      jsonData: restoredData
     }
 
   } catch (error) {

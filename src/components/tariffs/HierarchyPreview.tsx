@@ -1,86 +1,99 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { ChevronDown, ChevronRight, Info } from 'lucide-react'
-import { formatCurrency } from '@/lib/validators'
+import { useState } from "react";
+import { ChevronDown, ChevronRight, Info } from "lucide-react";
+import { formatCurrency } from "@/lib/validators";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
+} from "@/components/ui/dialog";
 
 interface BudgetItem {
-  level: 'chapter' | 'subchapter' | 'section' | 'item'
-  id: string
-  name: string
-  description?: string
-  amount?: string
-  unit?: string
-  quantity?: string
-  iva_percentage?: string
-  pvp?: string
-  children?: BudgetItem[]
+  level: "chapter" | "subchapter" | "section" | "item";
+  id: string;
+  name: string;
+  description?: string;
+  amount?: string;
+  unit?: string;
+  quantity?: string;
+  iva_percentage?: string;
+  pvp?: string;
+  children?: BudgetItem[];
 }
 
 interface HierarchyPreviewProps {
-  data: BudgetItem[]
+  data: BudgetItem[];
+  primaryColor?: string;
+  secondaryColor?: string;
 }
 
 interface HierarchyItemProps {
-  item: BudgetItem
-  depth: number
+  item: BudgetItem;
+  depth: number;
+  primaryColor: string;
+  secondaryColor: string;
 }
 
-function HierarchyItem({ item, depth }: HierarchyItemProps) {
-  const [isExpanded, setIsExpanded] = useState(true)
-  const hasChildren = item.children && item.children.length > 0
+function HierarchyItem({
+  item,
+  depth,
+  primaryColor,
+  secondaryColor,
+}: HierarchyItemProps) {
+  const [isExpanded, setIsExpanded] = useState(true);
+  const hasChildren = item.children && item.children.length > 0;
 
   const getLevelStyles = (level: string) => {
     switch (level) {
-      case 'chapter':
+      case "chapter":
         return {
-          bg: 'bg-primary',
-          text: 'text-primary-foreground',
-          border: 'border-primary'
-        }
-      case 'subchapter':
+          backgroundColor: secondaryColor,
+          color: "white",
+          borderColor: secondaryColor,
+        };
+      case "subchapter":
         return {
-          bg: 'bg-orange-500',
-          text: 'text-white',
-          border: 'border-orange-500'
-        }
-      case 'section':
+          backgroundColor: secondaryColor,
+          color: "white",
+          borderColor: secondaryColor,
+          opacity: 0.9,
+        };
+      case "section":
         return {
-          bg: 'bg-white',
-          text: 'text-primary',
-          border: 'border-primary'
-        }
-      case 'item':
+          backgroundColor: "white",
+          color: secondaryColor,
+          borderColor: secondaryColor,
+        };
+      case "item":
         return {
-          bg: 'bg-gray-100',
-          text: 'text-gray-900',
-          border: 'border-gray-300'
-        }
+          backgroundColor: "#f3f4f6",
+          color: "#111827",
+          borderColor: "#d1d5db",
+        };
       default:
         return {
-          bg: 'bg-gray-50',
-          text: 'text-gray-700',
-          border: 'border-gray-200'
-        }
+          backgroundColor: "#fafafa",
+          color: "#374151",
+          borderColor: "#e5e7eb",
+        };
     }
-  }
+  };
 
-  const styles = getLevelStyles(item.level)
+  const styles = getLevelStyles(item.level);
 
   return (
     <div className="mb-1">
       {/* Header del item */}
       <div
-        className={`flex items-center p-3 border cursor-pointer transition-all hover:brightness-95 ${styles.bg} ${styles.text} ${styles.border}`}
+        className="flex items-center p-3 border cursor-pointer transition-all hover:brightness-95"
+        style={{
+          marginLeft: `${depth * 16}px`,
+          ...styles,
+        }}
         onClick={() => hasChildren && setIsExpanded(!isExpanded)}
-        style={{ marginLeft: `${depth * 16}px` }}
       >
         {/* Toggle de expansión */}
         <div className="w-4 mr-2 flex justify-center">
@@ -124,17 +137,13 @@ function HierarchyItem({ item, depth }: HierarchyItemProps) {
           </div>
 
           {/* Línea 2: Información adicional solo para items */}
-          {item.level === 'item' && (
+          {item.level === "item" && (
             <div className="flex items-center gap-4 text-xs mt-1 opacity-90">
               {item.unit && (
-                <span className="font-mono">
-                  Unidad: {item.unit}
-                </span>
+                <span className="font-mono">Unidad: {item.unit}</span>
               )}
               {item.iva_percentage && (
-                <span className="font-mono">
-                  IVA: {item.iva_percentage}%
-                </span>
+                <span className="font-mono">IVA: {item.iva_percentage}%</span>
               )}
               {item.pvp && (
                 <span className="font-mono font-bold">
@@ -154,27 +163,33 @@ function HierarchyItem({ item, depth }: HierarchyItemProps) {
               key={`${child.id}-${index}`}
               item={child}
               depth={depth + 1}
+              primaryColor={primaryColor}
+              secondaryColor={secondaryColor}
             />
           ))}
         </div>
       )}
     </div>
-  )
+  );
 }
 
-export function HierarchyPreview({ data }: HierarchyPreviewProps) {
+export function HierarchyPreview({
+  data,
+  primaryColor = "#e8951c",
+  secondaryColor = "#109c61",
+}: HierarchyPreviewProps) {
   if (!data || data.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
         <p>No hay datos para mostrar</p>
       </div>
-    )
+    );
   }
 
   // Función para construir jerarquía a partir de datos planos
   const buildHierarchy = (items: unknown[]): BudgetItem[] => {
-    const hierarchy: BudgetItem[] = []
-    const itemMap = new Map<string, BudgetItem>()
+    const hierarchy: BudgetItem[] = [];
+    const itemMap = new Map<string, BudgetItem>();
 
     // Convertir items planos a estructura jerárquica
     items.forEach((item) => {
@@ -188,31 +203,31 @@ export function HierarchyPreview({ data }: HierarchyPreviewProps) {
         quantity: item.quantity,
         iva_percentage: item.iva_percentage,
         pvp: item.pvp,
-        children: []
-      }
+        children: [],
+      };
 
-      itemMap.set(item.id, budgetItem)
+      itemMap.set(item.id, budgetItem);
 
       // Determinar el padre basado en el ID
-      const idParts = item.id.split('.')
+      const idParts = item.id.split(".");
       if (idParts.length === 1) {
         // Es un chapter (raíz)
-        hierarchy.push(budgetItem)
+        hierarchy.push(budgetItem);
       } else {
         // Buscar el padre
-        const parentId = idParts.slice(0, -1).join('.')
-        const parent = itemMap.get(parentId)
+        const parentId = idParts.slice(0, -1).join(".");
+        const parent = itemMap.get(parentId);
         if (parent) {
-          if (!parent.children) parent.children = []
-          parent.children.push(budgetItem)
+          if (!parent.children) parent.children = [];
+          parent.children.push(budgetItem);
         }
       }
-    })
+    });
 
-    return hierarchy
-  }
+    return hierarchy;
+  };
 
-  const hierarchyData = buildHierarchy(data)
+  const hierarchyData = buildHierarchy(data);
 
   return (
     <div>
@@ -222,6 +237,8 @@ export function HierarchyPreview({ data }: HierarchyPreviewProps) {
             key={`${item.id}-${index}`}
             item={item}
             depth={0}
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
           />
         ))}
       </div>
@@ -233,19 +250,23 @@ export function HierarchyPreview({ data }: HierarchyPreviewProps) {
             <strong>Total items:</strong> {data.length}
           </p>
           <p>
-            <strong>Capítulos:</strong> {data.filter(i => i.level === 'chapter').length}
+            <strong>Capítulos:</strong>{" "}
+            {data.filter((i) => i.level === "chapter").length}
           </p>
           <p>
-            <strong>Subcapítulos:</strong> {data.filter(i => i.level === 'subchapter').length}
+            <strong>Subcapítulos:</strong>{" "}
+            {data.filter((i) => i.level === "subchapter").length}
           </p>
           <p>
-            <strong>Secciones:</strong> {data.filter(i => i.level === 'section').length}
+            <strong>Secciones:</strong>{" "}
+            {data.filter((i) => i.level === "section").length}
           </p>
           <p>
-            <strong>Partidas:</strong> {data.filter(i => i.level === 'item').length}
+            <strong>Partidas:</strong>{" "}
+            {data.filter((i) => i.level === "item").length}
           </p>
         </div>
       </div>
     </div>
-  )
+  );
 }

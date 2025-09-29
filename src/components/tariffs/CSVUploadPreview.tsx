@@ -1,11 +1,11 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Upload, X, FileText, AlertCircle } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { useState } from "react";
+import { Upload, X, FileText, AlertCircle } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,54 +15,68 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import { HierarchyPreview } from './HierarchyPreview'
-import { processCSV } from '@/app/actions/tariffs'
+} from "@/components/ui/alert-dialog";
+import { HierarchyPreview } from "./HierarchyPreview";
+import { processCSV } from "@/app/actions/tariffs";
 
 interface CSVUploadPreviewProps {
-  data: unknown
-  error?: string
-  onChange: (data: unknown) => void
+  data: unknown;
+  error?: string;
+  onChange: (data: unknown) => void;
+  primaryColor?: string;
+  secondaryColor?: string;
 }
 
-export function CSVUploadPreview({ data, error, onChange }: CSVUploadPreviewProps) {
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const [processingErrors, setProcessingErrors] = useState<unknown[]>([])
+export function CSVUploadPreview({
+  data,
+  error,
+  onChange,
+  primaryColor,
+  secondaryColor,
+}: CSVUploadPreviewProps) {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [processingErrors, setProcessingErrors] = useState<unknown[]>([]);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-    setIsProcessing(true)
-    setProcessingErrors([])
+    setIsProcessing(true);
+    setProcessingErrors([]);
 
     try {
-      const formData = new FormData()
-      formData.append('file', file)
+      const formData = new FormData();
+      formData.append("file", file);
 
-      const result = await processCSV(formData)
+      const result = await processCSV(formData);
 
       if (result.success && result.jsonData) {
-        onChange(result.jsonData)
+        onChange(result.jsonData);
       } else {
-        setProcessingErrors(result.errors || [{ message: 'Error al procesar el CSV' }])
+        setProcessingErrors(
+          result.errors || [{ message: "Error al procesar el CSV" }]
+        );
       }
     } catch (error) {
-      console.error('Error processing CSV:', error)
-      setProcessingErrors([{ message: 'Error inesperado al procesar el archivo' }])
+      console.error("Error processing CSV:", error);
+      setProcessingErrors([
+        { message: "Error inesperado al procesar el archivo" },
+      ]);
     } finally {
-      setIsProcessing(false)
+      setIsProcessing(false);
       // Limpiar el input file
-      event.target.value = ''
+      event.target.value = "";
     }
-  }
+  };
 
   const handleDeleteCSV = () => {
-    onChange(null)
-    setProcessingErrors([])
-    setShowDeleteDialog(false)
-  }
+    onChange(null);
+    setProcessingErrors([]);
+    setShowDeleteDialog(false);
+  };
 
   // Estado inicial: sin datos CSV cargados
   if (!data) {
@@ -89,7 +103,7 @@ export function CSVUploadPreview({ data, error, onChange }: CSVUploadPreviewProp
                     className="cursor-pointer inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md text-sm font-medium"
                   >
                     <Upload className="h-4 w-4" />
-                    {isProcessing ? 'Procesando...' : 'Seleccionar archivo CSV'}
+                    {isProcessing ? "Procesando..." : "Seleccionar archivo CSV"}
                   </Label>
                   <Input
                     id="csv-upload"
@@ -109,9 +123,15 @@ export function CSVUploadPreview({ data, error, onChange }: CSVUploadPreviewProp
                 Formato CSV requerido
               </h4>
               <div className="text-sm text-blue-800 space-y-1">
-                <p>• <strong>Separador:</strong> coma (,) o punto y coma (;)</p>
-                <p>• <strong>Codificación:</strong> UTF-8</p>
-                <p>• <strong>Columnas obligatorias:</strong></p>
+                <p>
+                  • <strong>Separador:</strong> coma (,) o punto y coma (;)
+                </p>
+                <p>
+                  • <strong>Codificación:</strong> UTF-8
+                </p>
+                <p>
+                  • <strong>Columnas obligatorias:</strong>
+                </p>
                 <ul className="list-disc list-inside ml-4 mt-1 space-y-1">
                   <li>nivel (chapter, subchapter, section, item)</li>
                   <li>nombre</li>
@@ -136,7 +156,8 @@ export function CSVUploadPreview({ data, error, onChange }: CSVUploadPreviewProp
                     <div className="space-y-1">
                       {processingErrors.map((error, index) => (
                         <p key={index} className="text-sm text-destructive">
-                          {error.line ? `Línea ${error.line}: ` : ''}{error.message}
+                          {error.line ? `Línea ${error.line}: ` : ""}
+                          {error.message}
                         </p>
                       ))}
                     </div>
@@ -154,7 +175,7 @@ export function CSVUploadPreview({ data, error, onChange }: CSVUploadPreviewProp
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   // Estado con datos CSV cargados: mostrar preview
@@ -174,7 +195,11 @@ export function CSVUploadPreview({ data, error, onChange }: CSVUploadPreviewProp
         </div>
       </CardHeader>
       <CardContent>
-        <HierarchyPreview data={data} />
+        <HierarchyPreview
+          data={data}
+          primaryColor={primaryColor}
+          secondaryColor={secondaryColor}
+        />
       </CardContent>
 
       {/* Dialog de confirmación para borrar CSV */}
@@ -183,8 +208,8 @@ export function CSVUploadPreview({ data, error, onChange }: CSVUploadPreviewProp
           <AlertDialogHeader>
             <AlertDialogTitle>¿Borrar datos CSV cargados?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción eliminará la estructura de tarifa cargada.
-              Tendrá que volver a subir el archivo CSV.
+              Esta acción eliminará la estructura de tarifa cargada. Tendrá que
+              volver a subir el archivo CSV.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -199,5 +224,5 @@ export function CSVUploadPreview({ data, error, onChange }: CSVUploadPreviewProp
         </AlertDialogContent>
       </AlertDialog>
     </Card>
-  )
+  );
 }

@@ -1,133 +1,154 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { TariffFormFields } from './TariffFormFields'
-import { CSVUploadPreview } from './CSVUploadPreview'
-import { createTariff, updateTariff, type TariffFormData } from '@/app/actions/tariffs'
-import { Database } from '@/lib/types/database.types'
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { TariffFormFields } from "./TariffFormFields";
+import { CSVUploadPreview } from "./CSVUploadPreview";
+import {
+  createTariff,
+  updateTariff,
+  type TariffFormData,
+} from "@/app/actions/tariffs";
+import { Database } from "@/lib/types/database.types";
 
-type Tariff = Database['public']['Tables']['tariffs']['Row']
+type Tariff = Database["public"]["Tables"]["tariffs"]["Row"];
 
 interface TariffFormProps {
-  mode: 'create' | 'edit'
-  initialData?: Tariff
+  mode: "create" | "edit";
+  initialData?: Tariff;
 }
 
 export function TariffForm({ mode, initialData }: TariffFormProps) {
-  const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
   const [formData, setFormData] = useState<TariffFormData>({
-    title: initialData?.title || '',
-    description: initialData?.description || '',
+    title: initialData?.title || "",
+    description: initialData?.description || "",
     validity: initialData?.validity || 30,
-    status: (initialData?.status as 'Activa' | 'Inactiva') || 'Activa',
-    logo_url: initialData?.logo_url || '',
-    name: initialData?.name || '',
-    nif: initialData?.nif || '',
-    address: initialData?.address || '',
-    contact: initialData?.contact || '',
-    template: initialData?.template || '41200-00001',
-    primary_color: initialData?.primary_color || '#e8951c',
-    secondary_color: initialData?.secondary_color || '#109c61',
-    summary_note: initialData?.summary_note || '',
-    conditions_note: initialData?.conditions_note || '',
-    legal_note: initialData?.legal_note || '',
-    json_tariff_data: initialData?.json_tariff_data || null
-  })
+    status: (initialData?.status as "Activa" | "Inactiva") || "Activa",
+    logo_url: initialData?.logo_url || "",
+    name: initialData?.name || "",
+    nif: initialData?.nif || "",
+    address: initialData?.address || "",
+    contact: initialData?.contact || "",
+    template: initialData?.template || "41200-00001",
+    primary_color: initialData?.primary_color || "#e8951c",
+    secondary_color: initialData?.secondary_color || "#109c61",
+    summary_note: initialData?.summary_note || "",
+    conditions_note: initialData?.conditions_note || "",
+    legal_note: initialData?.legal_note || "",
+    json_tariff_data: initialData?.json_tariff_data || null,
+  });
 
-  const [csvData, setCsvData] = useState<unknown>(initialData?.json_tariff_data || null)
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [csvData, setCsvData] = useState<unknown>(
+    initialData?.json_tariff_data || null
+  );
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const isFormValid = () => {
     const requiredFields = [
-      'title', 'validity', 'status', 'logo_url', 'name', 'nif',
-      'address', 'contact', 'template', 'primary_color', 'secondary_color',
-      'summary_note', 'conditions_note', 'legal_note'
-    ]
+      "title",
+      "validity",
+      "status",
+      "logo_url",
+      "name",
+      "nif",
+      "address",
+      "contact",
+      "template",
+      "primary_color",
+      "secondary_color",
+      "summary_note",
+      "conditions_note",
+      "legal_note",
+    ];
 
-    const hasRequiredFields = requiredFields.every(field =>
-      formData[field as keyof TariffFormData]
-    )
+    const hasRequiredFields = requiredFields.every(
+      (field) => formData[field as keyof TariffFormData]
+    );
 
-    const hasCSVData = csvData !== null
+    const hasCSVData = csvData !== null;
 
-    return hasRequiredFields && hasCSVData
-  }
+    return hasRequiredFields && hasCSVData;
+  };
 
   const handleSave = async () => {
     if (!isFormValid()) {
       // Mostrar errores de validación
-      const newErrors: Record<string, string> = {}
-      if (!formData.title) newErrors.title = 'El título es obligatorio'
-      if (!formData.logo_url) newErrors.logo_url = 'El logo es obligatorio'
-      if (!formData.name) newErrors.name = 'El nombre de empresa es obligatorio'
-      if (!formData.nif) newErrors.nif = 'El NIF es obligatorio'
-      if (!formData.address) newErrors.address = 'La dirección es obligatoria'
-      if (!formData.contact) newErrors.contact = 'El contacto es obligatorio'
-      if (!formData.summary_note) newErrors.summary_note = 'La nota resumen es obligatoria'
-      if (!formData.conditions_note) newErrors.conditions_note = 'Las condiciones son obligatorias'
-      if (!formData.legal_note) newErrors.legal_note = 'Las notas legales son obligatorias'
-      if (!csvData) newErrors.csv = 'Debe cargar un archivo CSV válido'
+      const newErrors: Record<string, string> = {};
+      if (!formData.title) newErrors.title = "El título es obligatorio";
+      if (!formData.logo_url) newErrors.logo_url = "El logo es obligatorio";
+      if (!formData.name)
+        newErrors.name = "El nombre de empresa es obligatorio";
+      if (!formData.nif) newErrors.nif = "El NIF es obligatorio";
+      if (!formData.address) newErrors.address = "La dirección es obligatoria";
+      if (!formData.contact) newErrors.contact = "El contacto es obligatorio";
+      if (!formData.summary_note)
+        newErrors.summary_note = "La nota resumen es obligatoria";
+      if (!formData.conditions_note)
+        newErrors.conditions_note = "Las condiciones son obligatorias";
+      if (!formData.legal_note)
+        newErrors.legal_note = "Las notas legales son obligatorias";
+      if (!csvData) newErrors.csv = "Debe cargar un archivo CSV válido";
 
-      setErrors(newErrors)
-      return
+      setErrors(newErrors);
+      return;
     }
 
-    setIsLoading(true)
-    setErrors({})
+    setIsLoading(true);
+    setErrors({});
 
     try {
       const dataWithCSV = {
         ...formData,
-        json_tariff_data: csvData
-      }
+        json_tariff_data: csvData,
+      };
 
-      let result
-      if (mode === 'create') {
-        result = await createTariff(dataWithCSV)
+      let result;
+      if (mode === "create") {
+        result = await createTariff(dataWithCSV);
       } else {
-        result = await updateTariff(initialData!.id, dataWithCSV)
+        result = await updateTariff(initialData!.id, dataWithCSV);
       }
 
       if (result.success) {
-        router.push('/tariffs')
+        router.push("/tariffs");
       } else {
-        setErrors({ general: result.error || 'Error al guardar la tarifa' })
+        setErrors({ general: result.error || "Error al guardar la tarifa" });
       }
     } catch {
-      setErrors({ general: 'Error inesperado al guardar' })
+      setErrors({ general: "Error inesperado al guardar" });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleCancel = () => {
-    router.push('/tariffs')
-  }
+    router.push("/tariffs");
+  };
 
   const handleFormDataChange = (newData: Partial<TariffFormData>) => {
-    setFormData(prev => ({ ...prev, ...newData }))
+    setFormData((prev) => ({ ...prev, ...newData }));
     // Limpiar errores del campo modificado
     if (errors) {
-      const clearedErrors = { ...errors }
-      Object.keys(newData).forEach(key => {
-        delete clearedErrors[key]
-      })
-      setErrors(clearedErrors)
+      const clearedErrors = { ...errors };
+      Object.keys(newData).forEach((key) => {
+        delete clearedErrors[key];
+      });
+      setErrors(clearedErrors);
     }
-  }
+  };
 
   const handleCSVChange = (data: unknown) => {
-    setCsvData(data)
+    setCsvData(data);
     if (errors.csv) {
-      const clearedErrors = { ...errors }
-      delete clearedErrors.csv
-      setErrors(clearedErrors)
+      const clearedErrors = { ...errors };
+      delete clearedErrors.csv;
+      setErrors(clearedErrors);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -137,7 +158,7 @@ export function TariffForm({ mode, initialData }: TariffFormProps) {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold">
-                {mode === 'create' ? 'Nueva Tarifa' : 'Editar Tarifa'}
+                {mode === "create" ? "Nueva Tarifa" : "Editar Tarifa"}
               </h1>
               <p className="text-muted-foreground">
                 Complete los datos de la tarifa
@@ -156,7 +177,7 @@ export function TariffForm({ mode, initialData }: TariffFormProps) {
                 disabled={isLoading || !isFormValid()}
                 className="min-w-[100px]"
               >
-                {isLoading ? 'Guardando...' : 'Guardar'}
+                {isLoading ? "Guardando..." : "Guardar"}
               </Button>
             </div>
           </div>
@@ -188,10 +209,12 @@ export function TariffForm({ mode, initialData }: TariffFormProps) {
               data={csvData}
               error={errors.csv}
               onChange={handleCSVChange}
+              primaryColor={formData.primary_color}
+              secondaryColor={formData.secondary_color}
             />
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
