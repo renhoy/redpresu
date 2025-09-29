@@ -86,6 +86,20 @@ export async function signOutAction(): Promise<SignInResult> {
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
 
+    // Verificar si hay una sesión activa antes de intentar cerrar sesión
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+    if (sessionError) {
+      console.error('[Server Action] Session check error:', sessionError)
+      // Aún así intentar cerrar sesión por si acaso
+    }
+
+    if (!session) {
+      console.log('[Server Action] No hay sesión activa, redirigiendo a login')
+      redirect('/login')
+      return { success: true }
+    }
+
     const { error } = await supabase.auth.signOut()
 
     if (error) {
