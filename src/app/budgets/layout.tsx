@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation'
 import { getServerUser } from '@/lib/auth/server'
-import { Header } from '@/components/layout/Header'
 
 export default async function BudgetsLayout({
   children,
@@ -15,8 +14,7 @@ export default async function BudgetsLayout({
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
-      <main className="pt-16">
+      <main>
         {children}
       </main>
     </div>

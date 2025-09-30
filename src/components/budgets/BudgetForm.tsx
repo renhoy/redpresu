@@ -229,7 +229,7 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full"
+                  className="w-full bg-gray-100"
                   style={clientData.client_type === 'empresa' ? {
                     borderColor: tariff.primary_color,
                     backgroundColor: `${tariff.primary_color}20`,
@@ -242,7 +242,7 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full"
+                  className="w-full bg-gray-100"
                   style={clientData.client_type === 'autonomo' ? {
                     borderColor: tariff.primary_color,
                     backgroundColor: `${tariff.primary_color}20`,
@@ -255,7 +255,7 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full"
+                  className="w-full bg-gray-100"
                   style={clientData.client_type === 'particular' ? {
                     borderColor: tariff.primary_color,
                     backgroundColor: `${tariff.primary_color}20`,
