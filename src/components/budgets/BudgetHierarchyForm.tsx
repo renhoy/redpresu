@@ -396,10 +396,9 @@ export function BudgetHierarchyForm({
           }
         case 'item':
           return {
-            backgroundColor: isActive ? '#dbeafe' : '#f3f4f6',
+            backgroundColor: '#f3f4f6',
             color: '#111827',
-            borderColor: isActive ? '#3b82f6' : '#d1d5db',
-            borderWidth: isActive ? '2px' : '1px',
+            borderColor: '#d1d5db',
           }
         default:
           return {
