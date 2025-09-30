@@ -140,52 +140,57 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
 
             {/* Columna 2: Datos empresa */}
             <div className="space-y-1">
-              <h2 className="text-xl font-bold">{tariff.name}</h2>
-              <p className="text-sm text-muted-foreground">NIF: {tariff.nif || 'No especificado'}</p>
+              <h2
+                className="text-xl font-bold"
+                style={{ color: tariff.primary_color }}
+              >
+                {tariff.name}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {tariff.nif || 'NIF no especificado'}
+              </p>
               <p className="text-sm text-muted-foreground">
                 {tariff.address ? `${tariff.address}, ${tariff.postal_code} ${tariff.locality}, ${tariff.province}` : 'Dirección no especificada'}
               </p>
               <p className="text-sm text-muted-foreground">
                 {tariff.phone && `Tel: ${tariff.phone}`}
-                {tariff.email && ` | Email: ${tariff.email}`}
+                {tariff.phone && tariff.email && ' | '}
+                {tariff.email && `Email: ${tariff.email}`}
               </p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Progress indicator */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <div className={`flex items-center ${currentStep >= 1 ? 'text-primary' : 'text-muted-foreground'}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-              currentStep >= 1 ? 'bg-primary text-primary-foreground' : 'bg-muted'
-            }`}>
-              1
-            </div>
-            <span className="ml-2 text-sm font-medium">Datos Cliente</span>
-          </div>
-          <div className="flex-1 h-px bg-border mx-4" />
-          <div className={`flex items-center ${currentStep >= 2 ? 'text-primary' : 'text-muted-foreground'}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-              currentStep >= 2 ? 'bg-primary text-primary-foreground' : 'bg-muted'
-            }`}>
-              2
-            </div>
-            <span className="ml-2 text-sm font-medium">Presupuesto</span>
-          </div>
-        </div>
-      </div>
-
       {/* Navigation buttons */}
       {currentStep === 1 && (
         <div className="flex justify-between mb-6">
-          <Button variant="outline" onClick={handleCancel}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Cancelar
+          <Button
+            variant="outline"
+            onClick={() => {
+              setClientData({
+                client_type: 'empresa',
+                client_name: '',
+                client_nif_nie: '',
+                client_phone: '',
+                client_email: '',
+                client_web: '',
+                client_address: '',
+                client_postal_code: '',
+                client_locality: '',
+                client_province: '',
+                client_acceptance: false
+              })
+              setErrors({})
+            }}
+          >
+            Borrar
           </Button>
-          <Button onClick={handleStep1Continue}>
-            Continuar al Presupuesto
+          <Button
+            onClick={handleStep1Continue}
+            style={{ backgroundColor: tariff.primary_color }}
+          >
+            Siguiente
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </div>
@@ -195,9 +200,12 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
         <div className="flex justify-between mb-6">
           <Button variant="outline" onClick={() => setCurrentStep(1)}>
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Volver a Datos Cliente
+            Anterior
           </Button>
-          <Button onClick={handleFinalizeBudget}>
+          <Button
+            onClick={handleFinalizeBudget}
+            style={{ backgroundColor: tariff.primary_color }}
+          >
             Finalizar Presupuesto
           </Button>
         </div>
