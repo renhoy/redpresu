@@ -1,55 +1,61 @@
-# Tareas - MÓDULO: Tariff Management
+# Tareas - MÓDULO: Budget Creation
 
-## MÓDULO ACTIVO: Tariff Management
-**Tareas Activas:** 5/5 ✅ COMPLETADO
+## MÓDULO ACTIVO: Budget Creation
+**Tareas Activas:** 0/6
 
-## IMPLEMENTADO ✅
+## BACKLOG
 
-### Críticas COMPLETADAS:
-1. **✅ Página listado tarifas** - ✅ COMPLETADO
-   - ✅ Tabla con tarifas activas/inactivas
-   - ✅ Acciones: ver, editar, activar/desactivar
-   - ✅ Filtros y búsqueda
+### Críticas:
+1. **Selector de tarifa y datos cliente** - 1 día
+   - Dropdown con tarifas activas de la empresa
+   - Formulario datos cliente (nombre, tipo, contacto)
+   - Validación campos obligatorios
 
-2. **✅ Formulario crear/editar tarifa** - ✅ COMPLETADO
-   - ✅ Campos básicos (title, description, validity, etc.)
-   - ✅ Upload CSV con validación en tiempo real
-   - ✅ Preview jerarquía procesada con colores dinámicos
-   - ✅ Upload logo empresa
-   - ✅ Validación completa al guardar (no deshabilitar botón)
-   - ✅ Header y título/botones sticky
+2. **Formulario dinámico jerárquico** - 2 días
+   - Generar formulario desde json_tariff_data
+   - Acordeones por capítulo/subcapítulo/sección
+   - Input cantidad por cada partida/item
+   - Navegación intuitiva en tablet
 
-3. **✅ Integración validador CSV** - ✅ COMPLETADO
-   - ✅ Server Action para procesar CSV
-   - ✅ Mostrar errores de validación
-   - ✅ Guardar json_tariff_data en BD
-   - ✅ Preview jerárquico con resumen en línea superior
+3. **Cálculos automáticos en tiempo real** - 1 día
+   - cantidad × precio unitario por item
+   - Suma por sección/subcapítulo/capítulo
+   - Aplicación IVA configurable
+   - Total general actualizado
 
-4. **✅ Gestión estados tarifa** - ✅ COMPLETADO
-   - ✅ Activar/desactivar tarifas
-   - ✅ Solo activas permiten crear presupuestos
-   - ✅ Validaciones de estado
+4. **Gestión de estados y guardado** - 1 día
+   - Estados: borrador → pendiente → enviado → aprobado/rechazado
+   - Persistencia automática como borrador
+   - Validaciones antes de cambiar estado
+   - Historial de cambios
 
-5. **✅ CRUD completo con RLS** - ✅ COMPLETADO
-   - ✅ Crear tarifa (admin, superadmin)
-   - ✅ Editar tarifa (admin, superadmin)
-   - ✅ Eliminar tarifa (solo superadmin)
-   - ✅ Listar tarifas (todos los roles)
+5. **Listado y filtros de presupuestos** - 1 día
+   - Tabla con presupuestos del usuario/empresa
+   - Filtros por estado, fecha, cliente
+   - Acciones: ver, editar, duplicar, eliminar
+   - Búsqueda por cliente/título
 
-## MEJORAS ADICIONALES IMPLEMENTADAS:
-- ✅ **UI/UX Mejorada**: Header sticky + título/botones sticky
-- ✅ **Validación Robusta**: Formulario valida al guardar mostrando todos los errores
-- ✅ **Preview Mejorado**: Resumen estadístico en línea superior
-- ✅ **Colores Dinámicos**: Preview con colores configurables
-- ✅ **Auth Fix**: Corrección logout para Next.js 15
-- ✅ **Layout Responsive**: Optimizado para tablet y desktop
+6. **Edición de presupuestos** - 1 día
+   - Cargar presupuesto existente en formulario
+   - Mantener datos cliente y cantidades
+   - Generar nueva versión/revisión
+   - Comparación con versión anterior
 
 ## ARCHIVOS DE ESTE MÓDULO:
-- src/app/(dashboard)/tariffs/*
-- src/components/tariffs/*
-- src/app/actions/tariffs.ts
+- src/app/budgets/*
+- src/components/budgets/*
+- src/app/actions/budgets.ts
 
 ## DEPENDENCIAS:
-- ✅ Database (tablas tariffs)
+- ✅ Database (tablas budgets, budget_items)
 - ✅ Auth (roles y permisos)
-- ✅ Common (validador CSV, formateo)
+- ✅ Common (cálculos, validaciones)
+- ✅ Tariff Management (consulta tarifas activas)
+
+## CRITERIOS COMPLETADO:
+- [ ] Selector tarifa funcionando
+- [ ] Formulario jerárquico con acordeones
+- [ ] Cálculos propagados correctamente
+- [ ] Estados gestionados (borrador→pendiente→enviado...)
+- [ ] Listado con filtros
+- [ ] Edición de presupuestos existentes
