@@ -1,17 +1,23 @@
 import { getTariffById } from '@/app/actions/tariffs'
 import { TariffForm } from '@/components/tariffs/TariffForm'
-import { notFound } from 'next/navigation'
+import { redirect } from 'next/navigation'
 
-interface EditTariffPageProps {
+interface PageProps {
   params: { id: string }
 }
 
-export default async function EditTariffPage({ params }: EditTariffPageProps) {
-  const tariff = await getTariffById(parseInt(params.id))
+export default async function EditTariffPage({ params }: PageProps) {
+  const tariffId = parseInt(params.id)
 
-  if (!tariff) {
-    notFound()
+  if (isNaN(tariffId)) {
+    redirect('/tariffs')
   }
 
-  return <TariffForm mode="edit" initialData={tariff} />
+  const tariff = await getTariffById(tariffId)
+
+  if (!tariff) {
+    redirect('/tariffs')
+  }
+
+  return <TariffForm mode="edit" tariffId={tariffId} initialData={tariff} />
 }

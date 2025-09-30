@@ -16,10 +16,11 @@ type Tariff = Database["public"]["Tables"]["tariffs"]["Row"];
 
 interface TariffFormProps {
   mode: "create" | "edit";
+  tariffId?: number;
   initialData?: Tariff;
 }
 
-export function TariffForm({ mode, initialData }: TariffFormProps) {
+export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -149,7 +150,11 @@ export function TariffForm({ mode, initialData }: TariffFormProps) {
       if (mode === "create") {
         result = await createTariff(dataWithCSV);
       } else {
-        result = await updateTariff(initialData!.id, dataWithCSV);
+        if (!tariffId) {
+          setErrors({ general: "Error: ID de tarifa no encontrado" });
+          return;
+        }
+        result = await updateTariff(tariffId, dataWithCSV);
       }
 
       if (result.success) {
