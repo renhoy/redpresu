@@ -439,7 +439,7 @@ export function BudgetHierarchyForm({
       return (
         <AccordionItem key={item.id} value={item.id}>
           <AccordionTrigger
-            className="hover:no-underline p-0"
+            className="hover:no-underline p-0 [&>svg]:hidden"
             onClick={handleContainerClick}
           >
             <div
@@ -491,7 +491,7 @@ export function BudgetHierarchyForm({
 
     return (
       <div key={item.id} className="mb-1">
-        {/* Item header */}
+        {/* Línea 1: Nombre + Importe con chevron */}
         <div
           className="flex items-center p-0 border transition-all hover:brightness-95 cursor-pointer"
           style={{
@@ -500,13 +500,17 @@ export function BudgetHierarchyForm({
           }}
           onClick={handleItemClick}
         >
-          {/* Spacer para alineación */}
+          {/* Chevron indicator */}
           <div className="w-4 mr-2 flex justify-center">
-            <span className="w-4" />
+            {isActive ? (
+              <span className="text-xs">▼</span>
+            ) : (
+              <span className="text-xs">▶</span>
+            )}
           </div>
 
-          {/* Contenido del header */}
-          <div className="flex-1">
+          {/* Contenido línea 1 */}
+          <div className="flex-1 flex items-center justify-between pr-2">
             <div className="flex items-center gap-2">
               <span className="font-medium">{item.name}</span>
 
@@ -533,83 +537,94 @@ export function BudgetHierarchyForm({
               )}
             </div>
 
-            {/* Línea 2: Controls - SOLO SI ES LA PARTIDA ACTIVA */}
-            {isActive && (
-              <div className="flex items-center justify-between gap-4 text-xs mt-1 opacity-90 pr-2">
-                {/* Unidad */}
-                <span className="font-mono">
-                  <strong>Unidad:</strong> {item.unit || 'ud'}
-                </span>
-
-                {/* IVA */}
-                <span className="font-mono">
-                  <strong>%IVA:</strong> {formatSpanishNumber(parseSpanishNumber(item.iva_percentage || '0'))}
-                </span>
-
-                {/* Cantidad con controles */}
-                <div className="flex items-center gap-2">
-                  <span className="font-mono">
-                    <strong>Cantidad:</strong>
-                  </span>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="h-7 w-7 p-0"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      decrementQuantity(item.id, item.quantity || '0,00')
-                    }}
-                  >
-                    <Minus className="h-3 w-3" />
-                  </Button>
-
-                  <Input
-                    type="text"
-                    value={item.quantity || '0,00'}
-                    onChange={(e) => {
-                      // Permitir solo números y coma
-                      const value = e.target.value.replace(/[^0-9,]/g, '')
-                      // Actualizar directamente sin formatear para permitir edición
-                      setBudgetData(prevData => {
-                        return prevData.map(i => {
-                          if (i.id === item.id) {
-                            return { ...i, quantity: value }
-                          }
-                          return i
-                        })
-                      })
-                    }}
-                    onBlur={(e) => {
-                      // Formatear al salir del input
-                      const numericValue = parseSpanishNumber(e.target.value || '0')
-                      const formattedValue = formatSpanishNumber(Math.max(0, numericValue))
-                      updateItemQuantity(item.id, formattedValue)
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="w-20 text-center h-7 bg-white text-black border-gray-300"
-                  />
-
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="h-7 w-7 p-0"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      incrementQuantity(item.id, item.quantity || '0,00')
-                    }}
-                  >
-                    <Plus className="h-3 w-3" />
-                  </Button>
-                </div>
-
-                {/* Precio */}
-                <span className="font-mono font-bold">
-                  <strong>Precio:</strong> {formatCurrency(parseSpanishNumber(item.pvp || '0'))}
-                </span>
-              </div>
-            )}
+            {/* Importe de la partida */}
+            <span className="font-mono text-sm">
+              {formatCurrency(parseSpanishNumber(item.amount || '0'))}
+            </span>
           </div>
         </div>
+
+        {/* Línea 2: Controls - SOLO SI ES LA PARTIDA ACTIVA */}
+        {isActive && (
+          <div
+            className="flex items-center justify-between gap-4 text-xs px-4 py-2 border-t"
+            style={{
+              marginLeft: `${depth * 2}px`,
+              backgroundColor: '#f9fafb',
+            }}
+          >
+            {/* Unidad */}
+            <span className="font-mono">
+              <strong>Unidad:</strong> {item.unit || 'ud'}
+            </span>
+
+            {/* IVA */}
+            <span className="font-mono">
+              <strong>%IVA:</strong> {formatSpanishNumber(parseSpanishNumber(item.iva_percentage || '0'))}
+            </span>
+
+            {/* Cantidad con controles */}
+            <div className="flex items-center gap-2">
+              <span className="font-mono">
+                <strong>Cantidad:</strong>
+              </span>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="h-7 w-7 p-0"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  decrementQuantity(item.id, item.quantity || '0,00')
+                }}
+              >
+                <Minus className="h-3 w-3" />
+              </Button>
+
+              <Input
+                type="text"
+                value={item.quantity || '0,00'}
+                onChange={(e) => {
+                  // Permitir solo números y coma
+                  const value = e.target.value.replace(/[^0-9,]/g, '')
+                  // Actualizar directamente sin formatear para permitir edición
+                  setBudgetData(prevData => {
+                    return prevData.map(i => {
+                      if (i.id === item.id) {
+                        return { ...i, quantity: value }
+                      }
+                      return i
+                    })
+                  })
+                }}
+                onBlur={(e) => {
+                  // Formatear al salir del input
+                  const numericValue = parseSpanishNumber(e.target.value || '0')
+                  const formattedValue = formatSpanishNumber(Math.max(0, numericValue))
+                  updateItemQuantity(item.id, formattedValue)
+                }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-20 text-center h-7 bg-white text-black border-gray-300"
+              />
+
+              <Button
+                variant="secondary"
+                size="sm"
+                className="h-7 w-7 p-0"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  incrementQuantity(item.id, item.quantity || '0,00')
+                }}
+              >
+                <Plus className="h-3 w-3" />
+              </Button>
+            </div>
+
+            {/* Precio */}
+            <span className="font-mono font-bold">
+              <strong>Precio:</strong> {formatCurrency(parseSpanishNumber(item.pvp || '0'))}
+            </span>
+          </div>
+        )}
       </div>
     )
   }
