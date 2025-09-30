@@ -164,9 +164,10 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
 
       {/* Navigation buttons */}
       {currentStep === 1 && (
-        <div className="flex justify-between mb-6">
+        <div className="flex justify-end gap-3 mb-6">
           <Button
             variant="outline"
+            className="bg-red-600 text-white hover:bg-red-700 border-red-600"
             onClick={() => {
               setClientData({
                 client_type: 'empresa',
@@ -227,24 +228,39 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
               <div className="grid grid-cols-3 gap-3">
                 <Button
                   type="button"
-                  variant={clientData.client_type === 'empresa' ? 'default' : 'outline'}
+                  variant="outline"
                   className="w-full"
+                  style={clientData.client_type === 'empresa' ? {
+                    borderColor: tariff.primary_color,
+                    backgroundColor: `${tariff.primary_color}20`,
+                    color: '#000'
+                  } : {}}
                   onClick={() => handleClientDataChange('client_type', 'empresa')}
                 >
                   Empresa
                 </Button>
                 <Button
                   type="button"
-                  variant={clientData.client_type === 'autonomo' ? 'default' : 'outline'}
+                  variant="outline"
                   className="w-full"
+                  style={clientData.client_type === 'autonomo' ? {
+                    borderColor: tariff.primary_color,
+                    backgroundColor: `${tariff.primary_color}20`,
+                    color: '#000'
+                  } : {}}
                   onClick={() => handleClientDataChange('client_type', 'autonomo')}
                 >
                   Autónomo
                 </Button>
                 <Button
                   type="button"
-                  variant={clientData.client_type === 'particular' ? 'default' : 'outline'}
+                  variant="outline"
                   className="w-full"
+                  style={clientData.client_type === 'particular' ? {
+                    borderColor: tariff.primary_color,
+                    backgroundColor: `${tariff.primary_color}20`,
+                    color: '#000'
+                  } : {}}
                   onClick={() => handleClientDataChange('client_type', 'particular')}
                 >
                   Particular
@@ -379,11 +395,21 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
                 className={errors.client_acceptance ? 'border-destructive' : ''}
               />
               <Label htmlFor="client_acceptance" className="text-sm">
-                El cliente acepta recibir el presupuesto *
+                Acepto la política de privacidad *
               </Label>
             </div>
             {errors.client_acceptance && (
               <p className="text-sm text-destructive">{errors.client_acceptance}</p>
+            )}
+
+            {/* Notas legales */}
+            {tariff.legal_notes && (
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold">Notas legales página presupuesto</Label>
+                <div className="text-sm text-muted-foreground p-3 bg-muted rounded-md">
+                  {tariff.legal_notes}
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>
