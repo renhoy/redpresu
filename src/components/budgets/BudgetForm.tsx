@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { BudgetHierarchyForm } from './BudgetHierarchyForm'
 
 interface BudgetFormProps {
   tariff: Tariff
@@ -31,6 +32,7 @@ interface ClientData {
 export function BudgetForm({ tariff }: BudgetFormProps) {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
+  const [budgetData, setBudgetData] = useState<any[]>([])
   const [clientData, setClientData] = useState<ClientData>({
     client_type: '',
     client_name: '',
@@ -87,15 +89,18 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
     }
   }
 
-  const handleStep2Continue = () => {
-    if (validateStep1()) {
-      // TODO: Próxima tarea - ir a formulario jerárquico
-      console.log('Datos listos para formulario jerárquico:', {
-        tariffId: tariff.id,
-        clientData
-      })
-      alert('Próxima tarea: Formulario jerárquico basado en tarifa seleccionada')
-    }
+  const handleBudgetDataChange = (newBudgetData: any[]) => {
+    setBudgetData(newBudgetData)
+  }
+
+  const handleFinalizeBudget = () => {
+    // TODO: Implementar guardado del presupuesto
+    console.log('Datos completos del presupuesto:', {
+      tariffId: tariff.id,
+      clientData,
+      budgetData
+    })
+    alert('Próxima tarea: Guardar presupuesto en base de datos')
   }
 
   const handleClientDataChange = (field: keyof ClientData, value: string | boolean) => {
@@ -304,13 +309,49 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Cancelar
               </Button>
-              <Button onClick={handleStep2Continue}>
+              <Button onClick={handleStep1Continue}>
                 Continuar al Presupuesto
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Step 2: Formulario jerárquico */}
+      {currentStep === 2 && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Paso 2: Configurar Presupuesto</CardTitle>
+              <CardDescription>
+                Ajusta las cantidades de los elementos para crear tu presupuesto personalizado
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          {tariff.json_tariff_data && (
+            <BudgetHierarchyForm
+              tariffData={tariff.json_tariff_data as any[]}
+              onBudgetDataChange={handleBudgetDataChange}
+            />
+          )}
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={() => setCurrentStep(1)}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Volver a Datos Cliente
+                </Button>
+                <Button onClick={handleFinalizeBudget}>
+                  Finalizar Presupuesto
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   )
