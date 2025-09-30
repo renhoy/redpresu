@@ -22,6 +22,7 @@ interface ClientData {
   client_nif_nie: string
   client_phone: string
   client_email: string
+  client_web?: string
   client_address: string
   client_postal_code: string
   client_locality: string
@@ -34,11 +35,12 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
   const [currentStep, setCurrentStep] = useState(1)
   const [budgetData, setBudgetData] = useState<any[]>([])
   const [clientData, setClientData] = useState<ClientData>({
-    client_type: '',
+    client_type: 'empresa',
     client_name: '',
     client_nif_nie: '',
     client_phone: '',
     client_email: '',
+    client_web: '',
     client_address: '',
     client_postal_code: '',
     client_locality: '',
@@ -163,30 +165,43 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Tipo de cliente */}
-              <div className="space-y-2">
-                <Label htmlFor="client_type">Tipo de Cliente *</Label>
-                <Select
-                  value={clientData.client_type}
-                  onValueChange={(value) => handleClientDataChange('client_type', value)}
+            {/* Línea 1: Tipo de cliente con botones */}
+            <div className="space-y-2">
+              <Label>Tipo de Cliente *</Label>
+              <div className="grid grid-cols-3 gap-3">
+                <Button
+                  type="button"
+                  variant={clientData.client_type === 'empresa' ? 'default' : 'outline'}
+                  className="w-full"
+                  onClick={() => handleClientDataChange('client_type', 'empresa')}
                 >
-                  <SelectTrigger className={errors.client_type ? 'border-destructive' : ''}>
-                    <SelectValue placeholder="Selecciona el tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="particular">Particular</SelectItem>
-                    <SelectItem value="autonomo">Autónomo</SelectItem>
-                    <SelectItem value="empresa">Empresa</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.client_type && (
-                  <p className="text-sm text-destructive">{errors.client_type}</p>
-                )}
+                  Empresa
+                </Button>
+                <Button
+                  type="button"
+                  variant={clientData.client_type === 'autonomo' ? 'default' : 'outline'}
+                  className="w-full"
+                  onClick={() => handleClientDataChange('client_type', 'autonomo')}
+                >
+                  Autónomo
+                </Button>
+                <Button
+                  type="button"
+                  variant={clientData.client_type === 'particular' ? 'default' : 'outline'}
+                  className="w-full"
+                  onClick={() => handleClientDataChange('client_type', 'particular')}
+                >
+                  Particular
+                </Button>
               </div>
+              {errors.client_type && (
+                <p className="text-sm text-destructive">{errors.client_type}</p>
+              )}
+            </div>
 
-              {/* Nombre */}
-              <div className="space-y-2">
+            {/* Línea 2: Nombre (75%) + NIF/NIE (25%) */}
+            <div className="grid grid-cols-4 gap-4">
+              <div className="col-span-3 space-y-2">
                 <Label htmlFor="client_name">
                   {clientData.client_type === 'empresa' ? 'Razón Social' : 'Nombre Completo'} *
                 </Label>
@@ -202,25 +217,24 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
                 )}
               </div>
 
-              {/* NIF/NIE */}
-              <div className="space-y-2">
-                <Label htmlFor="client_nif_nie">
-                  {clientData.client_type === 'empresa' ? 'NIF' : 'DNI/NIE'} *
-                </Label>
+              <div className="col-span-1 space-y-2">
+                <Label htmlFor="client_nif_nie">NIF/NIE *</Label>
                 <Input
                   id="client_nif_nie"
                   value={clientData.client_nif_nie}
                   onChange={(e) => handleClientDataChange('client_nif_nie', e.target.value.toUpperCase())}
                   className={errors.client_nif_nie ? 'border-destructive' : ''}
-                  placeholder={clientData.client_type === 'empresa' ? 'A12345678B' : '12345678Z o X1234567L'}
+                  placeholder="12345678Z"
                 />
                 {errors.client_nif_nie && (
                   <p className="text-sm text-destructive">{errors.client_nif_nie}</p>
                 )}
               </div>
+            </div>
 
-              {/* Teléfono */}
-              <div className="space-y-2">
+            {/* Línea 3: Teléfono (25%) + Email (50%) + Web (25%) */}
+            <div className="grid grid-cols-4 gap-4">
+              <div className="col-span-1 space-y-2">
                 <Label htmlFor="client_phone">Teléfono</Label>
                 <Input
                   id="client_phone"
@@ -231,8 +245,7 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
                 />
               </div>
 
-              {/* Email */}
-              <div className="space-y-2 md:col-span-2">
+              <div className="col-span-2 space-y-2">
                 <Label htmlFor="client_email">Email</Label>
                 <Input
                   id="client_email"
@@ -243,8 +256,21 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
                 />
               </div>
 
-              {/* Dirección */}
-              <div className="space-y-2 md:col-span-2">
+              <div className="col-span-1 space-y-2">
+                <Label htmlFor="client_web">Web</Label>
+                <Input
+                  id="client_web"
+                  type="url"
+                  value={clientData.client_web || ''}
+                  onChange={(e) => handleClientDataChange('client_web', e.target.value)}
+                  placeholder="www.ejemplo.com"
+                />
+              </div>
+            </div>
+
+            {/* Línea 4: Dirección (75%) + Código Postal (25%) */}
+            <div className="grid grid-cols-4 gap-4">
+              <div className="col-span-3 space-y-2">
                 <Label htmlFor="client_address">Dirección</Label>
                 <Input
                   id="client_address"
@@ -254,8 +280,7 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
                 />
               </div>
 
-              {/* Código postal */}
-              <div className="space-y-2">
+              <div className="col-span-1 space-y-2">
                 <Label htmlFor="client_postal_code">Código Postal</Label>
                 <Input
                   id="client_postal_code"
@@ -264,9 +289,11 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
                   placeholder="28001"
                 />
               </div>
+            </div>
 
-              {/* Localidad */}
-              <div className="space-y-2">
+            {/* Línea 5: Localidad (75%) + Provincia (25%) */}
+            <div className="grid grid-cols-4 gap-4">
+              <div className="col-span-3 space-y-2">
                 <Label htmlFor="client_locality">Localidad</Label>
                 <Input
                   id="client_locality"
@@ -276,8 +303,7 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
                 />
               </div>
 
-              {/* Provincia */}
-              <div className="space-y-2 md:col-span-2">
+              <div className="col-span-1 space-y-2">
                 <Label htmlFor="client_province">Provincia</Label>
                 <Input
                   id="client_province"
