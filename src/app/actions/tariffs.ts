@@ -216,102 +216,159 @@ export async function createTariff(data: TariffFormData): Promise<{
   tariffId?: number
   error?: string
 }> {
-  const cookieStore = await cookies()
-  const supabase = createServerActionClient({ cookies: () => cookieStore })
+  try {
+    console.log('[createTariff] Iniciando creación de tarifa...')
 
-  // Obtener empresa_id del usuario actual
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  if (authError || !user) {
-    return { success: false, error: 'Usuario no autenticado' }
-  }
+    const cookieStore = await cookies()
+    console.log('[createTariff] Cookies obtenidas:', { hasCookieStore: !!cookieStore })
 
-  const { data: userData, error: userError } = await supabase
-    .from('users')
-    .select('empresa_id')
-    .eq('id', user.id)
-    .single()
-
-  if (userError || !userData?.empresa_id) {
-    return { success: false, error: 'No se pudo obtener la empresa del usuario' }
-  }
-
-  const { error } = await supabase
-    .from('tariffs')
-    .insert({
-      empresa_id: userData.empresa_id,
-      title: data.title,
-      description: data.description,
-      validity: data.validity,
-      status: data.status,
-      logo_url: data.logo_url,
-      name: data.name,
-      nif: data.nif,
-      address: data.address,
-      contact: data.contact,
-      template: data.template,
-      primary_color: data.primary_color,
-      secondary_color: data.secondary_color,
-      summary_note: data.summary_note,
-      conditions_note: data.conditions_note,
-      legal_note: data.legal_note,
-      json_tariff_data: data.json_tariff_data,
-      validity_start: new Date().toISOString(),
-      validity_end: new Date(Date.now() + data.validity * 24 * 60 * 60 * 1000).toISOString()
+    // CRÍTICO: Pasar función que retorna cookieStore
+    const supabase = createServerActionClient({
+      cookies: () => cookieStore
     })
 
-  if (error) {
-    console.error('Error creating tariff:', error)
-    return { success: false, error: 'Error al crear la tarifa' }
-  }
+    // Usar getUser() NO getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-  revalidatePath('/tariffs')
-  return { success: true }
+    console.log('[createTariff] User check:', {
+      hasUser: !!user,
+      userId: user?.id,
+      userEmail: user?.email,
+      authError: authError?.message
+    })
+
+    if (authError || !user) {
+      console.error('[createTariff] Auth error:', authError)
+      return { success: false, error: 'Usuario no autenticado' }
+    }
+
+    // Obtener empresa_id del usuario actual
+    console.log('[createTariff] Obteniendo datos del usuario...')
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('empresa_id')
+      .eq('id', user.id)
+      .single()
+
+    console.log('[createTariff] User data:', {
+      hasUserData: !!userData,
+      empresaId: userData?.empresa_id,
+      userError: userError?.message
+    })
+
+    if (userError || !userData?.empresa_id) {
+      console.error('[createTariff] User data error:', userError)
+      return { success: false, error: 'No se pudo obtener la empresa del usuario' }
+    }
+
+    // Crear tarifa
+    console.log('[createTariff] Insertando tarifa en BD...')
+    const { error } = await supabase
+      .from('tariffs')
+      .insert({
+        empresa_id: userData.empresa_id,
+        title: data.title,
+        description: data.description,
+        validity: data.validity,
+        status: data.status,
+        logo_url: data.logo_url,
+        name: data.name,
+        nif: data.nif,
+        address: data.address,
+        contact: data.contact,
+        template: data.template,
+        primary_color: data.primary_color,
+        secondary_color: data.secondary_color,
+        summary_note: data.summary_note,
+        conditions_note: data.conditions_note,
+        legal_note: data.legal_note,
+        json_tariff_data: data.json_tariff_data
+      })
+
+    if (error) {
+      console.error('[createTariff] Insert error:', error)
+      return { success: false, error: 'Error al crear la tarifa' }
+    }
+
+    console.log('[createTariff] Tarifa creada exitosamente')
+    revalidatePath('/tariffs')
+    return { success: true }
+
+  } catch (error) {
+    console.error('[createTariff] Critical error:', error)
+    return { success: false, error: 'Error crítico al crear tarifa' }
+  }
 }
 
 export async function updateTariff(id: number, data: TariffFormData): Promise<{
   success: boolean
   error?: string
 }> {
-  const cookieStore = await cookies()
-  const supabase = createServerActionClient({ cookies: () => cookieStore })
+  try {
+    console.log('[updateTariff] Iniciando actualización de tarifa:', { id })
 
-  // Verificar autenticación
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  if (authError || !user) {
-    return { success: false, error: 'Usuario no autenticado' }
-  }
+    const cookieStore = await cookies()
+    console.log('[updateTariff] Cookies obtenidas:', { hasCookieStore: !!cookieStore })
 
-  const { error } = await supabase
-    .from('tariffs')
-    .update({
-      title: data.title,
-      description: data.description,
-      validity: data.validity,
-      status: data.status,
-      logo_url: data.logo_url,
-      name: data.name,
-      nif: data.nif,
-      address: data.address,
-      contact: data.contact,
-      template: data.template,
-      primary_color: data.primary_color,
-      secondary_color: data.secondary_color,
-      summary_note: data.summary_note,
-      conditions_note: data.conditions_note,
-      legal_note: data.legal_note,
-      json_tariff_data: data.json_tariff_data,
-      updated_at: new Date().toISOString()
+    // CRÍTICO: Pasar función que retorna cookieStore
+    const supabase = createServerActionClient({
+      cookies: () => cookieStore
     })
-    .eq('id', id)
 
-  if (error) {
-    console.error('Error updating tariff:', error)
-    return { success: false, error: 'Error al actualizar la tarifa' }
+    // Usar getUser() NO getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    console.log('[updateTariff] User check:', {
+      hasUser: !!user,
+      userId: user?.id,
+      userEmail: user?.email,
+      authError: authError?.message
+    })
+
+    if (authError || !user) {
+      console.error('[updateTariff] Auth error:', authError)
+      return { success: false, error: 'Usuario no autenticado' }
+    }
+
+    // Actualizar tarifa
+    console.log('[updateTariff] Actualizando tarifa en BD...')
+    const { error } = await supabase
+      .from('tariffs')
+      .update({
+        title: data.title,
+        description: data.description,
+        validity: data.validity,
+        status: data.status,
+        logo_url: data.logo_url,
+        name: data.name,
+        nif: data.nif,
+        address: data.address,
+        contact: data.contact,
+        template: data.template,
+        primary_color: data.primary_color,
+        secondary_color: data.secondary_color,
+        summary_note: data.summary_note,
+        conditions_note: data.conditions_note,
+        legal_note: data.legal_note,
+        json_tariff_data: data.json_tariff_data,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+
+    if (error) {
+      console.error('[updateTariff] Update error:', error)
+      return { success: false, error: 'Error al actualizar la tarifa' }
+    }
+
+    console.log('[updateTariff] Tarifa actualizada exitosamente')
+    revalidatePath('/tariffs')
+    revalidatePath(`/tariffs/edit/${id}`)
+    return { success: true }
+
+  } catch (error) {
+    console.error('[updateTariff] Critical error:', error)
+    return { success: false, error: 'Error crítico al actualizar tarifa' }
   }
-
-  revalidatePath('/tariffs')
-  revalidatePath(`/tariffs/edit/${id}`)
-  return { success: true }
 }
 
 export async function uploadLogo(formData: FormData): Promise<{
