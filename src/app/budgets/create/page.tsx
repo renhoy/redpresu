@@ -29,14 +29,6 @@ export default async function CreateBudgetPage({ searchParams }: PageProps) {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold tracking-tight">Crear Presupuesto</h1>
-          <p className="text-muted-foreground">
-            Presupuesto basado en la tarifa: <strong>{tariff.title}</strong>
-          </p>
-        </div>
-
         {/* Formulario */}
         <BudgetForm tariff={tariff} />
       </div>

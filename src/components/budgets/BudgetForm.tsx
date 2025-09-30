@@ -119,21 +119,43 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* Tariff Info */}
-      <div className="mb-6 p-4 bg-muted rounded-lg">
-        <h3 className="font-medium mb-2">Tarifa seleccionada:</h3>
-        <div className="text-sm space-y-1">
-          <p><strong>Título:</strong> {tariff.title}</p>
-          {tariff.description && (
-            <p><strong>Descripción:</strong> {tariff.description}</p>
-          )}
-          <p><strong>Validez:</strong> {tariff.validity} días</p>
-          <p><strong>Empresa:</strong> {tariff.name}</p>
-        </div>
-      </div>
+      {/* Company Header */}
+      <Card className="mb-6">
+        <CardContent className="p-6">
+          <div className="grid grid-cols-[auto_1fr] gap-6">
+            {/* Columna 1: Logo */}
+            <div className="flex items-start">
+              {tariff.logo_url ? (
+                <img
+                  src={tariff.logo_url}
+                  alt={tariff.name}
+                  className="w-24 h-24 object-contain"
+                />
+              ) : (
+                <div className="w-24 h-24 bg-muted rounded-lg flex items-center justify-center">
+                  <span className="text-xs text-muted-foreground">Sin logo</span>
+                </div>
+              )}
+            </div>
+
+            {/* Columna 2: Datos empresa */}
+            <div className="space-y-1">
+              <h2 className="text-xl font-bold">{tariff.name}</h2>
+              <p className="text-sm text-muted-foreground">NIF: {tariff.nif || 'No especificado'}</p>
+              <p className="text-sm text-muted-foreground">
+                {tariff.address ? `${tariff.address}, ${tariff.postal_code} ${tariff.locality}, ${tariff.province}` : 'Dirección no especificada'}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {tariff.phone && `Tel: ${tariff.phone}`}
+                {tariff.email && ` | Email: ${tariff.email}`}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Progress indicator */}
-      <div className="mb-8">
+      <div className="mb-6">
         <div className="flex items-center justify-between">
           <div className={`flex items-center ${currentStep >= 1 ? 'text-primary' : 'text-muted-foreground'}`}>
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
@@ -154,6 +176,32 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
           </div>
         </div>
       </div>
+
+      {/* Navigation buttons */}
+      {currentStep === 1 && (
+        <div className="flex justify-between mb-6">
+          <Button variant="outline" onClick={handleCancel}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Cancelar
+          </Button>
+          <Button onClick={handleStep1Continue}>
+            Continuar al Presupuesto
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        </div>
+      )}
+
+      {currentStep === 2 && (
+        <div className="flex justify-between mb-6">
+          <Button variant="outline" onClick={() => setCurrentStep(1)}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Volver a Datos Cliente
+          </Button>
+          <Button onClick={handleFinalizeBudget}>
+            Finalizar Presupuesto
+          </Button>
+        </div>
+      )}
 
       {/* Step 1: Datos del cliente */}
       {currentStep === 1 && (
@@ -329,17 +377,6 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
             {errors.client_acceptance && (
               <p className="text-sm text-destructive">{errors.client_acceptance}</p>
             )}
-
-            <div className="flex justify-between pt-4">
-              <Button variant="outline" onClick={handleCancel}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Cancelar
-              </Button>
-              <Button onClick={handleStep1Continue}>
-                Continuar al Presupuesto
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
           </CardContent>
         </Card>
       )}
@@ -364,21 +401,6 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
               secondaryColor={tariff.secondary_color}
             />
           )}
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex justify-between">
-                <Button variant="outline" onClick={() => setCurrentStep(1)}>
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Volver a Datos Cliente
-                </Button>
-                <Button onClick={handleFinalizeBudget}>
-                  Finalizar Presupuesto
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       )}
     </div>
