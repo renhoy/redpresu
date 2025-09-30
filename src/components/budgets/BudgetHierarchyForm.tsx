@@ -534,16 +534,19 @@ export function BudgetHierarchyForm({
           >
             {/* Unit info */}
             <span className="text-sm text-muted-foreground">
-              Unidad: {item.unit || 'ud'}
+              <strong>Unidad:</strong> {item.unit || 'ud'}
             </span>
 
             {/* IVA info */}
             <span className="text-sm text-muted-foreground">
-              %IVA: {formatSpanishNumber(parseSpanishNumber(item.iva_percentage || '0'))}
+              <strong>%IVA:</strong> {formatSpanishNumber(parseSpanishNumber(item.iva_percentage || '0'))}
             </span>
 
             {/* Quantity controls */}
             <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                <strong>Cantidad:</strong>
+              </span>
               <Button
                 variant="outline"
                 size="sm"
@@ -595,36 +598,10 @@ export function BudgetHierarchyForm({
               </Button>
             </div>
 
-            {/* PVP info */}
+            {/* Precio info */}
             <span className="text-sm text-muted-foreground">
-              PVP: {formatCurrency(parseSpanishNumber(item.pvp || '0'))}
+              <strong>Precio:</strong> {formatCurrency(parseSpanishNumber(item.pvp || '0'))}
             </span>
-
-            {/* Navigation buttons */}
-            <div className="flex items-center gap-2 ml-auto">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  navigateToItem('prev', item.id)
-                }}
-              >
-                ← Anterior
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  navigateToItem('next', item.id)
-                }}
-              >
-                Siguiente →
-              </Button>
-            </div>
           </div>
         )}
       </div>
