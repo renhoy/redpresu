@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 
 interface BudgetFormProps {
-  activeTariffs: Tariff[]
+  tariff: Tariff
 }
 
 interface ClientData {
@@ -28,10 +28,9 @@ interface ClientData {
   client_acceptance: boolean
 }
 
-export function BudgetForm({ activeTariffs }: BudgetFormProps) {
+export function BudgetForm({ tariff }: BudgetFormProps) {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
-  const [selectedTariffId, setSelectedTariffId] = useState<string>('')
   const [clientData, setClientData] = useState<ClientData>({
     client_type: '',
     client_name: '',
@@ -46,18 +45,9 @@ export function BudgetForm({ activeTariffs }: BudgetFormProps) {
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const selectedTariff = activeTariffs.find(t => t.id === selectedTariffId)
+
 
   const validateStep1 = () => {
-    const newErrors: Record<string, string> = {}
-    if (!selectedTariffId) {
-      newErrors.tariff = 'Debes seleccionar una tarifa'
-    }
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const validateStep2 = () => {
     const newErrors: Record<string, string> = {}
 
     if (!clientData.client_type) {
@@ -98,10 +88,10 @@ export function BudgetForm({ activeTariffs }: BudgetFormProps) {
   }
 
   const handleStep2Continue = () => {
-    if (validateStep2()) {
+    if (validateStep1()) {
       // TODO: Próxima tarea - ir a formulario jerárquico
       console.log('Datos listos para formulario jerárquico:', {
-        tariffId: selectedTariffId,
+        tariffId: tariff.id,
         clientData
       })
       alert('Próxima tarea: Formulario jerárquico basado en tarifa seleccionada')
@@ -122,6 +112,19 @@ export function BudgetForm({ activeTariffs }: BudgetFormProps) {
 
   return (
     <div className="max-w-4xl mx-auto">
+      {/* Tariff Info */}
+      <div className="mb-6 p-4 bg-muted rounded-lg">
+        <h3 className="font-medium mb-2">Tarifa seleccionada:</h3>
+        <div className="text-sm space-y-1">
+          <p><strong>Título:</strong> {tariff.title}</p>
+          {tariff.description && (
+            <p><strong>Descripción:</strong> {tariff.description}</p>
+          )}
+          <p><strong>Validez:</strong> {tariff.validity} días</p>
+          <p><strong>Empresa:</strong> {tariff.name}</p>
+        </div>
+      </div>
+
       {/* Progress indicator */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
@@ -131,7 +134,7 @@ export function BudgetForm({ activeTariffs }: BudgetFormProps) {
             }`}>
               1
             </div>
-            <span className="ml-2 text-sm font-medium">Seleccionar Tarifa</span>
+            <span className="ml-2 text-sm font-medium">Datos Cliente</span>
           </div>
           <div className="flex-1 h-px bg-border mx-4" />
           <div className={`flex items-center ${currentStep >= 2 ? 'text-primary' : 'text-muted-foreground'}`}>
@@ -140,89 +143,16 @@ export function BudgetForm({ activeTariffs }: BudgetFormProps) {
             }`}>
               2
             </div>
-            <span className="ml-2 text-sm font-medium">Datos Cliente</span>
-          </div>
-          <div className="flex-1 h-px bg-border mx-4" />
-          <div className={`flex items-center ${currentStep >= 3 ? 'text-primary' : 'text-muted-foreground'}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-              currentStep >= 3 ? 'bg-primary text-primary-foreground' : 'bg-muted'
-            }`}>
-              3
-            </div>
             <span className="ml-2 text-sm font-medium">Presupuesto</span>
           </div>
         </div>
       </div>
 
-      {/* Step 1: Selector de tarifa */}
+      {/* Step 1: Datos del cliente */}
       {currentStep === 1 && (
         <Card>
           <CardHeader>
-            <CardTitle>Paso 1: Seleccionar Tarifa</CardTitle>
-            <CardDescription>
-              Elige la tarifa que aplicarás para este presupuesto
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="tariff">Tarifa *</Label>
-              <Select value={selectedTariffId} onValueChange={setSelectedTariffId}>
-                <SelectTrigger className={errors.tariff ? 'border-destructive' : ''}>
-                  <SelectValue placeholder="Selecciona una tarifa activa" />
-                </SelectTrigger>
-                <SelectContent>
-                  {activeTariffs.map((tariff) => (
-                    <SelectItem key={tariff.id} value={tariff.id}>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{tariff.title}</span>
-                        {tariff.description && (
-                          <span className="text-sm text-muted-foreground">
-                            {tariff.description}
-                          </span>
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.tariff && (
-                <p className="text-sm text-destructive">{errors.tariff}</p>
-              )}
-            </div>
-
-            {selectedTariff && (
-              <div className="p-4 bg-muted rounded-lg">
-                <h4 className="font-medium mb-2">Tarifa seleccionada:</h4>
-                <div className="text-sm space-y-1">
-                  <p><strong>Título:</strong> {selectedTariff.title}</p>
-                  {selectedTariff.description && (
-                    <p><strong>Descripción:</strong> {selectedTariff.description}</p>
-                  )}
-                  <p><strong>Validez:</strong> {selectedTariff.validity} días</p>
-                  <p><strong>Empresa:</strong> {selectedTariff.name}</p>
-                </div>
-              </div>
-            )}
-
-            <div className="flex justify-between pt-4">
-              <Button variant="outline" onClick={handleCancel}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Cancelar
-              </Button>
-              <Button onClick={handleStep1Continue} disabled={!selectedTariffId}>
-                Continuar
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 2: Datos del cliente */}
-      {currentStep === 2 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Paso 2: Datos del Cliente</CardTitle>
+            <CardTitle>Paso 1: Datos del Cliente</CardTitle>
             <CardDescription>
               Completa la información del cliente para el presupuesto
             </CardDescription>
@@ -370,9 +300,9 @@ export function BudgetForm({ activeTariffs }: BudgetFormProps) {
             )}
 
             <div className="flex justify-between pt-4">
-              <Button variant="outline" onClick={() => setCurrentStep(1)}>
+              <Button variant="outline" onClick={handleCancel}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Anterior
+                Cancelar
               </Button>
               <Button onClick={handleStep2Continue}>
                 Continuar al Presupuesto

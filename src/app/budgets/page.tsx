@@ -8,19 +8,11 @@ export default function BudgetsPage() {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Presupuestos</h1>
-            <p className="text-muted-foreground">
-              Gestiona y crea presupuestos para tus clientes
-            </p>
-          </div>
-          <Link href="/budgets/create">
-            <Button className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Crear Presupuesto
-            </Button>
-          </Link>
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold tracking-tight">Presupuestos</h1>
+          <p className="text-muted-foreground">
+            Gestiona tus presupuestos creados. Para crear un nuevo presupuesto, ve a <Link href="/tariffs" className="text-primary hover:underline">Tarifas</Link> y haz clic en "Crear Presupuesto" en la tarifa deseada.
+          </p>
         </div>
 
         {/* Placeholder content */}
@@ -42,11 +34,12 @@ export default function BudgetsPage() {
                 Próximamente: listado de presupuestos
               </h3>
               <p className="text-sm mb-4">
-                El listado completo de presupuestos estará disponible en la próxima actualización
+                El listado completo de presupuestos estará disponible en la próxima actualización.
+                Para crear un presupuesto, ve a la sección de Tarifas.
               </p>
-              <Link href="/budgets/create">
+              <Link href="/tariffs">
                 <Button>
-                  Crear tu primer presupuesto
+                  Ver Tarifas
                 </Button>
               </Link>
             </div>

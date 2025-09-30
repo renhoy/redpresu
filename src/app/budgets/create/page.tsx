@@ -1,15 +1,29 @@
-import { getActiveTariffs } from '@/app/actions/budgets'
+import { getTariffById } from '@/app/actions/tariffs'
 import { BudgetForm } from '@/components/budgets/BudgetForm'
 import { redirect } from 'next/navigation'
 
-export default async function CreateBudgetPage() {
-  // Cargar tarifas activas
-  const activeTariffs = await getActiveTariffs()
+interface PageProps {
+  searchParams: { tariff_id?: string }
+}
 
-  // Si no hay tarifas activas, redirigir con mensaje
-  if (!activeTariffs || activeTariffs.length === 0) {
-    // TODO: Implementar sistema de mensajes/notificaciones
-    redirect('/tariffs?message=no-active-tariffs')
+export default async function CreateBudgetPage({ searchParams }: PageProps) {
+  const { tariff_id } = searchParams
+
+  // Si no hay tariff_id, redirigir a tariffs
+  if (!tariff_id) {
+    redirect('/tariffs?message=select-tariff')
+  }
+
+  // Cargar la tarifa específica
+  const tariff = await getTariffById(tariff_id)
+
+  // Si la tarifa no existe o está inactiva, redirigir
+  if (!tariff) {
+    redirect('/tariffs?message=tariff-not-found')
+  }
+
+  if (tariff.status !== 'Activa') {
+    redirect('/tariffs?message=tariff-inactive')
   }
 
   return (
@@ -19,12 +33,12 @@ export default async function CreateBudgetPage() {
         <div className="mb-6">
           <h1 className="text-3xl font-bold tracking-tight">Crear Presupuesto</h1>
           <p className="text-muted-foreground">
-            Selecciona una tarifa y completa los datos del cliente
+            Presupuesto basado en la tarifa: <strong>{tariff.title}</strong>
           </p>
         </div>
 
         {/* Formulario */}
-        <BudgetForm activeTariffs={activeTariffs} />
+        <BudgetForm tariff={tariff} />
       </div>
     </div>
   )

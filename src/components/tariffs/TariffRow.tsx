@@ -106,14 +106,21 @@ export function TariffRow({ tariff, onStatusChange, onDelete }: TariffRowProps) 
 
         {/* Columna Presupuesto */}
         <TableCell>
-          <button
-            className="flex items-center gap-1 text-primary hover:text-primary/80 transition-colors"
-            onClick={() => console.log('Crear presupuesto con tarifa:', tariff.id)}
-            title="Crear presupuesto con esta tarifa"
-          >
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline text-sm">Crear</span>
-          </button>
+          {tariff.status === 'Activa' ? (
+            <Link
+              href={`/budgets/create?tariff_id=${tariff.id}`}
+              className="flex items-center gap-1 text-primary hover:text-primary/80 transition-colors"
+              title="Crear presupuesto con esta tarifa"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline text-sm">Crear</span>
+            </Link>
+          ) : (
+            <span className="flex items-center gap-1 text-muted-foreground" title="Solo se pueden crear presupuestos de tarifas activas">
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline text-sm">-</span>
+            </span>
+          )}
         </TableCell>
 
         {/* Columna Estado */}
