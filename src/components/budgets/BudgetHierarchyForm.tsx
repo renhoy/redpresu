@@ -546,13 +546,16 @@ export function BudgetHierarchyForm({
         {/* Línea 2: Controls - SOLO SI ES LA PARTIDA ACTIVA */}
         {isActive && (
           <div
-            className="flex items-center justify-between gap-4 text-xs px-4 py-2 border-t"
+            className="flex items-center justify-between gap-4 text-xs py-2 border border-t-0"
             style={{
               marginLeft: `${depth * 2}px`,
-              backgroundColor: '#f9fafb',
+              paddingLeft: '1.5rem',
+              paddingRight: '0.5rem',
+              backgroundColor: '#f3f4f6',
+              borderColor: '#d1d5db',
             }}
           >
-            {/* Unidad */}
+            {/* Unidad - alineada con el nombre */}
             <span className="font-mono">
               <strong>Unidad:</strong> {item.unit || 'ud'}
             </span>
@@ -568,9 +571,9 @@ export function BudgetHierarchyForm({
                 <strong>Cantidad:</strong>
               </span>
               <Button
-                variant="secondary"
+                variant="outline"
                 size="sm"
-                className="h-7 w-7 p-0"
+                className="h-7 w-7 p-0 bg-gray-200 border-gray-400 hover:bg-gray-300"
                 onClick={(e) => {
                   e.stopPropagation()
                   decrementQuantity(item.id, item.quantity || '0,00')
@@ -606,9 +609,9 @@ export function BudgetHierarchyForm({
               />
 
               <Button
-                variant="secondary"
+                variant="outline"
                 size="sm"
-                className="h-7 w-7 p-0"
+                className="h-7 w-7 p-0 bg-gray-200 border-gray-400 hover:bg-gray-300"
                 onClick={(e) => {
                   e.stopPropagation()
                   incrementQuantity(item.id, item.quantity || '0,00')
@@ -618,8 +621,8 @@ export function BudgetHierarchyForm({
               </Button>
             </div>
 
-            {/* Precio */}
-            <span className="font-mono font-bold">
+            {/* Precio - 20px más a la izquierda */}
+            <span className="font-mono font-bold mr-5">
               <strong>Precio:</strong> {formatCurrency(parseSpanishNumber(item.pvp || '0'))}
             </span>
           </div>
@@ -641,7 +644,7 @@ export function BudgetHierarchyForm({
         <CardContent className="p-4">
           <div className="space-y-2 text-right font-mono">
             <div className="flex justify-between">
-              <span>Base</span>
+              <span>Base Imponible</span>
               <span>{formatCurrency(totals.base)}</span>
             </div>
 
@@ -654,7 +657,7 @@ export function BudgetHierarchyForm({
 
             <div className="border-t pt-2 mt-2">
               <div className="flex justify-between font-bold text-lg">
-                <span>TOTAL PRESUPUESTO</span>
+                <span>Total Presupuesto</span>
                 <span>{formatCurrency(totals.total)}</span>
               </div>
             </div>
