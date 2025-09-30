@@ -24,7 +24,22 @@ import { formatCurrency, formatNumberES, parseNumber } from '@/lib/helpers/forma
 // Helpers de formato numérico
 const parseSpanishNumber = (value: string | number): number => {
   if (typeof value === 'number') return value
-  return parseNumber(value.toString(), 'es')
+
+  // Detectar si viene en formato inglés (punto) o español (coma)
+  const str = value.toString().trim()
+
+  // Si tiene punto Y coma, asumir formato español (punto=miles, coma=decimal)
+  if (str.includes('.') && str.includes(',')) {
+    return parseNumber(str, 'es')
+  }
+
+  // Si solo tiene coma, es formato español
+  if (str.includes(',')) {
+    return parseNumber(str, 'es')
+  }
+
+  // Si solo tiene punto o ninguno, parseFloat directo (formato inglés)
+  return parseFloat(str) || 0
 }
 
 const formatSpanishNumber = (value: number, decimals = 2): string => {
@@ -71,19 +86,24 @@ export function BudgetHierarchyForm({
   const [budgetData, setBudgetData] = useState<BudgetItem[]>([])
   const [totals, setTotals] = useState<Totals>({ base: 0, ivaGroups: [], total: 0 })
 
-  // Initialize budget data with quantities set to 0
-  useEffect(() => {
-    const initializeBudgetData = (items: BudgetItem[]): BudgetItem[] => {
-      return items.map(item => ({
-        ...item,
-        quantity: item.level === 'item' ? '0,00' : undefined,
-        amount: '0,00',
-        children: item.children ? initializeBudgetData(item.children) : undefined
-      }))
-    }
+  // ESTADO GLOBAL: activeItemId controla qué partida muestra controles
+  const [activeItemId, setActiveItemId] = useState<string | null>(null)
 
-    const initialBudgetData = initializeBudgetData(tariffData)
+  // Initialize budget data with quantities set to 0 (array plano)
+  useEffect(() => {
+    const initialBudgetData = tariffData.map(item => ({
+      ...item,
+      quantity: item.level === 'item' ? '0,00' : undefined,
+      amount: '0,00'
+    }))
+
     setBudgetData(initialBudgetData)
+
+    // Establecer primera partida como activa
+    const firstItem = initialBudgetData.find(i => i.level === 'item')
+    if (firstItem) {
+      setActiveItemId(firstItem.id)
+    }
   }, [tariffData])
 
   // Calculate totals whenever budget data changes
@@ -141,53 +161,51 @@ export function BudgetHierarchyForm({
 
   const updateItemQuantity = (itemId: string, newQuantity: string) => {
     setBudgetData(prevData => {
-      const updateData = (items: BudgetItem[]): BudgetItem[] => {
-        const updatedItems = items.map(item => {
-          if (item.id === itemId && item.level === 'item') {
-            // Parsear usando formato español
-            const quantity = parseSpanishNumber(newQuantity)
-            const pvp = parseSpanishNumber(item.pvp || '0')
-            // Cálculo: amount = quantity × pvp (ambos en formato numérico)
-            const amount = quantity * pvp
+      // 1. Actualizar cantidad y amount del item
+      const updatedData = prevData.map(item => {
+        if (item.id === itemId && item.level === 'item') {
+          const quantity = parseSpanishNumber(newQuantity)
+          const pvp = parseSpanishNumber(item.pvp || '0')
+          const amount = quantity * pvp
 
-            return {
-              ...item,
-              quantity: formatSpanishNumber(quantity),
-              amount: formatSpanishNumber(amount)
-            }
+          return {
+            ...item,
+            quantity: formatSpanishNumber(quantity),
+            amount: formatSpanishNumber(amount)
           }
+        }
+        return item
+      })
 
-          if (item.children) {
-            const updatedChildren = updateData(item.children)
+      // 2. Calcular totales de ancestros
+      // Crear mapa de totales por ID
+      const totalsMap = new Map<string, number>()
 
-            // Recalcular importe del padre sumando todos los hijos recursivamente
-            const calculateChildrenTotal = (children: BudgetItem[]): number => {
-              return children.reduce((sum, child) => {
-                if (child.level === 'item') {
-                  return sum + parseSpanishNumber(child.amount || '0')
-                } else if (child.children) {
-                  return sum + calculateChildrenTotal(child.children)
-                }
-                return sum
-              }, 0)
-            }
+      // Acumular amounts de items en sus ancestros
+      updatedData.forEach(item => {
+        if (item.level === 'item' && item.amount) {
+          const itemAmount = parseSpanishNumber(item.amount)
+          const idParts = item.id.split('.')
 
-            const childrenTotal = calculateChildrenTotal(updatedChildren)
-
-            return {
-              ...item,
-              children: updatedChildren,
-              amount: formatSpanishNumber(childrenTotal)
-            }
+          // Generar IDs de ancestros: "1.1.1.1" → ["1", "1.1", "1.1.1"]
+          for (let i = 1; i <= idParts.length - 1; i++) {
+            const ancestorId = idParts.slice(0, i).join('.')
+            const current = totalsMap.get(ancestorId) || 0
+            totalsMap.set(ancestorId, current + itemAmount)
           }
+        }
+      })
 
-          return item
-        })
-
-        return updatedItems
-      }
-
-      return updateData(prevData)
+      // 3. Aplicar totales calculados a chapters/subchapters/sections
+      return updatedData.map(item => {
+        if (item.level !== 'item' && totalsMap.has(item.id)) {
+          return {
+            ...item,
+            amount: formatSpanishNumber(totalsMap.get(item.id)!)
+          }
+        }
+        return item
+      })
     })
   }
 
@@ -203,9 +221,157 @@ export function BudgetHierarchyForm({
     updateItemQuantity(itemId, formatSpanishNumber(newQuantity))
   }
 
+  // FUNCIONES DE NAVEGACIÓN (inspiradas en ItemNavigation)
+
+  /**
+   * Obtener ruta de ancestros de un itemId
+   * "1.1.1.1" → ["1", "1.1", "1.1.1"]
+   */
+  const getAncestorsPath = (itemId: string): string[] => {
+    const parts = itemId.split('.')
+    const ancestors: string[] = []
+
+    for (let i = 1; i < parts.length; i++) {
+      ancestors.push(parts.slice(0, i).join('.'))
+    }
+
+    return ancestors
+  }
+
+  /**
+   * Obtener siguiente partida en el archivo JSON plano
+   * Wrap around al principio si es la última
+   */
+  const getNextItem = (currentId: string | null): string | null => {
+    const items = budgetData.filter(i => i.level === 'item')
+    if (items.length === 0) return null
+
+    if (!currentId) return items[0].id
+
+    const currentIdx = items.findIndex(i => i.id === currentId)
+    if (currentIdx === -1) return items[0].id
+
+    const nextIdx = (currentIdx + 1) % items.length
+    return items[nextIdx].id
+  }
+
+  /**
+   * Obtener partida anterior en el archivo JSON plano
+   * Wrap around al final si es la primera
+   */
+  const getPrevItem = (currentId: string | null): string | null => {
+    const items = budgetData.filter(i => i.level === 'item')
+    if (items.length === 0) return null
+
+    if (!currentId) return items[items.length - 1].id
+
+    const currentIdx = items.findIndex(i => i.id === currentId)
+    if (currentIdx === -1) return items[items.length - 1].id
+
+    const prevIdx = currentIdx === 0 ? items.length - 1 : currentIdx - 1
+    return items[prevIdx].id
+  }
+
+  /**
+   * Obtener primera partida descendiente de un contenedor
+   */
+  const getFirstItemInContainer = (containerId: string): string | null => {
+    const items = budgetData.filter(i => i.level === 'item')
+    const firstItem = items.find(i => i.id.startsWith(containerId + '.'))
+    return firstItem ? firstItem.id : null
+  }
+
+  /**
+   * Navegar a una partida específica
+   * type: 'specific' | 'firstInContainer' | 'next' | 'prev'
+   */
+  const navigateToItem = (type: 'specific' | 'firstInContainer' | 'next' | 'prev', targetId: string) => {
+    let newActiveId: string | null = null
+
+    switch(type) {
+      case 'specific':
+        // Click directo en partida
+        newActiveId = targetId
+        break
+
+      case 'firstInContainer':
+        // Click en chapter/subchapter/section → ir a primera partida descendiente
+        newActiveId = getFirstItemInContainer(targetId)
+        if (!newActiveId) {
+          // Si no hay partidas en este contenedor, ir a la primera general
+          const items = budgetData.filter(i => i.level === 'item')
+          newActiveId = items.length > 0 ? items[0].id : null
+        }
+        break
+
+      case 'next':
+        // Siguiente partida con wrap-around
+        newActiveId = getNextItem(activeItemId)
+        break
+
+      case 'prev':
+        // Partida anterior con wrap-around
+        newActiveId = getPrevItem(activeItemId)
+        break
+    }
+
+    if (newActiveId) {
+      setActiveItemId(newActiveId)
+    }
+  }
+
+  /**
+   * Verificar si un item debe estar expandido
+   * Solo si está en la ruta hacia activeItemId
+   */
+  const isInActivePath = (itemId: string): boolean => {
+    if (!activeItemId) return false
+
+    // Si es el item activo, está en la ruta
+    if (itemId === activeItemId) return true
+
+    // Si activeItemId es descendiente de itemId, está en la ruta
+    return activeItemId.startsWith(itemId + '.')
+  }
+
+  // Construir jerarquía desde array plano
+  const buildHierarchy = (items: BudgetItem[]): BudgetItem[] => {
+    const hierarchy: BudgetItem[] = []
+    const itemMap = new Map<string, BudgetItem>()
+
+    // Crear copias con children array
+    items.forEach(item => {
+      const itemWithChildren: BudgetItem = { ...item, children: [] }
+      itemMap.set(item.id, itemWithChildren)
+    })
+
+    // Construir jerarquía
+    items.forEach(item => {
+      const idParts = item.id.split('.')
+      const itemWithChildren = itemMap.get(item.id)!
+
+      if (idParts.length === 1) {
+        // Es un chapter (raíz)
+        hierarchy.push(itemWithChildren)
+      } else {
+        // Buscar el padre
+        const parentId = idParts.slice(0, -1).join('.')
+        const parent = itemMap.get(parentId)
+        if (parent) {
+          if (!parent.children) parent.children = []
+          parent.children.push(itemWithChildren)
+        }
+      }
+    })
+
+    return hierarchy
+  }
+
   const renderItem = (item: BudgetItem, depth: number = 0): React.ReactNode => {
     const hasChildren = item.children && item.children.length > 0
     const isItem = item.level === 'item'
+    const isActive = item.id === activeItemId
+    const shouldBeExpanded = isInActivePath(item.id)
 
     const getLevelStyles = () => {
       switch (item.level) {
@@ -230,9 +396,10 @@ export function BudgetHierarchyForm({
           }
         case 'item':
           return {
-            backgroundColor: '#f3f4f6',
+            backgroundColor: isActive ? '#dbeafe' : '#f3f4f6',
             color: '#111827',
-            borderColor: '#d1d5db',
+            borderColor: isActive ? '#3b82f6' : '#d1d5db',
+            borderWidth: isActive ? '2px' : '1px',
           }
         default:
           return {
@@ -256,9 +423,25 @@ export function BudgetHierarchyForm({
     if (hasChildren) {
       const styles = getLevelStyles()
 
+      const handleContainerClick = (e: React.MouseEvent) => {
+        e.preventDefault()
+
+        // Si está en la ruta activa (expandido), cerrarlo significa ir al siguiente
+        if (shouldBeExpanded) {
+          // Ir a la siguiente partida
+          navigateToItem('next', activeItemId || '')
+        } else {
+          // Si está cerrado, abrirlo significa ir a su primera partida
+          navigateToItem('firstInContainer', item.id)
+        }
+      }
+
       return (
         <AccordionItem key={item.id} value={item.id}>
-          <AccordionTrigger className="hover:no-underline">
+          <AccordionTrigger
+            className="hover:no-underline"
+            onClick={handleContainerClick}
+          >
             <div
               className="flex items-center justify-between p-3 border transition-all hover:brightness-95 w-full"
               style={{
@@ -275,7 +458,7 @@ export function BudgetHierarchyForm({
             </div>
           </AccordionTrigger>
           <AccordionContent className="pt-0">
-            <Accordion type="multiple">
+            <Accordion type="multiple" value={shouldBeExpanded ? item.children?.filter(c => isInActivePath(c.id)).map(c => c.id) : []}>
               {item.children?.map(child => renderItem(child, depth + 1))}
             </Accordion>
           </AccordionContent>
@@ -283,18 +466,29 @@ export function BudgetHierarchyForm({
       )
     }
 
-    // Render item level
+    // Render item level (partida)
     const styles = getLevelStyles()
+
+    const handleItemClick = () => {
+      // Si está activa, cerrarla significa ir a la siguiente
+      if (isActive) {
+        navigateToItem('next', item.id)
+      } else {
+        // Si está cerrada, abrirla
+        navigateToItem('specific', item.id)
+      }
+    }
 
     return (
       <div key={item.id} className="mb-1">
         {/* Item line 1: Name, Amount */}
         <div
-          className="flex items-center justify-between p-3 border transition-all hover:brightness-95"
+          className="flex items-center justify-between p-3 border transition-all hover:brightness-95 cursor-pointer"
           style={{
             paddingLeft: `${getPaddingLeft() + 12}px`,
             ...styles,
           }}
+          onClick={handleItemClick}
         >
           <div className="flex items-center gap-2 flex-1">
             <span className="font-medium">{item.name}</span>
@@ -303,7 +497,12 @@ export function BudgetHierarchyForm({
             {item.description && (
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-5 w-5 p-0 opacity-60 hover:opacity-100">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-5 w-5 p-0 opacity-60 hover:opacity-100"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <Info className="h-3 w-3" />
                   </Button>
                 </DialogTrigger>
@@ -323,85 +522,119 @@ export function BudgetHierarchyForm({
           </div>
         </div>
 
-        {/* Item line 2: Controls */}
-        <div
-          className="flex items-center gap-4 p-3 text-xs"
-          style={{
-            paddingLeft: `${getPaddingLeft() + 12}px`,
-            backgroundColor: '#f9fafb',
-            borderLeft: `4px solid ${styles.borderColor}`,
-            opacity: 0.9,
-          }}
-        >
-          {/* Unit info */}
-          <span className="text-sm text-muted-foreground">
-            Unidad: {item.unit || 'ud'}
-          </span>
+        {/* Item line 2: Controls - SOLO SI ES LA PARTIDA ACTIVA */}
+        {isActive && (
+          <div
+            className="flex items-center gap-4 p-3 text-xs"
+            style={{
+              paddingLeft: `${getPaddingLeft() + 12}px`,
+              backgroundColor: '#f0f9ff',
+              borderLeft: `4px solid ${styles.borderColor}`,
+            }}
+          >
+            {/* Unit info */}
+            <span className="text-sm text-muted-foreground">
+              Unidad: {item.unit || 'ud'}
+            </span>
 
-          {/* IVA info */}
-          <span className="text-sm text-muted-foreground">
-            %IVA: {formatSpanishNumber(parseSpanishNumber(item.iva_percentage || '0'))}
-          </span>
+            {/* IVA info */}
+            <span className="text-sm text-muted-foreground">
+              %IVA: {formatSpanishNumber(parseSpanishNumber(item.iva_percentage || '0'))}
+            </span>
 
-          {/* Quantity controls */}
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={() => decrementQuantity(item.id, item.quantity || '0,00')}
-            >
-              <Minus className="h-4 w-4" />
-            </Button>
+            {/* Quantity controls */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  decrementQuantity(item.id, item.quantity || '0,00')
+                }}
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
 
-            <Input
-              type="text"
-              value={item.quantity || '0,00'}
-              onChange={(e) => {
-                // Permitir solo números y coma
-                const value = e.target.value.replace(/[^0-9,]/g, '')
-                // Actualizar directamente sin formatear para permitir edición
-                setBudgetData(prevData => {
-                  const updateData = (items: BudgetItem[]): BudgetItem[] => {
-                    return items.map(i => {
+              <Input
+                type="text"
+                value={item.quantity || '0,00'}
+                onChange={(e) => {
+                  // Permitir solo números y coma
+                  const value = e.target.value.replace(/[^0-9,]/g, '')
+                  // Actualizar directamente sin formatear para permitir edición
+                  setBudgetData(prevData => {
+                    return prevData.map(i => {
                       if (i.id === item.id) {
                         return { ...i, quantity: value }
                       }
-                      if (i.children) {
-                        return { ...i, children: updateData(i.children) }
-                      }
                       return i
                     })
-                  }
-                  return updateData(prevData)
-                })
-              }}
-              onBlur={(e) => {
-                // Formatear al salir del input
-                const numericValue = parseSpanishNumber(e.target.value || '0')
-                const formattedValue = formatSpanishNumber(Math.max(0, numericValue))
-                updateItemQuantity(item.id, formattedValue)
-              }}
-              className="w-20 text-center h-8"
-            />
+                  })
+                }}
+                onBlur={(e) => {
+                  // Formatear al salir del input
+                  const numericValue = parseSpanishNumber(e.target.value || '0')
+                  const formattedValue = formatSpanishNumber(Math.max(0, numericValue))
+                  updateItemQuantity(item.id, formattedValue)
+                }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-20 text-center h-8"
+              />
 
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={() => incrementQuantity(item.id, item.quantity || '0,00')}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  incrementQuantity(item.id, item.quantity || '0,00')
+                }}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* PVP info */}
+            <span className="text-sm text-muted-foreground">
+              PVP: {formatCurrency(parseSpanishNumber(item.pvp || '0'))}
+            </span>
+
+            {/* Navigation buttons */}
+            <div className="flex items-center gap-2 ml-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  navigateToItem('prev', item.id)
+                }}
+              >
+                ← Anterior
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  navigateToItem('next', item.id)
+                }}
+              >
+                Siguiente →
+              </Button>
+            </div>
           </div>
-
-          {/* PVP info */}
-          <span className="text-sm text-muted-foreground">
-            PVP: {formatCurrency(parseSpanishNumber(item.pvp || '0'))}
-          </span>
-        </div>
+        )}
       </div>
     )
+  }
+
+  // Calcular qué accordions deben estar abiertos inicialmente
+  const getOpenAccordions = (): string[] => {
+    if (!activeItemId) return []
+    return getAncestorsPath(activeItemId)
   }
 
   return (
@@ -435,8 +668,8 @@ export function BudgetHierarchyForm({
       {/* Hierarchical Form */}
       <Card>
         <CardContent className="p-0">
-          <Accordion type="multiple" defaultValue={budgetData.map(item => item.id)}>
-            {budgetData.map(item => renderItem(item))}
+          <Accordion type="multiple" value={getOpenAccordions()}>
+            {buildHierarchy(budgetData).map(item => renderItem(item))}
           </Accordion>
         </CardContent>
       </Card>
