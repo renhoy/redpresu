@@ -334,6 +334,8 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
             <BudgetHierarchyForm
               tariffData={tariff.json_tariff_data as any[]}
               onBudgetDataChange={handleBudgetDataChange}
+              primaryColor={tariff.primary_color}
+              secondaryColor={tariff.secondary_color}
             />
           )}
 

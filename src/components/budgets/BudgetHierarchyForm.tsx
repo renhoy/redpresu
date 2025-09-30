@@ -37,6 +37,8 @@ interface BudgetItem {
 interface BudgetHierarchyFormProps {
   tariffData: BudgetItem[]
   onBudgetDataChange: (budgetData: BudgetItem[]) => void
+  primaryColor?: string
+  secondaryColor?: string
 }
 
 interface IVAGroup {
@@ -50,7 +52,12 @@ interface Totals {
   total: number
 }
 
-export function BudgetHierarchyForm({ tariffData, onBudgetDataChange }: BudgetHierarchyFormProps) {
+export function BudgetHierarchyForm({
+  tariffData,
+  onBudgetDataChange,
+  primaryColor = '#3b82f6',
+  secondaryColor = '#1e40af'
+}: BudgetHierarchyFormProps) {
   const [budgetData, setBudgetData] = useState<BudgetItem[]>([])
   const [totals, setTotals] = useState<Totals>({ base: 0, ivaGroups: [], total: 0 })
 
@@ -122,39 +129,56 @@ export function BudgetHierarchyForm({ tariffData, onBudgetDataChange }: BudgetHi
   }
 
   const updateItemQuantity = (itemId: string, newQuantity: string) => {
-    const updateData = (items: BudgetItem[]): BudgetItem[] => {
-      return items.map(item => {
-        if (item.id === itemId) {
-          const quantity = parseNumber(newQuantity)
-          const pvp = parseNumber(item.pvp || '0')
-          const amount = quantity * pvp
+    setBudgetData(prevData => {
+      const updateData = (items: BudgetItem[]): BudgetItem[] => {
+        let hasChanged = false
 
-          return {
-            ...item,
-            quantity: newQuantity,
-            amount: formatNumberES(amount)
+        const updatedItems = items.map(item => {
+          if (item.id === itemId && item.level === 'item') {
+            const quantity = parseNumber(newQuantity)
+            const pvp = parseNumber(item.pvp || '0')
+            const amount = quantity * pvp
+            hasChanged = true
+
+            return {
+              ...item,
+              quantity: formatNumberES(quantity),
+              amount: formatNumberES(amount)
+            }
           }
-        }
 
-        if (item.children) {
-          const updatedChildren = updateData(item.children)
-          // Recalculate parent amount as sum of children
-          const childrenTotal = updatedChildren
-            .filter(child => child.amount)
-            .reduce((sum, child) => sum + parseNumber(child.amount || '0'), 0)
+          if (item.children) {
+            const updatedChildren = updateData(item.children)
 
-          return {
-            ...item,
-            children: updatedChildren,
-            amount: formatNumberES(childrenTotal)
+            // Recalculate parent amount as sum of all item children (recursively)
+            const calculateChildrenTotal = (children: BudgetItem[]): number => {
+              return children.reduce((sum, child) => {
+                if (child.level === 'item') {
+                  return sum + parseNumber(child.amount || '0')
+                } else if (child.children) {
+                  return sum + calculateChildrenTotal(child.children)
+                }
+                return sum
+              }, 0)
+            }
+
+            const childrenTotal = calculateChildrenTotal(updatedChildren)
+
+            return {
+              ...item,
+              children: updatedChildren,
+              amount: formatNumberES(childrenTotal)
+            }
           }
-        }
 
-        return item
-      })
-    }
+          return item
+        })
 
-    setBudgetData(updateData(budgetData))
+        return updatedItems
+      }
+
+      return updateData(prevData)
+    })
   }
 
   const incrementQuantity = (itemId: string, currentQuantity: string) => {
@@ -190,24 +214,57 @@ export function BudgetHierarchyForm({ tariffData, onBudgetDataChange }: BudgetHi
     }
 
     const getLevelStyles = () => {
-      const baseClasses = "flex items-center justify-between p-3 border-b"
       switch (item.level) {
-        case 'chapter': return `${baseClasses} bg-primary/5 font-semibold text-lg`
-        case 'subchapter': return `${baseClasses} bg-secondary/5 font-medium text-base`
-        case 'section': return `${baseClasses} bg-muted/5 font-medium text-sm`
-        case 'item': return `${baseClasses} bg-background text-sm`
-        default: return baseClasses
+        case 'chapter':
+          return {
+            backgroundColor: secondaryColor,
+            color: 'white',
+            borderColor: secondaryColor,
+          }
+        case 'subchapter':
+          return {
+            backgroundColor: primaryColor,
+            color: 'white',
+            borderColor: primaryColor,
+            opacity: 0.9,
+          }
+        case 'section':
+          return {
+            backgroundColor: 'white',
+            color: secondaryColor,
+            borderColor: secondaryColor,
+          }
+        case 'item':
+          return {
+            backgroundColor: '#f3f4f6',
+            color: '#111827',
+            borderColor: '#d1d5db',
+          }
+        default:
+          return {
+            backgroundColor: '#fafafa',
+            color: '#374151',
+            borderColor: '#e5e7eb',
+          }
       }
     }
 
     if (hasChildren) {
+      const styles = getLevelStyles()
+
       return (
         <AccordionItem key={item.id} value={item.id}>
           <AccordionTrigger className="hover:no-underline">
-            <div className={getLevelStyles()}>
+            <div
+              className="flex items-center justify-between p-3 border transition-all hover:brightness-95"
+              style={{
+                marginLeft: `${depth * 16}px`,
+                ...styles,
+              }}
+            >
               <div className="flex items-center gap-2 flex-1">
                 <span className="text-lg">{getLevelIcon()}</span>
-                <span>{item.name}</span>
+                <span className="font-medium">{item.name}</span>
               </div>
               <div className="text-right font-mono">
                 {formatCurrency(item.amount || '0')}
@@ -215,7 +272,7 @@ export function BudgetHierarchyForm({ tariffData, onBudgetDataChange }: BudgetHi
             </div>
           </AccordionTrigger>
           <AccordionContent className="pt-0">
-            <Accordion type="multiple" className="ml-4">
+            <Accordion type="multiple">
               {item.children?.map(child => renderItem(child, depth + 1))}
             </Accordion>
           </AccordionContent>
@@ -224,13 +281,21 @@ export function BudgetHierarchyForm({ tariffData, onBudgetDataChange }: BudgetHi
     }
 
     // Render item level
+    const styles = getLevelStyles()
+
     return (
-      <div key={item.id} className="border-b">
+      <div key={item.id} className="mb-1">
         {/* Item line 1: Icon, Name, Amount */}
-        <div className={getLevelStyles()}>
+        <div
+          className="flex items-center justify-between p-3 border transition-all hover:brightness-95"
+          style={{
+            marginLeft: `${depth * 16}px`,
+            ...styles,
+          }}
+        >
           <div className="flex items-center gap-2 flex-1">
             <span className="text-lg">{getLevelIcon()}</span>
-            <span>{item.name}</span>
+            <span className="font-medium">{item.name}</span>
           </div>
           <div className="text-right font-mono">
             {formatCurrency(item.amount || '0')}
@@ -238,7 +303,15 @@ export function BudgetHierarchyForm({ tariffData, onBudgetDataChange }: BudgetHi
         </div>
 
         {/* Item line 2: Controls */}
-        <div className="flex items-center gap-4 p-3 bg-muted/2">
+        <div
+          className="flex items-center gap-4 p-3 text-xs"
+          style={{
+            marginLeft: `${depth * 16}px`,
+            backgroundColor: '#f9fafb',
+            borderLeft: `4px solid ${styles.borderColor}`,
+            opacity: 0.9,
+          }}
+        >
           {/* Info button */}
           <Dialog>
             <DialogTrigger asChild>
@@ -278,11 +351,22 @@ export function BudgetHierarchyForm({ tariffData, onBudgetDataChange }: BudgetHi
             </Button>
 
             <Input
-              type="number"
-              step="0.01"
-              min="0"
-              value={parseNumber(item.quantity || '0,00')}
-              onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+              type="text"
+              value={item.quantity || '0,00'}
+              onChange={(e) => {
+                // Allow typing but format on blur
+                const value = e.target.value
+                if (value === '' || /^[\d,]*\.?\d*$/.test(value)) {
+                  // Allow intermediate typing states
+                  updateItemQuantity(item.id, value)
+                }
+              }}
+              onBlur={(e) => {
+                // Format properly on blur
+                const numericValue = parseNumber(e.target.value)
+                const formattedValue = formatNumberES(Math.max(0, numericValue))
+                updateItemQuantity(item.id, formattedValue)
+              }}
               className="w-20 text-center h-8"
             />
 
