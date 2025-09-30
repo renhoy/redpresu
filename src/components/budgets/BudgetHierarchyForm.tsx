@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { ChevronDown, ChevronRight, Info, Minus, Plus } from 'lucide-react'
+import { Info, Minus, Plus } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,6 +20,16 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { formatCurrency, formatNumberES, parseNumber } from '@/lib/helpers/format'
+
+// Helpers de formato numérico
+const parseSpanishNumber = (value: string | number): number => {
+  if (typeof value === 'number') return value
+  return parseNumber(value.toString(), 'es')
+}
+
+const formatSpanishNumber = (value: number, decimals = 2): string => {
+  return formatNumberES(value, decimals)
+}
 
 interface BudgetItem {
   level: "chapter" | "subchapter" | "section" | "item"
@@ -90,15 +100,16 @@ export function BudgetHierarchyForm({
     const processItems = (items: BudgetItem[]) => {
       items.forEach(item => {
         if (item.level === 'item' && item.quantity && item.pvp && item.iva_percentage) {
-          const quantity = parseNumber(item.quantity)
-          const pvp = parseNumber(item.pvp)
-          const ivaPercentage = parseNumber(item.iva_percentage)
+          // Parsear valores usando formato español
+          const quantity = parseSpanishNumber(item.quantity)
+          const pvp = parseSpanishNumber(item.pvp)
+          const ivaPercentage = parseSpanishNumber(item.iva_percentage)
 
           if (quantity > 0) {
             const itemTotal = quantity * pvp
             totalAmount += itemTotal
 
-            // Calculate IVA amount using the formula: iva_amount = amount_item × (iva_% / (100 + iva_%))
+            // Fórmula IVA incluido: iva_amount = total × (% / (100 + %))
             const ivaAmount = itemTotal * (ivaPercentage / (100 + ivaPercentage))
 
             if (ivaAmount > 0) {
@@ -131,30 +142,29 @@ export function BudgetHierarchyForm({
   const updateItemQuantity = (itemId: string, newQuantity: string) => {
     setBudgetData(prevData => {
       const updateData = (items: BudgetItem[]): BudgetItem[] => {
-        let hasChanged = false
-
         const updatedItems = items.map(item => {
           if (item.id === itemId && item.level === 'item') {
-            const quantity = parseNumber(newQuantity)
-            const pvp = parseNumber(item.pvp || '0')
+            // Parsear usando formato español
+            const quantity = parseSpanishNumber(newQuantity)
+            const pvp = parseSpanishNumber(item.pvp || '0')
+            // Cálculo: amount = quantity × pvp (ambos en formato numérico)
             const amount = quantity * pvp
-            hasChanged = true
 
             return {
               ...item,
-              quantity: formatNumberES(quantity),
-              amount: formatNumberES(amount)
+              quantity: formatSpanishNumber(quantity),
+              amount: formatSpanishNumber(amount)
             }
           }
 
           if (item.children) {
             const updatedChildren = updateData(item.children)
 
-            // Recalculate parent amount as sum of all item children (recursively)
+            // Recalcular importe del padre sumando todos los hijos recursivamente
             const calculateChildrenTotal = (children: BudgetItem[]): number => {
               return children.reduce((sum, child) => {
                 if (child.level === 'item') {
-                  return sum + parseNumber(child.amount || '0')
+                  return sum + parseSpanishNumber(child.amount || '0')
                 } else if (child.children) {
                   return sum + calculateChildrenTotal(child.children)
                 }
@@ -167,7 +177,7 @@ export function BudgetHierarchyForm({
             return {
               ...item,
               children: updatedChildren,
-              amount: formatNumberES(childrenTotal)
+              amount: formatSpanishNumber(childrenTotal)
             }
           }
 
@@ -182,36 +192,20 @@ export function BudgetHierarchyForm({
   }
 
   const incrementQuantity = (itemId: string, currentQuantity: string) => {
-    const quantity = parseNumber(currentQuantity)
-    const newQuantity = formatNumberES(quantity + 1)
+    const quantity = parseSpanishNumber(currentQuantity)
+    const newQuantity = formatSpanishNumber(quantity + 1)
     updateItemQuantity(itemId, newQuantity)
   }
 
   const decrementQuantity = (itemId: string, currentQuantity: string) => {
-    const quantity = parseNumber(currentQuantity)
+    const quantity = parseSpanishNumber(currentQuantity)
     const newQuantity = Math.max(0, quantity - 1)
-    updateItemQuantity(itemId, formatNumberES(newQuantity))
-  }
-
-  const handleQuantityChange = (itemId: string, value: string) => {
-    // Allow typing, but validate on blur
-    const formattedValue = formatNumberES(parseNumber(value))
-    updateItemQuantity(itemId, formattedValue)
+    updateItemQuantity(itemId, formatSpanishNumber(newQuantity))
   }
 
   const renderItem = (item: BudgetItem, depth: number = 0): React.ReactNode => {
     const hasChildren = item.children && item.children.length > 0
     const isItem = item.level === 'item'
-
-    const getLevelIcon = () => {
-      switch (item.level) {
-        case 'chapter': return '📁'
-        case 'subchapter': return '📂'
-        case 'section': return '📄'
-        case 'item': return '📝'
-        default: return '📋'
-      }
-    }
 
     const getLevelStyles = () => {
       switch (item.level) {
@@ -249,6 +243,16 @@ export function BudgetHierarchyForm({
       }
     }
 
+    const getPaddingLeft = () => {
+      switch (item.level) {
+        case 'chapter': return 0
+        case 'subchapter': return 16
+        case 'section': return 32
+        case 'item': return 48
+        default: return 0
+      }
+    }
+
     if (hasChildren) {
       const styles = getLevelStyles()
 
@@ -256,18 +260,17 @@ export function BudgetHierarchyForm({
         <AccordionItem key={item.id} value={item.id}>
           <AccordionTrigger className="hover:no-underline">
             <div
-              className="flex items-center justify-between p-3 border transition-all hover:brightness-95"
+              className="flex items-center justify-between p-3 border transition-all hover:brightness-95 w-full"
               style={{
-                marginLeft: `${depth * 16}px`,
+                paddingLeft: `${getPaddingLeft() + 12}px`,
                 ...styles,
               }}
             >
               <div className="flex items-center gap-2 flex-1">
-                <span className="text-lg">{getLevelIcon()}</span>
                 <span className="font-medium">{item.name}</span>
               </div>
-              <div className="text-right font-mono">
-                {formatCurrency(item.amount || '0')}
+              <div className="text-right font-mono mr-2">
+                {formatCurrency(parseSpanishNumber(item.amount || '0'))}
               </div>
             </div>
           </AccordionTrigger>
@@ -285,20 +288,38 @@ export function BudgetHierarchyForm({
 
     return (
       <div key={item.id} className="mb-1">
-        {/* Item line 1: Icon, Name, Amount */}
+        {/* Item line 1: Name, Amount */}
         <div
           className="flex items-center justify-between p-3 border transition-all hover:brightness-95"
           style={{
-            marginLeft: `${depth * 16}px`,
+            paddingLeft: `${getPaddingLeft() + 12}px`,
             ...styles,
           }}
         >
           <div className="flex items-center gap-2 flex-1">
-            <span className="text-lg">{getLevelIcon()}</span>
             <span className="font-medium">{item.name}</span>
+
+            {/* Info button inline */}
+            {item.description && (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-5 w-5 p-0 opacity-60 hover:opacity-100">
+                    <Info className="h-3 w-3" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>{item.name}</DialogTitle>
+                    <DialogDescription>
+                      {item.description || 'Sin descripción disponible'}
+                    </DialogDescription>
+                  </DialogHeader>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
           <div className="text-right font-mono">
-            {formatCurrency(item.amount || '0')}
+            {formatCurrency(parseSpanishNumber(item.amount || '0'))}
           </div>
         </div>
 
@@ -306,29 +327,12 @@ export function BudgetHierarchyForm({
         <div
           className="flex items-center gap-4 p-3 text-xs"
           style={{
-            marginLeft: `${depth * 16}px`,
+            paddingLeft: `${getPaddingLeft() + 12}px`,
             backgroundColor: '#f9fafb',
             borderLeft: `4px solid ${styles.borderColor}`,
             opacity: 0.9,
           }}
         >
-          {/* Info button */}
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                <Info className="h-4 w-4" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{item.name}</DialogTitle>
-                <DialogDescription>
-                  {item.description || 'Sin descripción disponible'}
-                </DialogDescription>
-              </DialogHeader>
-            </DialogContent>
-          </Dialog>
-
           {/* Unit info */}
           <span className="text-sm text-muted-foreground">
             Unidad: {item.unit || 'ud'}
@@ -336,7 +340,7 @@ export function BudgetHierarchyForm({
 
           {/* IVA info */}
           <span className="text-sm text-muted-foreground">
-            %IVA: {formatNumberES(parseNumber(item.iva_percentage || '0'))}
+            %IVA: {formatSpanishNumber(parseSpanishNumber(item.iva_percentage || '0'))}
           </span>
 
           {/* Quantity controls */}
@@ -354,17 +358,28 @@ export function BudgetHierarchyForm({
               type="text"
               value={item.quantity || '0,00'}
               onChange={(e) => {
-                // Allow typing but format on blur
-                const value = e.target.value
-                if (value === '' || /^[\d,]*\.?\d*$/.test(value)) {
-                  // Allow intermediate typing states
-                  updateItemQuantity(item.id, value)
-                }
+                // Permitir solo números y coma
+                const value = e.target.value.replace(/[^0-9,]/g, '')
+                // Actualizar directamente sin formatear para permitir edición
+                setBudgetData(prevData => {
+                  const updateData = (items: BudgetItem[]): BudgetItem[] => {
+                    return items.map(i => {
+                      if (i.id === item.id) {
+                        return { ...i, quantity: value }
+                      }
+                      if (i.children) {
+                        return { ...i, children: updateData(i.children) }
+                      }
+                      return i
+                    })
+                  }
+                  return updateData(prevData)
+                })
               }}
               onBlur={(e) => {
-                // Format properly on blur
-                const numericValue = parseNumber(e.target.value)
-                const formattedValue = formatNumberES(Math.max(0, numericValue))
+                // Formatear al salir del input
+                const numericValue = parseSpanishNumber(e.target.value || '0')
+                const formattedValue = formatSpanishNumber(Math.max(0, numericValue))
                 updateItemQuantity(item.id, formattedValue)
               }}
               className="w-20 text-center h-8"
@@ -382,7 +397,7 @@ export function BudgetHierarchyForm({
 
           {/* PVP info */}
           <span className="text-sm text-muted-foreground">
-            PVP: {formatCurrency(item.pvp || '0')}
+            PVP: {formatCurrency(parseSpanishNumber(item.pvp || '0'))}
           </span>
         </div>
       </div>
@@ -402,7 +417,7 @@ export function BudgetHierarchyForm({
 
             {totals.ivaGroups.map(group => (
               <div key={group.percentage} className="flex justify-between">
-                <span>IVA {formatNumberES(group.percentage)}%</span>
+                <span>IVA {formatSpanishNumber(group.percentage)}%</span>
                 <span>{formatCurrency(group.amount)}</span>
               </div>
             ))}
