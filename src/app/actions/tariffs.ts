@@ -121,7 +121,7 @@ export async function getTariffs(
 }
 
 export async function toggleTariffStatus(
-  tariffId: number,
+  tariffId: string,
   currentStatus: 'Activa' | 'Inactiva'
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = supabaseAdmin
@@ -149,7 +149,7 @@ export async function toggleTariffStatus(
 }
 
 export async function deleteTariff(
-  tariffId: number
+  tariffId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = supabaseAdmin
 
@@ -193,7 +193,7 @@ export async function deleteTariff(
 }
 
 export async function getTariffById(
-  tariffId: number
+  tariffId: string
 ): Promise<Tariff | null> {
   const supabase = supabaseAdmin
 
@@ -213,7 +213,7 @@ export async function getTariffById(
 
 export async function createTariff(data: TariffFormData): Promise<{
   success: boolean
-  tariffId?: number
+  tariffId?: string
   error?: string
 }> {
   try {
@@ -300,7 +300,7 @@ export async function createTariff(data: TariffFormData): Promise<{
   }
 }
 
-export async function updateTariff(id: number, data: TariffFormData): Promise<{
+export async function updateTariff(id: string, data: TariffFormData): Promise<{
   success: boolean
   error?: string
 }> {

@@ -10,13 +10,11 @@ import {
   updateTariff,
   type TariffFormData,
 } from "@/app/actions/tariffs";
-import { Database } from "@/lib/types/database.types";
-
-type Tariff = Database["public"]["Tables"]["tariffs"]["Row"];
+import { Tariff } from "@/lib/types/database";
 
 interface TariffFormProps {
   mode: "create" | "edit";
-  tariffId?: number;
+  tariffId?: string;
   initialData?: Tariff;
 }
 
