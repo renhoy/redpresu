@@ -399,3 +399,170 @@ export async function getBudgetById(
     return null
   }
 }
+
+/**
+ * Obtener listado de presupuestos con filtros
+ */
+export async function getBudgets(filters?: {
+  status?: string
+  search?: string
+}): Promise<Budget[]> {
+  try {
+    console.log('[getBudgets] Obteniendo presupuestos con filtros:', filters)
+
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+    // Obtener usuario actual
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      console.error('[getBudgets] Error de autenticación:', authError)
+      return []
+    }
+
+    // Obtener empresa_id y rol del usuario
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('empresa_id, role')
+      .eq('id', user.id)
+      .single()
+
+    if (userError || !userData) {
+      console.error('[getBudgets] Error obteniendo usuario:', userError)
+      return []
+    }
+
+    console.log('[getBudgets] Usuario:', userData.role, 'Empresa:', userData.empresa_id)
+
+    // Construir query base con JOIN a tariffs
+    let query = supabase
+      .from('budgets')
+      .select(`
+        *,
+        tariffs (
+          title
+        )
+      `)
+
+    // Filtrar según rol
+    if (userData.role === 'vendedor') {
+      // Vendedor: solo sus presupuestos
+      query = query.eq('user_id', user.id)
+    } else if (userData.role === 'admin') {
+      // Admin: presupuestos de su empresa
+      query = query.eq('empresa_id', userData.empresa_id)
+    }
+    // Superadmin: todos (no filtrar)
+
+    // Aplicar filtro de estado
+    if (filters?.status && filters.status !== 'all') {
+      query = query.eq('status', filters.status)
+    }
+
+    // Aplicar filtro de búsqueda
+    if (filters?.search && filters.search.trim() !== '') {
+      const searchTerm = filters.search.trim()
+      query = query.or(`client_name.ilike.%${searchTerm}%,client_nif_nie.ilike.%${searchTerm}%`)
+    }
+
+    // Ordenar por fecha de creación descendente
+    query = query.order('created_at', { ascending: false })
+
+    const { data: budgets, error: budgetsError } = await query
+
+    if (budgetsError) {
+      console.error('[getBudgets] Error obteniendo presupuestos:', budgetsError)
+      return []
+    }
+
+    console.log('[getBudgets] Presupuestos encontrados:', budgets?.length || 0)
+    return (budgets || []) as Budget[]
+
+  } catch (error) {
+    console.error('[getBudgets] Error crítico:', error)
+    return []
+  }
+}
+
+/**
+ * Eliminar presupuesto
+ */
+export async function deleteBudget(budgetId: string): Promise<{
+  success: boolean
+  error?: string
+}> {
+  try {
+    console.log('[deleteBudget] Eliminando presupuesto:', budgetId)
+
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+    // Obtener usuario actual
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      console.error('[deleteBudget] Error de autenticación:', authError)
+      return { success: false, error: 'No autenticado' }
+    }
+
+    // Obtener presupuesto para verificar permisos
+    const { data: budget, error: budgetError } = await supabaseAdmin
+      .from('budgets')
+      .select('user_id, pdf_url, empresa_id')
+      .eq('id', budgetId)
+      .single()
+
+    if (budgetError || !budget) {
+      console.error('[deleteBudget] Presupuesto no encontrado:', budgetError)
+      return { success: false, error: 'Presupuesto no encontrado' }
+    }
+
+    // Verificar permisos
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('role, empresa_id')
+      .eq('id', user.id)
+      .single()
+
+    if (userError || !userData) {
+      console.error('[deleteBudget] Error obteniendo usuario:', userError)
+      return { success: false, error: 'Usuario no encontrado' }
+    }
+
+    // Validar permisos según rol
+    const canDelete =
+      budget.user_id === user.id || // Owner
+      (userData.role === 'admin' && budget.empresa_id === userData.empresa_id) || // Admin de la empresa
+      userData.role === 'superadmin' // Superadmin
+
+    if (!canDelete) {
+      console.error('[deleteBudget] Usuario no autorizado')
+      return { success: false, error: 'No tiene permisos para eliminar este presupuesto' }
+    }
+
+    // TODO: Si tiene PDF, eliminar archivo físico del sistema
+    // Esto se implementará cuando tengamos el módulo PDF Generation
+    if (budget.pdf_url) {
+      console.log('[deleteBudget] TODO: Eliminar PDF físico:', budget.pdf_url)
+    }
+
+    // Eliminar presupuesto
+    const { error: deleteError } = await supabaseAdmin
+      .from('budgets')
+      .delete()
+      .eq('id', budgetId)
+
+    if (deleteError) {
+      console.error('[deleteBudget] Error eliminando:', deleteError)
+      return { success: false, error: 'Error al eliminar presupuesto' }
+    }
+
+    console.log('[deleteBudget] Presupuesto eliminado exitosamente')
+    revalidatePath('/budgets')
+
+    return { success: true }
+
+  } catch (error) {
+    console.error('[deleteBudget] Error crítico:', error)
+    return { success: false, error: 'Error interno del servidor' }
+  }
+}

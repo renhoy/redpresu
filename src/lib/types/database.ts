@@ -110,6 +110,9 @@ export interface Budget {
   user_id: string
   created_at: string
   updated_at: string
+  tariffs?: {
+    title: string
+  }
 }
 
 export interface BudgetData {
