@@ -305,9 +305,9 @@ export async function updateBudgetDraft(
 }
 
 /**
- * Guardar como pendiente (botón Guardar)
+ * Guardar presupuesto (botón Guardar)
  */
-export async function saveBudgetAsPending(
+export async function saveBudget(
   budgetId: string,
   totals: { base: number; total: number },
   budgetData: BudgetDataItem[]
@@ -319,7 +319,7 @@ export async function saveBudgetAsPending(
     // Obtener usuario actual
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      console.error('[saveBudgetAsPending] Error de autenticación:', authError)
+      console.error('[saveBudget] Error de autenticación:', authError)
       return { success: false, error: 'No autenticado' }
     }
 
@@ -331,12 +331,12 @@ export async function saveBudgetAsPending(
       .single()
 
     if (budgetError || !budget) {
-      console.error('[saveBudgetAsPending] Budget no encontrado:', budgetError)
+      console.error('[saveBudget] Budget no encontrado:', budgetError)
       return { success: false, error: 'Presupuesto no encontrado' }
     }
 
     if (budget.user_id !== user.id) {
-      console.error('[saveBudgetAsPending] Usuario no autorizado')
+      console.error('[saveBudget] Usuario no autorizado')
       return { success: false, error: 'No autorizado' }
     }
 
@@ -365,11 +365,11 @@ export async function saveBudgetAsPending(
       endDate.setDate(endDate.getDate() + budget.validity_days)
     }
 
-    // Actualizar a pendiente con totales y budgetData actualizado
+    // Actualizar como borrador con totales y budgetData actualizado
     const { error: updateError } = await supabaseAdmin
       .from('budgets')
       .update({
-        status: BudgetStatus.PENDIENTE,
+        status: BudgetStatus.BORRADOR,
         total: totals.total,
         iva: iva,
         base: totals.base,
@@ -381,17 +381,95 @@ export async function saveBudgetAsPending(
       .eq('id', budgetId)
 
     if (updateError) {
-      console.error('[saveBudgetAsPending] Error actualizando:', updateError)
+      console.error('[saveBudget] Error actualizando:', updateError)
       return { success: false, error: 'Error al guardar presupuesto' }
     }
 
-    console.log('[saveBudgetAsPending] Presupuesto guardado como pendiente')
+    console.log('[saveBudget] Presupuesto guardado como borrador')
     revalidatePath('/budgets')
 
     return { success: true }
 
   } catch (error) {
-    console.error('[saveBudgetAsPending] Error crítico:', error)
+    console.error('[saveBudget] Error crítico:', error)
+    return { success: false, error: 'Error interno del servidor' }
+  }
+}
+
+/**
+ * Actualizar estado de presupuesto con validación de transiciones
+ */
+export async function updateBudgetStatus(
+  budgetId: string,
+  newStatus: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+    // Obtener usuario actual
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      console.error('[updateBudgetStatus] Error de autenticación:', authError)
+      return { success: false, error: 'No autenticado' }
+    }
+
+    // Obtener budget
+    const { data: budget, error: budgetError } = await supabaseAdmin
+      .from('budgets')
+      .select('*')
+      .eq('id', budgetId)
+      .single()
+
+    if (budgetError || !budget) {
+      console.error('[updateBudgetStatus] Budget no encontrado:', budgetError)
+      return { success: false, error: 'Presupuesto no encontrado' }
+    }
+
+    if (budget.user_id !== user.id) {
+      console.error('[updateBudgetStatus] Usuario no autorizado')
+      return { success: false, error: 'No autorizado' }
+    }
+
+    // Validar transición de estado
+    const currentStatus = budget.status
+    const validTransitions: Record<string, string[]> = {
+      [BudgetStatus.BORRADOR]: [BudgetStatus.PENDIENTE, BudgetStatus.ENVIADO],
+      [BudgetStatus.PENDIENTE]: [BudgetStatus.BORRADOR, BudgetStatus.ENVIADO],
+      [BudgetStatus.ENVIADO]: [BudgetStatus.PENDIENTE, BudgetStatus.APROBADO, BudgetStatus.RECHAZADO],
+      [BudgetStatus.APROBADO]: [BudgetStatus.BORRADOR],
+      [BudgetStatus.RECHAZADO]: [BudgetStatus.BORRADOR],
+      [BudgetStatus.CADUCADO]: [BudgetStatus.BORRADOR]
+    }
+
+    if (!validTransitions[currentStatus]?.includes(newStatus)) {
+      return {
+        success: false,
+        error: `No se puede cambiar de ${currentStatus} a ${newStatus}`
+      }
+    }
+
+    // Actualizar estado
+    const { error: updateError } = await supabaseAdmin
+      .from('budgets')
+      .update({
+        status: newStatus,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', budgetId)
+
+    if (updateError) {
+      console.error('[updateBudgetStatus] Error actualizando:', updateError)
+      return { success: false, error: 'Error al actualizar estado' }
+    }
+
+    console.log('[updateBudgetStatus] Estado actualizado:', currentStatus, '→', newStatus)
+    revalidatePath('/budgets')
+
+    return { success: true }
+
+  } catch (error) {
+    console.error('[updateBudgetStatus] Error crítico:', error)
     return { success: false, error: 'Error interno del servidor' }
   }
 }

@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox'
 import { ArrowLeft, ArrowRight, Trash2, Save, FileStack, Loader2, Check } from 'lucide-react'
 import { BudgetHierarchyForm } from './BudgetHierarchyForm'
-import { createDraftBudget, updateBudgetDraft, saveBudgetAsPending } from '@/app/actions/budgets'
+import { createDraftBudget, updateBudgetDraft, saveBudget } from '@/app/actions/budgets'
 import { toast } from 'sonner'
 
 interface BudgetFormProps {
@@ -226,8 +226,8 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
         // Usar el budgetId recién creado
         const newBudgetId = createResult.budgetId
 
-        // Guardar como pendiente
-        const result = await saveBudgetAsPending(newBudgetId, totals, budgetData)
+        // Guardar como borrador
+        const result = await saveBudget(newBudgetId, totals, budgetData)
 
         if (result.success) {
           toast.success('Presupuesto guardado correctamente')
@@ -238,7 +238,7 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
         }
       } else {
         // Si ya existe, solo actualizar
-        const result = await saveBudgetAsPending(budgetId, totals, budgetData)
+        const result = await saveBudget(budgetId, totals, budgetData)
 
         if (result.success) {
           toast.success('Presupuesto guardado correctamente')

@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Pencil, Trash2, FileStack } from 'lucide-react'
-import { deleteBudget } from '@/app/actions/budgets'
+import { deleteBudget, updateBudgetStatus } from '@/app/actions/budgets'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 
@@ -87,6 +87,39 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
       return (budget.users as { name: string }).name
     }
     return 'N/A'
+  }
+
+  // Transiciones válidas de estado
+  const getValidTransitions = (currentStatus: string): string[] => {
+    const transitions: Record<string, string[]> = {
+      'borrador': ['pendiente', 'enviado'],
+      'pendiente': ['borrador', 'enviado'],
+      'enviado': ['pendiente', 'aprobado', 'rechazado'],
+      'aprobado': ['borrador'],
+      'rechazado': ['borrador'],
+      'caducado': ['borrador']
+    }
+    return transitions[currentStatus] || []
+  }
+
+  const handleStatusChange = async (budgetId: string, currentStatus: string, newStatus: string, clientName: string) => {
+    // Confirmar cambios críticos
+    const criticalTransitions = ['aprobado', 'rechazado']
+    if (criticalTransitions.includes(newStatus)) {
+      const action = newStatus === 'aprobado' ? 'aprobar' : 'rechazar'
+      if (!confirm(`¿Estás seguro de ${action} el presupuesto de ${clientName}?`)) {
+        return
+      }
+    }
+
+    const result = await updateBudgetStatus(budgetId, newStatus)
+
+    if (result.success) {
+      toast.success(`Estado actualizado a ${newStatus}`)
+      router.refresh()
+    } else {
+      toast.error(result.error || 'Error al actualizar estado')
+    }
   }
 
   return (
@@ -192,9 +225,32 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                     </td>
 
                     <td className="p-4">
-                      <Badge className={statusColors[budget.status as keyof typeof statusColors]}>
-                        {budget.status}
-                      </Badge>
+                      <Select
+                        value={budget.status}
+                        onValueChange={(newStatus) => handleStatusChange(budget.id, budget.status, newStatus, budget.client_name)}
+                      >
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue>
+                            <Badge className={statusColors[budget.status as keyof typeof statusColors]}>
+                              {budget.status}
+                            </Badge>
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={budget.status}>
+                            <Badge className={statusColors[budget.status as keyof typeof statusColors]}>
+                              {budget.status}
+                            </Badge>
+                          </SelectItem>
+                          {getValidTransitions(budget.status).map((status) => (
+                            <SelectItem key={status} value={status}>
+                              <Badge className={statusColors[status as keyof typeof statusColors]}>
+                                {status}
+                              </Badge>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </td>
 
                     <td className="p-4 text-sm text-muted-foreground">
