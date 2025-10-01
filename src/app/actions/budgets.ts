@@ -334,9 +334,15 @@ export async function saveBudgetAsPending(
 
     // Validar que hay al menos una partida con cantidad > 0
     const budgetData = budget.json_budget_data as BudgetDataItem[]
-    const hasItems = budgetData.some(
-      item => item.level === 'item' && parseFloat(item.quantity || '0') > 0
-    )
+    const hasItems = budgetData.some(item => {
+      if (item.level !== 'item') return false
+
+      // Parsear cantidad manejando formato español (coma como decimal)
+      const quantityStr = (item.quantity || '0').toString()
+      const quantity = parseFloat(quantityStr.replace(',', '.'))
+
+      return quantity > 0
+    })
 
     if (!hasItems) {
       return { success: false, error: 'Debe incluir al menos un elemento con cantidad' }

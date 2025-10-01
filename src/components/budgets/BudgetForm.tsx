@@ -207,9 +207,16 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
 
   const handleSaveBudget = async () => {
     // Validar al menos una partida con cantidad > 0
-    const hasItems = budgetData.some(
-      item => item.level === 'item' && parseFloat(item.quantity || '0') > 0
-    )
+    const hasItems = budgetData.some((item: unknown) => {
+      const budgetItem = item as { level?: string; quantity?: string }
+      if (budgetItem.level !== 'item') return false
+
+      // Parsear cantidad en formato español (con coma)
+      const quantityStr = budgetItem.quantity || '0'
+      const quantity = parseFloat(quantityStr.replace(',', '.'))
+
+      return quantity > 0
+    })
 
     if (!hasItems) {
       toast.error('Debe incluir al menos un elemento en el presupuesto')
