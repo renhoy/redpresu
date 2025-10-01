@@ -39,6 +39,7 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
   const [budgetData, setBudgetData] = useState<any[]>([])
   const [budgetId, setBudgetId] = useState<string | null>(existingBudget?.id || null)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
+  const [totals, setTotals] = useState<{ base: number; total: number }>({ base: 0, total: 0 })
   const [clientData, setClientData] = useState<ClientData>({
     client_type: existingBudget?.client_type as any || 'empresa',
     client_name: existingBudget?.client_name || '',
@@ -136,7 +137,7 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
       try {
         if (budgetId) {
           // Actualizar borrador existente
-          const result = await updateBudgetDraft(budgetId, { budgetData })
+          const result = await updateBudgetDraft(budgetId, { budgetData, totals })
           if (result.success) {
             setSaveStatus('saved')
             setTimeout(() => setSaveStatus('idle'), 2000)
@@ -152,7 +153,7 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
     }, 1500)
 
     return () => clearTimeout(timer)
-  }, [budgetData, budgetId])
+  }, [budgetData, budgetId, totals])
 
   const handleStep1Continue = async () => {
     if (validateStep1()) {
@@ -163,7 +164,8 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
           tariffId: tariff.id,
           clientData: clientData as any,
           tariffData: tariff.json_tariff_data as any[],
-          validity: tariff.validity
+          validity: tariff.validity,
+          totals: { base: 0, total: 0 }
         })
 
         if (result.success && result.budgetId) {
@@ -181,7 +183,8 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
         // Si ya existe, solo actualizar datos cliente y pasar a paso 2
         await updateBudgetDraft(budgetId, {
           clientData: clientData as any,
-          budgetData
+          budgetData,
+          totals
         })
         setCurrentStep(2)
       }
@@ -219,7 +222,7 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
     }
 
     setSaveStatus('saving')
-    const result = await saveBudgetAsPending(budgetId)
+    const result = await saveBudgetAsPending(budgetId, totals)
 
     if (result.success) {
       toast.success('Presupuesto guardado correctamente')
@@ -622,6 +625,7 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
               <BudgetHierarchyForm
                 tariffData={tariff.json_tariff_data as any[]}
                 onBudgetDataChange={handleBudgetDataChange}
+                onTotalsChange={setTotals}
                 primaryColor={tariff.primary_color}
                 secondaryColor={tariff.secondary_color}
               />

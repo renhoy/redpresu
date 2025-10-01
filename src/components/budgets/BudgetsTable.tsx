@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Eye, Pencil, Trash2, FileStack } from 'lucide-react'
 import { deleteBudget } from '@/app/actions/budgets'
 import { toast } from 'sonner'
@@ -163,7 +164,31 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                     </td>
 
                     <td className="p-4 text-right font-mono">
-                      {formatCurrency(budget.total || 0)}
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="cursor-help">
+                              {formatCurrency(budget.total || 0)}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent className="text-sm">
+                            <div className="space-y-1">
+                              <div className="flex justify-between gap-4">
+                                <span className="text-muted-foreground">Base Imponible:</span>
+                                <span className="font-medium">{formatCurrency(budget.base || 0)}</span>
+                              </div>
+                              <div className="flex justify-between gap-4">
+                                <span className="text-muted-foreground">IVA:</span>
+                                <span className="font-medium">{formatCurrency(budget.iva || 0)}</span>
+                              </div>
+                              <div className="flex justify-between gap-4 border-t pt-1">
+                                <span className="font-semibold">Total:</span>
+                                <span className="font-semibold">{formatCurrency(budget.total || 0)}</span>
+                              </div>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </td>
 
                     <td className="p-4">

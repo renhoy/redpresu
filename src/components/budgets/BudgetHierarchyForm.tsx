@@ -62,6 +62,7 @@ interface BudgetItem {
 interface BudgetHierarchyFormProps {
   tariffData: BudgetItem[]
   onBudgetDataChange: (budgetData: BudgetItem[]) => void
+  onTotalsChange?: (totals: { base: number; total: number }) => void
   primaryColor?: string
   secondaryColor?: string
 }
@@ -80,6 +81,7 @@ interface Totals {
 export function BudgetHierarchyForm({
   tariffData,
   onBudgetDataChange,
+  onTotalsChange,
   primaryColor = '#3b82f6',
   secondaryColor = '#1e40af'
 }: BudgetHierarchyFormProps) {
@@ -111,7 +113,15 @@ export function BudgetHierarchyForm({
     const newTotals = calculateTotals(budgetData)
     setTotals(newTotals)
     onBudgetDataChange(budgetData)
-  }, [budgetData, onBudgetDataChange])
+
+    // Notificar totals al padre
+    if (onTotalsChange) {
+      onTotalsChange({
+        base: newTotals.base,
+        total: newTotals.total
+      })
+    }
+  }, [budgetData, onBudgetDataChange, onTotalsChange])
 
   const calculateTotals = (items: BudgetItem[]): Totals => {
     let totalAmount = 0

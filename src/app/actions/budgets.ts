@@ -114,6 +114,7 @@ export async function createDraftBudget(data: {
   clientData: ClientData
   tariffData: any[]
   validity: number | null
+  totals: { base: number; total: number }
 }): Promise<{ success: boolean; budgetId?: string; error?: string }> {
   try {
     console.log('[createDraftBudget] Creando borrador...')
@@ -140,6 +141,9 @@ export async function createDraftBudget(data: {
       return { success: false, error: 'Usuario sin empresa asignada' }
     }
 
+    // Calcular IVA
+    const iva = data.totals.total - data.totals.base
+
     // Crear borrador
     const { data: budget, error: insertError } = await supabaseAdmin
       .from('budgets')
@@ -161,9 +165,9 @@ export async function createDraftBudget(data: {
         client_province: data.clientData.client_province,
         client_acceptance: data.clientData.client_acceptance,
         status: BudgetStatus.BORRADOR,
-        total: 0,
-        iva: 0,
-        base: 0,
+        total: data.totals.total,
+        iva: iva,
+        base: data.totals.base,
         validity_days: data.validity,
         start_date: null,
         end_date: null
@@ -195,6 +199,7 @@ export async function updateBudgetDraft(
   data: {
     clientData?: ClientData
     budgetData: any[]
+    totals?: { base: number; total: number }
   }
 ): Promise<{ success: boolean; error?: string }> {
   try {
@@ -233,16 +238,18 @@ export async function updateBudgetDraft(
       return { success: false, error: 'Solo se pueden actualizar borradores' }
     }
 
-    // Calcular totales
-    const totals = calculateBudgetTotals(data.budgetData)
-
     // Preparar datos a actualizar
     const updateData: any = {
       json_budget_data: data.budgetData,
-      total: totals.total,
-      iva: totals.iva,
-      base: totals.base,
       updated_at: new Date().toISOString()
+    }
+
+    // Si se proporcionan totals, actualizar también
+    if (data.totals) {
+      const iva = data.totals.total - data.totals.base
+      updateData.total = data.totals.total
+      updateData.iva = iva
+      updateData.base = data.totals.base
     }
 
     // Si hay clientData, actualizar también
@@ -284,7 +291,8 @@ export async function updateBudgetDraft(
  * Guardar como pendiente (botón Guardar)
  */
 export async function saveBudgetAsPending(
-  budgetId: string
+  budgetId: string,
+  totals: { base: number; total: number }
 ): Promise<{ success: boolean; error?: string }> {
   try {
     console.log('[saveBudgetAsPending] Guardando como pendiente:', budgetId)
@@ -326,6 +334,9 @@ export async function saveBudgetAsPending(
       return { success: false, error: 'Debe incluir al menos un elemento con cantidad' }
     }
 
+    // Calcular IVA
+    const iva = totals.total - totals.base
+
     // Calcular fechas
     const startDate = new Date()
     const endDate = new Date(startDate)
@@ -333,11 +344,14 @@ export async function saveBudgetAsPending(
       endDate.setDate(endDate.getDate() + budget.validity_days)
     }
 
-    // Actualizar a pendiente
+    // Actualizar a pendiente con totales
     const { error: updateError } = await supabaseAdmin
       .from('budgets')
       .update({
         status: BudgetStatus.PENDIENTE,
+        total: totals.total,
+        iva: iva,
+        base: totals.base,
         start_date: startDate.toISOString(),
         end_date: budget.validity_days ? endDate.toISOString() : null,
         updated_at: new Date().toISOString()
