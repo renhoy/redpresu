@@ -324,13 +324,10 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                 {tariff.nif || 'NIF no especificado'}
               </p>
               <p className="text-sm text-muted-foreground">
-                {tariff.address ? `${tariff.address}, ${tariff.postal_code} ${tariff.locality}, ${tariff.province}` : 'Dirección no especificada'}
+                {tariff.address || 'Dirección no especificada'}
               </p>
               <p className="text-sm text-muted-foreground">
-                {[
-                  tariff.phone && `Tel: ${tariff.phone}`,
-                  tariff.email && `Email: ${tariff.email}`
-                ].filter(Boolean).join(' | ')}
+                {tariff.contact || 'Contacto no especificado'}
               </p>
             </div>
           </div>
@@ -617,11 +614,11 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                 <p className="text-sm text-destructive">{errors.client_acceptance}</p>
               )}
 
-              {/* Notas legales */}
-              {tariff.legal_notes && (
+              {/* Nota legal */}
+              {tariff.legal_note && (
                 <div className="pt-4 border-t">
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    {tariff.legal_notes}
+                    {tariff.legal_note}
                   </p>
                 </div>
               )}
