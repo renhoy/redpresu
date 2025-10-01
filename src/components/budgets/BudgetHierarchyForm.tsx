@@ -127,12 +127,19 @@ export function BudgetHierarchyForm({
     if (currentBudgetDataStr !== prevBudgetDataRef.current) {
       prevBudgetDataRef.current = currentBudgetDataStr
 
+      console.log('[BudgetHierarchyForm useEffect] budgetData cambió, notificando al padre')
+      console.log('[BudgetHierarchyForm useEffect] Número de items:', budgetData.length)
+      console.log('[BudgetHierarchyForm useEffect] Items con level=item:', budgetData.filter(i => i.level === 'item').length)
+
       const newTotals = calculateTotals(budgetData)
       setTotals(newTotals)
+
+      console.log('[BudgetHierarchyForm useEffect] Llamando onBudgetDataChange con', budgetData.length, 'elementos')
       onBudgetDataChange(budgetData)
 
       // Notificar totals al padre
       if (onTotalsChange) {
+        console.log('[BudgetHierarchyForm useEffect] Totales:', newTotals)
         onTotalsChange({
           base: newTotals.base,
           total: newTotals.total
@@ -188,6 +195,8 @@ export function BudgetHierarchyForm({
   }
 
   const updateItemQuantity = (itemId: string, newQuantity: string) => {
+    console.log(`[updateItemQuantity] Actualizando item ${itemId} con cantidad: "${newQuantity}"`)
+
     setBudgetData(prevData => {
       // 1. Actualizar cantidad y amount del item
       const updatedData = prevData.map(item => {
@@ -195,6 +204,8 @@ export function BudgetHierarchyForm({
           const quantity = parseSpanishNumber(newQuantity)
           const pvp = parseSpanishNumber(item.pvp || '0')
           const amount = quantity * pvp
+
+          console.log(`[updateItemQuantity] Item ${itemId}: quantity=${quantity}, pvp=${pvp}, amount=${amount}`)
 
           return {
             ...item,

@@ -192,6 +192,7 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
   }
 
   const handleBudgetDataChange = (newBudgetData: unknown[]) => {
+    console.log('[BudgetForm handleBudgetDataChange] Recibiendo nuevos datos:', newBudgetData.length, 'elementos')
     setBudgetData(newBudgetData)
   }
 
