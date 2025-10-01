@@ -1,19 +1,22 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Tariff } from '@/lib/types/database'
+import { Tariff, Budget } from '@/lib/types/database'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import { ArrowLeft, ArrowRight, Trash2, Save, FileStack } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Trash2, Save, FileStack, Loader2, Check } from 'lucide-react'
 import { BudgetHierarchyForm } from './BudgetHierarchyForm'
+import { createDraftBudget, updateBudgetDraft, saveBudgetAsPending } from '@/app/actions/budgets'
+import { toast } from 'sonner'
 
 interface BudgetFormProps {
   tariff: Tariff
+  existingBudget?: Budget | null
 }
 
 interface ClientData {
@@ -30,24 +33,37 @@ interface ClientData {
   client_acceptance: boolean
 }
 
-export function BudgetForm({ tariff }: BudgetFormProps) {
+export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
   const [budgetData, setBudgetData] = useState<any[]>([])
+  const [budgetId, setBudgetId] = useState<string | null>(existingBudget?.id || null)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [clientData, setClientData] = useState<ClientData>({
-    client_type: 'empresa',
-    client_name: '',
-    client_nif_nie: '',
-    client_phone: '',
-    client_email: '',
-    client_web: '',
-    client_address: '',
-    client_postal_code: '',
-    client_locality: '',
-    client_province: '',
-    client_acceptance: false
+    client_type: existingBudget?.client_type as any || 'empresa',
+    client_name: existingBudget?.client_name || '',
+    client_nif_nie: existingBudget?.client_nif_nie || '',
+    client_phone: existingBudget?.client_phone || '',
+    client_email: existingBudget?.client_email || '',
+    client_web: existingBudget?.client_web || '',
+    client_address: existingBudget?.client_address || '',
+    client_postal_code: existingBudget?.client_postal_code || '',
+    client_locality: existingBudget?.client_locality || '',
+    client_province: existingBudget?.client_province || '',
+    client_acceptance: existingBudget?.client_acceptance || false
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const isInitialMount = useRef(true)
+
+  // Cargar budgetData del borrador existente
+  useEffect(() => {
+    if (existingBudget?.json_budget_data) {
+      setBudgetData(existingBudget.json_budget_data as any[])
+      if (existingBudget.json_budget_data.length > 0) {
+        setCurrentStep(2) // Si ya tiene datos, mostrar paso 2
+      }
+    }
+  }, [existingBudget])
 
 
 
@@ -103,9 +119,72 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleStep1Continue = () => {
+  // Auto-guardado con debounce al cambiar budgetData
+  useEffect(() => {
+    // Skip en el primer mount
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+      return
+    }
+
+    // Solo auto-guardar si hay datos
+    if (budgetData.length === 0) return
+
+    const timer = setTimeout(async () => {
+      setSaveStatus('saving')
+
+      try {
+        if (budgetId) {
+          // Actualizar borrador existente
+          const result = await updateBudgetDraft(budgetId, { budgetData })
+          if (result.success) {
+            setSaveStatus('saved')
+            setTimeout(() => setSaveStatus('idle'), 2000)
+          } else {
+            console.error('Error auto-guardando:', result.error)
+            setSaveStatus('idle')
+          }
+        }
+      } catch (error) {
+        console.error('Error en auto-guardado:', error)
+        setSaveStatus('idle')
+      }
+    }, 1500)
+
+    return () => clearTimeout(timer)
+  }, [budgetData, budgetId])
+
+  const handleStep1Continue = async () => {
     if (validateStep1()) {
-      setCurrentStep(2)
+      // Si no hay budgetId, crear borrador
+      if (!budgetId) {
+        setSaveStatus('saving')
+        const result = await createDraftBudget({
+          tariffId: tariff.id,
+          clientData: clientData as any,
+          tariffData: tariff.json_tariff_data as any[],
+          validity: tariff.validity
+        })
+
+        if (result.success && result.budgetId) {
+          setBudgetId(result.budgetId)
+          // Actualizar URL sin reload
+          router.replace(`/budgets/create?tariff_id=${tariff.id}&budget_id=${result.budgetId}`)
+          setSaveStatus('saved')
+          setTimeout(() => setSaveStatus('idle'), 2000)
+          setCurrentStep(2)
+        } else {
+          toast.error(result.error || 'Error al crear borrador')
+          setSaveStatus('idle')
+        }
+      } else {
+        // Si ya existe, solo actualizar datos cliente y pasar a paso 2
+        await updateBudgetDraft(budgetId, {
+          clientData: clientData as any,
+          budgetData
+        })
+        setCurrentStep(2)
+      }
     }
   }
 
@@ -123,24 +202,37 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
     }
   }
 
-  const handleSaveBudget = () => {
-    // TODO: Implementar guardado del presupuesto
-    console.log('Guardando presupuesto:', {
-      tariffId: tariff.id,
-      clientData,
-      budgetData
-    })
-    alert('Próxima tarea: Guardar presupuesto en base de datos')
+  const handleSaveBudget = async () => {
+    // Validar al menos una partida con cantidad > 0
+    const hasItems = budgetData.some(
+      item => item.level === 'item' && parseFloat(item.quantity || '0') > 0
+    )
+
+    if (!hasItems) {
+      toast.error('Debe incluir al menos un elemento en el presupuesto')
+      return
+    }
+
+    if (!budgetId) {
+      toast.error('Error: presupuesto no inicializado')
+      return
+    }
+
+    setSaveStatus('saving')
+    const result = await saveBudgetAsPending(budgetId)
+
+    if (result.success) {
+      toast.success('Presupuesto guardado correctamente')
+      router.push('/budgets')
+    } else {
+      toast.error(result.error || 'Error al guardar el presupuesto')
+      setSaveStatus('idle')
+    }
   }
 
   const handleGeneratePDF = () => {
     // TODO: Implementar generación de PDF
-    console.log('Generando PDF del presupuesto:', {
-      tariffId: tariff.id,
-      clientData,
-      budgetData
-    })
-    alert('Próxima tarea: Generar PDF del presupuesto')
+    toast.info('Generación de PDF próximamente')
   }
 
   const handleClientDataChange = (field: keyof ClientData, value: string | boolean) => {
@@ -156,7 +248,26 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto relative">
+      {/* Indicador de guardado */}
+      {saveStatus !== 'idle' && (
+        <div className="fixed top-4 right-4 z-50">
+          <div className="bg-white border rounded-lg px-4 py-2 shadow-lg flex items-center gap-2">
+            {saveStatus === 'saving' ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm text-muted-foreground">Guardando...</span>
+              </>
+            ) : (
+              <>
+                <Check className="h-4 w-4 text-green-600" />
+                <span className="text-sm text-green-600">Guardado</span>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Company Header */}
       <Card className="mb-6">
         <CardContent className="py-3 px-6">

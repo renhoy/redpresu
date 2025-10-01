@@ -3,7 +3,22 @@
 import { cookies } from 'next/headers'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { Tariff } from '@/lib/types/database'
+import { Tariff, Budget, BudgetStatus } from '@/lib/types/database'
+import { revalidatePath } from 'next/cache'
+
+interface ClientData {
+  client_type: 'particular' | 'autonomo' | 'empresa'
+  client_name: string
+  client_nif_nie: string
+  client_phone: string
+  client_email: string
+  client_web?: string
+  client_address: string
+  client_postal_code: string
+  client_locality: string
+  client_province: string
+  client_acceptance: boolean
+}
 
 /**
  * Obtiene las tarifas activas de la empresa del usuario actual
@@ -59,17 +74,328 @@ export async function getActiveTariffs(): Promise<Tariff[]> {
 }
 
 /**
- * Placeholder para crear presupuesto (próxima tarea)
+ * Helper: Calcular totales desde json_budget_data
  */
-export async function createBudget(budgetData: unknown): Promise<{
-  success: boolean
-  budgetId?: string
-  error?: string
-}> {
-  // TODO: Implementar en próxima tarea
-  console.log('[createBudget] Placeholder - datos recibidos:', budgetData)
+function calculateBudgetTotals(budgetData: any[]): {
+  total: number
+  iva: number
+  base: number
+} {
+  let base = 0
+  let totalIva = 0
+
+  budgetData.forEach(item => {
+    if (item.level === 'item') {
+      const quantity = parseFloat(item.quantity || '0')
+      const price = parseFloat(item.price || '0')
+      const ivaPercentage = parseFloat(item.iva_percentage || '0')
+
+      const itemTotal = quantity * price
+      const itemIva = itemTotal * (ivaPercentage / (100 + ivaPercentage))
+      const itemBase = itemTotal - itemIva
+
+      base += itemBase
+      totalIva += itemIva
+    }
+  })
+
   return {
-    success: false,
-    error: 'Función no implementada - próxima tarea'
+    base: Math.round(base * 100) / 100,
+    iva: Math.round(totalIva * 100) / 100,
+    total: Math.round((base + totalIva) * 100) / 100
+  }
+}
+
+/**
+ * Crear borrador inicial (al completar paso 1)
+ */
+export async function createDraftBudget(data: {
+  tariffId: string
+  clientData: ClientData
+  tariffData: any[]
+  validity: number | null
+}): Promise<{ success: boolean; budgetId?: string; error?: string }> {
+  try {
+    console.log('[createDraftBudget] Creando borrador...')
+
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+    // Obtener usuario actual
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      console.error('[createDraftBudget] Error de autenticación:', authError)
+      return { success: false, error: 'No autenticado' }
+    }
+
+    // Obtener empresa_id del usuario
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('empresa_id')
+      .eq('id', user.id)
+      .single()
+
+    if (userError || !userData?.empresa_id) {
+      console.error('[createDraftBudget] Error obteniendo empresa:', userError)
+      return { success: false, error: 'Usuario sin empresa asignada' }
+    }
+
+    // Crear borrador
+    const { data: budget, error: insertError } = await supabaseAdmin
+      .from('budgets')
+      .insert({
+        empresa_id: userData.empresa_id,
+        tariff_id: data.tariffId,
+        user_id: user.id,
+        json_tariff_data: data.tariffData,
+        json_budget_data: [],
+        client_type: data.clientData.client_type,
+        client_name: data.clientData.client_name,
+        client_nif_nie: data.clientData.client_nif_nie,
+        client_phone: data.clientData.client_phone,
+        client_email: data.clientData.client_email,
+        client_web: data.clientData.client_web || null,
+        client_address: data.clientData.client_address,
+        client_postal_code: data.clientData.client_postal_code,
+        client_locality: data.clientData.client_locality,
+        client_province: data.clientData.client_province,
+        client_acceptance: data.clientData.client_acceptance,
+        status: BudgetStatus.BORRADOR,
+        total: 0,
+        iva: 0,
+        base: 0,
+        validity_days: data.validity,
+        start_date: null,
+        end_date: null
+      })
+      .select()
+      .single()
+
+    if (insertError || !budget) {
+      console.error('[createDraftBudget] Error creando borrador:', insertError)
+      return { success: false, error: 'Error al crear borrador' }
+    }
+
+    console.log('[createDraftBudget] Borrador creado:', budget.id)
+    revalidatePath('/budgets')
+
+    return { success: true, budgetId: budget.id }
+
+  } catch (error) {
+    console.error('[createDraftBudget] Error crítico:', error)
+    return { success: false, error: 'Error interno del servidor' }
+  }
+}
+
+/**
+ * Actualizar borrador existente (auto-guardado)
+ */
+export async function updateBudgetDraft(
+  budgetId: string,
+  data: {
+    clientData?: ClientData
+    budgetData: any[]
+  }
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    console.log('[updateBudgetDraft] Actualizando borrador:', budgetId)
+
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+    // Obtener usuario actual
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      console.error('[updateBudgetDraft] Error de autenticación:', authError)
+      return { success: false, error: 'No autenticado' }
+    }
+
+    // Verificar que el usuario es owner del budget
+    const { data: existingBudget, error: budgetError } = await supabaseAdmin
+      .from('budgets')
+      .select('user_id, status')
+      .eq('id', budgetId)
+      .single()
+
+    if (budgetError || !existingBudget) {
+      console.error('[updateBudgetDraft] Budget no encontrado:', budgetError)
+      return { success: false, error: 'Presupuesto no encontrado' }
+    }
+
+    if (existingBudget.user_id !== user.id) {
+      console.error('[updateBudgetDraft] Usuario no autorizado')
+      return { success: false, error: 'No autorizado' }
+    }
+
+    // Solo permitir actualizar borradores
+    if (existingBudget.status !== BudgetStatus.BORRADOR) {
+      console.error('[updateBudgetDraft] Solo se pueden actualizar borradores')
+      return { success: false, error: 'Solo se pueden actualizar borradores' }
+    }
+
+    // Calcular totales
+    const totals = calculateBudgetTotals(data.budgetData)
+
+    // Preparar datos a actualizar
+    const updateData: any = {
+      json_budget_data: data.budgetData,
+      total: totals.total,
+      iva: totals.iva,
+      base: totals.base,
+      updated_at: new Date().toISOString()
+    }
+
+    // Si hay clientData, actualizar también
+    if (data.clientData) {
+      updateData.client_type = data.clientData.client_type
+      updateData.client_name = data.clientData.client_name
+      updateData.client_nif_nie = data.clientData.client_nif_nie
+      updateData.client_phone = data.clientData.client_phone
+      updateData.client_email = data.clientData.client_email
+      updateData.client_web = data.clientData.client_web || null
+      updateData.client_address = data.clientData.client_address
+      updateData.client_postal_code = data.clientData.client_postal_code
+      updateData.client_locality = data.clientData.client_locality
+      updateData.client_province = data.clientData.client_province
+      updateData.client_acceptance = data.clientData.client_acceptance
+    }
+
+    // Actualizar
+    const { error: updateError } = await supabaseAdmin
+      .from('budgets')
+      .update(updateData)
+      .eq('id', budgetId)
+
+    if (updateError) {
+      console.error('[updateBudgetDraft] Error actualizando:', updateError)
+      return { success: false, error: 'Error al actualizar' }
+    }
+
+    console.log('[updateBudgetDraft] Borrador actualizado exitosamente')
+    return { success: true }
+
+  } catch (error) {
+    console.error('[updateBudgetDraft] Error crítico:', error)
+    return { success: false, error: 'Error interno del servidor' }
+  }
+}
+
+/**
+ * Guardar como pendiente (botón Guardar)
+ */
+export async function saveBudgetAsPending(
+  budgetId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    console.log('[saveBudgetAsPending] Guardando como pendiente:', budgetId)
+
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+    // Obtener usuario actual
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      console.error('[saveBudgetAsPending] Error de autenticación:', authError)
+      return { success: false, error: 'No autenticado' }
+    }
+
+    // Obtener budget
+    const { data: budget, error: budgetError } = await supabaseAdmin
+      .from('budgets')
+      .select('*')
+      .eq('id', budgetId)
+      .single()
+
+    if (budgetError || !budget) {
+      console.error('[saveBudgetAsPending] Budget no encontrado:', budgetError)
+      return { success: false, error: 'Presupuesto no encontrado' }
+    }
+
+    if (budget.user_id !== user.id) {
+      console.error('[saveBudgetAsPending] Usuario no autorizado')
+      return { success: false, error: 'No autorizado' }
+    }
+
+    // Validar que hay al menos una partida con cantidad > 0
+    const budgetData = budget.json_budget_data as any[]
+    const hasItems = budgetData.some(
+      item => item.level === 'item' && parseFloat(item.quantity || '0') > 0
+    )
+
+    if (!hasItems) {
+      return { success: false, error: 'Debe incluir al menos un elemento con cantidad' }
+    }
+
+    // Calcular fechas
+    const startDate = new Date()
+    const endDate = new Date(startDate)
+    if (budget.validity_days) {
+      endDate.setDate(endDate.getDate() + budget.validity_days)
+    }
+
+    // Actualizar a pendiente
+    const { error: updateError } = await supabaseAdmin
+      .from('budgets')
+      .update({
+        status: BudgetStatus.PENDIENTE,
+        start_date: startDate.toISOString(),
+        end_date: budget.validity_days ? endDate.toISOString() : null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', budgetId)
+
+    if (updateError) {
+      console.error('[saveBudgetAsPending] Error actualizando:', updateError)
+      return { success: false, error: 'Error al guardar presupuesto' }
+    }
+
+    console.log('[saveBudgetAsPending] Presupuesto guardado como pendiente')
+    revalidatePath('/budgets')
+
+    return { success: true }
+
+  } catch (error) {
+    console.error('[saveBudgetAsPending] Error crítico:', error)
+    return { success: false, error: 'Error interno del servidor' }
+  }
+}
+
+/**
+ * Recuperar borrador existente
+ */
+export async function getBudgetById(
+  budgetId: string
+): Promise<Budget | null> {
+  try {
+    console.log('[getBudgetById] Obteniendo budget:', budgetId)
+
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+    // Obtener usuario actual
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      console.error('[getBudgetById] Error de autenticación:', authError)
+      return null
+    }
+
+    // Obtener budget (RLS se encargará de verificar permisos)
+    const { data: budget, error: budgetError } = await supabase
+      .from('budgets')
+      .select('*')
+      .eq('id', budgetId)
+      .single()
+
+    if (budgetError || !budget) {
+      console.error('[getBudgetById] Budget no encontrado:', budgetError)
+      return null
+    }
+
+    console.log('[getBudgetById] Budget encontrado:', budget.id)
+    return budget as Budget
+
+  } catch (error) {
+    console.error('[getBudgetById] Error crítico:', error)
+    return null
   }
 }

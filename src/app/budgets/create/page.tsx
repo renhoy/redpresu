@@ -1,17 +1,29 @@
 import { getTariffById } from '@/app/actions/tariffs'
+import { getBudgetById } from '@/app/actions/budgets'
 import { BudgetForm } from '@/components/budgets/BudgetForm'
 import { redirect } from 'next/navigation'
 
 interface PageProps {
-  searchParams: { tariff_id?: string }
+  searchParams: { tariff_id?: string; budget_id?: string }
 }
 
 export default async function CreateBudgetPage({ searchParams }: PageProps) {
-  const { tariff_id } = searchParams
+  const { tariff_id, budget_id } = searchParams
 
   // Si no hay tariff_id, redirigir a tariffs
   if (!tariff_id) {
     redirect('/tariffs?message=select-tariff')
+  }
+
+  // Si hay budget_id, cargar borrador existente
+  let existingBudget = null
+  if (budget_id) {
+    existingBudget = await getBudgetById(budget_id)
+
+    // Validar que el borrador pertenece a la tarifa correcta
+    if (existingBudget && existingBudget.tariff_id !== tariff_id) {
+      redirect('/tariffs?message=budget-tariff-mismatch')
+    }
   }
 
   // Cargar la tarifa específica
@@ -30,7 +42,7 @@ export default async function CreateBudgetPage({ searchParams }: PageProps) {
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6">
         {/* Formulario */}
-        <BudgetForm tariff={tariff} />
+        <BudgetForm tariff={tariff} existingBudget={existingBudget} />
       </div>
     </div>
   )
