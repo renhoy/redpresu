@@ -194,7 +194,7 @@ export class BudgetValidator {
   /**
    * Valida un item (partida) usando Zod
    */
-  private validateItem(data: ProcessedRow, lineNumber: number): any[] {
+  private validateItem(data: ProcessedRow, lineNumber: number): z.ZodIssue[] {
     const errors = [];
 
     try {
@@ -244,7 +244,7 @@ export class BudgetValidator {
   /**
    * Valida un contenedor (capítulo, subcapítulo, apartado) usando Zod
    */
-  private validateContainer(data: ProcessedRow, lineNumber: number): any[] {
+  private validateContainer(data: ProcessedRow, lineNumber: number): z.ZodIssue[] {
     const errors = [];
 
     try {
@@ -268,7 +268,7 @@ export class BudgetValidator {
   /**
    * Valida restricciones globales (duplicados, jerarquía, secuencias)
    */
-  private validateGlobalConstraints(data: ProcessedRow[]): any[] {
+  private validateGlobalConstraints(data: ProcessedRow[]): z.ZodIssue[] {
     const errors = [];
 
     // Validar duplicados
@@ -286,7 +286,7 @@ export class BudgetValidator {
   /**
    * Valida IDs duplicados
    */
-  private validateDuplicates(data: ProcessedRow[]): any[] {
+  private validateDuplicates(data: ProcessedRow[]): z.ZodIssue[] {
     const errors = [];
     const seen = new Map<string, ProcessedRow>();
 
@@ -306,7 +306,7 @@ export class BudgetValidator {
   /**
    * Valida la jerarquía de elementos
    */
-  private validateHierarchy(data: ProcessedRow[]): any[] {
+  private validateHierarchy(data: ProcessedRow[]): z.ZodIssue[] {
     const errors = [];
     const items = data.filter(item => item.normalizedLevel === 'partida');
     const existingIds = new Set(data.map(item => item.id));
@@ -357,7 +357,7 @@ export class BudgetValidator {
   /**
    * Valida secuencias numéricas
    */
-  private validateSequences(data: ProcessedRow[]): any[] {
+  private validateSequences(data: ProcessedRow[]): z.ZodIssue[] {
     const errors = [];
     const byLevel: Record<number, Record<string, Array<{ sequence: number; item: ProcessedRow }>>> = {};
 
