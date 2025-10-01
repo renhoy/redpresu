@@ -434,16 +434,14 @@ export async function getBudgets(filters?: {
 
     console.log('[getBudgets] Usuario:', userData.role, 'Empresa:', userData.empresa_id)
 
-    // Construir query base con JOIN a tariffs y users
+    // Construir query base con JOIN a tariffs
+    // Nota: users se obtiene por separado ya que la relación puede no estar definida
     let query = supabase
       .from('budgets')
       .select(`
         *,
         tariffs (
           title
-        ),
-        users (
-          name
         )
       `)
 
@@ -475,10 +473,30 @@ export async function getBudgets(filters?: {
 
     if (budgetsError) {
       console.error('[getBudgets] Error obteniendo presupuestos:', budgetsError)
+      console.error('[getBudgets] Error details:', JSON.stringify(budgetsError, null, 2))
       return []
     }
 
     console.log('[getBudgets] Presupuestos encontrados:', budgets?.length || 0)
+
+    // Obtener nombres de usuarios por separado
+    if (budgets && budgets.length > 0) {
+      const userIds = [...new Set(budgets.map(b => b.user_id))]
+      const { data: users } = await supabase
+        .from('users')
+        .select('id, name')
+        .in('id', userIds)
+
+      // Mapear usuarios a presupuestos
+      const usersMap = new Map(users?.map(u => [u.id, u.name]) || [])
+      const budgetsWithUsers = budgets.map(budget => ({
+        ...budget,
+        users: { name: usersMap.get(budget.user_id) || 'N/A' }
+      }))
+
+      return budgetsWithUsers as Budget[]
+    }
+
     return (budgets || []) as Budget[]
 
   } catch (error) {
