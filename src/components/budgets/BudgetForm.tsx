@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Trash2, Save, FileStack } from 'lucide-react'
 import { BudgetHierarchyForm } from './BudgetHierarchyForm'
 
 interface BudgetFormProps {
@@ -77,6 +77,24 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
         }
       }
     }
+    if (!clientData.client_phone.trim()) {
+      newErrors.client_phone = 'Teléfono es obligatorio'
+    }
+    if (!clientData.client_email.trim()) {
+      newErrors.client_email = 'Email es obligatorio'
+    }
+    if (!clientData.client_address.trim()) {
+      newErrors.client_address = 'Dirección es obligatoria'
+    }
+    if (!clientData.client_postal_code.trim()) {
+      newErrors.client_postal_code = 'Código Postal es obligatorio'
+    }
+    if (!clientData.client_locality.trim()) {
+      newErrors.client_locality = 'Localidad es obligatoria'
+    }
+    if (!clientData.client_province.trim()) {
+      newErrors.client_province = 'Provincia es obligatoria'
+    }
     if (!clientData.client_acceptance) {
       newErrors.client_acceptance = 'Debe aceptar el presupuesto'
     }
@@ -95,14 +113,34 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
     setBudgetData(newBudgetData)
   }
 
-  const handleFinalizeBudget = () => {
+  const handleClearBudgetData = () => {
+    // Resetear todas las cantidades a 0
+    if (window.confirm('¿Estás seguro de que quieres borrar todos los datos del presupuesto?')) {
+      setBudgetData([])
+      // Forzar recarga del formulario jerárquico
+      setCurrentStep(1)
+      setTimeout(() => setCurrentStep(2), 0)
+    }
+  }
+
+  const handleSaveBudget = () => {
     // TODO: Implementar guardado del presupuesto
-    console.log('Datos completos del presupuesto:', {
+    console.log('Guardando presupuesto:', {
       tariffId: tariff.id,
       clientData,
       budgetData
     })
     alert('Próxima tarea: Guardar presupuesto en base de datos')
+  }
+
+  const handleGeneratePDF = () => {
+    // TODO: Implementar generación de PDF
+    console.log('Generando PDF del presupuesto:', {
+      tariffId: tariff.id,
+      clientData,
+      budgetData
+    })
+    alert('Próxima tarea: Generar PDF del presupuesto')
   }
 
   const handleClientDataChange = (field: keyof ClientData, value: string | boolean) => {
@@ -121,7 +159,7 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
     <div className="max-w-4xl mx-auto">
       {/* Company Header */}
       <Card className="mb-6">
-        <CardContent className="p-6">
+        <CardContent className="py-3 px-6">
           <div className="grid grid-cols-[auto_1fr] gap-6">
             {/* Columna 1: Logo */}
             <div className="flex items-start">
@@ -139,7 +177,7 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
             </div>
 
             {/* Columna 2: Datos empresa */}
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <h2
                 className="text-xl font-bold"
                 style={{ color: tariff.primary_color }}
@@ -153,9 +191,10 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
                 {tariff.address ? `${tariff.address}, ${tariff.postal_code} ${tariff.locality}, ${tariff.province}` : 'Dirección no especificada'}
               </p>
               <p className="text-sm text-muted-foreground">
-                {tariff.phone && `Tel: ${tariff.phone}`}
-                {tariff.phone && tariff.email && ' | '}
-                {tariff.email && `Email: ${tariff.email}`}
+                {[
+                  tariff.phone && `Tel: ${tariff.phone}`,
+                  tariff.email && `Email: ${tariff.email}`
+                ].filter(Boolean).join(' | ')}
               </p>
             </div>
           </div>
@@ -167,6 +206,7 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
         <div className="flex justify-end gap-3 mb-6">
           <Button
             variant="outline"
+            size="icon"
             className="bg-red-600 text-white hover:bg-red-700 border-red-600"
             onClick={() => {
               setClientData({
@@ -185,29 +225,52 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
               setErrors({})
             }}
           >
-            Borrar
+            <Trash2 className="w-4 h-4" />
           </Button>
           <Button
+            size="icon"
             onClick={handleStep1Continue}
             style={{ backgroundColor: tariff.primary_color }}
           >
-            Siguiente
-            <ArrowRight className="w-4 h-4 ml-2" />
+            <ArrowRight className="w-4 h-4" />
           </Button>
         </div>
       )}
 
       {currentStep === 2 && (
-        <div className="flex justify-between mb-6">
-          <Button variant="outline" onClick={() => setCurrentStep(1)}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Anterior
+        <div className="flex justify-end gap-3 mb-6">
+          <Button
+            size="icon"
+            style={{ backgroundColor: tariff.primary_color }}
+            onClick={() => setCurrentStep(1)}
+            title="Atrás"
+          >
+            <ArrowLeft className="w-4 h-4" />
           </Button>
           <Button
-            onClick={handleFinalizeBudget}
-            style={{ backgroundColor: tariff.primary_color }}
+            variant="outline"
+            size="icon"
+            className="bg-red-600 text-white hover:bg-red-700 border-red-600"
+            onClick={handleClearBudgetData}
+            title="Borrar Datos"
           >
-            Finalizar Presupuesto
+            <Trash2 className="w-4 h-4" />
+          </Button>
+          <Button
+            size="icon"
+            style={{ backgroundColor: tariff.primary_color }}
+            onClick={handleSaveBudget}
+            title="Guardar"
+          >
+            <Save className="w-4 h-4" />
+          </Button>
+          <Button
+            size="icon"
+            style={{ backgroundColor: tariff.primary_color }}
+            onClick={handleGeneratePDF}
+            title="Generar PDF"
+          >
+            <FileStack className="w-4 h-4" />
           </Button>
         </div>
       )}
@@ -215,16 +278,18 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
       {/* Step 1: Datos del cliente */}
       {currentStep === 1 && (
         <Card>
-          <CardHeader>
-            <CardTitle>Paso 1: Datos del Cliente</CardTitle>
-            <CardDescription>
+          <CardHeader
+            style={{ backgroundColor: tariff.primary_color }}
+            className="text-white rounded-t-lg"
+          >
+            <CardTitle className="text-white">Paso 1: Datos del Cliente</CardTitle>
+            <CardDescription className="text-white/90">
               Completa la información del cliente para el presupuesto
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 pt-6">
             {/* Línea 1: Tipo de cliente con botones */}
             <div className="space-y-2">
-              <Label>Tipo de Cliente *</Label>
               <div className="grid grid-cols-3 gap-3">
                 <Button
                   type="button"
@@ -274,9 +339,6 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
             {/* Línea 2: Nombre (75%) + NIF/NIE (25%) */}
             <div className="grid grid-cols-4 gap-4">
               <div className="col-span-3 space-y-2">
-                <Label htmlFor="client_name">
-                  {clientData.client_type === 'empresa' ? 'Razón Social' : 'Nombre Completo'} *
-                </Label>
                 <Input
                   id="client_name"
                   value={clientData.client_name}
@@ -290,13 +352,12 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
               </div>
 
               <div className="col-span-1 space-y-2">
-                <Label htmlFor="client_nif_nie">NIF/NIE *</Label>
                 <Input
                   id="client_nif_nie"
                   value={clientData.client_nif_nie}
                   onChange={(e) => handleClientDataChange('client_nif_nie', e.target.value.toUpperCase())}
                   className={errors.client_nif_nie ? 'border-destructive' : ''}
-                  placeholder="12345678Z"
+                  placeholder="NIF/NIE"
                 />
                 {errors.client_nif_nie && (
                   <p className="text-sm text-destructive">{errors.client_nif_nie}</p>
@@ -307,35 +368,40 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
             {/* Línea 3: Teléfono (25%) + Email (50%) + Web (25%) */}
             <div className="grid grid-cols-4 gap-4">
               <div className="col-span-1 space-y-2">
-                <Label htmlFor="client_phone">Teléfono</Label>
                 <Input
                   id="client_phone"
                   type="tel"
                   value={clientData.client_phone}
                   onChange={(e) => handleClientDataChange('client_phone', e.target.value)}
-                  placeholder="600123456"
+                  placeholder="Teléfono"
+                  className={errors.client_phone ? 'border-destructive' : ''}
                 />
+                {errors.client_phone && (
+                  <p className="text-sm text-destructive">{errors.client_phone}</p>
+                )}
               </div>
 
               <div className="col-span-2 space-y-2">
-                <Label htmlFor="client_email">Email</Label>
                 <Input
                   id="client_email"
                   type="email"
                   value={clientData.client_email}
                   onChange={(e) => handleClientDataChange('client_email', e.target.value)}
-                  placeholder="cliente@ejemplo.com"
+                  placeholder="Email"
+                  className={errors.client_email ? 'border-destructive' : ''}
                 />
+                {errors.client_email && (
+                  <p className="text-sm text-destructive">{errors.client_email}</p>
+                )}
               </div>
 
               <div className="col-span-1 space-y-2">
-                <Label htmlFor="client_web">Web</Label>
                 <Input
                   id="client_web"
                   type="url"
                   value={clientData.client_web || ''}
                   onChange={(e) => handleClientDataChange('client_web', e.target.value)}
-                  placeholder="www.ejemplo.com"
+                  placeholder="Web"
                 />
               </div>
             </div>
@@ -343,99 +409,114 @@ export function BudgetForm({ tariff }: BudgetFormProps) {
             {/* Línea 4: Dirección (75%) + Código Postal (25%) */}
             <div className="grid grid-cols-4 gap-4">
               <div className="col-span-3 space-y-2">
-                <Label htmlFor="client_address">Dirección</Label>
                 <Input
                   id="client_address"
                   value={clientData.client_address}
                   onChange={(e) => handleClientDataChange('client_address', e.target.value)}
-                  placeholder="Calle, número, piso..."
+                  placeholder="Dirección"
+                  className={errors.client_address ? 'border-destructive' : ''}
                 />
+                {errors.client_address && (
+                  <p className="text-sm text-destructive">{errors.client_address}</p>
+                )}
               </div>
 
               <div className="col-span-1 space-y-2">
-                <Label htmlFor="client_postal_code">Código Postal</Label>
                 <Input
                   id="client_postal_code"
                   value={clientData.client_postal_code}
                   onChange={(e) => handleClientDataChange('client_postal_code', e.target.value)}
-                  placeholder="28001"
+                  placeholder="C.P."
+                  className={errors.client_postal_code ? 'border-destructive' : ''}
                 />
+                {errors.client_postal_code && (
+                  <p className="text-sm text-destructive">{errors.client_postal_code}</p>
+                )}
               </div>
             </div>
 
             {/* Línea 5: Localidad (75%) + Provincia (25%) */}
             <div className="grid grid-cols-4 gap-4">
               <div className="col-span-3 space-y-2">
-                <Label htmlFor="client_locality">Localidad</Label>
                 <Input
                   id="client_locality"
                   value={clientData.client_locality}
                   onChange={(e) => handleClientDataChange('client_locality', e.target.value)}
-                  placeholder="Madrid"
+                  placeholder="Localidad"
+                  className={errors.client_locality ? 'border-destructive' : ''}
                 />
+                {errors.client_locality && (
+                  <p className="text-sm text-destructive">{errors.client_locality}</p>
+                )}
               </div>
 
               <div className="col-span-1 space-y-2">
-                <Label htmlFor="client_province">Provincia</Label>
                 <Input
                   id="client_province"
                   value={clientData.client_province}
                   onChange={(e) => handleClientDataChange('client_province', e.target.value)}
-                  placeholder="Madrid"
+                  placeholder="Provincia"
+                  className={errors.client_province ? 'border-destructive' : ''}
                 />
+                {errors.client_province && (
+                  <p className="text-sm text-destructive">{errors.client_province}</p>
+                )}
               </div>
             </div>
 
             {/* Aceptación */}
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="client_acceptance"
-                checked={clientData.client_acceptance}
-                onCheckedChange={(checked) => handleClientDataChange('client_acceptance', !!checked)}
-                className={errors.client_acceptance ? 'border-destructive' : ''}
-              />
-              <Label htmlFor="client_acceptance" className="text-sm">
-                Acepto la política de privacidad *
-              </Label>
-            </div>
-            {errors.client_acceptance && (
-              <p className="text-sm text-destructive">{errors.client_acceptance}</p>
-            )}
-
-            {/* Notas legales */}
-            {tariff.legal_notes && (
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold">Notas legales página presupuesto</Label>
-                <div className="text-sm text-muted-foreground p-3 bg-muted rounded-md">
-                  {tariff.legal_notes}
-                </div>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="client_acceptance"
+                  checked={clientData.client_acceptance}
+                  onCheckedChange={(checked) => handleClientDataChange('client_acceptance', !!checked)}
+                  className={errors.client_acceptance ? 'border-destructive' : ''}
+                />
+                <Label htmlFor="client_acceptance" className="text-sm">
+                  Acepto la política de privacidad *
+                </Label>
               </div>
-            )}
+              {errors.client_acceptance && (
+                <p className="text-sm text-destructive">{errors.client_acceptance}</p>
+              )}
+
+              {/* Notas legales */}
+              {tariff.legal_notes && (
+                <div className="pt-4 border-t">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {tariff.legal_notes}
+                  </p>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       )}
 
       {/* Step 2: Formulario jerárquico */}
       {currentStep === 2 && (
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Paso 2: Configurar Presupuesto</CardTitle>
-              <CardDescription>
-                Ajusta las cantidades de los elementos para crear tu presupuesto personalizado
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          {tariff.json_tariff_data && (
-            <BudgetHierarchyForm
-              tariffData={tariff.json_tariff_data as any[]}
-              onBudgetDataChange={handleBudgetDataChange}
-              primaryColor={tariff.primary_color}
-              secondaryColor={tariff.secondary_color}
-            />
-          )}
-        </div>
+        <Card>
+          <CardHeader
+            style={{ backgroundColor: tariff.primary_color }}
+            className="text-white rounded-t-lg"
+          >
+            <CardTitle className="text-white">Presupuesto para {clientData.client_name || 'Cliente'}</CardTitle>
+            <CardDescription className="text-white/90">
+              Ajusta las cantidades de los elementos para crear tu presupuesto personalizado
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 pt-4">
+            {tariff.json_tariff_data && (
+              <BudgetHierarchyForm
+                tariffData={tariff.json_tariff_data as any[]}
+                onBudgetDataChange={handleBudgetDataChange}
+                primaryColor={tariff.primary_color}
+                secondaryColor={tariff.secondary_color}
+              />
+            )}
+          </CardContent>
+        </Card>
       )}
     </div>
   )

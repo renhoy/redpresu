@@ -7,7 +7,7 @@
 
 ## FASE 2: FEATURES (Uno por vez - 4 semanas)
 1. **✅ Tariff Management** - ✅ COMPLETADO - CRUD tarifas, procesamiento CSV→JSON, validación jerárquica
-2. **🔄 Budget Creation** - **EN CURSO** - Formularios dinámicos, cálculos tiempo real, gestión estados
+2. **🔄 Budget Creation** - **EN CURSO (50%)** - ✅ Formularios dinámicos, ✅ cálculos tiempo real, ⏳ gestión estados
 3. **⏳ PDF Generation** - PENDIENTE - Integración Rapid-PDF, payload construction, almacenamiento local
 4. **⏳ Dashboard** - PENDIENTE - Estadísticas básicas, listados con filtros, navegación
 
@@ -32,10 +32,16 @@
 - **⏳ Semana 8:** MVP funcional → comerciales pueden usar en campo
 
 ## PROGRESO ACTUAL
-**📊 Estado del Proyecto:** 60% Completado
+**📊 Estado del Proyecto:** 70% Completado
 - ✅ **FASE 1 (SHARED):** 100% completado
 - ✅ **Tariff Management:** 100% completado
-- 🔄 **Budget Creation:** 0% - **PRÓXIMO MÓDULO**
+- 🔄 **Budget Creation:** 50% - **MÓDULO ACTIVO**
+  - ✅ Selector tarifa y formulario cliente (100%)
+  - ✅ Formulario jerárquico dinámico (100%)
+  - ✅ Cálculos automáticos tiempo real (100%)
+  - 🔄 Gestión estados y guardado (20%)
+  - ⏳ Listado y filtros (0%)
+  - ⏳ Edición presupuestos (0%)
 - ⏳ **PDF Generation:** 0%
 - ⏳ **Dashboard:** 0%
 

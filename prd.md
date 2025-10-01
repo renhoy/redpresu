@@ -13,7 +13,7 @@
 - **Common** - Estado: READ-ONLY ✅ - Utilidades compartidas, validaciones y helpers
 
 ### FEATURES (Desarrollar después - uno por vez)
-- **Tariff Management** - Estado: Pendiente - CRUD tarifas, procesamiento CSV a JSON, validaciones jerárquicas
+- **Tariff Management** - Estado: READ-ONLY ✅ - CRUD tarifas, procesamiento CSV a JSON, validaciones jerárquicas
 - **Budget Creation** - Estado: Pendiente - Formularios dinámicos, cálculos automáticos, gestión estados
 - **PDF Generation** - Estado: Pendiente - Integración Rapid-PDF, almacenamiento local, nomenclatura archivos
 - **Dashboard** - Estado: Pendiente - Estadísticas básicas, listados y accesos directos

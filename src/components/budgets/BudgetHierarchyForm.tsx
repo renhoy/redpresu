@@ -640,39 +640,31 @@ export function BudgetHierarchyForm({
   return (
     <div className="space-y-6">
       {/* Totals Block */}
-      <Card className="w-full max-w-md ml-auto">
-        <CardContent className="p-4">
-          <div className="space-y-2 text-right font-mono">
-            <div className="flex justify-between">
-              <span>Base Imponible</span>
-              <span>{formatCurrency(totals.base)}</span>
-            </div>
+      <div className="w-full max-w-md ml-auto space-y-1">
+        <div className="flex justify-between text-sm font-mono bg-white p-3 rounded-lg" style={{ color: secondaryColor }}>
+          <span>Base Imponible</span>
+          <span className="font-bold">{formatCurrency(totals.base)}</span>
+        </div>
 
-            {totals.ivaGroups.map(group => (
-              <div key={group.percentage} className="flex justify-between">
-                <span>IVA {formatSpanishNumber(group.percentage)}%</span>
-                <span>{formatCurrency(group.amount)}</span>
-              </div>
-            ))}
-
-            <div className="border-t pt-2 mt-2">
-              <div className="flex justify-between font-bold text-lg">
-                <span>Total Presupuesto</span>
-                <span>{formatCurrency(totals.total)}</span>
-              </div>
-            </div>
+        {totals.ivaGroups.map(group => (
+          <div key={group.percentage} className="flex justify-between text-sm font-mono bg-white p-3 rounded-lg text-black">
+            <span>IVA {formatSpanishNumber(group.percentage)}%</span>
+            <span className="font-bold">{formatCurrency(group.amount)}</span>
           </div>
-        </CardContent>
-      </Card>
+        ))}
+
+        <div className="flex justify-between text-sm font-mono font-bold bg-white p-3 rounded-lg border-2" style={{ color: primaryColor, borderColor: primaryColor }}>
+          <span>Total Presupuesto</span>
+          <span className="font-bold">{formatCurrency(totals.total)}</span>
+        </div>
+      </div>
 
       {/* Hierarchical Form */}
-      <Card>
-        <CardContent className="p-0">
-          <Accordion type="multiple" value={getOpenAccordions()}>
-            {buildHierarchy(budgetData).map(item => renderItem(item))}
-          </Accordion>
-        </CardContent>
-      </Card>
+      <div>
+        <Accordion type="multiple" value={getOpenAccordions()}>
+          {buildHierarchy(budgetData).map(item => renderItem(item))}
+        </Accordion>
+      </div>
     </div>
   )
 }

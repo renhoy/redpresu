@@ -1,12 +1,15 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Header } from '@/components/layout/Header'
 import { Plus } from 'lucide-react'
 
 export default function BudgetsPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6">
+    <>
+      <Header />
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-3xl font-bold tracking-tight">Presupuestos</h1>
@@ -47,5 +50,6 @@ export default function BudgetsPage() {
         </Card>
       </div>
     </div>
+    </>
   )
 }
