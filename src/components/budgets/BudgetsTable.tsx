@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Eye, Pencil, Trash2, FileStack } from 'lucide-react'
+import { Pencil, Trash2, FileStack } from 'lucide-react'
 import { deleteBudget } from '@/app/actions/budgets'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
@@ -226,14 +226,6 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
 
                     <td className="p-4">
                       <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => router.push(`/budgets/view/${budget.id}`)}
-                          title="Ver"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"

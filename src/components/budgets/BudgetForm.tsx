@@ -120,40 +120,46 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
     return Object.keys(newErrors).length === 0
   }
 
-  // Auto-guardado con debounce al cambiar budgetData
-  useEffect(() => {
-    // Skip en el primer mount
-    if (isInitialMount.current) {
-      isInitialMount.current = false
-      return
-    }
+  // Auto-guardado desactivado - solo guardado manual con el botón "Guardar"
+  // useEffect(() => {
+  //   // Skip en el primer mount
+  //   if (isInitialMount.current) {
+  //     isInitialMount.current = false
+  //     return
+  //   }
 
-    // Solo auto-guardar si hay datos
-    if (budgetData.length === 0) return
+  //   // Solo auto-guardar si hay datos
+  //   if (budgetData.length === 0) return
 
-    const timer = setTimeout(async () => {
-      setSaveStatus('saving')
+  //   // Solo auto-guardar si es borrador (los presupuestos guardados no se pueden editar)
+  //   if (existingBudget && existingBudget.status !== 'borrador') {
+  //     console.log('[Auto-guardado] Saltando auto-guardado porque el presupuesto no es borrador, estado:', existingBudget.status)
+  //     return
+  //   }
 
-      try {
-        if (budgetId) {
-          // Actualizar borrador existente
-          const result = await updateBudgetDraft(budgetId, { budgetData, totals })
-          if (result.success) {
-            setSaveStatus('saved')
-            setTimeout(() => setSaveStatus('idle'), 2000)
-          } else {
-            console.error('Error auto-guardando:', result.error)
-            setSaveStatus('idle')
-          }
-        }
-      } catch (error) {
-        console.error('Error en auto-guardado:', error)
-        setSaveStatus('idle')
-      }
-    }, 1500)
+  //   const timer = setTimeout(async () => {
+  //     setSaveStatus('saving')
 
-    return () => clearTimeout(timer)
-  }, [budgetData, budgetId, totals])
+  //     try {
+  //       if (budgetId) {
+  //         // Actualizar borrador existente
+  //         const result = await updateBudgetDraft(budgetId, { budgetData, totals })
+  //         if (result.success) {
+  //           setSaveStatus('saved')
+  //           setTimeout(() => setSaveStatus('idle'), 2000)
+  //         } else {
+  //           console.error('Error auto-guardando:', result.error)
+  //           setSaveStatus('idle')
+  //         }
+  //       }
+  //     } catch (error) {
+  //       console.error('Error en auto-guardado:', error)
+  //       setSaveStatus('idle')
+  //     }
+  //   }, 1500)
+
+  //   return () => clearTimeout(timer)
+  // }, [budgetData, budgetId, totals, existingBudget])
 
   const handleStep1Continue = async () => {
     if (validateStep1()) {
@@ -207,10 +213,6 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
   }
 
   const handleSaveBudget = async () => {
-    // DEBUG: Ver estructura de budgetData
-    console.log('[handleSaveBudget] budgetData completo:', JSON.stringify(budgetData, null, 2))
-    console.log('[handleSaveBudget] Número de elementos:', budgetData.length)
-
     // Validar al menos una partida con cantidad > 0
     const itemsWithQuantity = budgetData
       .map((item: unknown) => {
@@ -221,13 +223,9 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
         const quantityStr = budgetItem.quantity || '0'
         const quantity = parseFloat(quantityStr.replace(',', '.'))
 
-        console.log(`[handleSaveBudget] Item ${budgetItem.id} (${budgetItem.name}): quantity="${quantityStr}" -> ${quantity}`)
-
         return quantity > 0 ? budgetItem : null
       })
       .filter(item => item !== null)
-
-    console.log('[handleSaveBudget] Items con cantidad > 0:', itemsWithQuantity.length)
 
     const hasItems = itemsWithQuantity.length > 0
 
@@ -242,7 +240,7 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
     }
 
     setSaveStatus('saving')
-    const result = await saveBudgetAsPending(budgetId, totals)
+    const result = await saveBudgetAsPending(budgetId, totals, budgetData)
 
     if (result.success) {
       toast.success('Presupuesto guardado correctamente')
@@ -641,9 +639,13 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 pt-4">
-            {tariff.json_tariff_data && (
+            {(existingBudget?.json_budget_data || tariff.json_tariff_data) && (
               <BudgetHierarchyForm
-                tariffData={tariff.json_tariff_data as unknown[]}
+                tariffData={
+                  existingBudget?.json_budget_data
+                    ? (existingBudget.json_budget_data as unknown[])
+                    : (tariff.json_tariff_data as unknown[])
+                }
                 onBudgetDataChange={handleBudgetDataChange}
                 onTotalsChange={setTotals}
                 primaryColor={tariff.primary_color}

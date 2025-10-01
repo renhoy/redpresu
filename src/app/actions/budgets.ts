@@ -300,11 +300,10 @@ export async function updateBudgetDraft(
  */
 export async function saveBudgetAsPending(
   budgetId: string,
-  totals: { base: number; total: number }
+  totals: { base: number; total: number },
+  budgetData: BudgetDataItem[]
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    console.log('[saveBudgetAsPending] Guardando como pendiente:', budgetId)
-
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
 
@@ -332,8 +331,7 @@ export async function saveBudgetAsPending(
       return { success: false, error: 'No autorizado' }
     }
 
-    // Validar que hay al menos una partida con cantidad > 0
-    const budgetData = budget.json_budget_data as BudgetDataItem[]
+    // Validar que hay al menos una partida con cantidad > 0 usando datos del request
     const hasItems = budgetData.some(item => {
       if (item.level !== 'item') return false
 
@@ -358,7 +356,7 @@ export async function saveBudgetAsPending(
       endDate.setDate(endDate.getDate() + budget.validity_days)
     }
 
-    // Actualizar a pendiente con totales
+    // Actualizar a pendiente con totales y budgetData actualizado
     const { error: updateError } = await supabaseAdmin
       .from('budgets')
       .update({
@@ -366,6 +364,7 @@ export async function saveBudgetAsPending(
         total: totals.total,
         iva: iva,
         base: totals.base,
+        json_budget_data: budgetData,
         start_date: startDate.toISOString(),
         end_date: budget.validity_days ? endDate.toISOString() : null,
         updated_at: new Date().toISOString()
