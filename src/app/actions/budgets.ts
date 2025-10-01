@@ -152,11 +152,13 @@ export async function createDraftBudget(data: {
     // Calcular IVA
     const iva = data.totals.total - data.totals.base
 
-    // Inicializar json_budget_data con copia de tariffData (con cantidades en 0)
+    // Inicializar json_budget_data con copia de tariffData
+    // Si tariffData ya tiene cantidades (viene de handleSaveBudget), preservarlas
+    // Si no tiene cantidades (viene de handleStep1Continue), inicializar en 0
     const initialBudgetData = (data.tariffData as BudgetDataItem[]).map(item => ({
       ...item,
-      quantity: item.level === 'item' ? '0,00' : undefined,
-      amount: '0,00'
+      quantity: item.quantity !== undefined ? item.quantity : (item.level === 'item' ? '0,00' : undefined),
+      amount: item.amount !== undefined ? item.amount : '0,00'
     }))
 
     // Crear borrador

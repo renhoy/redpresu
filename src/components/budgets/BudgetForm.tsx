@@ -161,39 +161,10 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
   //   return () => clearTimeout(timer)
   // }, [budgetData, budgetId, totals, existingBudget])
 
-  const handleStep1Continue = async () => {
+  const handleStep1Continue = () => {
+    // Solo validar y cambiar de paso, sin guardar en BD
     if (validateStep1()) {
-      // Si no hay budgetId, crear borrador
-      if (!budgetId) {
-        setSaveStatus('saving')
-        const result = await createDraftBudget({
-          tariffId: tariff.id,
-          clientData: clientData,
-          tariffData: tariff.json_tariff_data as unknown[],
-          validity: tariff.validity,
-          totals: { base: 0, total: 0 }
-        })
-
-        if (result.success && result.budgetId) {
-          setBudgetId(result.budgetId)
-          // Actualizar URL sin reload
-          router.replace(`/budgets/create?tariff_id=${tariff.id}&budget_id=${result.budgetId}`)
-          setSaveStatus('saved')
-          setTimeout(() => setSaveStatus('idle'), 2000)
-          setCurrentStep(2)
-        } else {
-          toast.error(result.error || 'Error al crear borrador')
-          setSaveStatus('idle')
-        }
-      } else {
-        // Si ya existe, solo actualizar datos cliente y pasar a paso 2
-        await updateBudgetDraft(budgetId, {
-          clientData: clientData,
-          budgetData,
-          totals
-        })
-        setCurrentStep(2)
-      }
+      setCurrentStep(2)
     }
   }
 
@@ -233,19 +204,53 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
       return
     }
 
-    if (!budgetId) {
-      toast.error('Error: presupuesto no inicializado')
-      return
-    }
-
     setSaveStatus('saving')
-    const result = await saveBudgetAsPending(budgetId, totals, budgetData)
 
-    if (result.success) {
-      toast.success('Presupuesto guardado correctamente')
-      router.push('/budgets')
-    } else {
-      toast.error(result.error || 'Error al guardar el presupuesto')
+    try {
+      // Si no existe budgetId, crear presupuesto nuevo
+      if (!budgetId) {
+        const createResult = await createDraftBudget({
+          tariffId: tariff.id,
+          clientData: clientData,
+          tariffData: budgetData,
+          validity: tariff.validity,
+          totals: totals
+        })
+
+        if (!createResult.success || !createResult.budgetId) {
+          toast.error(createResult.error || 'Error al crear presupuesto')
+          setSaveStatus('idle')
+          return
+        }
+
+        // Usar el budgetId recién creado
+        const newBudgetId = createResult.budgetId
+
+        // Guardar como pendiente
+        const result = await saveBudgetAsPending(newBudgetId, totals, budgetData)
+
+        if (result.success) {
+          toast.success('Presupuesto guardado correctamente')
+          router.push('/budgets')
+        } else {
+          toast.error(result.error || 'Error al guardar el presupuesto')
+          setSaveStatus('idle')
+        }
+      } else {
+        // Si ya existe, solo actualizar
+        const result = await saveBudgetAsPending(budgetId, totals, budgetData)
+
+        if (result.success) {
+          toast.success('Presupuesto guardado correctamente')
+          router.push('/budgets')
+        } else {
+          toast.error(result.error || 'Error al guardar el presupuesto')
+          setSaveStatus('idle')
+        }
+      }
+    } catch (error) {
+      console.error('Error al guardar presupuesto:', error)
+      toast.error('Error inesperado al guardar')
       setSaveStatus('idle')
     }
   }
