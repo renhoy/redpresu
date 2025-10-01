@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox'
 import { ArrowLeft, ArrowRight, Trash2, Save, FileStack, Loader2, Check } from 'lucide-react'
 import { BudgetHierarchyForm } from './BudgetHierarchyForm'
-import { createDraftBudget, updateBudgetDraft, saveBudget } from '@/app/actions/budgets'
+import { createDraftBudget, updateBudgetDraft, saveBudget, generateBudgetPDF } from '@/app/actions/budgets'
 import { toast } from 'sonner'
 
 interface BudgetFormProps {
@@ -255,9 +255,27 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
     }
   }
 
-  const handleGeneratePDF = () => {
-    // TODO: Implementar generación de PDF
-    toast.info('Generación de PDF próximamente')
+  const handleGeneratePDF = async () => {
+    if (!budgetId) {
+      toast.error('Debe guardar el presupuesto antes de generar PDF')
+      return
+    }
+
+    try {
+      toast.info('Generando payload PDF...')
+
+      const result = await generateBudgetPDF(budgetId)
+
+      if (result.success && result.payload) {
+        console.log('📄 PAYLOAD PDF GENERADO:', JSON.stringify(result.payload, null, 2))
+        toast.success('Payload PDF generado. Revisa la consola.')
+      } else {
+        toast.error(result.error || 'Error generando payload PDF')
+      }
+    } catch (error) {
+      console.error('Error en handleGeneratePDF:', error)
+      toast.error('Error generando payload PDF')
+    }
   }
 
   const handleClientDataChange = (field: keyof ClientData, value: string | boolean) => {

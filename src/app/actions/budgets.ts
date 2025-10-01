@@ -5,6 +5,7 @@ import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { Tariff, Budget, BudgetStatus } from '@/lib/types/database'
 import { revalidatePath } from 'next/cache'
+import { buildPDFPayload } from '@/lib/helpers/pdf-payload-builder'
 
 interface ClientData {
   client_type: 'particular' | 'autonomo' | 'empresa'
@@ -511,6 +512,60 @@ export async function getBudgetById(
   } catch (error) {
     console.error('[getBudgetById] Error crítico:', error)
     return null
+  }
+}
+
+/**
+ * Generar payload PDF desde presupuesto
+ */
+export async function generateBudgetPDF(budgetId: string): Promise<{
+  success: boolean
+  payload?: any
+  error?: string
+}> {
+  try {
+    console.log('[generateBudgetPDF] Generando payload para budget:', budgetId)
+
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+    // Obtener usuario actual
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      console.error('[generateBudgetPDF] Error de autenticación:', authError)
+      return { success: false, error: 'No autenticado' }
+    }
+
+    // Obtener budget con join a tariff
+    const { data: budget, error: budgetError } = await supabase
+      .from('budgets')
+      .select(`
+        *,
+        tariff:tariffs(*)
+      `)
+      .eq('id', budgetId)
+      .single()
+
+    if (budgetError || !budget) {
+      console.error('[generateBudgetPDF] Budget no encontrado:', budgetError)
+      return { success: false, error: 'Presupuesto no encontrado' }
+    }
+
+    // Validar que exista tariff
+    if (!budget.tariff) {
+      console.error('[generateBudgetPDF] Tarifa no encontrada para budget:', budgetId)
+      return { success: false, error: 'Tarifa no encontrada' }
+    }
+
+    // Construir payload
+    const payload = buildPDFPayload(budget as Budget, budget.tariff as Tariff)
+
+    console.log('[generateBudgetPDF] Payload generado exitosamente')
+    return { success: true, payload }
+
+  } catch (error) {
+    console.error('[generateBudgetPDF] Error crítico:', error)
+    return { success: false, error: 'Error generando payload PDF' }
   }
 }
 
