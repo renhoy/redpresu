@@ -152,6 +152,13 @@ export async function createDraftBudget(data: {
     // Calcular IVA
     const iva = data.totals.total - data.totals.base
 
+    // Inicializar json_budget_data con copia de tariffData (con cantidades en 0)
+    const initialBudgetData = (data.tariffData as BudgetDataItem[]).map(item => ({
+      ...item,
+      quantity: item.level === 'item' ? '0,00' : undefined,
+      amount: '0,00'
+    }))
+
     // Crear borrador
     const { data: budget, error: insertError } = await supabaseAdmin
       .from('budgets')
@@ -160,7 +167,7 @@ export async function createDraftBudget(data: {
         tariff_id: data.tariffId,
         user_id: user.id,
         json_tariff_data: data.tariffData,
-        json_budget_data: [],
+        json_budget_data: initialBudgetData,
         client_type: data.clientData.client_type,
         client_name: data.clientData.client_name,
         client_nif_nie: data.clientData.client_nif_nie,
