@@ -206,17 +206,29 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
   }
 
   const handleSaveBudget = async () => {
+    // DEBUG: Ver estructura de budgetData
+    console.log('[handleSaveBudget] budgetData completo:', JSON.stringify(budgetData, null, 2))
+    console.log('[handleSaveBudget] Número de elementos:', budgetData.length)
+
     // Validar al menos una partida con cantidad > 0
-    const hasItems = budgetData.some((item: unknown) => {
-      const budgetItem = item as { level?: string; quantity?: string }
-      if (budgetItem.level !== 'item') return false
+    const itemsWithQuantity = budgetData
+      .map((item: unknown) => {
+        const budgetItem = item as { level?: string; quantity?: string; id?: string; name?: string }
+        if (budgetItem.level !== 'item') return null
 
-      // Parsear cantidad en formato español (con coma)
-      const quantityStr = budgetItem.quantity || '0'
-      const quantity = parseFloat(quantityStr.replace(',', '.'))
+        // Parsear cantidad en formato español (con coma)
+        const quantityStr = budgetItem.quantity || '0'
+        const quantity = parseFloat(quantityStr.replace(',', '.'))
 
-      return quantity > 0
-    })
+        console.log(`[handleSaveBudget] Item ${budgetItem.id} (${budgetItem.name}): quantity="${quantityStr}" -> ${quantity}`)
+
+        return quantity > 0 ? budgetItem : null
+      })
+      .filter(item => item !== null)
+
+    console.log('[handleSaveBudget] Items con cantidad > 0:', itemsWithQuantity.length)
+
+    const hasItems = itemsWithQuantity.length > 0
 
     if (!hasItems) {
       toast.error('Debe incluir al menos un elemento en el presupuesto')

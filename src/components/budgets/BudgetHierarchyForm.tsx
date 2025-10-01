@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Info, Minus, Plus } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -91,6 +91,10 @@ export function BudgetHierarchyForm({
   // ESTADO GLOBAL: activeItemId controla qué partida muestra controles
   const [activeItemId, setActiveItemId] = useState<string | null>(null)
 
+  // Refs para evitar bucles infinitos en useEffect
+  const prevBudgetDataRef = useRef<string>('')
+  const isInitialMount = useRef(true)
+
   // Initialize budget data with quantities set to 0 (array plano)
   useEffect(() => {
     const initialBudgetData = tariffData.map(item => ({
@@ -110,16 +114,30 @@ export function BudgetHierarchyForm({
 
   // Calculate totals whenever budget data changes
   useEffect(() => {
-    const newTotals = calculateTotals(budgetData)
-    setTotals(newTotals)
-    onBudgetDataChange(budgetData)
+    // Skip en mount inicial cuando budgetData está vacío
+    if (isInitialMount.current && budgetData.length === 0) {
+      isInitialMount.current = false
+      return
+    }
 
-    // Notificar totals al padre
-    if (onTotalsChange) {
-      onTotalsChange({
-        base: newTotals.base,
-        total: newTotals.total
-      })
+    // Serializar budgetData para comparar si cambió realmente
+    const currentBudgetDataStr = JSON.stringify(budgetData)
+
+    // Solo notificar si budgetData cambió realmente
+    if (currentBudgetDataStr !== prevBudgetDataRef.current) {
+      prevBudgetDataRef.current = currentBudgetDataStr
+
+      const newTotals = calculateTotals(budgetData)
+      setTotals(newTotals)
+      onBudgetDataChange(budgetData)
+
+      // Notificar totals al padre
+      if (onTotalsChange) {
+        onTotalsChange({
+          base: newTotals.base,
+          total: newTotals.total
+        })
+      }
     }
   }, [budgetData, onBudgetDataChange, onTotalsChange])
 
