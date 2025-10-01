@@ -263,20 +263,13 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                           variant="ghost"
                           size="icon"
                           onClick={() => window.open(budget.pdf_url!, '_blank')}
-                          title="Ver PDF"
+                          title="Descargar PDF"
+                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
                         >
                           <FileStack className="h-4 w-4" />
                         </Button>
                       ) : (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          disabled
-                          className="opacity-30"
-                          title="PDF no disponible"
-                        >
-                          <FileStack className="h-4 w-4" />
-                        </Button>
+                        <span className="text-xs text-muted-foreground">Sin PDF</span>
                       )}
                     </td>
 

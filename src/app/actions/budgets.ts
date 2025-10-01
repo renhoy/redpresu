@@ -516,15 +516,31 @@ export async function getBudgetById(
 }
 
 /**
- * Generar payload PDF desde presupuesto
+ * Sanitiza nombre de archivo removiendo caracteres especiales
+ */
+function sanitizeFilename(filename: string): string {
+  return filename
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Eliminar acentos
+    .replace(/[^a-z0-9_-]/g, '_') // Solo letras, números, guiones y guiones bajos
+    .replace(/_+/g, '_') // Múltiples _ a uno solo
+    .substring(0, 100) // Máximo 100 caracteres
+}
+
+/**
+ * Generar PDF desde presupuesto con Rapid-PDF API
  */
 export async function generateBudgetPDF(budgetId: string): Promise<{
   success: boolean
-  payload?: any
+  pdf_url?: string
   error?: string
 }> {
+  const fs = require('fs')
+  const path = require('path')
+
   try {
-    console.log('[generateBudgetPDF] Generando payload para budget:', budgetId)
+    console.log('[generateBudgetPDF] Iniciando generación PDF para budget:', budgetId)
 
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
@@ -557,15 +573,138 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
       return { success: false, error: 'Tarifa no encontrada' }
     }
 
-    // Construir payload
-    const payload = buildPDFPayload(budget as Budget, budget.tariff as Tariff)
+    const budgetTyped = budget as Budget
+    const tariffTyped = budget.tariff as Tariff
 
-    console.log('[generateBudgetPDF] Payload generado exitosamente')
-    return { success: true, payload }
+    // 1. Construir payload
+    console.log('[generateBudgetPDF] Construyendo payload...')
+    const payload = buildPDFPayload(budgetTyped, tariffTyped)
+
+    // 2. Validar variables de entorno
+    const RAPID_PDF_URL = process.env.RAPID_PDF_URL
+    const RAPID_PDF_API_KEY = process.env.RAPID_PDF_API_KEY
+
+    if (!RAPID_PDF_URL || !RAPID_PDF_API_KEY) {
+      console.error('[generateBudgetPDF] Variables de entorno Rapid-PDF no configuradas')
+      return { success: false, error: 'Servicio PDF no configurado' }
+    }
+
+    // 3. Llamar a Rapid-PDF API con timeout 60s
+    console.log('[generateBudgetPDF] Llamando a Rapid-PDF API...')
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 60000) // 60 segundos
+
+    let rapidPdfResponse
+    try {
+      rapidPdfResponse = await fetch(`${RAPID_PDF_URL}/generate_document`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': RAPID_PDF_API_KEY
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      })
+
+      clearTimeout(timeoutId)
+
+      if (!rapidPdfResponse.ok) {
+        const errorText = await rapidPdfResponse.text()
+        console.error('[generateBudgetPDF] Error Rapid-PDF:', rapidPdfResponse.status, errorText)
+        return {
+          success: false,
+          error: `Error del servicio PDF (${rapidPdfResponse.status})`
+        }
+      }
+
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId)
+
+      if (fetchError.name === 'AbortError') {
+        console.error('[generateBudgetPDF] Timeout > 60s')
+        return { success: false, error: 'Timeout: generación PDF excedió 60 segundos' }
+      }
+
+      console.error('[generateBudgetPDF] Error de conexión Rapid-PDF:', fetchError)
+      return { success: false, error: 'Servicio PDF no disponible' }
+    }
+
+    const rapidPdfData = await rapidPdfResponse.json()
+    console.log('[generateBudgetPDF] Respuesta Rapid-PDF:', rapidPdfData)
+
+    if (!rapidPdfData.url) {
+      console.error('[generateBudgetPDF] Respuesta sin URL:', rapidPdfData)
+      return { success: false, error: 'Respuesta inválida del servicio PDF' }
+    }
+
+    // 4. Descargar PDF desde la URL retornada
+    console.log('[generateBudgetPDF] Descargando PDF desde:', rapidPdfData.url)
+
+    let pdfBuffer: Buffer
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const pdfUrl = `${RAPID_PDF_URL}${rapidPdfData.url}`
+        const downloadResponse = await fetch(pdfUrl)
+
+        if (!downloadResponse.ok) {
+          throw new Error(`HTTP ${downloadResponse.status}`)
+        }
+
+        const arrayBuffer = await downloadResponse.arrayBuffer()
+        pdfBuffer = Buffer.from(arrayBuffer)
+        console.log('[generateBudgetPDF] PDF descargado exitosamente:', pdfBuffer.length, 'bytes')
+        break
+
+      } catch (downloadError) {
+        console.error(`[generateBudgetPDF] Intento ${attempt}/2 descarga falló:`, downloadError)
+
+        if (attempt === 2) {
+          return { success: false, error: 'Error descargando PDF generado' }
+        }
+
+        // Esperar 1s antes de reintentar
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      }
+    }
+
+    // 5. Guardar PDF en /public/pdfs/
+    const date = new Date().toISOString().split('T')[0]
+    const clientName = sanitizeFilename(budgetTyped.client_name)
+    const filename = `presupuesto_${clientName}_${date}.pdf`
+
+    const publicDir = path.join(process.cwd(), 'public', 'pdfs')
+    const filePath = path.join(publicDir, filename)
+
+    // Crear directorio si no existe
+    if (!fs.existsSync(publicDir)) {
+      fs.mkdirSync(publicDir, { recursive: true })
+      console.log('[generateBudgetPDF] Directorio creado:', publicDir)
+    }
+
+    fs.writeFileSync(filePath, pdfBuffer!)
+    console.log('[generateBudgetPDF] PDF guardado en:', filePath)
+
+    const pdfUrl = `/pdfs/${filename}`
+
+    // 6. Actualizar pdf_url en budgets
+    const { error: updateError } = await supabaseAdmin
+      .from('budgets')
+      .update({ pdf_url: pdfUrl })
+      .eq('id', budgetId)
+
+    if (updateError) {
+      console.error('[generateBudgetPDF] Error actualizando pdf_url:', updateError)
+      // No retornamos error, el PDF ya está guardado
+    }
+
+    console.log('[generateBudgetPDF] ✅ PDF generado exitosamente:', pdfUrl)
+    revalidatePath('/budgets')
+
+    return { success: true, pdf_url: pdfUrl }
 
   } catch (error) {
     console.error('[generateBudgetPDF] Error crítico:', error)
-    return { success: false, error: 'Error generando payload PDF' }
+    return { success: false, error: 'Error generando PDF' }
   }
 }
 

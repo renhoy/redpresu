@@ -39,6 +39,7 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
   const [budgetData, setBudgetData] = useState<unknown[]>([])
   const [budgetId, setBudgetId] = useState<string | null>(existingBudget?.id || null)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
+  const [pdfStatus, setPdfStatus] = useState<'idle' | 'generating' | 'generated'>('idle')
   const [totals, setTotals] = useState<{ base: number; total: number }>({ base: 0, total: 0 })
   const [clientData, setClientData] = useState<ClientData>({
     client_type: (existingBudget?.client_type as ClientData['client_type']) || 'empresa',
@@ -262,19 +263,30 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
     }
 
     try {
-      toast.info('Generando payload PDF...')
+      setPdfStatus('generating')
+      toast.info('Generando PDF... Esto puede tardar hasta 60 segundos')
 
       const result = await generateBudgetPDF(budgetId)
 
-      if (result.success && result.payload) {
-        console.log('📄 PAYLOAD PDF GENERADO:', JSON.stringify(result.payload, null, 2))
-        toast.success('Payload PDF generado. Revisa la consola.')
+      if (result.success && result.pdf_url) {
+        setPdfStatus('generated')
+        toast.success('PDF generado exitosamente')
+
+        // Abrir PDF en nueva pestaña
+        window.open(result.pdf_url, '_blank')
+
+        // Redirigir al listado después de 1 segundo
+        setTimeout(() => {
+          router.push('/budgets')
+        }, 1000)
       } else {
-        toast.error(result.error || 'Error generando payload PDF')
+        setPdfStatus('idle')
+        toast.error(result.error || 'Error generando PDF')
       }
     } catch (error) {
+      setPdfStatus('idle')
       console.error('Error en handleGeneratePDF:', error)
-      toast.error('Error generando payload PDF')
+      toast.error('Error generando PDF')
     }
   }
 
@@ -419,9 +431,14 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
             size="icon"
             style={{ backgroundColor: tariff.primary_color }}
             onClick={handleGeneratePDF}
+            disabled={pdfStatus === 'generating'}
             title="Generar PDF"
           >
-            <FileStack className="w-4 h-4" />
+            {pdfStatus === 'generating' ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <FileStack className="w-4 h-4" />
+            )}
           </Button>
         </div>
       )}
