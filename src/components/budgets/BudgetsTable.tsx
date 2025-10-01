@@ -81,6 +81,13 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
     })
   }
 
+  const getUserName = (budget: Budget) => {
+    if (budget.users && typeof budget.users === 'object' && 'name' in budget.users) {
+      return (budget.users as any).name
+    }
+    return 'N/A'
+  }
+
   return (
     <div className="space-y-4">
       {/* Filtros */}
@@ -117,7 +124,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                 <th className="text-left p-4 font-medium">Tarifa</th>
                 <th className="text-right p-4 font-medium">Total</th>
                 <th className="text-left p-4 font-medium">Estado</th>
-                <th className="text-left p-4 font-medium">Fecha</th>
+                <th className="text-left p-4 font-medium">Usuario</th>
                 <th className="text-center p-4 font-medium">PDF</th>
                 <th className="text-right p-4 font-medium">Acciones</th>
               </tr>
@@ -156,7 +163,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                     </td>
 
                     <td className="p-4 text-right font-mono">
-                      {formatCurrency(budget.total)}
+                      {formatCurrency(budget.total || 0)}
                     </td>
 
                     <td className="p-4">
@@ -166,7 +173,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                     </td>
 
                     <td className="p-4 text-sm text-muted-foreground">
-                      {formatDate(budget.created_at)}
+                      {getUserName(budget)}
                     </td>
 
                     <td className="p-4 text-center">

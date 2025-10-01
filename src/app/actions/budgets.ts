@@ -434,13 +434,16 @@ export async function getBudgets(filters?: {
 
     console.log('[getBudgets] Usuario:', userData.role, 'Empresa:', userData.empresa_id)
 
-    // Construir query base con JOIN a tariffs
+    // Construir query base con JOIN a tariffs y users
     let query = supabase
       .from('budgets')
       .select(`
         *,
         tariffs (
           title
+        ),
+        users (
+          name
         )
       `)
 

@@ -113,6 +113,9 @@ export interface Budget {
   tariffs?: {
     title: string
   }
+  users?: {
+    name: string
+  }
 }
 
 export interface BudgetData {
