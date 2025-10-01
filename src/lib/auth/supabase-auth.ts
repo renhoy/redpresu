@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase/client'
-import type { User, UserRole } from '@/lib/types/database'
+import type { UserRole } from '@/lib/types/database'
 
 export interface AuthUser {
   id: string
@@ -9,7 +9,7 @@ export interface AuthUser {
   empresa_id: number
 }
 
-export interface AuthResponse<T = any> {
+export interface AuthResponse<T = unknown> {
   data: T | null
   error: string | null
   success: boolean

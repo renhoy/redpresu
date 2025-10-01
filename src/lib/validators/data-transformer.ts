@@ -232,7 +232,7 @@ export class DataTransformer {
    */
   private transformItemWithFullNormalization(item: ProcessedRow): BudgetItem {
     // 1. Normalización de campos base
-    const rawData: Record<string, any> = {
+    const rawData: Record<string, unknown> = {
       nivel: item.nivel,
       id: item.id,
       nombre: item.nombre,

@@ -1,4 +1,4 @@
-import { ValidationError, ErrorCode, ErrorSeverity } from '../validators/csv-types';
+import { ValidationError, ErrorSeverity } from '../validators/csv-types';
 import { ERROR_CODES, SEVERITY } from '../constants/csv';
 
 /**

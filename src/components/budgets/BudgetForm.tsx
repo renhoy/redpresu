@@ -36,12 +36,12 @@ interface ClientData {
 export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
-  const [budgetData, setBudgetData] = useState<any[]>([])
+  const [budgetData, setBudgetData] = useState<unknown[]>([])
   const [budgetId, setBudgetId] = useState<string | null>(existingBudget?.id || null)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [totals, setTotals] = useState<{ base: number; total: number }>({ base: 0, total: 0 })
   const [clientData, setClientData] = useState<ClientData>({
-    client_type: existingBudget?.client_type as any || 'empresa',
+    client_type: (existingBudget?.client_type as ClientData['client_type']) || 'empresa',
     client_name: existingBudget?.client_name || '',
     client_nif_nie: existingBudget?.client_nif_nie || '',
     client_phone: existingBudget?.client_phone || '',
@@ -59,8 +59,8 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
   // Cargar budgetData del borrador existente
   useEffect(() => {
     if (existingBudget?.json_budget_data) {
-      setBudgetData(existingBudget.json_budget_data as any[])
-      if (existingBudget.json_budget_data.length > 0) {
+      setBudgetData(existingBudget.json_budget_data as unknown[])
+      if (Array.isArray(existingBudget.json_budget_data) && existingBudget.json_budget_data.length > 0) {
         setCurrentStep(2) // Si ya tiene datos, mostrar paso 2
       }
     }
@@ -162,8 +162,8 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
         setSaveStatus('saving')
         const result = await createDraftBudget({
           tariffId: tariff.id,
-          clientData: clientData as any,
-          tariffData: tariff.json_tariff_data as any[],
+          clientData: clientData,
+          tariffData: tariff.json_tariff_data as unknown[],
           validity: tariff.validity,
           totals: { base: 0, total: 0 }
         })
@@ -182,7 +182,7 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
       } else {
         // Si ya existe, solo actualizar datos cliente y pasar a paso 2
         await updateBudgetDraft(budgetId, {
-          clientData: clientData as any,
+          clientData: clientData,
           budgetData,
           totals
         })
@@ -191,7 +191,7 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
     }
   }
 
-  const handleBudgetDataChange = (newBudgetData: any[]) => {
+  const handleBudgetDataChange = (newBudgetData: unknown[]) => {
     setBudgetData(newBudgetData)
   }
 
@@ -623,7 +623,7 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
           <CardContent className="space-y-3 pt-4">
             {tariff.json_tariff_data && (
               <BudgetHierarchyForm
-                tariffData={tariff.json_tariff_data as any[]}
+                tariffData={tariff.json_tariff_data as unknown[]}
                 onBudgetDataChange={handleBudgetDataChange}
                 onTotalsChange={setTotals}
                 primaryColor={tariff.primary_color}

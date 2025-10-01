@@ -8,7 +8,7 @@ import {
 } from './csv-types';
 import { ErrorFactory } from '../helpers/csv-errors';
 import { CSVUtils } from '../helpers/csv-utils';
-import { REQUIRED_FIELDS, LEVEL_MAP } from '../constants/csv';
+import { REQUIRED_FIELDS } from '../constants/csv';
 
 /**
  * Schema Zod para validar campos de items
@@ -82,7 +82,7 @@ export class BudgetValidator {
   /**
    * Mapea los campos de las cabeceras a índices
    */
-  private mapFields(headers: string[]): { success: boolean; data?: FieldMap; errors: any[] } {
+  private mapFields(headers: string[]): { success: boolean; data?: FieldMap; errors: z.ZodIssue[] } {
     const slugHeaders = headers.map(h => CSVUtils.createSlug(h));
     const spanishSlugs = REQUIRED_FIELDS.spanish.map(f => CSVUtils.createSlug(f));
     const englishSlugs = REQUIRED_FIELDS.english.map(f => CSVUtils.createSlug(f));
@@ -151,7 +151,7 @@ export class BudgetValidator {
     values: string[],
     fieldMap: FieldMap,
     lineNumber: number
-  ): { data: ProcessedRow | null; errors: any[] } {
+  ): { data: ProcessedRow | null; errors: z.ZodIssue[] } {
     const errors = [];
     const data: ProcessedRow = {
       lineNumber,
@@ -326,7 +326,7 @@ export class BudgetValidator {
   /**
    * Valida la jerarquía de un item específico
    */
-  private validateItemHierarchy(item: ProcessedRow, existingIds: Set<string | undefined>): any {
+  private validateItemHierarchy(item: ProcessedRow, existingIds: Set<string | undefined>): z.ZodIssue | null {
     if (!item.id) return null;
 
     const depth = CSVUtils.getHierarchyDepth(item.id);

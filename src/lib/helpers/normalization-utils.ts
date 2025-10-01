@@ -202,8 +202,8 @@ export class NormalizationUtils {
   /**
    * Crea un objeto normalizado con todos los campos traducidos
    */
-  static createNormalizedObject(rawData: Record<string, any>): Record<string, any> {
-    const normalized: Record<string, any> = {};
+  static createNormalizedObject(rawData: Record<string, unknown>): Record<string, unknown> {
+    const normalized: Record<string, unknown> = {};
 
     Object.keys(rawData).forEach(key => {
       const translatedKey = this.translateFieldToEnglish(key);
@@ -240,7 +240,7 @@ export class NormalizationUtils {
    * Valida que todos los campos requeridos estén presentes
    */
   static validateRequiredFields(
-    data: Record<string, any>,
+    data: Record<string, unknown>,
     requiredFields: string[]
   ): { isValid: boolean; missingFields: string[] } {
     const missingFields = requiredFields.filter(field => {

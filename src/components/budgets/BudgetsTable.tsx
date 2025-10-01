@@ -84,7 +84,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
 
   const getUserName = (budget: Budget) => {
     if (budget.users && typeof budget.users === 'object' && 'name' in budget.users) {
-      return (budget.users as any).name
+      return (budget.users as { name: string }).name
     }
     return 'N/A'
   }
@@ -134,7 +134,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
               {filteredBudgets.map(budget => {
                 const days = getDaysRemaining(budget.start_date, budget.validity_days)
                 const tariffTitle = budget.tariffs && typeof budget.tariffs === 'object' && 'title' in budget.tariffs
-                  ? (budget.tariffs as any).title
+                  ? (budget.tariffs as { title: string }).title
                   : 'N/A'
 
                 return (

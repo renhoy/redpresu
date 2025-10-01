@@ -1,6 +1,6 @@
 import { BudgetItem } from '../validators/csv-types';
 import { CalculationUtils } from '../utils/calculations';
-import { IVAGroup, TotalsResult, CalculationOptions } from './calculation-types';
+import { TotalsResult } from './calculation-types';
 
 /**
  * Funciones de conveniencia para cálculos específicos

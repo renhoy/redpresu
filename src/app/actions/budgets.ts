@@ -73,10 +73,18 @@ export async function getActiveTariffs(): Promise<Tariff[]> {
   }
 }
 
+interface BudgetDataItem {
+  level: string
+  quantity?: string
+  price?: string
+  iva_percentage?: string
+  [key: string]: unknown
+}
+
 /**
  * Helper: Calcular totales desde json_budget_data
  */
-function calculateBudgetTotals(budgetData: any[]): {
+function calculateBudgetTotals(budgetData: BudgetDataItem[]): {
   total: number
   iva: number
   base: number
@@ -112,7 +120,7 @@ function calculateBudgetTotals(budgetData: any[]): {
 export async function createDraftBudget(data: {
   tariffId: string
   clientData: ClientData
-  tariffData: any[]
+  tariffData: unknown[]
   validity: number | null
   totals: { base: number; total: number }
 }): Promise<{ success: boolean; budgetId?: string; error?: string }> {
@@ -198,7 +206,7 @@ export async function updateBudgetDraft(
   budgetId: string,
   data: {
     clientData?: ClientData
-    budgetData: any[]
+    budgetData: unknown[]
     totals?: { base: number; total: number }
   }
 ): Promise<{ success: boolean; error?: string }> {
@@ -239,7 +247,7 @@ export async function updateBudgetDraft(
     }
 
     // Preparar datos a actualizar
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       json_budget_data: data.budgetData,
       updated_at: new Date().toISOString()
     }
@@ -325,7 +333,7 @@ export async function saveBudgetAsPending(
     }
 
     // Validar que hay al menos una partida con cantidad > 0
-    const budgetData = budget.json_budget_data as any[]
+    const budgetData = budget.json_budget_data as BudgetDataItem[]
     const hasItems = budgetData.some(
       item => item.level === 'item' && parseFloat(item.quantity || '0') > 0
     )

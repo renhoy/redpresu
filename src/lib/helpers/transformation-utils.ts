@@ -1,6 +1,5 @@
 import { BudgetItem } from '../validators/csv-types';
 import { CSVUtils } from './csv-utils';
-import { NormalizationUtils } from './normalization-utils';
 
 /**
  * Utilidades adicionales para transformación de datos de presupuesto
@@ -79,7 +78,7 @@ export class TransformationUtils {
     // Verificar secuencias correctas por nivel
     const byLevel = this.groupByLevel(data);
 
-    Object.entries(byLevel).forEach(([level, items]) => {
+    Object.entries(byLevel).forEach(([, items]) => {
       const byParent = this.groupByParentId(items);
 
       Object.entries(byParent).forEach(([parentId, siblings]) => {

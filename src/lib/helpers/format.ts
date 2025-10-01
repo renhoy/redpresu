@@ -165,7 +165,6 @@ export function parseNumber(formatted: string, locale: 'es' | 'en' = 'es'): numb
     return 0;
   }
 
-  const config = LOCALE_CONFIG[locale];
   let normalized = formatted.trim();
 
   // Manejar signo negativo
