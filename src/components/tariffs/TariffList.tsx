@@ -11,7 +11,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { TariffFilters } from './TariffFilters'
 import { TariffRow } from './TariffRow'
 import { getTariffs } from '@/app/actions/tariffs'
@@ -62,29 +61,14 @@ export function TariffList({ empresaId, initialTariffs = [] }: TariffListProps) 
     loadTariffs()
   }
 
-  if (loading && tariffs.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Cargando tarifas...</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
-
   return (
-    <div className="space-y-6">
+    <>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Gestión de Tarifas</h1>
-          <p className="text-muted-foreground">
-            Administra las tarifas de tu empresa
+          <h1 className="text-2xl font-bold">Tarifas</h1>
+          <p className="text-sm text-muted-foreground">
+            Gestiona las tarifas de tu empresa
           </p>
         </div>
         <Button asChild>
@@ -102,20 +86,9 @@ export function TariffList({ empresaId, initialTariffs = [] }: TariffListProps) 
         defaultSearch={filters.search}
       />
 
-      {/* Results */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Tarifas ({tariffs.length})
-            </CardTitle>
-            {loading && (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
+      {/* Table */}
+      <div className="border rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
           {tariffs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <FileText className="h-12 w-12 text-muted-foreground mb-4" />
@@ -136,33 +109,32 @@ export function TariffList({ empresaId, initialTariffs = [] }: TariffListProps) 
               )}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tarifa</TableHead>
-                    <TableHead className="w-24">Presupuesto</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead className="hidden md:table-cell">Validez</TableHead>
-                    <TableHead className="hidden sm:table-cell">Fecha</TableHead>
-                    <TableHead className="w-12">Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {tariffs.map((tariff) => (
-                    <TariffRow
-                      key={tariff.id}
-                      tariff={tariff}
-                      onStatusChange={handleRefresh}
-                      onDelete={handleRefresh}
-                    />
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <table className="w-full">
+              <thead className="bg-muted">
+                <tr>
+                  <th className="text-left p-4 font-medium">Tarifa</th>
+                  <th className="text-center p-4 font-medium">Presupuesto</th>
+                  <th className="text-center p-4 font-medium">Estado</th>
+                  <th className="text-center p-4 font-medium">Usuario</th>
+                  <th className="text-center p-4 font-medium">Validez</th>
+                  <th className="text-center p-4 font-medium">Fecha</th>
+                  <th className="text-center p-4 font-medium">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tariffs.map((tariff) => (
+                  <TariffRow
+                    key={tariff.id}
+                    tariff={tariff}
+                    onStatusChange={handleRefresh}
+                    onDelete={handleRefresh}
+                  />
+                ))}
+              </tbody>
+            </table>
           )}
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </div>
+    </>
   )
 }

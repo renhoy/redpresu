@@ -87,9 +87,9 @@ export function TariffRow({ tariff, onStatusChange, onDelete }: TariffRowProps) 
 
   return (
     <>
-      <TableRow className="hover:bg-muted/50">
+      <TableRow className="border-t hover:bg-muted/50">
         {/* Columna Tarifa (Nombre + Descripción) */}
-        <TableCell className="font-medium">
+        <TableCell className="p-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <FileText className="h-4 w-4 text-muted-foreground" />
@@ -102,54 +102,61 @@ export function TariffRow({ tariff, onStatusChange, onDelete }: TariffRowProps) 
         </TableCell>
 
         {/* Columna Presupuesto */}
-        <TableCell>
+        <TableCell className="p-4 text-center">
           {tariff.status === 'Activa' ? (
             <Link
               href={`/budgets/create?tariff_id=${tariff.id}`}
-              className="flex items-center gap-1 text-primary hover:text-primary/80 transition-colors"
+              className="inline-flex items-center gap-1 text-primary hover:text-primary/80 transition-colors"
               title="Crear presupuesto con esta tarifa"
             >
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline text-sm">Crear</span>
+              <span className="text-sm">Crear</span>
             </Link>
           ) : (
-            <span className="flex items-center gap-1 text-muted-foreground" title="Solo se pueden crear presupuestos de tarifas activas">
+            <span className="inline-flex items-center gap-1 text-muted-foreground" title="Solo se pueden crear presupuestos de tarifas activas">
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline text-sm">-</span>
+              <span className="text-sm">-</span>
             </span>
           )}
         </TableCell>
 
         {/* Columna Estado */}
-        <TableCell>
-          <Select
-            value={tariff.status || 'Activa'}
-            onValueChange={handleStatusChange}
-          >
-            <SelectTrigger className="w-[120px]">
-              <SelectValue>
-                <Badge className={statusColors[tariff.status as keyof typeof statusColors] || 'bg-gray-200 text-gray-700'}>
-                  {tariff.status || 'Activa'}
-                </Badge>
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Activa">
-                <Badge className="bg-green-100 text-green-800">
-                  Activa
-                </Badge>
-              </SelectItem>
-              <SelectItem value="Inactiva">
-                <Badge className="bg-gray-200 text-gray-700">
-                  Inactiva
-                </Badge>
-              </SelectItem>
-            </SelectContent>
-          </Select>
+        <TableCell className="p-4">
+          <div className="flex justify-center">
+            <Select
+              value={tariff.status || 'Activa'}
+              onValueChange={handleStatusChange}
+            >
+              <SelectTrigger className="w-[140px]">
+                <SelectValue>
+                  <Badge className={statusColors[tariff.status as keyof typeof statusColors] || 'bg-gray-200 text-gray-700'}>
+                    {tariff.status || 'Activa'}
+                  </Badge>
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Activa">
+                  <Badge className="bg-green-100 text-green-800">
+                    Activa
+                  </Badge>
+                </SelectItem>
+                <SelectItem value="Inactiva">
+                  <Badge className="bg-gray-200 text-gray-700">
+                    Inactiva
+                  </Badge>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </TableCell>
+
+        {/* Columna Usuario */}
+        <TableCell className="p-4 text-center text-sm text-muted-foreground">
+          N/A
         </TableCell>
 
         {/* Columna Validez */}
-        <TableCell className="hidden md:table-cell">
+        <TableCell className="p-4 text-center">
           <div className="text-sm">
             {tariff.validity ? (
               <span>{tariff.validity} días</span>
@@ -160,11 +167,11 @@ export function TariffRow({ tariff, onStatusChange, onDelete }: TariffRowProps) 
         </TableCell>
 
         {/* Columna Fecha */}
-        <TableCell className="hidden sm:table-cell text-muted-foreground">
+        <TableCell className="p-4 text-center text-sm text-muted-foreground">
           {formatDate(tariff.created_at)}
         </TableCell>
 
-        <TableCell>
+        <TableCell className="p-4">
           <TooltipProvider>
             <div className="flex justify-end gap-2">
               <Tooltip>
