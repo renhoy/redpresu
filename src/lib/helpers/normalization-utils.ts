@@ -81,9 +81,19 @@ export class NormalizationUtils {
   }
 
   /**
-   * Normaliza texto eliminando tildes pero conservando espacios y mayúsculas
+   * Normaliza texto PRESERVANDO tildes, espacios y mayúsculas
+   * Solo elimina espacios al inicio/final
    */
   static normalizeText(text: string): string {
+    if (!text) return '';
+
+    return text.trim();
+  }
+
+  /**
+   * Normaliza texto eliminando tildes (usado solo para comparaciones internas)
+   */
+  static normalizeTextWithoutAccents(text: string): string {
     if (!text) return '';
 
     return text
@@ -162,14 +172,14 @@ export class NormalizationUtils {
   }
 
   /**
-   * Limpia y normaliza descripciones
+   * Limpia y normaliza descripciones (preservando tildes)
    */
   static normalizeDescription(description?: string): string {
     if (!description || description.trim() === '') {
       return ' '; // Espacio en blanco para mantener compatibilidad
     }
 
-    return this.normalizeText(description);
+    return this.normalizeText(description); // Ahora preserva tildes
   }
 
   /**
