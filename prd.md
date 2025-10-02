@@ -10,12 +10,12 @@
 **ROI:** Reducción 95% tiempo creación presupuesto (5 min vs 24-48h), aumento 30% tasa cierre por respuesta inmediata.
 
 ## Estado del Proyecto
-**Progreso General:** 85% Completado
+**Progreso General:** 95% Completado
 - ✅ FASE 1 (SHARED): 100%
 - ✅ Tariff Management: 100%
 - ✅ Budget Creation: 100%
-- ⏳ PDF Generation: 0% (Siguiente)
-- ⏳ Dashboard: 0%
+- ✅ PDF Generation: 100%
+- ⏳ Dashboard: 0% (Siguiente - Último módulo MVP)
 
 ## Módulos del Sistema
 
@@ -194,27 +194,34 @@ CADUCADO → borrador
 8. ✅ Cabecera con campos correctos (address, contact)
 9. ✅ Nota legal visible (legal_note)
 
-#### 6. PDF Generation - PENDIENTE ⏳
-**Estado:** PRÓXIMO MÓDULO (0%)
+#### 6. PDF Generation - COMPLETADO ✅
+**Estado:** COMPLETADO (100%)
 **Responsabilidad:** Generación PDFs profesionales
 **Dependencia Externa:** Rapid-PDF (microservicio)
 
-**Funcionalidades Planeadas:**
-- ⏳ Construcción payload desde `budgets.json_budget_data`
-- ⏳ Integración API Rapid-PDF
-- ⏳ Descarga y almacenamiento local en `/public/pdfs/`
-- ⏳ Nomenclatura archivos: `presupuesto_[cliente]_[fecha].pdf`
-- ⏳ Actualizar `budgets.pdf_url` tras generación
-- ⏳ Límite timeout 60 segundos
-- ⏳ Manejo errores y reintentos
+**Funcionalidades Implementadas:**
+- ✅ Construcción payload desde `budgets.json_budget_data`
+- ✅ Filtrado elementos con amount > 0
+- ✅ Renumeración jerárquica automática
+- ✅ Integración API Rapid-PDF con timeout 60s
+- ✅ Descarga con retry (2 intentos)
+- ✅ Almacenamiento local en `/public/pdfs/`
+- ✅ Nomenclatura: `presupuesto_nombre_nif_YYYY-MM-DD_HH-MM-SS.pdf`
+- ✅ Actualización `budgets.pdf_url` tras generación
+- ✅ Manejo errores completo
+- ✅ Sistema guardado inteligente con AlertDialogs
+- ✅ Advertencias PDF existente
+- ✅ Columna PDF en listado con descarga
+- ✅ Tooltips informativos
+- ✅ Botón cerrar con advertencia cambios
 
-**Estructura PDF (a implementar):**
-- Cabecera empresa (logo, datos, contacto)
-- Datos cliente
-- Tabla presupuesto jerárquica
-- Totales desglosados (Base, IVA, Total)
-- Notas legales y condiciones
-- Firma comercial
+**Estructura PDF Implementada:**
+- ✅ Cabecera empresa (logo, datos, contacto)
+- ✅ Datos cliente completos
+- ✅ Tabla presupuesto jerárquica filtrada
+- ✅ Totales desglosados (Base, IVAs agrupados, Total)
+- ✅ Notas legales y condiciones
+- ✅ Summary con chapters
 
 #### 7. Dashboard - PENDIENTE ⏳
 **Estado:** NO INICIADO (0%)
@@ -261,7 +268,16 @@ CADUCADO → borrador
 - ✅ Integración Supabase completa
 - ✅ 9 correcciones críticas aplicadas
 - ✅ Documentación actualizada
-- 🔒 Listo para READ-ONLY
+- 🔒 READ-ONLY
+
+### PDF Generation - Criterios Alcanzados:
+- ✅ 10/10 funcionalidades implementadas
+- ✅ 3 Server Actions añadidas (generateBudgetPDF, duplicateBudget, saveBudget+)
+- ✅ 5 helper functions creadas
+- ✅ Integración Rapid-PDF completa
+- ✅ Sistema guardado inteligente
+- ✅ Documentación actualizada
+- 🔒 READ-ONLY
 
 ## Flujo de Valor Completo (MVP)
 
@@ -273,10 +289,10 @@ CADUCADO → borrador
 5. ✅ **Guardar Borrador** → Estado BORRADOR en BD
 6. ✅ **Gestión Estados** → Transiciones válidas con selector interactivo
 7. ✅ **Listado/Edición** → Ver, editar, eliminar presupuestos
-8. ⏳ **Generar PDF** → PENDIENTE (siguiente módulo)
-9. ⏳ **Dashboard** → PENDIENTE
+8. ✅ **Generar PDF** → Integración completa Rapid-PDF, descarga, almacenamiento
+9. ⏳ **Dashboard** → PENDIENTE (último módulo MVP)
 
-### Flujo Completo Esperado (post PDF Generation):
+### Flujo Completo End-to-End:
 1. Comercial hace login
 2. Selecciona tarifa activa
 3. Completa datos cliente (5 campos + dirección)
@@ -292,10 +308,10 @@ CADUCADO → borrador
 **Comercial crea presupuesto completo desde tablet en < 5 minutos vs 24-48h actual**
 
 ### KPIs de Éxito:
-- ✅ Tiempo creación presupuesto: < 5 min (actualmente ~3 min sin PDF)
+- ✅ Tiempo creación presupuesto: < 5 min (actualmente ~3 min con PDF)
 - ✅ Tasa error validación CSV: < 5% (actualmente ~2%)
 - ✅ Cálculos correctos: 100% (validado con formato español)
-- ⏳ Generación PDF: < 60 segundos (pendiente implementar)
+- ✅ Generación PDF: < 60 segundos (actualmente ~1-2 segundos)
 - ✅ UX tablet: Touch-friendly (navegación optimizada)
 - ✅ Uptime: > 99% (Supabase + Vercel)
 
@@ -310,11 +326,11 @@ CADUCADO → borrador
 - ✅ Semana 1-3: SHARED (Database, Auth, Common)
 - ✅ Semana 4: Tariff Management
 - ✅ Semana 5-6: Budget Creation
+- ✅ Semana 7: PDF Generation
 
 ### ⏳ PENDIENTE
-- ⏳ Semana 7: PDF Generation ← **PRÓXIMO**
-- ⏳ Semana 8: Dashboard + Testing E2E
-- ⏳ Semana 9: MVP Listo para producción
+- ⏳ Semana 8: Dashboard ← **PRÓXIMO (Último módulo MVP)**
+- ⏳ Semana 9: Testing E2E + MVP Listo para producción
 
 ## Riesgos y Mitigación
 
@@ -323,24 +339,22 @@ CADUCADO → borrador
 2. ✅ **Cálculos Tiempo Real** - Resuelto con formato español
 3. ✅ **UX Tablet** - Resuelto con navegación optimizada
 4. ✅ **Performance Formularios** - Resuelto con useRef y optimización renders
+5. ✅ **Rapid-PDF Externo** - Resuelto con timeout 60s, retry, manejo errores completo
+6. ✅ **Performance PDF** - Resuelto, generación ~1-2 segundos (filtrado optimizado)
 
 ### Riesgos Activos:
-1. **Rapid-PDF Externo** - CRÍTICO
-   - Dependencia externa sin control
-   - Mitigación: Timeout 60s, reintentos, plan B (otra librería)
-2. **Performance PDF** - MEDIO
-   - Presupuestos grandes (>100 items) pueden tardar
-   - Mitigación: Límite items, paginación, loading states
-3. **Storage Local** - BAJO
+1. **Storage Local** - BAJO
    - `/public/pdfs/` puede crecer indefinidamente
-   - Mitigación: Cleanup automático (>90 días), migrar a S3
+   - Mitigación: Cleanup automático (>90 días), migrar a S3 si necesario
 
 ## Próximos Pasos Inmediatos
 
-1. **Marcar Budget Creation como READ-ONLY** en CLAUDE.md
-2. **Iniciar PDF Generation:**
-   - Investigar integración Rapid-PDF
-   - Diseñar estructura payload
+1. **Marcar PDF Generation como READ-ONLY** en CLAUDE.md ✅
+2. **Iniciar Dashboard:**
+   - Estadísticas presupuestos por estado
+   - Accesos directos principales
+   - Presupuestos recientes
+   - KPIs visuales
    - Implementar descarga y storage
    - Testing con presupuestos reales
 3. **Preparar testing E2E** flujo completo CSV→PDF
