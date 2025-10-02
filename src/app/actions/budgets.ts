@@ -517,6 +517,9 @@ export async function duplicateBudget(
         tariff_id: originalBudget.tariff_id,
         status: BudgetStatus.BORRADOR,
 
+        // Copiar json_tariff_data del original (requerido)
+        json_tariff_data: originalBudget.json_tariff_data,
+
         // Datos del cliente (actualizados)
         client_type: newData.clientData.client_type,
         client_name: newData.clientData.client_name,
@@ -542,10 +545,7 @@ export async function duplicateBudget(
         end_date: originalBudget.validity_days ? endDate.toISOString() : null,
 
         // Sin PDF (se genera después si se desea)
-        pdf_url: null,
-
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        pdf_url: null
       })
       .select()
       .single()
