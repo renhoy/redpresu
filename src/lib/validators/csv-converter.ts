@@ -36,8 +36,21 @@ export class CSV2JSONConverter {
         };
       }
 
+      // Validar que parseResult.data existe y es un array
+      if (!parseResult.data || !Array.isArray(parseResult.data)) {
+        return {
+          success: false,
+          data: undefined,
+          errors: [{
+            code: 'PARSE_ERROR',
+            severity: 'fatal',
+            message: 'No se pudo leer el contenido del CSV. Verifica que el archivo tenga el formato correcto.'
+          }]
+        };
+      }
+
       // 2. Validar estructura
-      const structureResult = this.validator.validateStructure(parseResult.data!);
+      const structureResult = this.validator.validateStructure(parseResult.data);
       if (!structureResult.success) {
         return {
           success: false,
@@ -46,10 +59,23 @@ export class CSV2JSONConverter {
         };
       }
 
+      // Validar que structureResult.fieldMap existe
+      if (!structureResult.fieldMap) {
+        return {
+          success: false,
+          data: undefined,
+          errors: [{
+            code: 'STRUCTURE_ERROR',
+            severity: 'fatal',
+            message: 'No se pudieron identificar las columnas del CSV. Verifica que la primera fila contenga las cabeceras correctas.'
+          }]
+        };
+      }
+
       // 3. Validar datos
       const dataResult = this.validator.validateData(
-        parseResult.data!,
-        structureResult.fieldMap!
+        parseResult.data,
+        structureResult.fieldMap
       );
       if (!dataResult.success) {
         return {
@@ -59,8 +85,21 @@ export class CSV2JSONConverter {
         };
       }
 
+      // Validar que dataResult.data existe
+      if (!dataResult.data || !Array.isArray(dataResult.data)) {
+        return {
+          success: false,
+          data: undefined,
+          errors: [{
+            code: 'VALIDATION_ERROR',
+            severity: 'fatal',
+            message: 'No se pudieron validar los datos del CSV. Verifica que todas las filas tengan el formato correcto.'
+          }]
+        };
+      }
+
       // 4. Transformar a JSON con normalización completa
-      const transformResult = this.transformer.transformWithFullNormalization(dataResult.data!);
+      const transformResult = this.transformer.transformWithFullNormalization(dataResult.data);
       if (!transformResult.success) {
         return {
           success: false,
@@ -69,21 +108,48 @@ export class CSV2JSONConverter {
         };
       }
 
+      // Validar que transformResult.data existe
+      if (!transformResult.data || !Array.isArray(transformResult.data)) {
+        return {
+          success: false,
+          data: undefined,
+          errors: [{
+            code: 'TRANSFORMATION_ERROR',
+            severity: 'fatal',
+            message: 'Error al transformar los datos del CSV. Por favor, verifica el formato del archivo.'
+          }]
+        };
+      }
+
       // Retornar éxito pero incluir warnings si los hay
       return {
         success: true,
-        data: transformResult.data!,
+        data: transformResult.data,
         errors: dataResult.errors // Incluir warnings de la validación
       };
 
     } catch (error) {
+      // Logging para debugging
+      console.error('[CSV2JSONConverter] Error inesperado:', error);
+      console.error('[CSV2JSONConverter] Stack:', error instanceof Error ? error.stack : 'No stack');
+
+      // Detectar errores técnicos comunes
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const isTechnicalError = errorMessage.includes('undefined') ||
+                               errorMessage.includes('null') ||
+                               errorMessage.includes('Cannot read') ||
+                               errorMessage.includes('forEach') ||
+                               errorMessage.includes('TypeError');
+
       return {
         success: false,
         data: undefined,
         errors: [{
           code: 'UNKNOWN_ERROR',
           severity: 'fatal',
-          message: `Error inesperado: ${error instanceof Error ? error.message : 'Error desconocido'}`
+          message: isTechnicalError
+            ? 'El archivo CSV tiene un formato inválido o datos corruptos. Verifica que todas las columnas requeridas estén presentes y tengan valores válidos.'
+            : `Error al procesar el CSV: ${errorMessage}`
         }]
       };
     }

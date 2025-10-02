@@ -434,6 +434,17 @@ export async function processCSV(formData: FormData): Promise<{
     // Leer contenido del archivo con manejo de BOM y codificación
     const arrayBuffer = await file.arrayBuffer()
 
+    // Validación: verificar que el archivo no está vacío
+    if (arrayBuffer.byteLength === 0) {
+      return {
+        success: false,
+        errors: [{
+          message: 'El archivo está vacío. Asegúrate de subir un archivo CSV válido con datos.',
+          severity: 'fatal'
+        }]
+      }
+    }
+
     // Detectar y manejar BOM UTF-8
     const uint8Array = new Uint8Array(arrayBuffer)
     let startIndex = 0
@@ -454,6 +465,17 @@ export async function processCSV(formData: FormData): Promise<{
     const decoder = new TextDecoder('utf-8')
     const csvContent = decoder.decode(cleanBuffer)
 
+    // Validación: verificar que hay contenido después de decodificar
+    if (!csvContent || csvContent.trim().length === 0) {
+      return {
+        success: false,
+        errors: [{
+          message: 'El archivo no contiene datos legibles. Verifica que sea un archivo CSV válido con codificación UTF-8.',
+          severity: 'fatal'
+        }]
+      }
+    }
+
     // Procesar con validador de Common
     const converter = new CSV2JSONConverter()
     const result = await converter.convertCSVToJSON(csvContent)
@@ -465,19 +487,69 @@ export async function processCSV(formData: FormData): Promise<{
       }
     }
 
+    // Validación: verificar que se generaron datos
+    if (!result.data || !Array.isArray(result.data) || result.data.length === 0) {
+      return {
+        success: false,
+        errors: [{
+          message: 'No se pudieron extraer datos del archivo. Verifica que el CSV tenga el formato correcto con cabeceras y al menos una fila de datos.',
+          severity: 'fatal'
+        }]
+      }
+    }
+
     // Post-procesar para restaurar acentos perdidos por normalización
-    const restoredData = restoreAccents(result.data!, csvContent)
+    const restoredData = restoreAccents(result.data, csvContent)
+
+    // Validación final: verificar que el post-procesamiento funcionó
+    if (!restoredData || !Array.isArray(restoredData)) {
+      console.error('[processCSV] Error en post-procesamiento:', { hasData: !!result.data, restoredData })
+      return {
+        success: false,
+        errors: [{
+          message: 'Error al procesar los datos del CSV. Por favor, intenta nuevamente.',
+          severity: 'fatal'
+        }]
+      }
+    }
 
     return {
       success: true,
-      jsonData: restoredData
+      jsonData: restoredData,
+      errors: result.errors // Incluir warnings si los hay
     }
 
   } catch (error) {
-    console.error('Error processing CSV:', error)
+    // Logging detallado para debugging
+    console.error('[processCSV] Error inesperado:', error)
+    console.error('[processCSV] Stack:', error instanceof Error ? error.stack : 'No stack available')
+    console.error('[processCSV] Error type:', error instanceof Error ? error.constructor.name : typeof error)
+
+    // Distinguir entre errores controlados y no controlados
+    const errorMessage = error instanceof Error ? error.message : String(error)
+
+    // Si el error contiene información técnica (undefined, null, etc), dar mensaje genérico
+    if (errorMessage.includes('undefined') ||
+        errorMessage.includes('null') ||
+        errorMessage.includes('Cannot read') ||
+        errorMessage.includes('forEach') ||
+        errorMessage.includes('TypeError')) {
+      return {
+        success: false,
+        errors: [{
+          message: 'No se pudo procesar el archivo CSV. Posibles causas:\n\n• El archivo no tiene el formato CSV correcto\n• Faltan columnas obligatorias (Nivel, ID, Nombre, Descripción, Ud, %IVA, PVP)\n• El archivo está corrupto o tiene una estructura inválida\n• La codificación no es UTF-8\n\nSolución: Descarga la plantilla de ejemplo y copia tus datos siguiendo ese formato.',
+          severity: 'fatal'
+        }]
+      }
+    }
+
+    // Error controlado con mensaje específico
     return {
       success: false,
-      errors: [{ message: 'Error al procesar el archivo CSV' }]
+      errors: [{
+        message: errorMessage || 'Error al procesar el archivo CSV',
+        severity: 'fatal'
+      }]
     }
   }
 }
