@@ -69,10 +69,11 @@ export class CSV2JSONConverter {
         };
       }
 
+      // Retornar éxito pero incluir warnings si los hay
       return {
         success: true,
         data: transformResult.data!,
-        errors: []
+        errors: dataResult.errors // Incluir warnings de la validación
       };
 
     } catch (error) {

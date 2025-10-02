@@ -8,7 +8,7 @@ import {
 } from './csv-types';
 import { ErrorFactory } from '../helpers/csv-errors';
 import { CSVUtils } from '../helpers/csv-utils';
-import { REQUIRED_FIELDS } from '../constants/csv';
+import { REQUIRED_FIELDS, SEVERITY } from '../constants/csv';
 
 /**
  * Schema Zod para validar campos de items
@@ -130,10 +130,10 @@ export class BudgetValidator {
         }
 
         if (!found) {
-          missingFields.push(spanishField === 'nivel' ? 'Nivel' :
-                           spanishField === 'nombre' ? 'Nombre' :
-                           spanishField === 'descripcion' ? 'Descripción' :
-                           spanishField === 'ud' ? 'Ud' : spanishField.toUpperCase());
+          missingFields.push(spanishField === 'nivel' ? 'Nivel (o Level)' :
+                           spanishField === 'nombre' ? 'Nombre (o Name)' :
+                           spanishField === 'descripcion' ? 'Descripción (o Description)' :
+                           spanishField === 'ud' ? 'Ud (o Unit)' : spanishField.toUpperCase());
         }
       }
     });
@@ -150,15 +150,16 @@ export class BudgetValidator {
     }
 
     if (!ivaFound) {
-      missingFields.push('%IVA');
+      missingFields.push('%IVA (o iva_percentage)');
     }
 
-    // Paso 3: Si faltan campos, generar error descriptivo
+    // Paso 3: Si faltan campos, generar error descriptivo con columnas encontradas
     if (missingFields.length > 0) {
+      const foundColumns = headers.join(', ');
       return {
         success: false,
         errors: [ErrorFactory.createStructureError(
-          `Faltan campos obligatorios: ${missingFields.join(', ')}. Descarga plantilla: /tarifa-plantilla.csv`
+          `El archivo no contiene las columnas obligatorias. Columnas requeridas: Nivel (o Level), ID, Nombre (o Name), Descripción (o Description), Ud (o Unit), %IVA (o iva_percentage), PVP. Columnas encontradas en tu archivo: ${foundColumns}.`
         )]
       };
     }
@@ -178,7 +179,11 @@ export class BudgetValidator {
 
       if (rowResult.errors.length > 0) {
         errors.push(...rowResult.errors);
-        continue;
+        // Solo continuar si hay errores fatales o errors (no warnings)
+        const hasFatalErrors = rowResult.errors.some(e => e.severity === SEVERITY.FATAL || e.severity === SEVERITY.ERROR);
+        if (hasFatalErrors) {
+          continue;
+        }
       }
 
       if (rowResult.data) {
@@ -190,8 +195,11 @@ export class BudgetValidator {
     const globalErrors = this.validateGlobalConstraints(processedData);
     errors.push(...globalErrors);
 
+    // El éxito depende solo de si hay errores fatales o errors (no warnings)
+    const hasFatalErrors = errors.some(e => e.severity === SEVERITY.FATAL || e.severity === SEVERITY.ERROR);
+
     return {
-      success: errors.length === 0,
+      success: !hasFatalErrors,
       data: processedData.filter(item => item !== null),
       errors
     };
@@ -460,10 +468,17 @@ export class BudgetValidator {
           const actual = items[i].sequence;
 
           if (actual !== expected) {
+            const item = items[i].item;
+            const levelName = item.normalizedLevel === 'capitulo' ? 'capítulo' :
+                            item.normalizedLevel === 'subcapitulo' ? 'subcapítulo' :
+                            item.normalizedLevel === 'apartado' ? 'apartado' : 'partida';
+
+            const parentStr = parentId ? ` dentro de ${parentId}` : '';
+
             errors.push(ErrorFactory.createSequenceError(
-              expected,
-              actual,
-              items[i].item.originalRow
+              `Advertencia fila ${item.lineNumber}: Secuencia de IDs no consecutiva${parentStr}. Se esperaba ${levelName} '${expected}' pero se encontró '${actual}'. Esto no impide la importación, pero verifica que no falten elementos.`,
+              item.lineNumber,
+              item.originalRow
             ));
           }
         }

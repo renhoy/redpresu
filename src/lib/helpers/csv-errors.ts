@@ -82,15 +82,16 @@ export class ErrorFactory {
    * Crea un error de secuencia
    */
   static createSequenceError(
-    expected: number,
-    actual: number,
+    message: string,
+    lineNumber?: number,
     originalRow?: string[]
   ): ValidationError {
     return {
       code: ERROR_CODES.SEQUENCE_ERROR,
       severity: SEVERITY.WARNING,
+      line: lineNumber,
       originalRow: originalRow,
-      message: `Secuencia incorrecta: esperado ${expected}, encontrado ${actual}`
+      message: message
     };
   }
 
