@@ -16,7 +16,7 @@ export default async function TariffsLayout({
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="pt-16">
+      <main>
         {children}
       </main>
     </div>
