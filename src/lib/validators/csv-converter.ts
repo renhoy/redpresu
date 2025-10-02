@@ -148,7 +148,7 @@ export class CSV2JSONConverter {
           code: 'UNKNOWN_ERROR',
           severity: 'fatal',
           message: isTechnicalError
-            ? 'El archivo CSV tiene un formato inválido o datos corruptos. Verifica que todas las columnas requeridas estén presentes y tengan valores válidos.'
+            ? 'El archivo CSV tiene un formato inválido o datos corruptos. Verifica que todas las columnas requeridas estén presentes y tengan valores válidos. Descarga plantilla: /tarifa-plantilla.csv'
             : `Error al procesar el CSV: ${errorMessage}`
         }]
       };
