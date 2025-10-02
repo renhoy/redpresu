@@ -2,17 +2,46 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Building2, LogOut } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Building2, LogOut, Home, FileText, Receipt } from 'lucide-react'
 import LogoutButton from '@/components/auth/LogoutButton'
-
-const navigation = [
-  { name: 'Inicio', href: '/dashboard' },
-  { name: 'Tarifas', href: '/tariffs' },
-  { name: 'Presupuestos', href: '/budgets' },
-]
+import { createBrowserClient } from '@supabase/ssr'
 
 export function Header() {
   const pathname = usePathname()
+  const [userRole, setUserRole] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
+    const fetchUserRole = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (user) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', user.id)
+          .single()
+
+        setUserRole(userData?.role || null)
+      }
+      setLoading(false)
+    }
+
+    fetchUserRole()
+  }, [])
+
+  // Construir navegación según rol
+  const navigation = [
+    { name: 'Inicio', href: '/dashboard', icon: Home, show: true },
+    { name: 'Tarifas', href: '/tariffs', icon: FileText, show: userRole === 'admin' || userRole === 'superadmin' },
+    { name: 'Presupuestos', href: '/budgets', icon: Receipt, show: true },
+  ].filter(item => item.show)
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-sm border-b">
@@ -26,20 +55,22 @@ export function Header() {
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            {navigation.map((item) => {
+            {!loading && navigation.map((item) => {
               const isActive = pathname === item.href ||
                 (item.href !== '/dashboard' && pathname.startsWith(item.href))
+              const Icon = item.icon
 
               return (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${
                     isActive
                       ? 'text-primary bg-primary/10'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                 >
+                  <Icon className="w-4 h-4" />
                   {item.name}
                 </Link>
               )
@@ -49,19 +80,21 @@ export function Header() {
           {/* Mobile menu button + Logout */}
           <div className="flex items-center gap-2">
             {/* Mobile navigation */}
-            <div className="md:hidden">
-              <select
-                className="text-sm border rounded px-2 py-1"
-                value={pathname}
-                onChange={(e) => window.location.href = e.target.value}
-              >
-                {navigation.map((item) => (
-                  <option key={item.name} value={item.href}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {!loading && (
+              <div className="md:hidden">
+                <select
+                  className="text-sm border rounded px-2 py-1"
+                  value={pathname}
+                  onChange={(e) => window.location.href = e.target.value}
+                >
+                  {navigation.map((item) => (
+                    <option key={item.name} value={item.href}>
+                      {item.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Logout Button */}
             <LogoutButton variant="ghost" size="sm" showText={false}>

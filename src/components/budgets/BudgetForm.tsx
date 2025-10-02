@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import { ArrowLeft, ArrowRight, Trash2, Save, FileStack, Loader2, Check } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Trash2, Save, FileStack, Loader2, Check, X } from 'lucide-react'
 import { BudgetHierarchyForm } from './BudgetHierarchyForm'
 import { createDraftBudget, updateBudgetDraft, saveBudget, generateBudgetPDF, duplicateBudget } from '@/app/actions/budgets'
 import { toast } from 'sonner'
@@ -23,6 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface BudgetFormProps {
   tariff: Tariff
@@ -53,6 +54,9 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
   const [totals, setTotals] = useState<{ base: number; total: number }>({ base: 0, total: 0 })
   const [showSaveOptions, setShowSaveOptions] = useState(false)
   const [showOverwriteConfirm, setShowOverwriteConfirm] = useState(false)
+  const [showPdfConfirm, setShowPdfConfirm] = useState(false)
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const isEditMode = !!existingBudget?.id
   const [clientData, setClientData] = useState<ClientData>({
     client_type: (existingBudget?.client_type as ClientData['client_type']) || 'empresa',
@@ -74,13 +78,26 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
   useEffect(() => {
     if (existingBudget?.json_budget_data) {
       setBudgetData(existingBudget.json_budget_data as unknown[])
-      if (Array.isArray(existingBudget.json_budget_data) && existingBudget.json_budget_data.length > 0) {
-        setCurrentStep(2) // Si ya tiene datos, mostrar paso 2
-      }
+      // Siempre comenzar en paso 1 (datos del cliente), incluso al editar
     }
   }, [existingBudget])
 
+  // Detectar cambios en clientData o budgetData
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+      return
+    }
+    // Marcar que hay cambios sin guardar
+    setHasUnsavedChanges(true)
+  }, [clientData, budgetData, totals])
 
+  // Resetear flag cuando se guarda
+  useEffect(() => {
+    if (saveStatus === 'saved') {
+      setHasUnsavedChanges(false)
+    }
+  }, [saveStatus])
 
   const validateStep1 = () => {
     const newErrors: Record<string, string> = {}
@@ -342,7 +359,54 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
       return
     }
 
+    // Validar que hay items con cantidad > 0
+    const itemsWithQuantity = budgetData
+      .map((item: unknown) => {
+        const budgetItem = item as { level?: string; quantity?: string }
+        if (budgetItem.level !== 'item') return null
+        const quantityStr = budgetItem.quantity || '0'
+        const quantity = parseFloat(quantityStr.replace(',', '.'))
+        return quantity > 0 ? budgetItem : null
+      })
+      .filter(item => item !== null)
+
+    if (itemsWithQuantity.length === 0) {
+      toast.error('Debe incluir al menos un elemento en el presupuesto')
+      return
+    }
+
+    // Si ya existe PDF, mostrar confirmación
+    if (existingBudget?.pdf_url) {
+      setShowPdfConfirm(true)
+      return
+    }
+
+    // Si no hay PDF previo, generar directamente
+    await executeGeneratePDF()
+  }
+
+  const executeGeneratePDF = async () => {
+    setShowPdfConfirm(false)
+
     try {
+      // Primero guardar los datos actuales
+      setSaveStatus('saving')
+
+      if (!budgetId) return
+
+      const saveResult = await saveBudget(budgetId, totals, budgetData, clientData)
+
+      if (!saveResult.success) {
+        toast.error(saveResult.error || 'Error al guardar')
+        setSaveStatus('idle')
+        return
+      }
+
+      toast.success('Datos guardados correctamente')
+      setSaveStatus('saved')
+      setTimeout(() => setSaveStatus('idle'), 2000)
+
+      // Luego generar el PDF
       setPdfStatus('generating')
       toast.info('Generando PDF... Esto puede tardar hasta 60 segundos')
 
@@ -364,15 +428,16 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
         // Abrir PDF en nueva pestaña
         window.open(result.pdf_url, '_blank')
 
-        // Usuario permanece en formulario para revisar
-        // (eliminada redirección automática)
+        // Refrescar página para actualizar existingBudget.pdf_url
+        router.refresh()
       } else {
         setPdfStatus('idle')
         toast.error(result.error || 'Error generando PDF')
       }
     } catch (error) {
       setPdfStatus('idle')
-      console.error('Error en handleGeneratePDF:', error)
+      setSaveStatus('idle')
+      console.error('Error en executeGeneratePDF:', error)
       toast.error('Error generando PDF')
     }
   }
@@ -387,6 +452,22 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
 
   const handleCancel = () => {
     router.push('/budgets')
+  }
+
+  const handleClose = () => {
+    // Si hay cambios sin guardar, mostrar confirmación
+    if (hasUnsavedChanges) {
+      setShowCloseConfirm(true)
+      return
+    }
+
+    // Si no hay cambios, cerrar directamente
+    window.close()
+  }
+
+  const executeClose = () => {
+    setShowCloseConfirm(false)
+    window.close()
   }
 
   return (
@@ -453,80 +534,172 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
 
       {/* Navigation buttons */}
       {currentStep === 1 && (
-        <div className="flex justify-end gap-3 mb-6">
-          <Button
-            variant="outline"
-            size="icon"
-            className="bg-red-600 text-white hover:bg-red-700 border-red-600"
-            onClick={() => {
-              setClientData({
-                client_type: 'empresa',
-                client_name: '',
-                client_nif_nie: '',
-                client_phone: '',
-                client_email: '',
-                client_web: '',
-                client_address: '',
-                client_postal_code: '',
-                client_locality: '',
-                client_province: '',
-                client_acceptance: false
-              })
-              setErrors({})
-            }}
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
-          <Button
-            size="icon"
-            onClick={handleStep1Continue}
-            style={{ backgroundColor: tariff.primary_color }}
-          >
-            <ArrowRight className="w-4 h-4" />
-          </Button>
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex gap-3">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="icon"
+                    onClick={handleStep1Continue}
+                    style={{ backgroundColor: tariff.primary_color }}
+                  >
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Siguiente</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          <div className="flex gap-3">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="bg-red-600 text-white hover:bg-red-700 border-red-600"
+                    onClick={() => {
+                      setClientData({
+                        client_type: 'empresa',
+                        client_name: '',
+                        client_nif_nie: '',
+                        client_phone: '',
+                        client_email: '',
+                        client_web: '',
+                        client_address: '',
+                        client_postal_code: '',
+                        client_locality: '',
+                        client_province: '',
+                        client_acceptance: false
+                      })
+                      setErrors({})
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Borrar Datos</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleClose}
+                    className="border-gray-300 hover:bg-gray-100"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Cerrar Pestaña</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
       )}
 
       {currentStep === 2 && (
-        <div className="flex justify-end gap-3 mb-6">
-          <Button
-            size="icon"
-            style={{ backgroundColor: tariff.primary_color }}
-            onClick={() => setCurrentStep(1)}
-            title="Atrás"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="bg-red-600 text-white hover:bg-red-700 border-red-600"
-            onClick={handleClearBudgetData}
-            title="Borrar Datos"
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
-          <Button
-            size="icon"
-            style={{ backgroundColor: tariff.primary_color }}
-            onClick={handleSaveBudget}
-            title="Guardar"
-          >
-            <Save className="w-4 h-4" />
-          </Button>
-          <Button
-            size="icon"
-            style={{ backgroundColor: tariff.primary_color }}
-            onClick={handleGeneratePDF}
-            disabled={pdfStatus === 'generating'}
-            title="Generar PDF"
-          >
-            {pdfStatus === 'generating' ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <FileStack className="w-4 h-4" />
-            )}
-          </Button>
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex gap-3">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="icon"
+                    style={{ backgroundColor: tariff.primary_color }}
+                    onClick={() => setCurrentStep(1)}
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Atrás</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="icon"
+                    style={{ backgroundColor: tariff.primary_color }}
+                    onClick={handleSaveBudget}
+                  >
+                    <Save className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Guardar Presupuesto</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="icon"
+                    style={{ backgroundColor: tariff.primary_color }}
+                    onClick={handleGeneratePDF}
+                    disabled={pdfStatus === 'generating'}
+                  >
+                    {pdfStatus === 'generating' ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <FileStack className="w-4 h-4" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Generar PDF</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          <div className="flex gap-3">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="bg-red-600 text-white hover:bg-red-700 border-red-600"
+                    onClick={handleClearBudgetData}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Borrar Datos</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleClose}
+                    className="border-gray-300 hover:bg-gray-100"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Cerrar Pestaña</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
       )}
 
@@ -842,6 +1015,54 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Sí, sobrescribir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* AlertDialog: Confirmación de generación de PDF (cuando ya existe uno) */}
+      <AlertDialog open={showPdfConfirm} onOpenChange={setShowPdfConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirma la generación del nuevo PDF</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>Al generar un nuevo PDF se realizarán las siguientes acciones:</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Se guardarán los datos actuales del presupuesto</li>
+                <li>Se eliminará el PDF anterior</li>
+                <li>Se generará un nuevo PDF con los datos actualizados</li>
+              </ul>
+              <p className="font-semibold mt-2">⚠️ Los datos y PDF anteriores se perderán permanentemente</p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={executeGeneratePDF}
+              style={{ backgroundColor: tariff.primary_color }}
+            >
+              Sí, generar nuevo PDF
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* AlertDialog: Confirmación de cierre con cambios sin guardar */}
+      <AlertDialog open={showCloseConfirm} onOpenChange={setShowCloseConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Cerrar ventana con cambios sin guardar?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Has realizado cambios que no se han guardado. Si cierras la ventana ahora, se perderán todos los cambios.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>No, volver al formulario</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={executeClose}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Sí, cerrar sin guardar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

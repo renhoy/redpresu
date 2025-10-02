@@ -508,6 +508,12 @@ export async function duplicateBudget(
       endDate.setDate(endDate.getDate() + originalBudget.validity_days)
     }
 
+    console.log('[duplicateBudget] Fechas calculadas:', {
+      validity_days: originalBudget.validity_days,
+      start_date: startDate.toISOString(),
+      end_date: originalBudget.validity_days ? endDate.toISOString() : null
+    })
+
     // Crear NUEVO presupuesto con los datos actualizados
     const { data: newBudget, error: insertError } = await supabaseAdmin
       .from('budgets')
@@ -751,9 +757,10 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
     console.log('[generateBudgetPDF] Construyendo payload...')
     const payload = buildPDFPayload(budgetTyped, tariffTyped)
 
-    // MODO DESARROLLO: Solo debug, no llamar API
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[generateBudgetPDF] Modo desarrollo: payload construido, no se llama a Rapid-PDF')
+    // MODO DEBUG: Solo mostrar payload, no llamar API (activar con RAPID_PDF_DEBUG_ONLY=true)
+    if (process.env.RAPID_PDF_DEBUG_ONLY === 'true') {
+      console.log('[generateBudgetPDF] Modo debug: payload construido, no se llama a Rapid-PDF')
+      console.log('[generateBudgetPDF] Payload:', JSON.stringify(payload, null, 2))
 
       return {
         success: true,
@@ -762,7 +769,7 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
       }
     }
 
-    // MODO PRODUCCIÓN: Flujo completo
+    // FLUJO COMPLETO (desarrollo y producción)
     // 2. Validar variables de entorno
     const RAPID_PDF_URL = process.env.RAPID_PDF_URL
     const RAPID_PDF_API_KEY = process.env.RAPID_PDF_API_KEY
@@ -851,9 +858,15 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
     }
 
     // 5. Guardar PDF en /public/pdfs/
-    const date = new Date().toISOString().split('T')[0]
+    // Formato: presupuesto_nombre_nif_nie_YYYY-MM-DD_HH-MM-SS.pdf
+    const now = new Date()
+    const datePart = now.toISOString().split('T')[0] // YYYY-MM-DD
+    const timePart = now.toTimeString().split(' ')[0].replace(/:/g, '-') // HH-MM-SS
+    const timestamp = `${datePart}_${timePart}`
+
     const clientName = sanitizeFilename(budgetTyped.client_name)
-    const filename = `presupuesto_${clientName}_${date}.pdf`
+    const clientNif = sanitizeFilename(budgetTyped.client_nif_nie || 'sin_nif')
+    const filename = `presupuesto_${clientName}_${clientNif}_${timestamp}.pdf`
 
     const publicDir = path.join(process.cwd(), 'public', 'pdfs')
     const filePath = path.join(publicDir, filename)
