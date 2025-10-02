@@ -31,7 +31,7 @@ export class ErrorFactory {
     return {
       code: ERROR_CODES.PARSE_ERROR,
       severity: SEVERITY.FATAL,
-      message: `Error al parsear CSV: ${message}`
+      message: `El archivo está vacío o no tiene estructura válida. Debe incluir cabeceras y al menos una fila de datos. Descarga plantilla: /tarifa-plantilla.csv`
     };
   }
 

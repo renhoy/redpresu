@@ -21,13 +21,19 @@ export const SEVERITY = {
 } as const;
 
 /**
- * Mapeo de niveles en español a inglés
+ * Mapeo de niveles en español/inglés a inglés estándar
  */
 export const LEVEL_MAP = {
+  // Español (normalizado)
   'capitulo': 'chapter',
   'subcapitulo': 'subchapter',
   'apartado': 'section',
-  'partida': 'item'
+  'partida': 'item',
+  // Inglés directo
+  'chapter': 'chapter',
+  'subchapter': 'subchapter',
+  'section': 'section',
+  'item': 'item'
 } as const;
 
 /**

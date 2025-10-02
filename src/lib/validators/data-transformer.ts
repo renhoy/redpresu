@@ -229,6 +229,8 @@ export class DataTransformer {
 
   /**
    * Transformación completa con todas las especificaciones de normalización
+   * CONTENEDORES: usar solo level, id, name, amount = "0.00"
+   * ITEMS: usar todos los campos incluyendo description, unit, iva_percentage, pvp
    */
   private transformItemWithFullNormalization(item: ProcessedRow): BudgetItem {
     // 1. Normalización de campos base
@@ -249,21 +251,22 @@ export class DataTransformer {
     const normalizedLevel = item.normalizedLevel as keyof typeof LEVEL_MAP;
     const level = LEVEL_MAP[normalizedLevel];
 
-    // 4. Construir objeto final
+    // 4. Construir objeto final según el tipo
     const transformed: BudgetItem = {
       level,
-      id: normalized.id || '',
-      name: normalized.name || '',
+      id: (normalized.id as string) || '',
+      name: (normalized.name as string) || '',
       amount: '0.00'
     };
 
-    // 5. Agregar campos adicionales para items
+    // 5. Agregar campos adicionales SOLO para items (partidas)
+    // Contenedores (chapter, subchapter, section) NO tienen estos campos
     if (level === 'item') {
-      transformed.description = normalized.description;
-      transformed.unit = normalized.unit;
+      transformed.description = normalized.description as string;
+      transformed.unit = normalized.unit as string;
       transformed.quantity = '0.00';
-      transformed.iva_percentage = normalized.iva_percentage;
-      transformed.pvp = normalized.pvp;
+      transformed.iva_percentage = normalized.iva_percentage as string;
+      transformed.pvp = normalized.pvp as string;
     }
 
     return transformed;

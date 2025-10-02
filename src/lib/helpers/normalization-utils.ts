@@ -3,17 +3,26 @@
  */
 
 /**
- * Mapeo de campos español a inglés
+ * Mapeo de campos normalizados (slug) a inglés
  */
 export const FIELD_TRANSLATION_MAP = {
-  // Campos CSV españoles → campos JSON ingleses
+  // Campos normalizados (slug) → campos JSON ingleses
   'nivel': 'level',
   'id': 'id',
   'nombre': 'name',
   'descripcion': 'description',
   'ud': 'unit',
+  'iva': 'iva_percentage',
   '%iva': 'iva_percentage',
-  'pvp': 'pvp'
+  'piva': 'iva_percentage',
+  'pvp': 'pvp',
+  // También soportar nombres en inglés directamente
+  'level': 'level',
+  'name': 'name',
+  'description': 'description',
+  'unit': 'unit',
+  'iva_percentage': 'iva_percentage',
+  'ivapercentage': 'iva_percentage'
 } as const;
 
 /**
@@ -48,17 +57,20 @@ export class NormalizationUtils {
   }
 
   /**
-   * Traduce campos del español al inglés
+   * Traduce campos del español/inglés al inglés estándar (3 pasos)
+   * Paso 1: Convertir a slug (minúsculas, sin acentos, sin espacios)
+   * Paso 2: Mapear a nombres inglés estándar
+   * Paso 3: Retornar campo normalizado o descartar si no es válido
    */
-  static translateFieldToEnglish(spanishField: string): string {
-    const normalized = this.normalizeField(spanishField);
+  static translateFieldToEnglish(field: string): string {
+    // Paso 1: Normalizar a slug
+    const normalized = this.normalizeField(field);
 
-    // Casos especiales para %iva
-    if (normalized === 'iva' || normalized === 'piva') {
-      return 'iva_percentage';
-    }
+    // Paso 2: Mapear usando la tabla de traducción
+    const mapped = FIELD_TRANSLATION_MAP[normalized as keyof typeof FIELD_TRANSLATION_MAP];
 
-    return FIELD_TRANSLATION_MAP[normalized as keyof typeof FIELD_TRANSLATION_MAP] || normalized;
+    // Paso 3: Retornar mapeado o el slug si no está en el mapa
+    return mapped || normalized;
   }
 
   /**

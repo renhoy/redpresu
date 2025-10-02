@@ -1,0 +1,18 @@
+Nivel,ID,Nombre,Descripción,Ud,%IVA,PVP
+Capítulo,1,Instalaciones Eléctricas,,,,
+Subcapítulo,1.1,Cableado Estructurado,,,,
+Apartado,1.1.1,Cableado de Baja Tensión,,,,
+Partida,1.1.1.1,Instalación de Cable UTP Cat6,Instalación de cable UTP categoría 6 para redes de datos,m,21,15.50
+Partida,1.1.1.2,Instalación de Fibra Óptica,Instalación de cable de fibra óptica monomodo,m,21,25.75
+Subcapítulo,1.2,Cuadros Eléctricos,,,,
+Partida,1.2.1,Cuadro de Distribución,Cuadro eléctrico con protecciones diferenciales y magnetotérmicas,ud,21,350.00
+Capítulo,2,Fontanería,,,,
+Subcapítulo,2.1,Tuberías de Agua,,,,
+Partida,2.1.1,Instalación de Tubería PEX,Instalación de tuberías PEX para agua fría y caliente,m,10,12.30
+Partida,2.1.2,Instalación de Tubería de Cobre,Instalación de tubería de cobre sanitario,m,10,18.90
+Subcapítulo,2.2,Sanitarios,,,,
+Apartado,2.2.1,Inodoros,,,,
+Partida,2.2.1.1,Inodoro de Porcelana,Inodoro de porcelana con cisterna de doble descarga,ud,21,185.50
+Capítulo,3,Pintura,,,,
+Partida,3.1,Pintura de Paredes,Aplicación de pintura plástica lisa color blanco,m²,21,8.50
+Partida,3.2,Pintura de Techos,Aplicación de pintura plástica en techos,m²,21,9.25

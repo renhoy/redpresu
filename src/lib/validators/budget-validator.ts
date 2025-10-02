@@ -59,7 +59,7 @@ export class BudgetValidator {
 
     if (rows.length < 2) {
       errors.push(ErrorFactory.createStructureError(
-        'CSV debe tener cabeceras y al menos una fila de datos'
+        'El archivo está vacío o no tiene estructura válida. Debe incluir cabeceras y al menos una fila de datos. Descarga plantilla: /tarifa-plantilla.csv'
       ));
       return { success: false, errors };
     }
@@ -80,35 +80,88 @@ export class BudgetValidator {
   }
 
   /**
-   * Mapea los campos de las cabeceras a índices
+   * Mapea los campos de las cabeceras a índices (con normalización 3 pasos)
    */
   private mapFields(headers: string[]): { success: boolean; data?: FieldMap; errors: z.ZodIssue[] } {
+    // Paso 1: Normalizar cabeceras a slug
     const slugHeaders = headers.map(h => CSVUtils.createSlug(h));
-    const spanishSlugs = REQUIRED_FIELDS.spanish.map(f => CSVUtils.createSlug(f));
-    const englishSlugs = REQUIRED_FIELDS.english.map(f => CSVUtils.createSlug(f));
 
-    const hasSpanish = spanishSlugs.every(slug => slugHeaders.includes(slug));
-    const hasEnglish = englishSlugs.every(slug => slugHeaders.includes(slug));
+    // Campos obligatorios en slug
+    const requiredSlugs = ['nivel', 'id', 'nombre', 'descripcion', 'ud', 'pvp'];
+    const ivaVariants = ['iva', '%iva', 'piva', 'ivapercentage', 'iva_percentage'];
 
-    if (!hasSpanish && !hasEnglish) {
+    // Paso 2: Verificar que existan todos los campos obligatorios
+    const missingFields: string[] = [];
+    const fieldMap: FieldMap = {};
+
+    // Mapear cada campo requerido
+    const fieldsToMap = {
+      'nivel': 'nivel',
+      'id': 'id',
+      'nombre': 'nombre',
+      'descripcion': 'descripcion',
+      'ud': 'ud',
+      'pvp': 'pvp'
+    };
+
+    Object.entries(fieldsToMap).forEach(([spanishField, _]) => {
+      const index = slugHeaders.indexOf(spanishField);
+      if (index !== -1) {
+        fieldMap[spanishField] = index;
+      } else {
+        // Buscar versión en inglés
+        const englishVariants: Record<string, string[]> = {
+          'nivel': ['level'],
+          'nombre': ['name'],
+          'descripcion': ['description'],
+          'ud': ['unit']
+        };
+
+        const variants = englishVariants[spanishField] || [];
+        let found = false;
+
+        for (const variant of variants) {
+          const variantIndex = slugHeaders.indexOf(variant);
+          if (variantIndex !== -1) {
+            fieldMap[spanishField] = variantIndex;
+            found = true;
+            break;
+          }
+        }
+
+        if (!found) {
+          missingFields.push(spanishField === 'nivel' ? 'Nivel' :
+                           spanishField === 'nombre' ? 'Nombre' :
+                           spanishField === 'descripcion' ? 'Descripción' :
+                           spanishField === 'ud' ? 'Ud' : spanishField.toUpperCase());
+        }
+      }
+    });
+
+    // Buscar IVA en cualquier variante
+    let ivaFound = false;
+    for (const variant of ivaVariants) {
+      const index = slugHeaders.indexOf(variant);
+      if (index !== -1) {
+        fieldMap['%iva'] = index;
+        ivaFound = true;
+        break;
+      }
+    }
+
+    if (!ivaFound) {
+      missingFields.push('%IVA');
+    }
+
+    // Paso 3: Si faltan campos, generar error descriptivo
+    if (missingFields.length > 0) {
       return {
         success: false,
         errors: [ErrorFactory.createStructureError(
-          'Faltan campos esenciales: nivel, id, nombre, descripcion, ud, %iva, pvp'
+          `Faltan campos obligatorios: ${missingFields.join(', ')}. Descarga plantilla: /tarifa-plantilla.csv`
         )]
       };
     }
-
-    const fieldMap: FieldMap = {};
-    const fieldsToMap = hasSpanish ? REQUIRED_FIELDS.spanish : REQUIRED_FIELDS.english;
-
-    fieldsToMap.forEach(field => {
-      const slug = CSVUtils.createSlug(field);
-      const index = slugHeaders.indexOf(slug);
-      if (index !== -1) {
-        fieldMap[field] = index;
-      }
-    });
 
     return { success: true, data: fieldMap, errors: [] };
   }
@@ -169,8 +222,8 @@ export class BudgetValidator {
       const normalizedLevel = CSVUtils.normalizeLevel(data.nivel);
       if (!normalizedLevel) {
         errors.push(ErrorFactory.createFieldError(
-          'nivel',
-          `inválido: "${data.nivel}"`,
+          'Nivel',
+          `inválido en fila ${lineNumber}: "${data.nivel}". Valores permitidos: Capítulo, Subcapítulo, Apartado, Partida. Descarga plantilla: /tarifa-plantilla.csv`,
           lineNumber,
           values
         ));
@@ -213,13 +266,15 @@ export class BudgetValidator {
       }
     }
 
-    // Validaciones adicionales de números
+    // Validaciones adicionales de números con mensajes mejorados
     if (data['%iva']) {
       const ivaValidation = CSVUtils.validateNumber(data['%iva'], 0, 100);
       if (!ivaValidation.isValid) {
+        const itemName = data.nombre || 'Sin nombre';
+        const itemId = data.id || '';
         errors.push(ErrorFactory.createFieldError(
           '%IVA',
-          ivaValidation.error!,
+          `inválido en Partida "${itemName}" (${itemId}): "${data['%iva']}". Debe estar entre 0 y 100. Descarga plantilla: /tarifa-plantilla.csv`,
           lineNumber,
           data.originalRow
         ));
@@ -229,9 +284,11 @@ export class BudgetValidator {
     if (data.pvp) {
       const pvpValidation = CSVUtils.validateNumber(data.pvp, 0, null);
       if (!pvpValidation.isValid) {
+        const itemName = data.nombre || 'Sin nombre';
+        const itemId = data.id || '';
         errors.push(ErrorFactory.createFieldError(
           'PVP',
-          pvpValidation.error!,
+          `inválido en Partida "${itemName}" (${itemId}): "${data.pvp}". Debe ser un número mayor o igual a 0. Descarga plantilla: /tarifa-plantilla.csv`,
           lineNumber,
           data.originalRow
         ));
@@ -333,7 +390,7 @@ export class BudgetValidator {
 
     if (depth > (this.config.maxHierarchyDepth || 4)) {
       return ErrorFactory.createHierarchyError(
-        `Partida ${item.id}: profundidad inválida (${depth} niveles)`,
+        `Error jerárquico en ID ${item.id}: profundidad inválida (${depth} niveles, máximo ${this.config.maxHierarchyDepth || 4}). Descarga plantilla: /tarifa-plantilla.csv`,
         item.lineNumber,
         item.originalRow
       );
@@ -343,9 +400,26 @@ export class BudgetValidator {
     const missing = requiredAncestors.filter(ancestor => !existingIds.has(ancestor.id));
 
     if (missing.length > 0) {
-      const missingList = missing.map(m => `${m.name}: ${m.id}`).join(', ');
+      // Construir mensaje detallado
+      const parentId = CSVUtils.getParentId(item.id);
+      const parts = item.id.split('.');
+
+      let message = `Error jerárquico en ID ${item.id}: falta el contenedor padre `;
+
+      if (parts.length === 2) {
+        message += `(debe existir ${parts[0]} antes de ${item.id})`;
+      } else if (parts.length === 3) {
+        message += `(debe existir ${parts[0]} y ${parts.slice(0, 2).join('.')} antes de ${item.id})`;
+      } else if (parts.length === 4) {
+        message += `(debe existir ${parts[0]}, ${parts.slice(0, 2).join('.')} y ${parts.slice(0, 3).join('.')} antes de ${item.id})`;
+      } else {
+        message += `(faltan: ${missing.map(m => m.id).join(', ')})`;
+      }
+
+      message += `. Descarga plantilla: /tarifa-plantilla.csv`;
+
       return ErrorFactory.createHierarchyError(
-        `Partida ${item.id}: faltan ancestros: ${missingList}`,
+        message,
         item.lineNumber,
         item.originalRow
       );
