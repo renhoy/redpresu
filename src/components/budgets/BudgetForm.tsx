@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox'
 import { ArrowLeft, ArrowRight, Trash2, Save, FileStack, Loader2, Check } from 'lucide-react'
 import { BudgetHierarchyForm } from './BudgetHierarchyForm'
-import { createDraftBudget, updateBudgetDraft, saveBudget, generateBudgetPDF } from '@/app/actions/budgets'
+import { createDraftBudget, updateBudgetDraft, saveBudget, generateBudgetPDF, duplicateBudget } from '@/app/actions/budgets'
 import { toast } from 'sonner'
 import {
   AlertDialog,
@@ -51,8 +51,9 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [pdfStatus, setPdfStatus] = useState<'idle' | 'generating' | 'generated'>('idle')
   const [totals, setTotals] = useState<{ base: number; total: number }>({ base: 0, total: 0 })
-  const [showPdfWarning, setShowPdfWarning] = useState(false)
-  const [pendingAction, setPendingAction] = useState<'save' | 'generate' | null>(null)
+  const [showSaveOptions, setShowSaveOptions] = useState(false)
+  const [showOverwriteConfirm, setShowOverwriteConfirm] = useState(false)
+  const isEditMode = !!existingBudget?.id
   const [clientData, setClientData] = useState<ClientData>({
     client_type: (existingBudget?.client_type as ClientData['client_type']) || 'empresa',
     client_name: existingBudget?.client_name || '',
@@ -202,7 +203,6 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
         const budgetItem = item as { level?: string; quantity?: string; id?: string; name?: string }
         if (budgetItem.level !== 'item') return null
 
-        // Parsear cantidad en formato español (con coma)
         const quantityStr = budgetItem.quantity || '0'
         const quantity = parseFloat(quantityStr.replace(',', '.'))
 
@@ -217,10 +217,21 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
       return
     }
 
+    // MODO EDICIÓN: Mostrar diálogo de opciones
+    if (isEditMode) {
+      setShowSaveOptions(true)
+      return
+    }
+
+    // MODO CREACIÓN: Guardar directamente
+    await executeCreateNew()
+  }
+
+  const executeCreateNew = async () => {
     setSaveStatus('saving')
 
     try {
-      // Si no existe budgetId, crear presupuesto nuevo
+      // Crear presupuesto nuevo
       if (!budgetId) {
         const createResult = await createDraftBudget({
           tariffId: tariff.id,
@@ -236,43 +247,91 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
           return
         }
 
-        // Usar el budgetId recién creado
         const newBudgetId = createResult.budgetId
 
-        // Guardar como borrador con clientData
         const result = await saveBudget(newBudgetId, totals, budgetData, clientData)
 
         if (result.success) {
-          toast.success('Presupuesto guardado correctamente')
-          if (result.had_pdf) {
-            toast.info('PDF anterior eliminado, genera uno nuevo')
-          }
+          toast.success('Presupuesto creado correctamente')
           setBudgetId(newBudgetId)
           setSaveStatus('saved')
           setTimeout(() => setSaveStatus('idle'), 2000)
         } else {
-          toast.error(result.error || 'Error al guardar el presupuesto')
+          toast.error(result.error || 'Error al guardar')
           setSaveStatus('idle')
         }
       } else {
-        // Si ya existe y tiene PDF, eliminar el PDF al guardar
+        // Ya existe budgetId (caso raro en create mode)
         const result = await saveBudget(budgetId, totals, budgetData, clientData)
 
         if (result.success) {
           toast.success('Presupuesto guardado correctamente')
-          if (result.had_pdf) {
-            toast.info('PDF anterior eliminado, genera uno nuevo')
-          }
           setSaveStatus('saved')
           setTimeout(() => setSaveStatus('idle'), 2000)
         } else {
-          toast.error(result.error || 'Error al guardar el presupuesto')
+          toast.error(result.error || 'Error al guardar')
           setSaveStatus('idle')
         }
       }
     } catch (error) {
-      console.error('Error al guardar presupuesto:', error)
+      console.error('Error al guardar:', error)
       toast.error('Error inesperado al guardar')
+      setSaveStatus('idle')
+    }
+  }
+
+  const executeOverwrite = async () => {
+    setShowOverwriteConfirm(false)
+    setShowSaveOptions(false)
+    setSaveStatus('saving')
+
+    try {
+      if (!budgetId) return
+
+      const result = await saveBudget(budgetId, totals, budgetData, clientData)
+
+      if (result.success) {
+        toast.success('Presupuesto actualizado correctamente')
+        if (result.had_pdf) {
+          toast.info('PDF eliminado. Genera uno nuevo cuando estés listo.')
+        }
+        setSaveStatus('saved')
+        setTimeout(() => setSaveStatus('idle'), 2000)
+      } else {
+        toast.error(result.error || 'Error al actualizar')
+        setSaveStatus('idle')
+      }
+    } catch (error) {
+      console.error('Error al sobrescribir:', error)
+      toast.error('Error inesperado')
+      setSaveStatus('idle')
+    }
+  }
+
+  const executeDuplicate = async () => {
+    setShowSaveOptions(false)
+    setSaveStatus('saving')
+
+    try {
+      if (!budgetId) return
+
+      const result = await duplicateBudget(budgetId, {
+        clientData,
+        budgetData: budgetData as any[],
+        totals
+      })
+
+      if (result.success && result.budgetId) {
+        toast.success('Nuevo presupuesto creado. Original preservado.')
+        // Redirigir al nuevo presupuesto
+        router.push(`/budgets/create?tariff_id=${tariff.id}&budget_id=${result.budgetId}`)
+      } else {
+        toast.error(result.error || 'Error al duplicar')
+        setSaveStatus('idle')
+      }
+    } catch (error) {
+      console.error('Error al duplicar:', error)
+      toast.error('Error inesperado')
       setSaveStatus('idle')
     }
   }
@@ -719,6 +778,74 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
           </CardContent>
         </Card>
       )}
+
+      {/* AlertDialog: Opciones de guardado en modo edición */}
+      <AlertDialog open={showSaveOptions} onOpenChange={setShowSaveOptions}>
+        <AlertDialogContent className="sm:max-w-[500px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Cómo deseas guardar los cambios?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Has modificado este presupuesto. Elige una opción:
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex flex-col gap-3 py-4">
+            <Button
+              variant="destructive"
+              onClick={() => {
+                setShowSaveOptions(false)
+                setShowOverwriteConfirm(true)
+              }}
+              className="w-full flex flex-col items-start h-auto py-3"
+            >
+              <span className="font-semibold">Sobrescribir presupuesto</span>
+              <span className="text-xs font-normal opacity-90">
+                ⚠️ Los datos anteriores se perderán permanentemente
+                {existingBudget?.pdf_url && " • El PDF actual será eliminado"}
+              </span>
+            </Button>
+            <Button
+              onClick={executeDuplicate}
+              className="w-full flex flex-col items-start h-auto py-3"
+              style={{ backgroundColor: tariff.primary_color }}
+            >
+              <span className="font-semibold">Crear nuevo presupuesto</span>
+              <span className="text-xs font-normal opacity-90">
+                ✓ Mantiene el original intacto
+              </span>
+            </Button>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* AlertDialog: Confirmación de sobrescritura */}
+      <AlertDialog open={showOverwriteConfirm} onOpenChange={setShowOverwriteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirma que deseas sobrescribir</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>Esta acción NO se puede deshacer. Se perderán:</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Datos del presupuesto anterior</li>
+                {existingBudget?.pdf_url && <li>Archivo PDF generado</li>}
+              </ul>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowSaveOptions(true)}>
+              No, volver atrás
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={executeOverwrite}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Sí, sobrescribir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

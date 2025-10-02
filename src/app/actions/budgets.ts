@@ -451,6 +451,122 @@ export async function saveBudget(
 }
 
 /**
+ * Duplicar presupuesto (crear nuevo a partir de existente)
+ */
+export async function duplicateBudget(
+  originalBudgetId: string,
+  newData: {
+    clientData: {
+      client_type: string
+      client_name: string
+      client_nif_nie: string
+      client_phone: string
+      client_email: string
+      client_web?: string
+      client_address: string
+      client_postal_code: string
+      client_locality: string
+      client_province: string
+      client_acceptance: boolean
+    }
+    budgetData: BudgetDataItem[]
+    totals: { base: number; total: number }
+  }
+): Promise<{ success: boolean; budgetId?: string; error?: string }> {
+  try {
+    console.log('[duplicateBudget] Duplicando presupuesto:', originalBudgetId)
+
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+    // Obtener usuario actual
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      console.error('[duplicateBudget] Error de autenticación:', authError)
+      return { success: false, error: 'No autenticado' }
+    }
+
+    // Obtener budget original para copiar datos base
+    const { data: originalBudget, error: budgetError } = await supabaseAdmin
+      .from('budgets')
+      .select('*')
+      .eq('id', originalBudgetId)
+      .single()
+
+    if (budgetError || !originalBudget) {
+      console.error('[duplicateBudget] Budget original no encontrado:', budgetError)
+      return { success: false, error: 'Presupuesto original no encontrado' }
+    }
+
+    // Calcular IVA
+    const iva = newData.totals.total - newData.totals.base
+
+    // Calcular fechas de validez
+    const startDate = new Date()
+    const endDate = new Date(startDate)
+    if (originalBudget.validity_days) {
+      endDate.setDate(endDate.getDate() + originalBudget.validity_days)
+    }
+
+    // Crear NUEVO presupuesto con los datos actualizados
+    const { data: newBudget, error: insertError } = await supabaseAdmin
+      .from('budgets')
+      .insert({
+        empresa_id: originalBudget.empresa_id,
+        user_id: user.id,
+        tariff_id: originalBudget.tariff_id,
+        status: BudgetStatus.BORRADOR,
+
+        // Datos del cliente (actualizados)
+        client_type: newData.clientData.client_type,
+        client_name: newData.clientData.client_name,
+        client_nif_nie: newData.clientData.client_nif_nie,
+        client_phone: newData.clientData.client_phone,
+        client_email: newData.clientData.client_email,
+        client_web: newData.clientData.client_web || null,
+        client_address: newData.clientData.client_address,
+        client_postal_code: newData.clientData.client_postal_code,
+        client_locality: newData.clientData.client_locality,
+        client_province: newData.clientData.client_province,
+        client_acceptance: newData.clientData.client_acceptance,
+
+        // Datos del presupuesto (actualizados)
+        json_budget_data: newData.budgetData,
+        total: newData.totals.total,
+        iva: iva,
+        base: newData.totals.base,
+
+        // Fechas y validez
+        validity_days: originalBudget.validity_days,
+        start_date: startDate.toISOString(),
+        end_date: originalBudget.validity_days ? endDate.toISOString() : null,
+
+        // Sin PDF (se genera después si se desea)
+        pdf_url: null,
+
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single()
+
+    if (insertError || !newBudget) {
+      console.error('[duplicateBudget] Error creando nuevo presupuesto:', insertError)
+      return { success: false, error: 'Error al duplicar presupuesto' }
+    }
+
+    console.log('[duplicateBudget] Nuevo presupuesto creado:', newBudget.id)
+    revalidatePath('/budgets')
+
+    return { success: true, budgetId: newBudget.id }
+
+  } catch (error) {
+    console.error('[duplicateBudget] Error crítico:', error)
+    return { success: false, error: 'Error interno del servidor' }
+  }
+}
+
+/**
  * Actualizar estado de presupuesto con validación de transiciones
  */
 export async function updateBudgetStatus(
