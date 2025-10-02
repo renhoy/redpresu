@@ -140,14 +140,18 @@ function HierarchyItem({
           {item.level === "item" && (
             <div className="flex items-center gap-4 text-xs mt-1 opacity-90">
               {item.unit && (
-                <span className="font-mono">Unidad: {item.unit}</span>
+                <span className="font-mono">
+                  <span className="font-bold">Unidad:</span> {item.unit}
+                </span>
               )}
               {item.iva_percentage && (
-                <span className="font-mono">IVA: {item.iva_percentage}%</span>
+                <span className="font-mono">
+                  <span className="font-bold">IVA:</span> {item.iva_percentage}%
+                </span>
               )}
               {item.pvp && (
-                <span className="font-mono font-bold">
-                  Precio: {formatCurrency(parseFloat(item.pvp))}
+                <span className="font-mono">
+                  <span className="font-bold">Precio:</span> {formatCurrency(parseFloat(item.pvp))}
                 </span>
               )}
             </div>
