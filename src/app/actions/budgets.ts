@@ -584,8 +584,10 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
 
     // MODO DESARROLLO: Solo debug, no llamar API
     if (process.env.NODE_ENV === 'development') {
+      const jsonPayload = JSON.stringify(payload, null, 2)
+
       console.log('\n=== MODO DESARROLLO: DEBUG PAYLOAD PDF ===')
-      console.log(JSON.stringify(payload, null, 2))
+      console.log(jsonPayload)
       console.log('=== FIN PAYLOAD ===\n')
 
       return {
