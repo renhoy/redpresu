@@ -328,7 +328,7 @@ export function buildPDFPayload(budget: Budget, tariff: Tariff): PDFPayload {
         address: formatClientAddress(budget),
         contact: formatClientContact(budget),
         budget_date: formatDate(budget.created_at),
-        validity: tariff.validity ? `${tariff.validity} días` : 'No especificado'
+        validity: tariff.validity ? tariff.validity.toString().replace(/[^0-9]/g, '') : '0'
       },
       title: 'Resumen del Presupuesto',
       note: tariff.legal_note || 'En cumplimiento del Reglamento General de Protección de Datos (RGPD), le informamos que sus datos serán tratados confidencialmente.',
