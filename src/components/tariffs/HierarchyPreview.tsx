@@ -237,9 +237,9 @@ export function HierarchyPreview({
           <p>
             Capítulos: {data.filter((i) => i.level === "chapter").length},
             Subcapítulos: {data.filter((i) => i.level === "subchapter").length},
-            Secciones: {data.filter((i) => i.level === "section").length},
+            Apartados: {data.filter((i) => i.level === "section").length},
             Partidas: {data.filter((i) => i.level === "item").length}, Total
-            items: {data.length}
+            elementos: {data.length}
           </p>
         </div>
       </div>
