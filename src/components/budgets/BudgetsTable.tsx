@@ -278,7 +278,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => router.push(`/budgets/create?tariff_id=${budget.tariff_id}&budget_id=${budget.id}`)}
+                          onClick={() => window.open(`/budgets/create?tariff_id=${budget.tariff_id}&budget_id=${budget.id}`, '_blank')}
                           title="Editar"
                         >
                           <Pencil className="h-4 w-4" />
