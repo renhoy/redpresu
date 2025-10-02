@@ -2,16 +2,16 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Eye, Edit, Power, Trash2, MoreHorizontal, FileText, Plus } from 'lucide-react'
+import { Edit, Trash2, FileText, Plus } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +26,7 @@ import { TableCell, TableRow } from '@/components/ui/table'
 import { formatDate } from '@/lib/validators'
 import { toggleTariffStatus, deleteTariff } from '@/app/actions/tariffs'
 import { Database } from '@/lib/types/database.types'
+import { toast } from 'sonner'
 
 type Tariff = Database['public']['Tables']['tariffs']['Row']
 
@@ -36,25 +37,20 @@ interface TariffRowProps {
 }
 
 export function TariffRow({ tariff, onStatusChange, onDelete }: TariffRowProps) {
-  const [isToggling, setIsToggling] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
-  const handleToggleStatus = async () => {
-    if (isToggling) return
-
-    setIsToggling(true)
+  const handleStatusChange = async (newStatus: string) => {
     try {
       const result = await toggleTariffStatus(tariff.id, tariff.status as 'Activa' | 'Inactiva')
       if (result.success) {
+        toast.success(`Estado actualizado a ${newStatus}`)
         onStatusChange?.()
       } else {
-        console.error('Error:', result.error)
+        toast.error(result.error || 'Error al actualizar estado')
       }
-    } catch (error) {
-      console.error('Error toggling status:', error)
-    } finally {
-      setIsToggling(false)
+    } catch {
+      toast.error('Error inesperado al actualizar estado')
     }
   }
 
@@ -65,27 +61,22 @@ export function TariffRow({ tariff, onStatusChange, onDelete }: TariffRowProps) 
     try {
       const result = await deleteTariff(tariff.id)
       if (result.success) {
+        toast.success('Tarifa eliminada')
         onDelete?.()
         setShowDeleteDialog(false)
       } else {
-        console.error('Error:', result.error)
+        toast.error(result.error || 'Error al eliminar')
       }
-    } catch (error) {
-      console.error('Error deleting tariff:', error)
+    } catch {
+      toast.error('Error inesperado al eliminar')
     } finally {
       setIsDeleting(false)
     }
   }
 
-  const getStatusBadge = () => {
-    switch (tariff.status) {
-      case 'Activa':
-        return <Badge variant="default" className="bg-green-100 text-green-800">Activa</Badge>
-      case 'Inactiva':
-        return <Badge variant="secondary">Inactiva</Badge>
-      default:
-        return <Badge variant="outline">{tariff.status}</Badge>
-    }
+  const statusColors = {
+    'Activa': 'bg-green-100 text-green-800',
+    'Inactiva': 'bg-gray-200 text-gray-700'
   }
 
   return (
@@ -125,7 +116,30 @@ export function TariffRow({ tariff, onStatusChange, onDelete }: TariffRowProps) 
 
         {/* Columna Estado */}
         <TableCell>
-          {getStatusBadge()}
+          <Select
+            value={tariff.status || 'Activa'}
+            onValueChange={handleStatusChange}
+          >
+            <SelectTrigger className="w-[120px]">
+              <SelectValue>
+                <Badge className={statusColors[tariff.status as keyof typeof statusColors] || 'bg-gray-200 text-gray-700'}>
+                  {tariff.status || 'Activa'}
+                </Badge>
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Activa">
+                <Badge className="bg-green-100 text-green-800">
+                  Activa
+                </Badge>
+              </SelectItem>
+              <SelectItem value="Inactiva">
+                <Badge className="bg-gray-200 text-gray-700">
+                  Inactiva
+                </Badge>
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </TableCell>
 
         {/* Columna Validez (Fechas combinadas) */}
@@ -149,42 +163,26 @@ export function TariffRow({ tariff, onStatusChange, onDelete }: TariffRowProps) 
         </TableCell>
 
         <TableCell>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <MoreHorizontal className="h-4 w-4" />
-                <span className="sr-only">Abrir menú</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <Eye className="mr-2 h-4 w-4" />
-                Ver detalles
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={`/tariffs/edit/${tariff.id}`}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Editar
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={handleToggleStatus}
-                disabled={isToggling}
-              >
-                <Power className="mr-2 h-4 w-4" />
-                {tariff.status === 'Activa' ? 'Desactivar' : 'Activar'}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => setShowDeleteDialog(true)}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Eliminar
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              asChild
+              title="Editar tarifa"
+            >
+              <Link href={`/tariffs/edit/${tariff.id}`}>
+                <Edit className="h-4 w-4" />
+              </Link>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowDeleteDialog(true)}
+              title="Eliminar tarifa"
+            >
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
+          </div>
         </TableCell>
       </TableRow>
 
