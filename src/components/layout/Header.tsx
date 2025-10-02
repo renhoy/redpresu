@@ -34,7 +34,7 @@ export function Header() {
   // Construir navegación según rol
   const navigation = [
     { name: 'Inicio', href: '/dashboard', icon: Home, show: true },
-    { name: 'Tarifas', href: '/tariffs', icon: FileText, show: userRole === 'admin' || userRole === 'superadmin' },
+    { name: 'Tarifas', href: '/tariffs', icon: FileText, show: true },
     { name: 'Presupuestos', href: '/budgets', icon: Receipt, show: true },
   ].filter(item => item.show)
 

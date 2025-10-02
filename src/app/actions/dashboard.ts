@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
-import { Budget } from '@/lib/types/database'
+import { Budget, Database } from '@/lib/types/database'
 
 interface DashboardStats {
   countsByStatus: Record<string, number>
@@ -22,7 +22,7 @@ type Periodo = 'hoy' | 'semana' | 'mes' | 'año'
 export async function getDashboardStats(periodo: Periodo = 'mes'): Promise<DashboardStats | null> {
   try {
     const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+    const supabase = createServerActionClient<Database>({ cookies: () => cookieStore })
 
     // Obtener usuario actual
     const { data: { user }, error: authError } = await supabase.auth.getUser()
