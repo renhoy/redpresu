@@ -27,6 +27,11 @@
 - ✅ Activar/desactivar tarifas
 - ✅ Estructura JSON jerárquica (capítulo → subcapítulo → apartado → partida)
 - ✅ Validación IDs secuenciales (1, 1.1, 1.1.1, 1.1.1.1)
+- ✅ Upload logo dual-mode (archivo local O URL externa)
+- ✅ Confirmaciones al cambiar modo de logo (AlertDialog)
+- ✅ UI unificada con página Presupuestos
+- ✅ Iconos de acción con tooltips (Pencil, Trash, Receipt)
+- ✅ Filtros simplificados sin bordes
 
 ### ✅ MÓDULO 4: Budget Creation
 **Estado:** ✅ COMPLETADO - READ-ONLY

@@ -6,7 +6,7 @@
 3. **✅ Common Module** - ✅ COMPLETADO - Validadores CSV, utilidades cálculo, helpers formato, constantes
 
 ## FASE 2: FEATURES (Uno por vez - 4 semanas)
-1. **✅ Tariff Management** - ✅ COMPLETADO - CRUD tarifas, procesamiento CSV→JSON, validación jerárquica
+1. **✅ Tariff Management** - ✅ COMPLETADO - CRUD tarifas, procesamiento CSV→JSON, validación jerárquica, logo dual-mode (archivo/URL), UI unificada con tooltips
 2. **✅ Budget Creation** - ✅ COMPLETADO (100%) - Formularios dinámicos, cálculos tiempo real, gestión estados, listado, edición
 3. **✅ PDF Generation** - ✅ COMPLETADO (100%) - Integración Rapid-PDF, payload construction, almacenamiento local, sistema guardado inteligente
 4. **✅ Dashboard** - ✅ COMPLETADO (100%) - Header navegación global, estadísticas por estado, accesos rápidos, permisos por rol
@@ -243,6 +243,12 @@
 3. **✅ UX Tablet** - Resuelto, navegación optimizada
 4. **✅ Rapid-PDF externo** - Resuelto, integración completa con timeout y retry
 5. **✅ Performance PDF** - Resuelto, generación ~1-2 segundos (muy por debajo del límite 60s)
+
+## COMMITS RECIENTES (Tariff Management - UI):
+- `18a386e` - feat: añadir confirmaciones al cambiar modo de logo
+- `ae14813` - docs: flujo completo importación CSV
+- `8bfa4db` - refactor: optimizar tamaño cards dashboard
+- `1eacc02` - fix: eliminar padding-top innecesario en layouts
 
 ## COMMITS RECIENTES (Dashboard):
 - `8bfa4db` - refactor: optimizar tamaño cards y actualizar accesos rápidos

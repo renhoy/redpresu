@@ -43,6 +43,11 @@
 - ✅ **Colores Dinámicos**: Preview con colores configurables
 - ✅ **Auth Fix**: Corrección logout para Next.js 15
 - ✅ **Layout Responsive**: Optimizado para tablet y desktop
+- ✅ **Logo Dual-Mode**: Subir archivo local O URL externa con validación
+- ✅ **Confirmaciones Logo**: AlertDialog al cambiar entre modos
+- ✅ **UI Tarifas Unificada**: Diseño coherente con página Presupuestos
+- ✅ **Iconos y Tooltips**: Acciones con iconos y tooltips informativos
+- ✅ **Filtros Simplificados**: Diseño minimalista sin bordes
 
 ## ARCHIVOS DE ESTE MÓDULO:
 - src/app/(dashboard)/tariffs/*
