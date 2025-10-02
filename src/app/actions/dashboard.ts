@@ -65,7 +65,7 @@ export async function getDashboardStats(periodo: Periodo = 'mes'): Promise<Dashb
     // Construir query base según rol
     let query = supabase
       .from('budgets')
-      .select('*, tariffs(title), users(name)')
+      .select('*')
       .eq('empresa_id', userData.empresa_id)
 
     // Vendedor: solo sus presupuestos
