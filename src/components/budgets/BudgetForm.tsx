@@ -268,6 +268,15 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
 
       const result = await generateBudgetPDF(budgetId)
 
+      // MODO DESARROLLO: Solo debug
+      if (result.success && result.debug) {
+        setPdfStatus('idle')
+        console.log('📄 PAYLOAD PDF GENERADO (desarrollo):', result.payload)
+        toast.success('Payload generado (revisa consola del servidor)')
+        return
+      }
+
+      // MODO PRODUCCIÓN: Flujo completo
       if (result.success && result.pdf_url) {
         setPdfStatus('generated')
         toast.success('PDF generado exitosamente')
@@ -275,10 +284,8 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
         // Abrir PDF en nueva pestaña
         window.open(result.pdf_url, '_blank')
 
-        // Redirigir al listado después de 1 segundo
-        setTimeout(() => {
-          router.push('/budgets')
-        }, 1000)
+        // Usuario permanece en formulario para revisar
+        // (eliminada redirección automática)
       } else {
         setPdfStatus('idle')
         toast.error(result.error || 'Error generando PDF')

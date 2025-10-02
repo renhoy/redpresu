@@ -534,6 +534,8 @@ function sanitizeFilename(filename: string): string {
 export async function generateBudgetPDF(budgetId: string): Promise<{
   success: boolean
   pdf_url?: string
+  debug?: boolean
+  payload?: any
   error?: string
 }> {
   const fs = require('fs')
@@ -580,6 +582,20 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
     console.log('[generateBudgetPDF] Construyendo payload...')
     const payload = buildPDFPayload(budgetTyped, tariffTyped)
 
+    // MODO DESARROLLO: Solo debug, no llamar API
+    if (process.env.NODE_ENV === 'development') {
+      console.log('\n=== MODO DESARROLLO: DEBUG PAYLOAD PDF ===')
+      console.log(JSON.stringify(payload, null, 2))
+      console.log('=== FIN PAYLOAD ===\n')
+
+      return {
+        success: true,
+        debug: true,
+        payload
+      }
+    }
+
+    // MODO PRODUCCIÓN: Flujo completo
     // 2. Validar variables de entorno
     const RAPID_PDF_URL = process.env.RAPID_PDF_URL
     const RAPID_PDF_API_KEY = process.env.RAPID_PDF_API_KEY
