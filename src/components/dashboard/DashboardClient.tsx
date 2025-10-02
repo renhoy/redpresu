@@ -73,8 +73,6 @@ export function DashboardClient({ initialStats, userRole }: DashboardClientProps
     setLoading(false)
   }
 
-  const canManageTariffs = userRole === 'admin' || userRole === 'superadmin'
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleDateString('es-ES', {
@@ -110,7 +108,7 @@ export function DashboardClient({ initialStats, userRole }: DashboardClientProps
       </div>
 
       {/* Estadísticas principales - Grid 2x2 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total presupuestos */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -119,20 +117,11 @@ export function DashboardClient({ initialStats, userRole }: DashboardClientProps
           </CardHeader>
           <CardContent>
             {loading ? (
-              <Skeleton className="h-8 w-20" />
+              <Skeleton className="h-6 w-16" />
             ) : (
-              <>
-                <div className="text-2xl font-bold">
-                  {Object.values(stats.countsByStatus).reduce((sum, count) => sum + count, 0)}
-                </div>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {Object.entries(stats.countsByStatus).map(([status, count]) => (
-                    <Badge key={status} className={statusColors[status as keyof typeof statusColors] || ''}>
-                      {status}: {count}
-                    </Badge>
-                  ))}
-                </div>
-              </>
+              <div className="text-xl font-bold">
+                {Object.values(stats.countsByStatus).reduce((sum, count) => sum + count, 0)}
+              </div>
             )}
           </CardContent>
         </Card>
@@ -145,14 +134,9 @@ export function DashboardClient({ initialStats, userRole }: DashboardClientProps
           </CardHeader>
           <CardContent>
             {loading ? (
-              <Skeleton className="h-8 w-32" />
+              <Skeleton className="h-6 w-24" />
             ) : (
-              <>
-                <div className="text-2xl font-bold">{stats.totalValue}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Suma de todos los presupuestos
-                </p>
-              </>
+              <div className="text-xl font-bold">{stats.totalValue}</div>
             )}
           </CardContent>
         </Card>
@@ -165,14 +149,9 @@ export function DashboardClient({ initialStats, userRole }: DashboardClientProps
           </CardHeader>
           <CardContent>
             {loading ? (
-              <Skeleton className="h-8 w-16" />
+              <Skeleton className="h-6 w-12" />
             ) : (
-              <>
-                <div className="text-2xl font-bold">{stats.monthCount}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Presupuestos creados este mes
-                </p>
-              </>
+              <div className="text-xl font-bold">{stats.monthCount}</div>
             )}
           </CardContent>
         </Card>
@@ -185,14 +164,9 @@ export function DashboardClient({ initialStats, userRole }: DashboardClientProps
           </CardHeader>
           <CardContent>
             {loading ? (
-              <Skeleton className="h-8 w-20" />
+              <Skeleton className="h-6 w-16" />
             ) : (
-              <>
-                <div className="text-2xl font-bold">{stats.conversionRate}%</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Aprobados / Enviados
-                </p>
-              </>
+              <div className="text-xl font-bold">{stats.conversionRate}%</div>
             )}
           </CardContent>
         </Card>
@@ -206,25 +180,23 @@ export function DashboardClient({ initialStats, userRole }: DashboardClientProps
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            <Link href="/tariffs">
-              <Button className="w-full h-20 flex flex-col gap-2" variant="outline">
-                <PlusCircle className="w-6 h-6" />
-                <span>Crear Presupuesto</span>
+            <Link href="/tariffs/create">
+              <Button className="w-full h-16 flex items-center gap-2 justify-center" variant="outline">
+                <PlusCircle className="w-5 h-5" />
+                <span>Crear Tarifa</span>
               </Button>
             </Link>
 
-            {canManageTariffs && (
-              <Link href="/tariffs">
-                <Button className="w-full h-20 flex flex-col gap-2" variant="outline">
-                  <FileText className="w-6 h-6" />
-                  <span>Ver Tarifas</span>
-                </Button>
-              </Link>
-            )}
+            <Link href="/tariffs">
+              <Button className="w-full h-16 flex items-center gap-2 justify-center" variant="outline">
+                <FileText className="w-5 h-5" />
+                <span>Ver Tarifas</span>
+              </Button>
+            </Link>
 
             <Link href="/budgets">
-              <Button className="w-full h-20 flex flex-col gap-2" variant="outline">
-                <Receipt className="w-6 h-6" />
+              <Button className="w-full h-16 flex items-center gap-2 justify-center" variant="outline">
+                <Receipt className="w-5 h-5" />
                 <span>Ver Presupuestos</span>
               </Button>
             </Link>
