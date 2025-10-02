@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Building2, LogOut, Home, FileText, Receipt } from 'lucide-react'
 import LogoutButton from '@/components/auth/LogoutButton'
-import { createBrowserClient } from '@supabase/ssr'
+import { supabase } from '@/lib/supabase/client'
 
 export function Header() {
   const pathname = usePathname()
@@ -13,11 +13,6 @@ export function Header() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-
     const fetchUserRole = async () => {
       const { data: { user } } = await supabase.auth.getUser()
 

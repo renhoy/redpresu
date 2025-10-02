@@ -1,7 +1,7 @@
 'use server'
 
 import { cookies } from 'next/headers'
-import { createServerActionClient } from '@/lib/supabase/server'
+import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { Budget } from '@/lib/types/database'
 
 interface DashboardStats {
@@ -45,7 +45,7 @@ export async function getDashboardStats(periodo: Periodo = 'mes'): Promise<Dashb
 
     // Calcular fecha de inicio según período
     const now = new Date()
-    let startDate = new Date()
+    const startDate = new Date()
 
     switch (periodo) {
       case 'hoy':
