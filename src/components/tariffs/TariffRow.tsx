@@ -142,17 +142,13 @@ export function TariffRow({ tariff, onStatusChange, onDelete }: TariffRowProps) 
           </Select>
         </TableCell>
 
-        {/* Columna Validez (Fechas combinadas) */}
+        {/* Columna Validez */}
         <TableCell className="hidden md:table-cell">
-          <div className="text-sm space-y-1">
-            {tariff.validity_start && (
-              <div>Desde: {formatDate(tariff.validity_start)}</div>
-            )}
-            {tariff.validity_end && (
-              <div>Hasta: {formatDate(tariff.validity_end)}</div>
-            )}
-            {!tariff.validity_start && !tariff.validity_end && (
-              <span className="text-muted-foreground">Sin límites</span>
+          <div className="text-sm">
+            {tariff.validity ? (
+              <span>{tariff.validity} días</span>
+            ) : (
+              <span className="text-muted-foreground">-</span>
             )}
           </div>
         </TableCell>
