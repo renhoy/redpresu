@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Header } from '@/components/layout/Header'
 import { Plus } from 'lucide-react'
 import { getBudgets } from '@/app/actions/budgets'
 import { BudgetsTable } from '@/components/budgets/BudgetsTable'
@@ -9,10 +8,7 @@ export default async function BudgetsPage() {
   const budgets = await getBudgets()
 
   return (
-    <>
-      <Header />
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-6">
+    <div className="container mx-auto px-4 py-6">
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <div>
@@ -29,10 +25,8 @@ export default async function BudgetsPage() {
             </Link>
           </div>
 
-          {/* Tabla de presupuestos */}
-          <BudgetsTable budgets={budgets} />
-        </div>
-      </div>
-    </>
+      {/* Tabla de presupuestos */}
+      <BudgetsTable budgets={budgets} />
+    </div>
   )
 }
