@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { getServerUser } from '@/lib/auth/server'
 import { Header } from '@/components/layout/Header'
 
-export default async function BudgetsLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
