@@ -1,12 +1,9 @@
 'use client'
 
-import { useState } from 'react'
-import { Upload, X, Image as ImageIcon } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
 import {
   Select,
   SelectContent,
@@ -14,7 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { uploadLogo, type TariffFormData } from '@/app/actions/tariffs'
+import { LogoUploader } from './LogoUploader'
+import { type TariffFormData } from '@/app/actions/tariffs'
 
 interface TariffFormFieldsProps {
   data: TariffFormData
@@ -23,37 +21,8 @@ interface TariffFormFieldsProps {
 }
 
 export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsProps) {
-  const [isUploadingLogo, setIsUploadingLogo] = useState(false)
-
   const handleInputChange = (field: keyof TariffFormData, value: string | number) => {
     onChange({ [field]: value })
-  }
-
-  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    setIsUploadingLogo(true)
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-
-      const result = await uploadLogo(formData)
-      if (result.success && result.url) {
-        onChange({ logo_url: result.url })
-      } else {
-        // TODO: Mostrar error de upload
-        console.error('Error uploading logo:', result.error)
-      }
-    } catch (error) {
-      console.error('Error uploading logo:', error)
-    } finally {
-      setIsUploadingLogo(false)
-    }
-  }
-
-  const handleRemoveLogo = () => {
-    onChange({ logo_url: '' })
   }
 
   return (
@@ -127,61 +96,11 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
           <CardTitle>Datos Empresa</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <Label>Logo *</Label>
-            {data.logo_url ? (
-              <div className="mt-2">
-                <div className="relative inline-block">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={data.logo_url}
-                    alt="Logo empresa"
-                    className="w-32 h-32 object-contain border rounded-lg bg-white"
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
-                    onClick={handleRemoveLogo}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="mt-2">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <div className="flex flex-col items-center gap-2">
-                    <ImageIcon className="h-8 w-8 text-gray-400" />
-                    <div>
-                      <Label
-                        htmlFor="logo-upload"
-                        className="cursor-pointer inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md text-sm font-medium"
-                      >
-                        <Upload className="h-4 w-4" />
-                        {isUploadingLogo ? 'Subiendo...' : 'Subir logo'}
-                      </Label>
-                      <Input
-                        id="logo-upload"
-                        type="file"
-                        accept="image/jpeg,image/jpg,image/png,image/svg+xml"
-                        onChange={handleLogoUpload}
-                        disabled={isUploadingLogo}
-                        className="hidden"
-                      />
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      JPG, PNG, SVG hasta 2MB
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-            {errors.logo_url && (
-              <p className="text-sm text-destructive mt-1">{errors.logo_url}</p>
-            )}
-          </div>
+          <LogoUploader
+            value={data.logo_url}
+            onChange={(url) => handleInputChange('logo_url', url)}
+            error={errors.logo_url}
+          />
 
           <div className="grid grid-cols-4 gap-4">
             <div className="col-span-3">
