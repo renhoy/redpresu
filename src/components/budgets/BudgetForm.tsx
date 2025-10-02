@@ -13,6 +13,16 @@ import { ArrowLeft, ArrowRight, Trash2, Save, FileStack, Loader2, Check } from '
 import { BudgetHierarchyForm } from './BudgetHierarchyForm'
 import { createDraftBudget, updateBudgetDraft, saveBudget, generateBudgetPDF } from '@/app/actions/budgets'
 import { toast } from 'sonner'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 interface BudgetFormProps {
   tariff: Tariff
@@ -41,6 +51,8 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [pdfStatus, setPdfStatus] = useState<'idle' | 'generating' | 'generated'>('idle')
   const [totals, setTotals] = useState<{ base: number; total: number }>({ base: 0, total: 0 })
+  const [showPdfWarning, setShowPdfWarning] = useState(false)
+  const [pendingAction, setPendingAction] = useState<'save' | 'generate' | null>(null)
   const [clientData, setClientData] = useState<ClientData>({
     client_type: (existingBudget?.client_type as ClientData['client_type']) || 'empresa',
     client_name: existingBudget?.client_name || '',
@@ -227,23 +239,32 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
         // Usar el budgetId recién creado
         const newBudgetId = createResult.budgetId
 
-        // Guardar como borrador
-        const result = await saveBudget(newBudgetId, totals, budgetData)
+        // Guardar como borrador con clientData
+        const result = await saveBudget(newBudgetId, totals, budgetData, clientData)
 
         if (result.success) {
           toast.success('Presupuesto guardado correctamente')
-          router.push('/budgets')
+          if (result.had_pdf) {
+            toast.info('PDF anterior eliminado, genera uno nuevo')
+          }
+          setBudgetId(newBudgetId)
+          setSaveStatus('saved')
+          setTimeout(() => setSaveStatus('idle'), 2000)
         } else {
           toast.error(result.error || 'Error al guardar el presupuesto')
           setSaveStatus('idle')
         }
       } else {
-        // Si ya existe, solo actualizar
-        const result = await saveBudget(budgetId, totals, budgetData)
+        // Si ya existe y tiene PDF, eliminar el PDF al guardar
+        const result = await saveBudget(budgetId, totals, budgetData, clientData)
 
         if (result.success) {
           toast.success('Presupuesto guardado correctamente')
-          router.push('/budgets')
+          if (result.had_pdf) {
+            toast.info('PDF anterior eliminado, genera uno nuevo')
+          }
+          setSaveStatus('saved')
+          setTimeout(() => setSaveStatus('idle'), 2000)
         } else {
           toast.error(result.error || 'Error al guardar el presupuesto')
           setSaveStatus('idle')

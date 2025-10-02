@@ -311,8 +311,21 @@ export async function updateBudgetDraft(
 export async function saveBudget(
   budgetId: string,
   totals: { base: number; total: number },
-  budgetData: BudgetDataItem[]
-): Promise<{ success: boolean; error?: string }> {
+  budgetData: BudgetDataItem[],
+  clientData?: {
+    client_type: string
+    client_name: string
+    client_nif_nie: string
+    client_phone: string
+    client_email: string
+    client_web?: string
+    client_address: string
+    client_postal_code: string
+    client_locality: string
+    client_province: string
+    client_acceptance: boolean
+  }
+): Promise<{ success: boolean; error?: string; had_pdf?: boolean }> {
   try {
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
@@ -366,19 +379,59 @@ export async function saveBudget(
       endDate.setDate(endDate.getDate() + budget.validity_days)
     }
 
-    // Actualizar como borrador con totales y budgetData actualizado
+    // Detectar si había PDF para informar al frontend
+    const hadPdf = !!budget.pdf_url
+
+    // Preparar datos de actualización
+    const updateData: any = {
+      status: BudgetStatus.BORRADOR,
+      total: totals.total,
+      iva: iva,
+      base: totals.base,
+      json_budget_data: budgetData,
+      start_date: startDate.toISOString(),
+      end_date: budget.validity_days ? endDate.toISOString() : null,
+      updated_at: new Date().toISOString()
+    }
+
+    // Si hay clientData, actualizar campos del cliente
+    if (clientData) {
+      updateData.client_type = clientData.client_type
+      updateData.client_name = clientData.client_name
+      updateData.client_nif_nie = clientData.client_nif_nie
+      updateData.client_phone = clientData.client_phone
+      updateData.client_email = clientData.client_email
+      updateData.client_web = clientData.client_web || null
+      updateData.client_address = clientData.client_address
+      updateData.client_postal_code = clientData.client_postal_code
+      updateData.client_locality = clientData.client_locality
+      updateData.client_province = clientData.client_province
+      updateData.client_acceptance = clientData.client_acceptance
+    }
+
+    // Si había PDF, eliminarlo (tanto URL como archivo físico)
+    if (hadPdf) {
+      updateData.pdf_url = null
+
+      // Eliminar archivo físico
+      try {
+        const fs = require('fs')
+        const path = require('path')
+        const filePath = path.join(process.cwd(), 'public', budget.pdf_url)
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath)
+          console.log('[saveBudget] PDF físico eliminado:', filePath)
+        }
+      } catch (fsError) {
+        console.error('[saveBudget] Error eliminando PDF físico:', fsError)
+        // No fallar el guardado por error de eliminación de archivo
+      }
+    }
+
+    // Actualizar como borrador
     const { error: updateError } = await supabaseAdmin
       .from('budgets')
-      .update({
-        status: BudgetStatus.BORRADOR,
-        total: totals.total,
-        iva: iva,
-        base: totals.base,
-        json_budget_data: budgetData,
-        start_date: startDate.toISOString(),
-        end_date: budget.validity_days ? endDate.toISOString() : null,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', budgetId)
 
     if (updateError) {
@@ -389,7 +442,7 @@ export async function saveBudget(
     console.log('[saveBudget] Presupuesto guardado como borrador')
     revalidatePath('/budgets')
 
-    return { success: true }
+    return { success: true, had_pdf: hadPdf }
 
   } catch (error) {
     console.error('[saveBudget] Error crítico:', error)
@@ -584,11 +637,7 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
 
     // MODO DESARROLLO: Solo debug, no llamar API
     if (process.env.NODE_ENV === 'development') {
-      const jsonPayload = JSON.stringify(payload, null, 2)
-
-      console.log('\n=== MODO DESARROLLO: DEBUG PAYLOAD PDF ===')
-      console.log(jsonPayload)
-      console.log('=== FIN PAYLOAD ===\n')
+      console.log('[generateBudgetPDF] Modo desarrollo: payload construido, no se llama a Rapid-PDF')
 
       return {
         success: true,
