@@ -6,6 +6,16 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { uploadLogo } from '@/app/actions/tariffs'
 
 interface LogoUploaderProps {
@@ -22,6 +32,9 @@ export function LogoUploader({ value, onChange, error, disabled }: LogoUploaderP
   const [urlInput, setUrlInput] = useState('')
   const [urlValidationMessage, setUrlValidationMessage] = useState('')
   const [isValidatingUrl, setIsValidatingUrl] = useState(false)
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null)
+  const [confirmMessage, setConfirmMessage] = useState('')
 
   // Determinar el tab activo según el tipo de URL
   const [activeTab, setActiveTab] = useState<'upload' | 'url'>(
@@ -41,10 +54,70 @@ export function LogoUploader({ value, onChange, error, disabled }: LogoUploaderP
     }
   }, [value])
 
+  const showConfirmation = (message: string, action: () => void) => {
+    setConfirmMessage(message)
+    setPendingAction(() => action)
+    setShowConfirmDialog(true)
+  }
+
+  const handleConfirmAction = () => {
+    if (pendingAction) {
+      pendingAction()
+    }
+    setShowConfirmDialog(false)
+    setPendingAction(null)
+  }
+
+  const handleCancelAction = () => {
+    setShowConfirmDialog(false)
+    setPendingAction(null)
+  }
+
+  const handleTabChange = (newTab: 'upload' | 'url') => {
+    // Si hay contenido en el otro tab, pedir confirmación
+    if (newTab === 'upload' && urlInput.trim()) {
+      showConfirmation(
+        'Al cambiar a subir archivo se eliminará la URL externa. ¿Deseas continuar?',
+        () => {
+          setUrlInput('')
+          setPreviewUrl('')
+          onChange('')
+          setActiveTab(newTab)
+        }
+      )
+    } else if (newTab === 'url' && previewUrl && !previewUrl.startsWith('http')) {
+      showConfirmation(
+        'Al cambiar a URL externa se eliminará la imagen subida. ¿Deseas continuar?',
+        () => {
+          setPreviewUrl('')
+          onChange('')
+          setActiveTab(newTab)
+        }
+      )
+    } else {
+      setActiveTab(newTab)
+    }
+  }
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
 
+    // Si hay URL externa, pedir confirmación
+    if (urlInput.trim()) {
+      showConfirmation(
+        'Al subir una imagen se eliminará la URL externa. ¿Deseas continuar?',
+        () => processFileUpload(file)
+      )
+      // Limpiar el input file para permitir seleccionar el mismo archivo después
+      event.target.value = ''
+      return
+    }
+
+    await processFileUpload(file)
+  }
+
+  const processFileUpload = async (file: File) => {
     // Validar tipo de archivo
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml']
     if (!validTypes.includes(file.type)) {
@@ -59,6 +132,8 @@ export function LogoUploader({ value, onChange, error, disabled }: LogoUploaderP
       return
     }
 
+    // Limpiar URL externa si existe
+    setUrlInput('')
     setUrlValidationMessage('')
     setIsUploading(true)
 
@@ -105,6 +180,25 @@ export function LogoUploader({ value, onChange, error, disabled }: LogoUploaderP
       return
     }
 
+    // Si hay imagen subida, pedir confirmación
+    if (previewUrl && !previewUrl.startsWith('http')) {
+      showConfirmation(
+        'Al usar una URL externa se eliminará la imagen subida. ¿Deseas continuar?',
+        () => processUrlChange(url)
+      )
+      // Restaurar el input anterior temporalmente
+      setTimeout(() => {
+        if (!showConfirmDialog) {
+          setUrlInput('')
+        }
+      }, 0)
+      return
+    }
+
+    processUrlChange(url)
+  }
+
+  const processUrlChange = (url: string) => {
     // Validar formato URL
     try {
       const urlObj = new URL(url)
@@ -116,7 +210,7 @@ export function LogoUploader({ value, onChange, error, disabled }: LogoUploaderP
         setUrlValidationMessage('')
       }
 
-      // Actualizar preview y value
+      // Limpiar preview de archivo local si existe
       setPreviewUrl(url)
       setImageError(false)
       onChange(url)
@@ -159,11 +253,19 @@ export function LogoUploader({ value, onChange, error, disabled }: LogoUploaderP
     onChange('')
   }
 
+  // Determinar si el preview corresponde al tab activo
+  const shouldShowPreview = () => {
+    if (!previewUrl) return false
+    if (activeTab === 'url' && previewUrl.startsWith('http')) return true
+    if (activeTab === 'upload' && !previewUrl.startsWith('http')) return true
+    return false
+  }
+
   return (
     <div className="space-y-4">
       <Label>Logo de la empresa *</Label>
 
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'upload' | 'url')}>
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="upload">Subir archivo</TabsTrigger>
           <TabsTrigger value="url">URL externa</TabsTrigger>
@@ -245,8 +347,8 @@ export function LogoUploader({ value, onChange, error, disabled }: LogoUploaderP
         </TabsContent>
       </Tabs>
 
-      {/* Vista previa */}
-      {previewUrl && (
+      {/* Vista previa - Solo mostrar si corresponde al tab activo */}
+      {shouldShowPreview() && (
         <div className="mt-4 border rounded-lg p-4 relative">
           <div className="flex flex-col items-center">
             {imageError ? (
@@ -284,6 +386,22 @@ export function LogoUploader({ value, onChange, error, disabled }: LogoUploaderP
       {error && (
         <p className="text-sm text-destructive">{error}</p>
       )}
+
+      {/* Dialog de confirmación */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar acción</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmMessage}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelAction}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmAction}>Aceptar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
