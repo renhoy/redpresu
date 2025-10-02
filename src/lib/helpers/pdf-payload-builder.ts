@@ -48,12 +48,18 @@ interface PDFPayload {
       amount: string
     }>
     totals: {
-      base: string
+      base: {
+        name: string
+        amount: string
+      }
       ivas: Array<{
-        percentage: string
+        name: string
         amount: string
       }>
-      total: string
+      total: {
+        name: string
+        amount: string
+      }
     }
   }
   budget: {
@@ -169,9 +175,9 @@ function extractChapters(items: BudgetDataItem[]): Array<{
  * Calcula totales desde los items con cantidad > 0
  */
 function calculateTotals(items: BudgetDataItem[]): {
-  base: string
-  ivas: Array<{ percentage: string; amount: string }>
-  total: string
+  base: { name: string; amount: string }
+  ivas: Array<{ name: string; amount: string }>
+  total: { name: string; amount: string }
 } {
   let totalAmount = 0
   const ivaGroups = new Map<number, number>()
@@ -200,18 +206,32 @@ function calculateTotals(items: BudgetDataItem[]): {
   // Base imponible = Total - IVA
   const base = totalAmount - totalIva
 
-  // Formatear IVAs agrupados
+  // Formatear IVAs agrupados con formato esperado por Rapid-PDF
   const ivas = Array.from(ivaGroups.entries())
-    .map(([percentage, amount]) => ({
-      percentage: `${percentage}%`,
-      amount: formatSpanishCurrency(amount)
-    }))
-    .sort((a, b) => parseFloat(a.percentage) - parseFloat(b.percentage))
+    .map(([percentage, amount]) => {
+      // Formatear porcentaje con coma decimal (5.00 → 5,00)
+      const percentageFormatted = percentage.toFixed(2).replace('.', ',')
+      return {
+        name: `${percentageFormatted}% IVA`,
+        amount: formatSpanishCurrency(amount)
+      }
+    })
+    .sort((a, b) => {
+      const aNum = parseFloat(a.name.replace(',', '.'))
+      const bNum = parseFloat(b.name.replace(',', '.'))
+      return aNum - bNum
+    })
 
   return {
-    base: formatSpanishCurrency(base),
+    base: {
+      name: 'Base',
+      amount: formatSpanishCurrency(base)
+    },
     ivas,
-    total: formatSpanishCurrency(totalAmount)
+    total: {
+      name: 'Total Presupuesto',
+      amount: formatSpanishCurrency(totalAmount)
+    }
   }
 }
 
