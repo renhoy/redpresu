@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Pencil, Trash2, FileText, Plus, FileStack } from 'lucide-react'
+import { Pencil, Trash2, FileText, Plus, Receipt } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -114,7 +114,7 @@ export function TariffRow({ tariff, onStatusChange, onDelete }: TariffRowProps) 
                 >
                   <Link href={`/budgets/create?tariff_id=${tariff.id}`}>
                     <Plus className="h-4 w-4 mr-1" />
-                    <FileStack className="h-4 w-4" />
+                    <Receipt className="h-4 w-4" />
                   </Link>
                 </Button>
               ) : (
@@ -125,7 +125,7 @@ export function TariffRow({ tariff, onStatusChange, onDelete }: TariffRowProps) 
                   className="h-9 px-2 cursor-not-allowed"
                 >
                   <Plus className="h-4 w-4 mr-1" />
-                  <FileStack className="h-4 w-4" />
+                  <Receipt className="h-4 w-4" />
                 </Button>
               )}
             </TooltipTrigger>
