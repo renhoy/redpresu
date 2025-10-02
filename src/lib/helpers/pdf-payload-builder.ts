@@ -273,9 +273,17 @@ export function buildPDFPayload(budget: Budget, tariff: Tariff): PDFPayload {
   const totals = calculateTotals(renumberedItems)
 
   // 6. Construir payload
+  // Construir URL completa del logo para que Rapid-PDF pueda acceder
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const logoUrl = tariff.logo_url
+    ? tariff.logo_url.startsWith('http')
+      ? tariff.logo_url // Ya es URL completa
+      : `${baseUrl}${tariff.logo_url}` // Convertir ruta relativa a absoluta
+    : ''
+
   const payload: PDFPayload = {
     company: {
-      logo: tariff.logo_url || '',
+      logo: logoUrl,
       name: tariff.name || '',
       nif: tariff.nif || '',
       address: tariff.address || '',
