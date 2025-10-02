@@ -235,11 +235,11 @@ export function HierarchyPreview({
       <div className="mb-4 pb-3 border-b border-gray-200">
         <div className="text-xs text-gray-500">
           <p>
-            Capítulos: {data.filter((i) => i.level === "chapter").length},
-            Subcapítulos: {data.filter((i) => i.level === "subchapter").length},
-            Apartados: {data.filter((i) => i.level === "section").length},
-            Partidas: {data.filter((i) => i.level === "item").length}, Total
-            elementos: {data.length}
+            <span className="font-bold">Capítulos:</span> {data.filter((i) => i.level === "chapter").length},
+            <span className="font-bold"> Subcapítulos:</span> {data.filter((i) => i.level === "subchapter").length},
+            <span className="font-bold"> Apartados:</span> {data.filter((i) => i.level === "section").length},
+            <span className="font-bold"> Partidas:</span> {data.filter((i) => i.level === "item").length},
+            <span className="font-bold"> Total elementos:</span> {data.length}
           </p>
         </div>
       </div>
