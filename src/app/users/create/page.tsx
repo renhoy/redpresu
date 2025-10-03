@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { getServerUser } from '@/lib/auth/server'
 import UserForm from '@/components/users/UserForm'
 
 export const metadata = {
@@ -8,23 +8,13 @@ export const metadata = {
 }
 
 export default async function CreateUserPage() {
-  const supabase = await createClient()
+  const user = await getServerUser()
 
-  // Verificar autenticación
-  const { data: { user: authUser } } = await supabase.auth.getUser()
-
-  if (!authUser) {
+  if (!user) {
     redirect('/login')
   }
 
-  // Verificar que el usuario es admin o superadmin
-  const { data: currentUser } = await supabase
-    .from('users')
-    .select('role, empresa_id')
-    .eq('id', authUser.id)
-    .single()
-
-  if (!currentUser || !['admin', 'superadmin'].includes(currentUser.role)) {
+  if (!['admin', 'superadmin'].includes(user.role)) {
     redirect('/dashboard')
   }
 
@@ -32,7 +22,7 @@ export default async function CreateUserPage() {
     <div className="container mx-auto py-10">
       <UserForm
         mode="create"
-        empresaId={currentUser.empresa_id}
+        empresaId={user.empresa_id}
       />
     </div>
   )

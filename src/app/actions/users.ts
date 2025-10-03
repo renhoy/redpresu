@@ -5,9 +5,9 @@
 
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+import { supabaseAdmin } from '@/lib/supabase/server'
 import { z } from 'zod'
+import { getServerUser } from '@/lib/auth/server'
 
 // ============================================
 // TIPOS
@@ -63,26 +63,21 @@ export type UpdateUserData = z.infer<typeof updateUserSchema>
 /**
  * Verifica si el usuario actual es admin o superadmin
  */
-async function checkAdminPermission(): Promise<{ allowed: boolean; currentUser: any }> {
-  const supabase = await createClient()
+async function checkAdminPermission(): Promise<{ allowed: boolean; currentUser: { id: string; role: string; empresa_id: number } | null }> {
+  const user = await getServerUser()
 
-  const { data: { user: authUser } } = await supabase.auth.getUser()
-
-  if (!authUser) {
+  if (!user || !['admin', 'superadmin'].includes(user.role)) {
     return { allowed: false, currentUser: null }
   }
 
-  const { data: currentUser } = await supabase
-    .from('users')
-    .select('id, role, empresa_id')
-    .eq('id', authUser.id)
-    .single()
-
-  if (!currentUser || !['admin', 'superadmin'].includes(currentUser.role)) {
-    return { allowed: false, currentUser: null }
+  return {
+    allowed: true,
+    currentUser: {
+      id: user.id,
+      role: user.role,
+      empresa_id: user.empresa_id
+    }
   }
-
-  return { allowed: true, currentUser }
 }
 
 /**
@@ -105,8 +100,6 @@ function generateTemporaryPassword(): string {
  * Obtener lista de usuarios de la empresa
  */
 export async function getUsers() {
-  const supabase = await createClient()
-
   const { allowed, currentUser } = await checkAdminPermission()
 
   if (!allowed) {
@@ -117,7 +110,7 @@ export async function getUsers() {
   }
 
   // Obtener usuarios de la misma empresa con información del invitador
-  const { data: users, error } = await supabase
+  const { data: users, error } = await supabaseAdmin
     .from('users')
     .select(`
       *,
@@ -155,8 +148,6 @@ export async function getUsers() {
  * Obtener un usuario por ID
  */
 export async function getUserById(userId: string) {
-  const supabase = await createClient()
-
   const { allowed, currentUser } = await checkAdminPermission()
 
   if (!allowed) {
@@ -166,7 +157,7 @@ export async function getUserById(userId: string) {
     }
   }
 
-  const { data: user, error } = await supabase
+  const { data: user, error } = await supabaseAdmin
     .from('users')
     .select(`
       *,
@@ -204,8 +195,6 @@ export async function getUserById(userId: string) {
  * Crear nuevo usuario (admin invita)
  */
 export async function createUser(data: CreateUserData) {
-  const supabase = await createClient()
-
   // Validar permisos
   const { allowed, currentUser } = await checkAdminPermission()
 
@@ -227,10 +216,11 @@ export async function createUser(data: CreateUserData) {
   // Validar schema
   try {
     createUserSchema.parse(data)
-  } catch (error: any) {
+  } catch (error) {
+    const zodError = error as z.ZodError
     return {
       success: false,
-      error: error.errors?.[0]?.message || 'Datos inválidos'
+      error: zodError.errors?.[0]?.message || 'Datos inválidos'
     }
   }
 
@@ -239,7 +229,7 @@ export async function createUser(data: CreateUserData) {
 
   try {
     // 1. Crear usuario en auth.users
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
       password: temporaryPassword,
       email_confirm: true // Auto-confirmar email
@@ -263,7 +253,7 @@ export async function createUser(data: CreateUserData) {
     }
 
     // 2. Crear registro en public.users
-    const { data: userData, error: userError } = await supabase
+    const { data: userData, error: userError } = await supabaseAdmin
       .from('users')
       .insert({
         id: authData.user.id,
@@ -280,7 +270,7 @@ export async function createUser(data: CreateUserData) {
 
     if (userError) {
       // Rollback: eliminar usuario de auth
-      await supabase.auth.admin.deleteUser(authData.user.id)
+      await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
 
       console.error('Error creating user record:', userError)
       return {
@@ -311,8 +301,6 @@ export async function createUser(data: CreateUserData) {
  * Actualizar usuario existente
  */
 export async function updateUser(userId: string, data: UpdateUserData) {
-  const supabase = await createClient()
-
   // Validar permisos
   const { allowed, currentUser } = await checkAdminPermission()
 
@@ -326,15 +314,16 @@ export async function updateUser(userId: string, data: UpdateUserData) {
   // Validar schema
   try {
     updateUserSchema.parse(data)
-  } catch (error: any) {
+  } catch (error) {
+    const zodError = error as z.ZodError
     return {
       success: false,
-      error: error.errors?.[0]?.message || 'Datos inválidos'
+      error: zodError.errors?.[0]?.message || 'Datos inválidos'
     }
   }
 
   // Verificar que el usuario pertenece a la misma empresa
-  const { data: targetUser, error: checkError } = await supabase
+  const { data: targetUser, error: checkError } = await supabaseAdmin
     .from('users')
     .select('empresa_id, role')
     .eq('id', userId)
@@ -363,7 +352,7 @@ export async function updateUser(userId: string, data: UpdateUserData) {
   }
 
   // Actualizar usuario
-  const { data: updatedUser, error: updateError } = await supabase
+  const { data: updatedUser, error: updateError } = await supabaseAdmin
     .from('users')
     .update({
       ...data,
@@ -398,8 +387,6 @@ export async function toggleUserStatus(userId: string, newStatus: 'active' | 'in
  * Eliminar usuario (físicamente - solo superadmin)
  */
 export async function deleteUser(userId: string) {
-  const supabase = await createClient()
-
   const { allowed, currentUser } = await checkAdminPermission()
 
   if (!allowed || currentUser.role !== 'superadmin') {
@@ -418,7 +405,7 @@ export async function deleteUser(userId: string) {
   }
 
   // Verificar que el usuario pertenece a la misma empresa
-  const { data: targetUser } = await supabase
+  const { data: targetUser } = await supabaseAdmin
     .from('users')
     .select('empresa_id')
     .eq('id', userId)
@@ -432,7 +419,7 @@ export async function deleteUser(userId: string) {
   }
 
   // Eliminar de auth.users (cascada eliminará de public.users)
-  const { error: authError } = await supabase.auth.admin.deleteUser(userId)
+  const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId)
 
   if (authError) {
     console.error('Error deleting user:', authError)

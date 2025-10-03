@@ -1,5 +1,5 @@
 import { redirect, notFound } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { getServerUser } from '@/lib/auth/server'
 import { getUserById } from '@/app/actions/users'
 import UserForm from '@/components/users/UserForm'
 
@@ -16,23 +16,13 @@ interface EditUserPageProps {
 
 export default async function EditUserPage({ params }: EditUserPageProps) {
   const { id: userId } = await params
-  const supabase = await createClient()
+  const user = await getServerUser()
 
-  // Verificar autenticación
-  const { data: { user: authUser } } = await supabase.auth.getUser()
-
-  if (!authUser) {
+  if (!user) {
     redirect('/login')
   }
 
-  // Verificar que el usuario es admin o superadmin
-  const { data: currentUser } = await supabase
-    .from('users')
-    .select('role, empresa_id')
-    .eq('id', authUser.id)
-    .single()
-
-  if (!currentUser || !['admin', 'superadmin'].includes(currentUser.role)) {
+  if (!['admin', 'superadmin'].includes(user.role)) {
     redirect('/dashboard')
   }
 
@@ -48,7 +38,7 @@ export default async function EditUserPage({ params }: EditUserPageProps) {
       <UserForm
         mode="edit"
         user={result.data}
-        empresaId={currentUser.empresa_id}
+        empresaId={user.empresa_id}
       />
     </div>
   )

@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { getServerUser } from '@/lib/auth/server'
 import { getUsers } from '@/app/actions/users'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
@@ -12,23 +12,13 @@ export const metadata = {
 }
 
 export default async function UsersPage() {
-  const supabase = await createClient()
+  const user = await getServerUser()
 
-  // Verificar autenticación
-  const { data: { user: authUser } } = await supabase.auth.getUser()
-
-  if (!authUser) {
+  if (!user) {
     redirect('/login')
   }
 
-  // Verificar que el usuario es admin o superadmin
-  const { data: currentUser } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', authUser.id)
-    .single()
-
-  if (!currentUser || !['admin', 'superadmin'].includes(currentUser.role)) {
+  if (!['admin', 'superadmin'].includes(user.role)) {
     redirect('/dashboard')
   }
 
