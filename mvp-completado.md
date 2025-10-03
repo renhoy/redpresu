@@ -211,19 +211,23 @@
 - ❌ Notificaciones push/email (caducidad, cambios estado)
 - ❌ Histórico de versiones de presupuestos
 - ❌ Exportación a Excel/CSV de presupuestos
+- ❌ Chat/comentarios internos en presupuestos
+
+### Funcionalidades aplazadas para Fase 3:
 - ❌ Integración con CRM externo (Salesforce, HubSpot, etc.)
 - ❌ Firma digital de presupuestos
-- ❌ Chat/comentarios internos en presupuestos
 - ❌ Plantillas de email personalizables
 - ❌ Multiidioma (solo español)
 - ❌ Monedas alternativas (solo EUR)
-- ❌ IVA configurable (fijo 21%)
-- ❌ Descuentos y promociones
-- ❌ Gestión de productos/servicios independiente
 - ❌ Reportes y analytics avanzados
 - ❌ Exportación backup completo
 - ❌ Modo offline/PWA
 - ❌ API pública para integraciones
+
+### No aplica a este proyecto:
+- ❌ **Descuentos y promociones** - Se manejan creando tarifas diferentes según necesidad
+- ❌ **IVA configurable** - El IVA viene definido en cada partida del CSV por el autor de la tarifa
+- ❌ **Gestión de productos/servicios independiente** - Se consigue creando tarifas independientes
 
 ## ⚠️ Limitaciones Conocidas
 
@@ -453,15 +457,20 @@ El MVP está **100% completo y funcional**. Todas las funcionalidades core está
 - Optimización experiencia mobile
 - Tooltips y ayuda contextual completa
 
-#### 4. Features Adicionales (prioridad BAJA)
+#### 4. Features Fase 2 (prioridad según roadmap)
 - Envío automático PDFs por email
 - Notificaciones (caducidad, cambios estado)
 - Histórico de versiones
 - Exportación Excel/CSV
-- Integración CRM (Salesforce, HubSpot)
-- Plantillas email personalizables
+- Chat/comentarios internos
 
-#### 5. DevOps y Deployment (prioridad ALTA)
+#### 5. Features Fase 3 (largo plazo)
+- Integración CRM (Salesforce, HubSpot)
+- Firma digital de presupuestos
+- Plantillas email personalizables
+- Multiidioma y monedas alternativas
+
+#### 6. DevOps y Deployment (prioridad ALTA)
 - Configuración entorno producción (Vercel)
 - Variables de entorno producción
 - Migración base de datos producción
