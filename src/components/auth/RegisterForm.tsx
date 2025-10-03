@@ -241,7 +241,7 @@ export default function RegisterForm() {
             </div>
           </div>
 
-          {/* Sección: Datos del Emisor */}
+          {/* Sección: Datos del Issuer (Emisor) */}
           <div className="space-y-4">
             <h3 className="font-semibold text-lg">Datos del Emisor</h3>
 

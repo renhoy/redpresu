@@ -288,7 +288,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
         </CardContent>
       </Card>
 
-      {/* Sección: Datos del Emisor (Editable) */}
+      {/* Sección: Datos del Issuer (Emisor) - Editable */}
       {profile.emisor && (
         <Card>
           <CardHeader>

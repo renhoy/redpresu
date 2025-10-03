@@ -171,14 +171,14 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
     const supabase = createServerActionClient({ cookies: () => cookieStore })
 
     // 1. Validar que el NIF no esté ya registrado
-    const { data: existingEmisor, error: checkError } = await supabase
-      .from('emisores')
+    const { data: existingIssuer, error: checkError } = await supabase
+      .from('issuers')
       .select('id, nif')
       .eq('nif', data.nif.trim().toUpperCase())
       .eq('empresa_id', 1) // Por ahora solo empresa_id = 1
       .single()
 
-    if (existingEmisor) {
+    if (existingIssuer) {
       console.error('[registerUser] NIF ya registrado:', data.nif)
       return {
         success: false,
@@ -249,30 +249,30 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
 
     console.log('[registerUser] Registro en users creado')
 
-    // 4. Crear registro en public.emisores
-    const { data: emisorData, error: emisorError } = await supabase
-      .from('emisores')
+    // 4. Crear registro en public.issuers
+    const { data: issuerData, error: issuerError } = await supabase
+      .from('issuers')
       .insert({
         user_id: userId,
-        empresa_id: 1,
-        tipo: data.tipo,
-        nombre_comercial: data.nombreComercial.trim(),
-        nif: data.nif.trim().toUpperCase(),
-        direccion_fiscal: data.direccionFiscal.trim(),
-        codigo_postal: data.codigoPostal?.trim() || null,
-        ciudad: data.ciudad?.trim() || null,
-        provincia: data.provincia?.trim() || null,
-        pais: data.pais?.trim() || 'España',
-        telefono: data.telefono?.trim() || null,
-        email: data.emailContacto?.trim() || data.email.trim().toLowerCase(),
-        web: data.web?.trim() || null,
-        irpf_percentage: data.tipo === 'autonomo' ? (data.irpfPercentage ?? 15) : null
+        company_id: 1,
+        issuers_type: data.tipo,
+        issuers_name: data.nombreComercial.trim(),
+        issuers_nif: data.nif.trim().toUpperCase(),
+        issuers_address: data.direccionFiscal.trim(),
+        issuers_postal_code: data.codigoPostal?.trim() || null,
+        issuers_locality: data.ciudad?.trim() || null,
+        issuers_province: data.provincia?.trim() || null,
+        issuers_country: data.pais?.trim() || 'España',
+        issuers_phone: data.telefono?.trim() || null,
+        issuers_email: data.emailContacto?.trim() || data.email.trim().toLowerCase(),
+        issuers_web: data.web?.trim() || null,
+        issuers_irpf_percentage: data.tipo === 'autonomo' ? (data.irpfPercentage ?? 15) : null
       })
       .select('id')
       .single()
 
-    if (emisorError) {
-      console.error('[registerUser] Error al crear emisor:', emisorError)
+    if (issuerError) {
+      console.error('[registerUser] Error al crear issuer:', issuerError)
 
       // Intentar rollback: eliminar usuario de public.users y auth.users
       await supabase.from('users').delete().eq('id', userId)
@@ -284,8 +284,8 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
       }
     }
 
-    if (!emisorData) {
-      console.error('[registerUser] No se obtuvo el emisor creado')
+    if (!issuerData) {
+      console.error('[registerUser] No se obtuvo el issuer creado')
 
       // Rollback
       await supabase.from('users').delete().eq('id', userId)
@@ -297,7 +297,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
       }
     }
 
-    console.log('[registerUser] Emisor creado:', emisorData.id)
+    console.log('[registerUser] Issuer creado:', issuerData.id)
     console.log('[registerUser] Registro completado exitosamente')
 
     // 5. Iniciar sesión automáticamente
@@ -590,35 +590,35 @@ export async function getUserProfile(): Promise<ProfileResult> {
       }
     }
 
-    // Obtener datos del emisor
-    const { data: emisorData, error: emisorError } = await supabase
-      .from('emisores')
+    // Obtener datos del issuer
+    const { data: issuerData, error: issuerError } = await supabase
+      .from('issuers')
       .select('*')
       .eq('user_id', user.id)
       .single()
 
-    if (emisorError) {
-      console.error('[getUserProfile] Error al obtener emisor:', emisorError)
-      // No es crítico si no existe emisor (usuarios antiguos pueden no tenerlo)
+    if (issuerError) {
+      console.error('[getUserProfile] Error al obtener issuer:', issuerError)
+      // No es crítico si no existe issuer (usuarios antiguos pueden no tenerlo)
     }
 
     const profile: UserProfile = {
       ...userData,
-      emisor: emisorData ? {
-        id: emisorData.id,
-        tipo: emisorData.tipo,
-        nombre_comercial: emisorData.nombre_comercial,
-        nif: emisorData.nif,
-        direccion_fiscal: emisorData.direccion_fiscal,
-        codigo_postal: emisorData.codigo_postal,
-        ciudad: emisorData.ciudad,
-        provincia: emisorData.provincia,
-        pais: emisorData.pais,
-        telefono: emisorData.telefono,
-        email: emisorData.email,
-        web: emisorData.web,
-        irpf_percentage: emisorData.irpf_percentage,
-        logo_url: emisorData.logo_url
+      emisor: issuerData ? {
+        id: issuerData.id,
+        tipo: issuerData.issuers_type,
+        nombre_comercial: issuerData.issuers_name,
+        nif: issuerData.issuers_nif,
+        direccion_fiscal: issuerData.issuers_address,
+        codigo_postal: issuerData.issuers_postal_code,
+        ciudad: issuerData.issuers_locality,
+        provincia: issuerData.issuers_province,
+        pais: issuerData.issuers_country,
+        telefono: issuerData.issuers_phone,
+        email: issuerData.issuers_email,
+        web: issuerData.issuers_web,
+        irpf_percentage: issuerData.issuers_irpf_percentage,
+        logo_url: issuerData.issuers_logo_url
       } : undefined
     }
 
@@ -724,36 +724,36 @@ export async function updateUserProfile(data: UpdateProfileData): Promise<Profil
       // Construir objeto de actualización solo con campos proporcionados
       const updateData: any = {}
 
-      if (data.nombre_comercial) updateData.nombre_comercial = data.nombre_comercial.trim()
-      if (data.nif) updateData.nif = data.nif.trim().toUpperCase()
-      if (data.direccion_fiscal) updateData.direccion_fiscal = data.direccion_fiscal.trim()
-      if (data.codigo_postal !== undefined) updateData.codigo_postal = data.codigo_postal?.trim() || null
-      if (data.ciudad !== undefined) updateData.ciudad = data.ciudad?.trim() || null
-      if (data.provincia !== undefined) updateData.provincia = data.provincia?.trim() || null
-      if (data.pais !== undefined) updateData.pais = data.pais?.trim() || null
-      if (data.telefono !== undefined) updateData.telefono = data.telefono?.trim() || null
-      if (data.emailContacto !== undefined) updateData.email = data.emailContacto?.trim() || null
-      if (data.web !== undefined) updateData.web = data.web?.trim() || null
-      if (data.irpf_percentage !== undefined) updateData.irpf_percentage = data.irpf_percentage
+      if (data.nombre_comercial) updateData.issuers_name = data.nombre_comercial.trim()
+      if (data.nif) updateData.issuers_nif = data.nif.trim().toUpperCase()
+      if (data.direccion_fiscal) updateData.issuers_address = data.direccion_fiscal.trim()
+      if (data.codigo_postal !== undefined) updateData.issuers_postal_code = data.codigo_postal?.trim() || null
+      if (data.ciudad !== undefined) updateData.issuers_locality = data.ciudad?.trim() || null
+      if (data.provincia !== undefined) updateData.issuers_province = data.provincia?.trim() || null
+      if (data.pais !== undefined) updateData.issuers_country = data.pais?.trim() || null
+      if (data.telefono !== undefined) updateData.issuers_phone = data.telefono?.trim() || null
+      if (data.emailContacto !== undefined) updateData.issuers_email = data.emailContacto?.trim() || null
+      if (data.web !== undefined) updateData.issuers_web = data.web?.trim() || null
+      if (data.irpf_percentage !== undefined) updateData.issuers_irpf_percentage = data.irpf_percentage
 
       // Añadir updated_at
       updateData.updated_at = new Date().toISOString()
 
-      // Actualizar emisor
-      const { error: emisorError } = await supabase
-        .from('emisores')
+      // Actualizar issuer
+      const { error: issuerError } = await supabase
+        .from('issuers')
         .update(updateData)
         .eq('user_id', user.id)
 
-      if (emisorError) {
-        console.error('[updateUserProfile] Error al actualizar emisor:', emisorError)
+      if (issuerError) {
+        console.error('[updateUserProfile] Error al actualizar issuer:', issuerError)
         return {
           success: false,
           error: 'Error al actualizar los datos del emisor'
         }
       }
 
-      console.log('[updateUserProfile] Datos emisor actualizados exitosamente')
+      console.log('[updateUserProfile] Datos issuer actualizados exitosamente')
     }
 
     // Obtener perfil actualizado

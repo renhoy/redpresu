@@ -27,7 +27,7 @@ export const registerSchema = z.object({
 
   confirmPassword: z.string().min(1, 'Debes confirmar la contraseña'),
 
-  // Datos del emisor
+  // Datos del issuer (emisor)
   tipo: z.enum(['empresa', 'autonomo'], {
     required_error: 'Debes seleccionar el tipo de emisor'
   }),
