@@ -1,118 +1,127 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { signInAction } from '@/app/actions/auth'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2 } from 'lucide-react'
+import { useState } from "react";
+import { signInAction } from "@/app/actions/auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2 } from "lucide-react";
 
 interface LoginFormData {
-  email: string
-  password: string
+  email: string;
+  password: string;
 }
 
 interface LoginFormErrors {
-  email?: string
-  password?: string
-  general?: string
+  email?: string;
+  password?: string;
+  general?: string;
 }
 
 export default function LoginForm() {
   const [formData, setFormData] = useState<LoginFormData>({
-    email: '',
-    password: ''
-  })
-  const [errors, setErrors] = useState<LoginFormErrors>({})
-  const [isLoading, setIsLoading] = useState(false)
+    email: "",
+    password: "",
+  });
+  const [errors, setErrors] = useState<LoginFormErrors>({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    return emailRegex.test(email)
-  }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
 
   const validateForm = (): boolean => {
-    const newErrors: LoginFormErrors = {}
+    const newErrors: LoginFormErrors = {};
 
     // Validar email
     if (!formData.email.trim()) {
-      newErrors.email = 'El email es requerido'
+      newErrors.email = "El email es requerido";
     } else if (!validateEmail(formData.email.trim())) {
-      newErrors.email = 'Por favor ingresa un email válido'
+      newErrors.email = "Por favor ingresa un email válido";
     }
 
     // Validar password
     if (!formData.password) {
-      newErrors.password = 'La contraseña es requerida'
+      newErrors.password = "La contraseña es requerida";
     } else if (formData.password.length < 6) {
-      newErrors.password = 'La contraseña debe tener al menos 6 caracteres'
+      newErrors.password = "La contraseña debe tener al menos 6 caracteres";
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     // Limpiar errores anteriores
-    setErrors({})
+    setErrors({});
 
     // Validar formulario
     if (!validateForm()) {
-      return
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
       const result = await signInAction(
         formData.email.trim().toLowerCase(),
         formData.password
-      )
+      );
 
       if (!result.success) {
         setErrors({
-          general: result.error || 'Error desconocido durante el login'
-        })
-        return
+          general: result.error || "Error desconocido durante el login",
+        });
+        return;
       }
 
       // El Server Action maneja el redirect automáticamente
       // No necesitamos hacer nada más aquí
-
     } catch (error) {
       setErrors({
-        general: error instanceof Error ? error.message : 'Error inesperado durante el login'
-      })
+        general:
+          error instanceof Error
+            ? error.message
+            : "Error inesperado durante el login",
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
-  const handleInputChange = (field: keyof LoginFormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: e.target.value
-    }))
-
-    // Limpiar error del campo cuando el usuario empieza a escribir
-    if (errors[field]) {
-      setErrors(prev => ({
+  const handleInputChange =
+    (field: keyof LoginFormData) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setFormData((prev) => ({
         ...prev,
-        [field]: undefined
-      }))
-    }
-  }
+        [field]: e.target.value,
+      }));
+
+      // Limpiar error del campo cuando el usuario empieza a escribir
+      if (errors[field]) {
+        setErrors((prev) => ({
+          ...prev,
+          [field]: undefined,
+        }));
+      }
+    };
 
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-center">
-          Iniciar Sesión
-        </CardTitle>
+        <CardTitle className="text-2xl text-center">Iniciar Sesión</CardTitle>
         <CardDescription className="text-center">
           Ingresa tus credenciales para acceder al sistema
         </CardDescription>
@@ -135,8 +144,8 @@ export default function LoginForm() {
               type="email"
               placeholder="usuario@ejemplo.com"
               value={formData.email}
-              onChange={handleInputChange('email')}
-              className={errors.email ? 'border-red-500' : ''}
+              onChange={handleInputChange("email")}
+              className={errors.email ? "border-red-500" : ""}
               disabled={isLoading}
               autoComplete="email"
               autoFocus
@@ -154,8 +163,8 @@ export default function LoginForm() {
               type="password"
               placeholder="Tu contraseña"
               value={formData.password}
-              onChange={handleInputChange('password')}
-              className={errors.password ? 'border-red-500' : ''}
+              onChange={handleInputChange("password")}
+              className={errors.password ? "border-red-500" : ""}
               disabled={isLoading}
               autoComplete="current-password"
             />
@@ -163,25 +172,18 @@ export default function LoginForm() {
               <p className="text-sm text-red-600">{errors.password}</p>
             )}
           </div>
-        </CardContent>
-
-        <CardFooter>
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={isLoading}
-          >
+          <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Iniciando sesión...
               </>
             ) : (
-              'Iniciar Sesión'
+              "Iniciar Sesión"
             )}
           </Button>
-        </CardFooter>
+        </CardContent>
       </form>
     </Card>
-  )
+  );
 }

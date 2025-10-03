@@ -328,3 +328,165 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
     }
   }
 }
+
+/**
+ * Interfaz para resultado de operaciones de password
+ */
+export interface PasswordResetResult {
+  success: boolean
+  error?: string
+  message?: string
+}
+
+/**
+ * Server Action para solicitar recuperación de contraseña
+ *
+ * Envía un email con link mágico al usuario para resetear su contraseña
+ *
+ * @param email - Email del usuario que solicita recuperación
+ * @returns PasswordResetResult indicando éxito o error
+ */
+export async function requestPasswordReset(email: string): Promise<PasswordResetResult> {
+  try {
+    console.log('[requestPasswordReset] Iniciando...', { email })
+
+    // Validar email
+    if (!email || !email.trim()) {
+      return {
+        success: false,
+        error: 'El email es requerido'
+      }
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email.trim())) {
+      return {
+        success: false,
+        error: 'Email inválido'
+      }
+    }
+
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+    // Enviar email de recuperación usando Supabase Auth
+    // El link de reset apuntará a /reset-password
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+      redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/reset-password`
+    })
+
+    if (error) {
+      console.error('[requestPasswordReset] Error al enviar email:', error)
+
+      let errorMessage = error.message
+
+      if (error.message.includes('Email not found')) {
+        // Por seguridad, no revelamos si el email existe o no
+        // Mostramos mensaje genérico de éxito
+        return {
+          success: true,
+          message: 'Si el email está registrado, recibirás un enlace de recuperación'
+        }
+      }
+
+      return {
+        success: false,
+        error: errorMessage
+      }
+    }
+
+    console.log('[requestPasswordReset] Email enviado exitosamente')
+
+    return {
+      success: true,
+      message: 'Si el email está registrado, recibirás un enlace de recuperación'
+    }
+  } catch (error) {
+    console.error('[requestPasswordReset] Error crítico:', error)
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error inesperado al solicitar recuperación'
+    }
+  }
+}
+
+/**
+ * Server Action para resetear contraseña con token
+ *
+ * @param newPassword - Nueva contraseña del usuario
+ * @returns PasswordResetResult indicando éxito o error
+ */
+export async function resetPassword(newPassword: string): Promise<PasswordResetResult> {
+  try {
+    console.log('[resetPassword] Iniciando...')
+
+    // Validar contraseña
+    if (!newPassword || newPassword.length < 8) {
+      return {
+        success: false,
+        error: 'La contraseña debe tener al menos 8 caracteres'
+      }
+    }
+
+    // Validar complejidad de contraseña
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/
+    if (!passwordRegex.test(newPassword)) {
+      return {
+        success: false,
+        error: 'La contraseña debe contener al menos una mayúscula, una minúscula y un número'
+      }
+    }
+
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+    // Verificar que hay una sesión activa (del link de reset)
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+    if (sessionError || !session) {
+      console.error('[resetPassword] No hay sesión activa:', sessionError)
+      return {
+        success: false,
+        error: 'Token de recuperación inválido o expirado. Solicita un nuevo enlace de recuperación.'
+      }
+    }
+
+    // Actualizar contraseña
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: newPassword
+    })
+
+    if (updateError) {
+      console.error('[resetPassword] Error al actualizar contraseña:', updateError)
+
+      let errorMessage = updateError.message
+
+      if (updateError.message.includes('same as the old password')) {
+        errorMessage = 'La nueva contraseña no puede ser igual a la anterior'
+      }
+
+      return {
+        success: false,
+        error: errorMessage
+      }
+    }
+
+    console.log('[resetPassword] Contraseña actualizada exitosamente')
+
+    // Cerrar sesión después de resetear (usuario deberá hacer login con nueva contraseña)
+    await supabase.auth.signOut()
+
+    return {
+      success: true,
+      message: 'Contraseña actualizada exitosamente. Ya puedes iniciar sesión con tu nueva contraseña.'
+    }
+  } catch (error) {
+    console.error('[resetPassword] Error crítico:', error)
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error inesperado al resetear contraseña'
+    }
+  }
+}
