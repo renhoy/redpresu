@@ -1,260 +1,644 @@
-# Tareas - MVP COMPLETADO ✅
+# Tareas - Fase 2: Evolución Funcional y Multi-tenant
 
-## 🎉 MVP FUNCIONAL - TODOS LOS MÓDULOS COMPLETADOS
+## MÓDULO ACTIVO: Usuarios y Autenticación
 
-### ✅ MÓDULO 1: Database & Auth (SHARED)
-**Estado:** ✅ COMPLETADO - READ-ONLY
-- ✅ Estructura de datos Supabase (PostgreSQL)
-- ✅ Tablas: empresas, users, tariffs, budgets
-- ✅ Row Level Security (RLS) por empresa y rol
-- ✅ Sistema de autenticación con roles (superadmin/admin/vendedor)
-- ✅ Middleware protección rutas
-- ✅ Tipos TypeScript generados desde schema
+**Tareas Activas:** 0/12 (Fase 2 iniciando)
 
-### ✅ MÓDULO 2: Common Module (SHARED)
-**Estado:** ✅ COMPLETADO - READ-ONLY
-- ✅ Validadores CSV con Zod
-- ✅ Helpers formato numérico (español/inglés)
-- ✅ Cálculos de IVA y totales
-- ✅ Utilidades de texto y fechas
-- ✅ Normalización de datos
+---
 
-### ✅ MÓDULO 3: Tariff Management
-**Estado:** ✅ COMPLETADO - READ-ONLY
-- ✅ CRUD completo de tarifas
-- ✅ Importación CSV con validación jerárquica
-- ✅ Vista previa interactiva
-- ✅ Activar/desactivar tarifas
-- ✅ Estructura JSON jerárquica (capítulo → subcapítulo → apartado → partida)
-- ✅ Validación IDs secuenciales (1, 1.1, 1.1.1, 1.1.1.1)
-- ✅ Upload logo dual-mode (archivo local O URL externa)
-- ✅ Confirmaciones al cambiar modo de logo (AlertDialog)
-- ✅ UI unificada con página Presupuestos
-- ✅ Iconos de acción con tooltips (Pencil, Trash, Receipt)
-- ✅ Filtros simplificados sin bordes
+## BLOQUE 1: USUARIOS Y SEGURIDAD (CRÍTICO) ⏳
 
-### ✅ MÓDULO 4: Budget Creation
-**Estado:** ✅ COMPLETADO - READ-ONLY
+### Tareas Críticas:
 
-**Funcionalidades:**
-- ✅ Selector de tarifa desde /tariffs
-- ✅ Formulario 2 pasos: Cliente → Presupuesto
-- ✅ Formulario jerárquico dinámico con acordeones
-- ✅ Navegación intuitiva (un item activo a la vez)
-- ✅ Cálculos en tiempo real con propagación jerárquica
-- ✅ Gestión de estados (borrador → pendiente → enviado → aprobado/rechazado)
-- ✅ Listado con filtros por estado y búsqueda
-- ✅ Selector estados interactivo con transiciones válidas
-- ✅ Edición de presupuestos existentes
-- ✅ Validación formato español para números
+#### 1.1 Sistema de Registro Completo
 
-**Server Actions:**
-- ✅ `getBudgets()` - Listar con joins
-- ✅ `getBudgetById()` - Obtener por ID
-- ✅ `createDraftBudget()` - Crear borrador
-- ✅ `updateBudgetDraft()` - Actualizar borrador
-- ✅ `saveBudget()` - Guardar como BORRADOR
-- ✅ `updateBudgetStatus()` - Cambiar estado
-- ✅ `deleteBudget()` - Eliminar
+**Prioridad:** CRÍTICA | **Estimación:** 3 días | **Estado:** ⏳ Pendiente
 
-### ✅ MÓDULO 5: PDF Generation
-**Estado:** ✅ COMPLETADO - READ-ONLY
+- [ ] Crear tabla `emisores` en BD
+- [ ] Migración SQL con índices
+- [ ] Server Action `registerUser()`
+- [ ] Página `/app/(auth)/register/page.tsx`
+- [ ] Componente `RegisterForm.tsx`
+- [ ] Validación Zod para registro
+- [ ] Integración Supabase Auth (signup)
+- [ ] Redirect automático a dashboard post-registro
 
-**Funcionalidades:**
-- ✅ Construcción payload desde json_budget_data
-- ✅ Filtrado elementos con amount > 0
-- ✅ Renumeración jerárquica automática
-- ✅ Generación summary con chapters
-- ✅ Cálculo totals con formato español
-- ✅ Integración Rapid-PDF API (timeout 60s, retry)
-- ✅ Descarga y almacenamiento /public/pdfs/
-- ✅ Formato nombre: presupuesto_nombre_nif_YYYY-MM-DD_HH-MM-SS.pdf
-- ✅ Actualización budgets.pdf_url
-- ✅ Columna PDF en listado con botón descarga
-- ✅ Sistema guardado inteligente con AlertDialogs
-- ✅ Sobrescribir vs Crear nuevo (duplicar)
-- ✅ Advertencias PDF existente
-- ✅ Tooltips informativos en botones
-- ✅ Botón cerrar con advertencia cambios
+**Archivos nuevos:**
 
-**Server Actions:**
-- ✅ `generateBudgetPDF()` - Generación completa PDF
-- ✅ `duplicateBudget()` - Crear copia presupuesto
+- `migrations/004_emisores_table.sql`
+- `src/app/(auth)/register/page.tsx`
+- `src/components/auth/RegisterForm.tsx`
+- `src/app/actions/auth.ts` (extender existente)
 
-**Helper Functions:**
-- ✅ `buildPDFPayload()` - Construcción payload
-- ✅ `filterNonZeroItems()` - Filtrado elementos
-- ✅ `renumberHierarchicalIds()` - Renumeración IDs
-- ✅ `extractChapters()` - Extracción chapters
-- ✅ `calculateTotals()` - Cálculo totals con IVA
+**Criterios de completado:**
 
-**Performance:**
-- ✅ Generación PDF: ~1-2 segundos (muy por debajo del límite 60s)
+- Usuario puede registrarse como empresa o autónomo
+- Datos fiscales guardados correctamente
+- Email único validado
+- Redirect funcional
 
-### ✅ MÓDULO 6: Dashboard
-**Estado:** ✅ COMPLETADO - READ-ONLY
+---
 
-**Funcionalidades:**
-- ✅ Header navegación global (Logo, Inicio, Tarifas, Presupuestos, Logout)
-- ✅ Navegación sticky en todas las páginas
-- ✅ Layouts consistentes con Header
-- ✅ Responsive (desktop y mobile)
-- ✅ Indicador página activa
-- ✅ Estadísticas por estado (4 cards compactas)
-  - Total Presupuestos
-  - Valor Total
-  - Mes Actual
-  - Tasa de Conversión (Aprobados/Enviados)
-- ✅ Filtrado por período (hoy/semana/mes/año)
-- ✅ Accesos rápidos optimizados:
-  - Crear Tarifa → /tariffs/create
-  - Ver Tarifas → /tariffs
-  - Ver Presupuestos → /budgets
-- ✅ Últimos 5 presupuestos con enlaces directos
-- ✅ Próximos a caducar (< 7 días) con advertencia visual
-- ✅ Permisos por rol (vendedor: solo sus datos)
-- ✅ Loading states con Skeleton
-- ✅ Badges de estado coloreados
-- ✅ Formato moneda español
+#### 1.2 Recuperación de Contraseña
 
-**Server Actions:**
-- ✅ `getDashboardStats()` - Estadísticas con filtro período y rol
+**Prioridad:** ALTA | **Estimación:** 2 días | **Estado:** ⏳ Pendiente
 
-**Componentes:**
-- ✅ `Header.tsx` - Navegación global
-- ✅ `DashboardClient.tsx` - Dashboard interactivo
-- ✅ `dashboard/page.tsx` - Página server component
-- ✅ `dashboard/layout.tsx` - Layout con Header
-- ✅ `budgets/layout.tsx` - Layout con Header
-- ✅ `tariffs/layout.tsx` - Layout con Header
+- [ ] Server Action `requestPasswordReset(email)`
+- [ ] Server Action `resetPassword(token, newPassword)`
+- [ ] Página `/app/(auth)/forgot-password/page.tsx`
+- [ ] Página `/app/(auth)/reset-password/page.tsx`
+- [ ] Configurar email templates en Supabase
+- [ ] Componente `PasswordResetForm.tsx`
+- [ ] Validación tokens expiración
 
-**Correcciones Aplicadas:**
-- ✅ Imports Supabase corregidos (client vs server)
-- ✅ Query simplificada sin JOINs problemáticos
-- ✅ Tipo Database pasado correctamente
-- ✅ Header único (sin duplicados)
-- ✅ Padding-top eliminado (header sticky)
-- ✅ Cards optimizadas (reducido altura y anchura)
+**Archivos nuevos:**
 
-## FLUJO COMPLETO END-TO-END ✅
+- `src/app/(auth)/forgot-password/page.tsx`
+- `src/app/(auth)/reset-password/page.tsx`
+- `src/components/auth/PasswordResetForm.tsx`
 
-1. ✅ Comercial hace login
-2. ✅ Accede al Dashboard con estadísticas
-3. ✅ Selecciona "Crear Tarifa" o usa tarifa existente
-4. ✅ Selecciona tarifa activa para presupuesto
-5. ✅ Completa datos cliente (5 campos + dirección)
-6. ✅ Ajusta cantidades en formulario jerárquico
-7. ✅ Revisa totales calculados automáticamente
-8. ✅ Guarda presupuesto como BORRADOR
-9. ✅ Genera PDF profesional
-10. ✅ Descarga PDF al momento
-11. ✅ Cliente recibe presupuesto en < 5 minutos
+---
 
-## STACK TECNOLÓGICO IMPLEMENTADO
+#### 1.3 Perfil de Usuario
 
-**Frontend:**
-- ✅ Next.js 15 (App Router)
-- ✅ TypeScript
-- ✅ Tailwind CSS
-- ✅ shadcn/ui (componentes)
-- ✅ React Hook Form + Zod
+**Prioridad:** ALTA | **Estimación:** 2 días | **Estado:** ⏳ Pendiente
 
-**Backend:**
-- ✅ Next.js Server Actions
-- ✅ Supabase (PostgreSQL + Auth + RLS)
+- [ ] Página `/app/profile/page.tsx`
+- [ ] Server Action `updateUserProfile()`
+- [ ] Componente `ProfileForm.tsx`
+- [ ] Editar datos fiscales emisor
+- [ ] Cambiar contraseña desde perfil
+- [ ] Upload avatar (opcional)
 
-**Servicios Externos:**
-- ✅ Rapid-PDF (generación PDFs)
+**Archivos nuevos:**
 
-**Storage:**
-- ✅ /public/pdfs/ (almacenamiento local)
-- ✅ /public/logos/ (logos empresas)
+- `src/app/profile/page.tsx`
+- `src/components/profile/ProfileForm.tsx`
 
-## KPIs ALCANZADOS ✅
+---
 
-- ✅ Tiempo creación presupuesto: ~3-5 minutos (vs 24-48h anterior)
-- ✅ Tasa error validación CSV: < 5%
-- ✅ Cálculos correctos: 100% (validado con formato español)
-- ✅ Generación PDF: ~1-2 segundos (objetivo < 60s)
-- ✅ UX tablet: Touch-friendly optimizado
-- ✅ Navegación: Intuitiva y responsive
+#### 1.4 CRUD de Usuarios (Admin)
 
-## ARCHIVOS DEL PROYECTO (READ-ONLY)
+**Prioridad:** ALTA | **Estimación:** 3 días | **Estado:** ⏳ Pendiente
 
-### Database & Auth
-- ✅ src/lib/database/*
-- ✅ src/lib/types/*
-- ✅ src/lib/supabase/*
-- ✅ src/lib/auth/*
-- ✅ src/components/auth/*
+- [ ] Tabla `users` añadir campos `status`, `invited_by`, `last_login`
+- [ ] Server Actions CRUD usuarios
+- [ ] Página `/app/users/page.tsx` (listado)
+- [ ] Página `/app/users/create/page.tsx`
+- [ ] Página `/app/users/[id]/edit/page.tsx`
+- [ ] Componente `UserTable.tsx`
+- [ ] Componente `UserForm.tsx`
+- [ ] RLS policies para usuarios
+- [ ] Validación permisos por rol
 
-### Common
-- ✅ src/lib/utils/*
-- ✅ src/lib/validators/*
-- ✅ src/lib/helpers/*
-- ✅ src/lib/constants/*
+**Archivos nuevos:**
 
-### Tariff Management
-- ✅ src/app/tariffs/*
-- ✅ src/components/tariffs/*
-- ✅ src/app/actions/tariffs.ts
+- `migrations/005_users_status_fields.sql`
+- `src/app/users/page.tsx`
+- `src/app/users/create/page.tsx`
+- `src/app/users/[id]/edit/page.tsx`
+- `src/components/users/UserTable.tsx`
+- `src/components/users/UserForm.tsx`
+- `src/app/actions/users.ts`
 
-### Budget Creation + PDF
-- ✅ src/app/budgets/*
-- ✅ src/components/budgets/*
-- ✅ src/app/actions/budgets.ts
+**Criterios de completado:**
 
-### Dashboard
-- ✅ src/app/dashboard/*
-- ✅ src/components/dashboard/*
-- ✅ src/components/layout/Header.tsx
-- ✅ src/app/actions/dashboard.ts
+- Admin puede crear/editar usuarios de su empresa
+- Vendedor no tiene acceso a gestión usuarios
+- RLS filtra correctamente por empresa_id
 
-## PRÓXIMOS PASOS (FASE 3 - INTEGRACIÓN)
+---
 
-### Testing E2E
-- ⏳ Flujo completo CSV → Formulario → PDF
-- ⏳ Validación en diferentes roles
-- ⏳ Testing en tablets reales
+## BLOQUE 2: MEJORAS INCREMENTALES TARIFAS ⏳
 
-### Optimización
-- ⏳ Performance carga inicial
-- ⏳ Optimización queries Supabase
-- ⏳ Cleanup PDFs antiguos (>90 días)
+### Tareas Críticas:
 
-### Deployment
-- ⏳ Variables de entorno producción
-- ⏳ Configuración Vercel
-- ⏳ Migración base de datos producción
-- ⏳ Monitoreo y logs
+#### 2.1 Campo user_id en Tarifas
 
-## NOTAS TÉCNICAS IMPORTANTES
+**Prioridad:** ALTA | **Estimación:** 0.5 días | **Estado:** ⏳ Pendiente
 
-**Formato Numérico:**
-- Display: español (1.234,56)
-- Cálculos internos: inglés (1234.56)
-- Parser inteligente acepta ambos formatos
+- [ ] Migración SQL añadir `user_id` a `tariffs`
+- [ ] Migrar datos existentes (asignar a admin)
+- [ ] Modificar `createTariff()` para incluir `user_id`
+- [ ] Modificar `getTariffs()` con join `users`
+- [ ] Añadir columna "Creado por" en listado
+- [ ] Filtro por usuario (admin/superadmin)
 
-**Estados Presupuestos:**
-- Transiciones válidas implementadas
-- Confirmación en acciones críticas
-- Selector interactivo en listado
+**Archivos modificados:**
 
-**PDF:**
-- Solo elementos con cantidad > 0
-- Renumeración automática jerárquica
-- Formato nombre con timestamp completo
-- Sistema guardado: sobrescribir vs duplicar
+- `migrations/006_tariffs_user_id.sql`
+- `src/app/actions/tariffs.ts`
+- `src/components/tariffs/TariffList.tsx`
 
-**Permisos:**
-- Superadmin: acceso total
-- Admin: gestión empresa completa
-- Vendedor: solo sus presupuestos
+**Criterios de completado:**
 
-**Navegación:**
-- Header sticky en todas las páginas
-- Indicador página activa
-- Mobile: select dropdown
-- Desktop: navegación horizontal
+- Campo obligatorio tras migración
+- Join funcional con tabla users
+- Columna visible en UI
 
-## 🎉 MVP FUNCIONAL COMPLETADO - LISTO PARA TESTING Y PRODUCCIÓN
+---
+
+#### 2.2 Detección Automática IVAs en CSV
+
+**Prioridad:** ALTA | **Estimación:** 1 día | **Estado:** ⏳ Pendiente
+
+- [ ] Función `detectIVAsPresentes()` en csv-converter
+- [ ] Migración añadir `ivas_presentes[]` a tariffs
+- [ ] Modificar `createTariff()` para detectar y guardar IVAs
+- [ ] Tests unitarios detección IVAs
+
+**Archivos modificados:**
+
+- `migrations/007_tariffs_ivas_presentes.sql`
+- `src/lib/validators/csv-converter.ts`
+- `src/app/actions/tariffs.ts`
+
+**Criterios de completado:**
+
+- IVAs detectados automáticamente al importar CSV
+- Array guardado correctamente en BD
+- Sin cambios UI (campo invisible)
+
+---
+
+#### 2.3 Tarifa por Defecto (Plantilla)
+
+**Prioridad:** MEDIA | **Estimación:** 1.5 días | **Estado:** ⏳ Pendiente
+
+- [ ] Migración añadir `is_template` a tariffs
+- [ ] Trigger SQL `ensure_single_template()`
+- [ ] Server Action `setTariffAsTemplate()`
+- [ ] Server Action `getTemplateTariff()`
+- [ ] Server Action `createTariffFromTemplate()`
+- [ ] Checkbox "Plantilla" en listado
+- [ ] Pre-cargar datos plantilla al crear tarifa
+
+**Archivos nuevos:**
+
+- `migrations/008_tariffs_template.sql`
+
+**Archivos modificados:**
+
+- `src/app/actions/tariffs.ts`
+- `src/components/tariffs/TariffList.tsx`
+- `src/app/tariffs/create/page.tsx`
+
+**Criterios de completado:**
+
+- Solo 1 tarifa puede ser plantilla (trigger)
+- Datos pre-cargados excepto CSV
+- Checkbox funcional en listado
+
+---
+
+## BLOQUE 3: TABLA DE CONFIGURACIÓN ⏳
+
+### Tareas Críticas:
+
+#### 3.1 Tabla Config y Helpers
+
+**Prioridad:** ALTA | **Estimación:** 2 días | **Estado:** ⏳ Pendiente
+
+- [ ] Crear tabla `config` en BD
+- [ ] Insertar datos iniciales (IVA-RE, plantillas PDF, defaults)
+- [ ] Helper `getConfigValue<T>(key)`
+- [ ] Helper `setConfigValue(key, value)`
+- [ ] Helpers específicos: `getIVAtoREEquivalences()`, `getPDFTemplates()`
+- [ ] Server Actions config (solo superadmin)
+- [ ] Página `/app/settings/page.tsx` (solo superadmin)
+
+**Archivos nuevos:**
+
+- `migrations/009_config_table.sql`
+- `src/lib/helpers/config-helpers.ts`
+- `src/app/actions/config.ts`
+- `src/app/settings/page.tsx`
+
+**Criterios de completado:**
+
+- Tabla config poblada con datos iniciales
+- Helpers funcionando correctamente
+- Solo superadmin accede a settings
+
+---
+
+#### 3.2 Selector de Plantillas PDF
+
+**Prioridad:** MEDIA | **Estimación:** 2 días | **Estado:** ⏳ Pendiente
+**Dependencia:** 3.1 completado
+
+- [ ] Añadir imágenes preview en `/public/templates/`
+- [ ] Modificar formulario tarifa: cambiar input text por Select
+- [ ] Tooltip preview al hacer hover
+- [ ] Cargar plantillas desde config al montar componente
+- [ ] Validar plantilla seleccionada existe
+
+**Archivos modificados:**
+
+- `src/components/tariffs/TariffForm.tsx`
+- `public/templates/` (añadir imágenes)
+
+**Criterios de completado:**
+
+- Selector desplegable funcional
+- Preview visible en hover
+- Plantilla guardada correctamente
+
+---
+
+## BLOQUE 4: IRPF Y RECARGO DE EQUIVALENCIA ⏳
+
+### Tareas Críticas:
+
+#### 4.1 Implementación IRPF
+
+**Prioridad:** ALTA | **Estimación:** 3 días | **Estado:** ⏳ Pendiente
+**Dependencia:** Bloque 1 completado (tabla emisores)
+
+- [ ] Campo `irpf_percentage` en tabla emisores (ya incluido)
+- [ ] Helper `shouldApplyIRPF(emisor, cliente)`
+- [ ] Helper `calculateIRPF(base, percentage)`
+- [ ] Modificar `saveBudget()`: calcular y guardar IRPF
+- [ ] Modificar formulario presupuesto: mostrar IRPF si aplica
+- [ ] Tooltip explicativo IRPF
+- [ ] Tests cálculo IRPF
+
+**Archivos nuevos:**
+
+- `src/lib/helpers/fiscal-calculations.ts`
+
+**Archivos modificados:**
+
+- `src/app/actions/budgets.ts`
+- `src/components/budgets/BudgetForm.tsx`
+
+**Criterios de completado:**
+
+- IRPF se aplica solo si emisor = autónomo Y cliente = empresa|autónomo
+- Cálculo correcto: base × (% IRPF / 100)
+- Visible en resumen totales
+
+---
+
+#### 4.2 Implementación Recargo de Equivalencia
+
+**Prioridad:** ALTA | **Estimación:** 4 días | **Estado:** ⏳ Pendiente
+**Dependencia:** 3.1 (config), 2.2 (detección IVAs)
+
+- [ ] Checkbox "Aplicar RE" en formulario cliente (solo si autónomo)
+- [ ] Tabla dinámica recargos por IVA presente
+- [ ] Pre-cargar valores RE desde config
+- [ ] Permitir edición manual de % RE
+- [ ] Helper `calculateRecargo(items, recargos)`
+- [ ] Guardar en `json_budget_data.cliente.recargos`
+- [ ] Guardar en `json_budget_data.totales.re`
+- [ ] Tests cálculo RE
+
+**Archivos modificados:**
+
+- `src/lib/helpers/fiscal-calculations.ts`
+- `src/components/budgets/BudgetForm.tsx`
+- `src/app/actions/budgets.ts`
+
+**Criterios de completado:**
+
+- Checkbox visible solo si cliente = autónomo
+- Tabla muestra solo IVAs de la tarifa seleccionada
+- Cálculo correcto por IVA
+- Datos guardados en JSON
+
+---
+
+#### 4.3 Modificación Payload PDF
+
+**Prioridad:** ALTA | **Estimación:** 2 días | **Estado:** ⏳ Pendiente
+**Dependencia:** 4.1, 4.2 completados
+
+- [ ] Modificar `buildPDFPayload()`: añadir IRPF y RE a totals
+- [ ] Formato correcto: IRPF negativo, RE positivo
+- [ ] Cambiar "Total Presupuesto" → "Total a Pagar"
+- [ ] Tests payload con IRPF/RE
+- [ ] Documentar cambios para Rapid-PDF
+
+**Archivos modificados:**
+
+- `src/lib/helpers/pdf-payload-builder.ts`
+
+**Estructura payload:**
+
+```json
+{
+  "totals": {
+    "subtotal": {...},
+    "base": {...},
+    "ivas": [...],
+    "irpf": {...},  // nuevo
+    "re": [...],    // nuevo
+    "total": {...}
+  }
+}
+```
+
+**Criterios de completado:**
+
+- Payload incluye IRPF si aplica
+- Payload incluye RE si aplica
+- Formato moneda español correcto
+- Rapid-PDF renderiza correctamente
+
+---
+
+## BLOQUE 5: VERSIONES Y NOTAS ⏳
+
+### Tareas Críticas:
+
+#### 5.1 Sistema de Versiones
+
+**Prioridad:** MEDIA | **Estimación:** 3 días | **Estado:** ⏳ Pendiente
+
+- [ ] Crear tabla `budget_versions`
+- [ ] Migrar campo `json_client_data` en budgets
+- [ ] Server Action `createBudgetVersion()`
+- [ ] Server Action `getBudgetVersions()`
+- [ ] Server Action `restoreBudgetVersion()`
+- [ ] Página `/app/budgets/[id]/versions/page.tsx`
+- [ ] Componente timeline versiones
+- [ ] Botón "Guardar versión" en formulario
+- [ ] Confirmar restauración (AlertDialog)
+
+**Archivos nuevos:**
+
+- `migrations/010_budget_versions.sql`
+- `src/app/actions/budget-versions.ts`
+- `src/app/budgets/[id]/versions/page.tsx`
+- `src/components/budgets/VersionTimeline.tsx`
+
+**Criterios de completado:**
+
+- Versiones guardan snapshot completo
+- Timeline muestra historial
+- Restauración funciona sin pérdida datos
+
+---
+
+#### 5.2 Sistema de Notas
+
+**Prioridad:** MEDIA | **Estimación:** 2 días | **Estado:** ⏳ Pendiente
+
+- [ ] Crear tabla `budget_notes`
+- [ ] Server Action `addBudgetNote()`
+- [ ] Server Action `getBudgetNotes()`
+- [ ] Server Action `deleteBudgetNote()`
+- [ ] Componente `BudgetNotes.tsx`
+- [ ] Textarea + botón añadir
+- [ ] Timeline cronológico notas
+- [ ] Formato fecha relativo
+- [ ] Botón eliminar (solo creador/admin)
+
+**Archivos nuevos:**
+
+- `migrations/011_budget_notes.sql`
+- `src/app/actions/budget-notes.ts`
+- `src/components/budgets/BudgetNotes.tsx`
+
+**Criterios de completado:**
+
+- Notas se guardan con timestamp automático
+- Timeline muestra usuario y fecha
+- Solo creador/admin puede eliminar
+
+---
+
+## BLOQUE 6: NAVEGACIÓN UNIFICADA ⏳
+
+### Tareas Altas:
+
+#### 6.1 Componente HierarchicalNavigator
+
+**Prioridad:** ALTA | **Estimación:** 4 días | **Estado:** ⏳ Pendiente
+
+- [ ] Componente base `HierarchicalNavigator.tsx`
+- [ ] Props: data, mode, renderItem, onItemClick
+- [ ] Lógica: un elemento abierto + ancestros visibles
+- [ ] Función `closeSiblings()`
+- [ ] Función `removeDescendants()`
+- [ ] Estilos por nivel (chapter, subchapter, section, item)
+- [ ] Migrar `TariffPreview` a usar componente
+- [ ] Migrar `BudgetHierarchyForm` a usar componente
+- [ ] Tests interacción
+
+**Archivos nuevos:**
+
+- `src/components/shared/HierarchicalNavigator.tsx`
+
+**Archivos modificados:**
+
+- `src/components/tariffs/HierarchyPreview.tsx`
+- `src/components/budgets/BudgetHierarchyForm.tsx`
+
+**Criterios de completado:**
+
+- Navegación consistente en tariff preview y budget form
+- Solo un elemento activo a la vez
+- Ancestros siempre visibles
+- Estilos unificados
+
+---
+
+## BLOQUE 7: RICH TEXT EDITOR ⏳
+
+### Tareas Medias:
+
+#### 7.1 Editor de Texto Enriquecido
+
+**Prioridad:** MEDIA | **Estimación:** 3 días | **Estado:** ⏳ Pendiente
+
+- [ ] Instalar Tiptap: `@tiptap/react`, `@tiptap/starter-kit`
+- [ ] Componente `RichTextEditor.tsx`
+- [ ] Toolbar: negrita, cursiva, listas
+- [ ] Integrar en formulario tarifa (summary_note, conditions_note, legal_note)
+- [ ] Guardar HTML en BD
+- [ ] Modificar `buildPDFPayload()` para parsear HTML
+- [ ] Documentar cambios Rapid-PDF (renderizar HTML básico)
+
+**Archivos nuevos:**
+
+- `src/components/shared/RichTextEditor.tsx`
+
+**Archivos modificados:**
+
+- `src/components/tariffs/TariffForm.tsx`
+- `src/lib/helpers/pdf-payload-builder.ts`
+
+**Criterios de completado:**
+
+- Editor funcional con toolbar básico
+- HTML guardado correctamente
+- Rapid-PDF renderiza negritas, cursivas, listas
+
+---
+
+## BLOQUE 8: IMPORT/EXPORT ⏳
+
+### Tareas Medias:
+
+#### 8.1 Exportar Tarifas/Presupuestos
+
+**Prioridad:** MEDIA | **Estimación:** 2 días | **Estado:** ⏳ Pendiente
+
+- [ ] Server Action `exportTariffs(ids, format)`
+- [ ] Server Action `exportBudgets(ids, format)`
+- [ ] Función `convertTariffsToCSV()`
+- [ ] Función `convertBudgetsToCSV()`
+- [ ] UI: checkboxes selección múltiple
+- [ ] DropdownMenu exportar (JSON/CSV)
+- [ ] Generar y descargar archivo
+
+**Archivos nuevos:**
+
+- `src/app/actions/export.ts`
+- `src/lib/helpers/export-helpers.ts`
+
+**Archivos modificados:**
+
+- `src/components/tariffs/TariffList.tsx`
+- `src/components/budgets/BudgetList.tsx`
+
+**Criterios de completado:**
+
+- Exportar JSON completo
+- Exportar CSV solo items
+- Descarga archivo automática
+
+---
+
+#### 8.2 Importar Tarifas/Presupuestos
+
+**Prioridad:** MEDIA | **Estimación:** 2 días | **Estado:** ⏳ Pendiente
+
+- [ ] Server Action `importTariffs(content, format)`
+- [ ] Server Action `importBudgets(content, format)`
+- [ ] Validar estructura JSON
+- [ ] Limpiar IDs (generar nuevos)
+- [ ] Página `/app/tariffs/import/page.tsx`
+- [ ] Página `/app/budgets/import/page.tsx`
+- [ ] Input file + validación
+
+**Archivos nuevos:**
+
+- `src/app/actions/import.ts`
+- `src/app/tariffs/import/page.tsx`
+- `src/app/budgets/import/page.tsx`
+
+**Criterios de completado:**
+
+- Importar JSON válido
+- IDs regenerados correctamente
+- Errores manejados con mensajes claros
+
+---
+
+## BLOQUE 9: RESPONSIVE MOBILE-FIRST ⏳
+
+### Tareas Altas:
+
+#### 9.1 Listados Responsive (Cards Mobile)
+
+**Prioridad:** ALTA | **Estimación:** 3 días | **Estado:** ⏳ Pendiente
+
+- [ ] Componente `TariffCard.tsx` (mobile)
+- [ ] Componente `BudgetCard.tsx` (mobile)
+- [ ] Condicional desktop: tabla, mobile: cards
+- [ ] useMediaQuery hook
+- [ ] Botones/acciones adaptados a mobile
+- [ ] Filtros responsive
+
+**Archivos nuevos:**
+
+- `src/components/tariffs/TariffCard.tsx`
+- `src/components/budgets/BudgetCard.tsx`
+- `src/hooks/useMediaQuery.ts`
+
+**Archivos modificados:**
+
+- `src/components/tariffs/TariffList.tsx`
+- `src/components/budgets/BudgetList.tsx`
+
+**Criterios de completado:**
+
+- Desktop: tabla tradicional
+- Mobile: cards verticales
+- Transición suave entre breakpoints
+
+---
+
+#### 9.2 Formulario Presupuesto Mobile
+
+**Prioridad:** ALTA | **Estimación:** 4 días | **Estado:** ⏳ Pendiente
+
+- [ ] Componente `BudgetFormMobile.tsx`
+- [ ] Navegación por niveles (breadcrumb)
+- [ ] Stack de navegación
+- [ ] Botón "Atrás"
+- [ ] Cards por nivel actual
+- [ ] Modal editar cantidad (partidas)
+- [ ] Resumen sticky inferior
+- [ ] Condicional: mobile usa BudgetFormMobile, desktop usa BudgetFormDesktop
+
+**Archivos nuevos:**
+
+- `src/components/budgets/BudgetFormMobile.tsx`
+
+**Archivos modificados:**
+
+- `src/components/budgets/BudgetHierarchyForm.tsx`
+
+**Criterios de completado:**
+
+- Navegación táctil fluida
+- Breadcrumb funcional
+- Edición cantidad fácil en móvil
+
+---
+
+## RESUMEN DE PRIORIDADES
+
+### INMEDIATO (Semanas 1-2):
+
+- ✅ Bloque 1.1-1.2: Registro y recuperación contraseña
+- ✅ Bloque 2.1-2.2: user_id en tarifas + detección IVAs
+
+### CORTO PLAZO (Semanas 3-4):
+
+- ✅ Bloque 1.3-1.4: Perfil usuario + CRUD usuarios
+- ✅ Bloque 3.1-3.2: Tabla config + selector plantillas
+- ✅ Bloque 2.3: Tarifa plantilla
+
+### MEDIO PLAZO (Semanas 5-8):
+
+- ✅ Bloque 4: IRPF y RE completos
+- ✅ Bloque 5: Versiones y notas
+
+### LARGO PLAZO (Semanas 9-12):
+
+- ✅ Bloque 6: Navegación unificada
+- ✅ Bloque 7: Rich text editor
+- ✅ Bloque 8: Import/Export
+- ✅ Bloque 9: Responsive completo
+
+---
+
+## ESTADO GLOBAL FASE 2
+
+**Progreso:** 0% (0/49 tareas)
+**Bloques completados:** 0/9
+**Duración estimada:** 12 semanas
+
+**Próximo paso:** Iniciar Bloque 1 - Registro de usuarios
+
+---
+
+**Documento:** Tareas Fase 2
+**Versión:** 1.0
+**Fecha:** 2025-01-04
+**Estado:** Activo

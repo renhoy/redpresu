@@ -1,378 +1,1931 @@
-# PRD - jeyca-presu
-
-## Resumen Ejecutivo
-**Problema:** Los comerciales pierden tiempo y oportunidades de venta al tener que volver a la oficina para preparar presupuestos, creando demoras de 24-48h que pueden hacer perder clientes.
-
-**Solución:** Aplicación web que permite crear presupuestos in situ con tablets, generando PDFs profesionales al momento usando tarifas dinámicas desde CSV.
-
-**Usuario:** Empresas pequeñas y medianas con equipos comerciales que manejan múltiples tarifas de productos/servicios (TPVs, televigilancia, centralitas).
-
-**ROI:** Reducción 95% tiempo creación presupuesto (5 min vs 24-48h), aumento 30% tasa cierre por respuesta inmediata.
+# Fase 2 - Requisitos y Funcionalidades
 
 ## Estado del Proyecto
-**Progreso General:** 100% Completado - **MVP FUNCIONAL** ✅
-- ✅ FASE 1 (SHARED): 100%
-- ✅ Tariff Management: 100%
-- ✅ Budget Creation: 100%
-- ✅ PDF Generation: 100%
-- ✅ Dashboard: 100% - **COMPLETADO**
 
-## Módulos del Sistema
-
-### SHARED (Base común - COMPLETADOS ✅)
-
-#### 1. Database Module - READ-ONLY ✅
-**Estado:** COMPLETADO
-**Responsabilidad:** Estructura de datos, migraciones, tipos TypeScript
-**Tecnologías:** Supabase (PostgreSQL), Row Level Security (RLS)
-
-**Tablas Principales:**
-- `empresas` - Datos de empresas cliente
-- `users` - Usuarios con roles (superadmin/admin/vendedor)
-- `tariffs` - Tarifas con estructura JSON jerárquica
-- `budgets` - Presupuestos con datos cliente y cálculos
-
-**Features:**
-- ✅ Migraciones iniciales con seed data
-- ✅ RLS policies por empresa y rol
-- ✅ Tipos TypeScript generados desde schema
-- ✅ Relaciones y foreign keys configuradas
-- ✅ Índices para performance
-
-#### 2. Auth Module - READ-ONLY ✅
-**Estado:** COMPLETADO
-**Responsabilidad:** Autenticación y autorización
-**Tecnologías:** Supabase Auth, Next.js 15 middleware
-
-**Roles:**
-- `superadmin` - Acceso total sistema
-- `admin` - Gestión empresa (tarifas, presupuestos, usuarios)
-- `vendedor` - Solo creación presupuestos
-
-**Features:**
-- ✅ Login/Logout con Supabase Auth
-- ✅ Middleware protección rutas por rol
-- ✅ Session management automática
-- ✅ Gestión usuarios por empresa
-- ✅ Reset password funcional
-
-#### 3. Common Module - READ-ONLY ✅
-**Estado:** COMPLETADO
-**Responsabilidad:** Utilidades compartidas, validaciones, helpers
-**Ubicación:** `src/lib/*`
-
-**Componentes:**
-- ✅ Validadores CSV con Zod
-- ✅ Helpers formato numérico (español/inglés)
-- ✅ Normalización de datos
-- ✅ Cálculos de IVA y totales
-- ✅ Constantes del sistema
-- ✅ Utilidades de texto y fechas
-
-### FEATURES (Funcionalidades core)
-
-#### 4. Tariff Management - READ-ONLY ✅
-**Estado:** COMPLETADO
-**Responsabilidad:** Gestión completa de tarifas con CSV
-**Rutas:** `/tariffs`, `/tariffs/new`, `/tariffs/[id]/edit`
-
-**Funcionalidades:**
-- ✅ Listado tarifas con filtros (activa/inactiva)
-- ✅ Crear tarifa desde cero
-- ✅ Importar CSV con validación completa
-- ✅ Editar tarifas existentes
-- ✅ Activar/desactivar tarifas
-- ✅ Eliminar tarifas
-- ✅ Vista previa jerárquica interactiva
-
-**Validaciones CSV:**
-- ✅ Estructura jerárquica (capítulo → subcapítulo → apartado → partida)
-- ✅ IDs numéricos secuenciales (1, 1.1, 1.1.1, 1.1.1.1)
-- ✅ Campos requeridos según nivel
-- ✅ Formato números español/inglés
-- ✅ Duplicados y secuencias
-- ✅ Ancestros requeridos
-
-**Estructura Tarifa:**
-```json
-{
-  "title": "Tarifa TPVs 2024",
-  "description": "Tarifas para terminales punto de venta",
-  "name": "JEYCA Telecomunicaciones SL",
-  "nif": "B12345678",
-  "address": "Calle Pimienta 6 - 41200, Alcalá del Río (Sevilla)",
-  "contact": "954 678 901 - info@jeyca.net - jeyca.net",
-  "primary_color": "#3b82f6",
-  "secondary_color": "#1e40af",
-  "validity": 30,
-  "legal_note": "Texto protección datos...",
-  "json_tariff_data": [
-    { "level": "chapter", "id": "1", "name": "Capítulo", ... },
-    { "level": "item", "id": "1.1.1.1", "name": "Partida", "pvp": "100.00", ... }
-  ]
-}
-```
-
-#### 5. Budget Creation - READ-ONLY ✅ (Listo para bloquear)
-**Estado:** COMPLETADO 100%
-**Responsabilidad:** Creación y gestión de presupuestos
-**Rutas:** `/budgets`, `/budgets/create?tariff_id=xxx&budget_id=xxx`
-
-**Flujo de Creación:**
-1. ✅ Selección de tarifa desde `/tariffs`
-2. ✅ Paso 1: Formulario datos cliente
-   - Tipo cliente (Empresa/Autónomo/Particular)
-   - Datos identificación (nombre, NIF/NIE)
-   - Contacto (teléfono, email, web)
-   - Dirección completa
-   - Checkbox aceptación con nota legal
-3. ✅ Paso 2: Formulario presupuesto jerárquico
-   - Acordeones por capítulo/subcapítulo/apartado
-   - Navegación un item activo a la vez
-   - Inputs cantidad por partida
-   - Cálculos automáticos en tiempo real
-   - Totales desglosados (Base, IVA, Total)
-4. ✅ Guardado como BORRADOR
-
-**Gestión de Estados:**
-```
-BORRADOR → pendiente, enviado
-PENDIENTE → borrador, enviado
-ENVIADO → pendiente, aprobado, rechazado
-APROBADO → borrador
-RECHAZADO → borrador
-CADUCADO → borrador
-```
-
-**Funcionalidades Listado:**
-- ✅ Tabla con joins (tariffs, users)
-- ✅ Filtros por estado y búsqueda por cliente/NIF
-- ✅ Selector de estado interactivo con validación transiciones
-- ✅ Confirmación en cambios críticos (aprobar/rechazar)
-- ✅ Columnas: Cliente, Tarifa, Total (con tooltip), Estado, Usuario, PDF, Acciones
-- ✅ Indicador días restantes de validez
-- ✅ Acciones: Editar, Eliminar
-
-**Funcionalidades Edición:**
-- ✅ Cargar presupuesto existente desde BD
-- ✅ Preservar datos cliente y cantidades
-- ✅ Flujo: `budgets.json_budget_data` → formulario → guardado
-- ✅ Actualización sin pérdida de datos
-
-**Cálculos:**
-- ✅ Cantidad × PVP por item
-- ✅ Propagación jerárquica (item → apartado → subcapítulo → capítulo)
-- ✅ IVA incluido: `iva_amount = total × (%iva / (100 + %iva))`
-- ✅ Base imponible: `base = total - iva_amount`
-- ✅ Agrupación IVA por porcentaje
-- ✅ Formato español (1.234,56)
-
-**Validaciones:**
-- ✅ Formato NIF/NIE según tipo cliente
-- ✅ Campos obligatorios cliente
-- ✅ Al menos una partida con cantidad > 0
-- ✅ Formato numérico español (coma decimal)
-- ✅ Transiciones de estado válidas
-
-**Server Actions:**
-- ✅ `getBudgets()` - Listar con joins
-- ✅ `getBudgetById()` - Obtener por ID
-- ✅ `createDraftBudget()` - Crear borrador
-- ✅ `updateBudgetDraft()` - Actualizar borrador
-- ✅ `saveBudget()` - Guardar como BORRADOR
-- ✅ `updateBudgetStatus()` - Cambiar estado
-- ✅ `deleteBudget()` - Eliminar
-
-**Correcciones Aplicadas:**
-1. ✅ Validación formato español (coma decimal)
-2. ✅ Eliminado bucle infinito en useEffect
-3. ✅ Inicialización correcta `json_budget_data`
-4. ✅ Flujo edición vs creación separado
-5. ✅ Sin guardado automático destructivo
-6. ✅ Estado inicial BORRADOR (no PENDIENTE)
-7. ✅ Selector estados con transiciones válidas
-8. ✅ Cabecera con campos correctos (address, contact)
-9. ✅ Nota legal visible (legal_note)
-
-#### 6. PDF Generation - COMPLETADO ✅
-**Estado:** COMPLETADO (100%)
-**Responsabilidad:** Generación PDFs profesionales
-**Dependencia Externa:** Rapid-PDF (microservicio)
-
-**Funcionalidades Implementadas:**
-- ✅ Construcción payload desde `budgets.json_budget_data`
-- ✅ Filtrado elementos con amount > 0
-- ✅ Renumeración jerárquica automática
-- ✅ Integración API Rapid-PDF con timeout 60s
-- ✅ Descarga con retry (2 intentos)
-- ✅ Almacenamiento local en `/public/pdfs/`
-- ✅ Nomenclatura: `presupuesto_nombre_nif_YYYY-MM-DD_HH-MM-SS.pdf`
-- ✅ Actualización `budgets.pdf_url` tras generación
-- ✅ Manejo errores completo
-- ✅ Sistema guardado inteligente con AlertDialogs
-- ✅ Advertencias PDF existente
-- ✅ Columna PDF en listado con descarga
-- ✅ Tooltips informativos
-- ✅ Botón cerrar con advertencia cambios
-
-**Estructura PDF Implementada:**
-- ✅ Cabecera empresa (logo, datos, contacto)
-- ✅ Datos cliente completos
-- ✅ Tabla presupuesto jerárquica filtrada
-- ✅ Totales desglosados (Base, IVAs agrupados, Total)
-- ✅ Notas legales y condiciones
-- ✅ Summary con chapters
-
-#### 7. Dashboard - COMPLETADO ✅
-**Estado:** COMPLETADO (100%)
-**Responsabilidad:** Navegación global y estadísticas
-**Rutas:** `/dashboard`
-
-**Funcionalidades Implementadas:**
-- ✅ Header navegación global (Inicio, Tarifas, Presupuestos, Logout)
-- ✅ Estadísticas por estado (Total, Valor, Mes, Conversión)
-- ✅ Filtrado por período (hoy/semana/mes/año)
-- ✅ Accesos rápidos (Crear Tarifa, Ver Tarifas, Ver Presupuestos)
-- ✅ Últimos 5 presupuestos con enlaces
-- ✅ Presupuestos próximos a caducar (< 7 días)
-- ✅ Permisos por rol (vendedor: solo sus datos)
-- ✅ Layouts consistentes con Header en todas las páginas
-- ✅ Responsive (desktop y mobile)
-
-**Server Actions:**
-- ✅ `getDashboardStats()` - Estadísticas con filtro período y rol
-
-## Stack Tecnológico
-
-**Frontend:**
-- Next.js 15 (App Router)
-- TypeScript
-- Tailwind CSS
-- shadcn/ui (componentes)
-- React Hook Form + Zod (validaciones)
-
-**Backend:**
-- Next.js API Routes (Server Actions)
-- Supabase (PostgreSQL + Auth + RLS)
-
-**Servicios Externos:**
-- Rapid-PDF (generación PDFs)
-
-**Storage:**
-- Directorios locales: `/public/pdfs/`, `/public/logos/`
-
-## Criterios de Completado por Módulo
-
-### Módulo Completado cuando:
-- ✅ Funcionalidad core implementada y probada
-- ✅ Integración con Supabase funcionando
-- ✅ Validaciones de negocio implementadas
-- ✅ Documentación actualizada (tareas.md, planificacion.md)
-- ✅ Estado cambiado a READ-ONLY
-- ✅ Archivos bloqueados en CLAUDE.md
-
-### Budget Creation - Criterios Alcanzados:
-- ✅ 6/6 tareas principales completadas
-- ✅ 7 Server Actions implementadas
-- ✅ Integración Supabase completa
-- ✅ 9 correcciones críticas aplicadas
-- ✅ Documentación actualizada
-- 🔒 READ-ONLY
-
-### PDF Generation - Criterios Alcanzados:
-- ✅ 10/10 funcionalidades implementadas
-- ✅ 3 Server Actions añadidas (generateBudgetPDF, duplicateBudget, saveBudget+)
-- ✅ 5 helper functions creadas
-- ✅ Integración Rapid-PDF completa
-- ✅ Sistema guardado inteligente
-- ✅ Documentación actualizada
-- 🔒 READ-ONLY
-
-## Flujo de Valor Completo (MVP)
-
-### Flujo Actual Implementado:
-1. ✅ **Login** → Autenticación con roles
-2. ✅ **Dashboard** → Navegación global, estadísticas, accesos rápidos
-3. ✅ **Gestión Tarifas** → Subir CSV, validar, activar
-4. ✅ **Crear Presupuesto** → Seleccionar tarifa, datos cliente, ajustar cantidades
-5. ✅ **Cálculos Automáticos** → Base, IVA, Total en tiempo real
-6. ✅ **Guardar Borrador** → Estado BORRADOR en BD
-7. ✅ **Gestión Estados** → Transiciones válidas con selector interactivo
-8. ✅ **Listado/Edición** → Ver, editar, eliminar presupuestos
-9. ✅ **Generar PDF** → Integración completa Rapid-PDF, descarga, almacenamiento
-
-### Flujo Completo End-to-End:
-1. ✅ Comercial hace login
-2. ✅ Accede al Dashboard con estadísticas
-3. ✅ Selecciona tarifa activa
-4. ✅ Completa datos cliente (5 campos + dirección)
-5. ✅ Ajusta cantidades en formulario jerárquico
-6. ✅ Revisa totales calculados automáticamente
-7. ✅ **Genera PDF profesional**
-8. ✅ Descarga PDF al momento
-9. Cliente recibe presupuesto en < 5 minutos ✅ OBJETIVO CUMPLIDO
-
-## Metas del MVP
-
-### Meta Principal:
-**Comercial crea presupuesto completo desde tablet en < 5 minutos vs 24-48h actual**
-
-### KPIs de Éxito:
-- ✅ Tiempo creación presupuesto: < 5 min (actualmente ~3 min con PDF)
-- ✅ Tasa error validación CSV: < 5% (actualmente ~2%)
-- ✅ Cálculos correctos: 100% (validado con formato español)
-- ✅ Generación PDF: < 60 segundos (actualmente ~1-2 segundos)
-- ✅ UX tablet: Touch-friendly (navegación optimizada)
-- ✅ Uptime: > 99% (Supabase + Vercel)
-
-### Adopción Esperada:
-- Fase 1: 1 empresa piloto (JEYCA) - 5 comerciales
-- Fase 2: 3-5 empresas - 15-25 comerciales
-- Fase 3: Escalado con pricing
-
-## Roadmap
-
-### ✅ MVP COMPLETADO
-- ✅ Semana 1-3: SHARED (Database, Auth, Common)
-- ✅ Semana 4: Tariff Management
-- ✅ Semana 5-6: Budget Creation
-- ✅ Semana 7: PDF Generation
-- ✅ Semana 8: Dashboard - **MVP FUNCIONAL COMPLETADO** ✅
-
-### 🎯 PRÓXIMOS PASOS (FASE 3)
-- ⏳ Semana 9: Testing E2E del flujo completo
-- ⏳ Optimización de performance y UX
-- ⏳ Preparación para producción
-
-## Riesgos y Mitigación
-
-### Riesgos Resueltos:
-1. ✅ **CSV Complejo** - Resuelto con validadores jerárquicos
-2. ✅ **Cálculos Tiempo Real** - Resuelto con formato español
-3. ✅ **UX Tablet** - Resuelto con navegación optimizada
-4. ✅ **Performance Formularios** - Resuelto con useRef y optimización renders
-5. ✅ **Rapid-PDF Externo** - Resuelto con timeout 60s, retry, manejo errores completo
-6. ✅ **Performance PDF** - Resuelto, generación ~1-2 segundos (filtrado optimizado)
-
-### Riesgos Activos:
-1. **Storage Local** - BAJO
-   - `/public/pdfs/` puede crecer indefinidamente
-   - Mitigación: Cleanup automático (>90 días), migrar a S3 si necesario
-
-## Próximos Pasos Inmediatos
-
-1. **Marcar PDF Generation como READ-ONLY** en CLAUDE.md ✅
-2. **Iniciar Dashboard:**
-   - Estadísticas presupuestos por estado
-   - Accesos directos principales
-   - Presupuestos recientes
-   - KPIs visuales
-   - Implementar descarga y storage
-   - Testing con presupuestos reales
-3. **Preparar testing E2E** flujo completo CSV→PDF
+**Fase Actual:** Fase 2 (Post-MVP)
+**MVP Completado:** 100% ✅
+**Objetivo Fase 2:** Evolución funcional, preparación multi-tenant, mejoras UX
 
 ---
 
-**Última Actualización:** 2025-01-02
-**Progreso:** 85% Completado
-**Siguiente Hito:** PDF Generation (Semana 7)
+## Priorización de Implementación
+
+Las tareas están ordenadas por:
+
+1. **Impacto en funcionalidad crítica** (usuarios, seguridad)
+2. **Dependencias técnicas** (base para otras features)
+3. **Complejidad de cambios** (menor cambio = mayor prioridad)
+4. **Valor para usuario final**
+
+---
+
+## BLOQUE 1: Usuarios y Seguridad (CRÍTICO)
+
+### 1.1 Sistema de Registro y Autenticación Completo
+
+**Prioridad:** CRÍTICA
+**Estado:** Parcialmente implementado (falta registro y recuperación)
+**Impacto:** Base para multi-tenant
+
+**Funcionalidades:**
+
+- ✅ Login existente (mantener)
+- ⏳ Registro de usuarios nuevos
+- ⏳ Recuperación de contraseña (email)
+- ⏳ Cambio de contraseña desde perfil
+- ⏳ Verificación email (opcional Fase 3)
+
+**Flujo de Registro:**
+
+```
+1. Usuario accede a /register
+2. Completa formulario:
+   - Email
+   - Contraseña (+ confirmar)
+   - Tipo emisor: [Empresa | Autónomo]
+   - Nombre comercial
+   - NIF/CIF
+   - Datos fiscales:
+     * Si Autónomo: % IRPF (default 15%)
+     * Dirección fiscal
+     * Contacto (teléfono, web)
+3. Sistema crea:
+   - Usuario en auth.users
+   - Registro en public.users (role: admin por defecto)
+   - Registro en public.emisores
+4. Redirect a /dashboard
+```
+
+**Server Actions nuevas:**
+
+- `registerUser(data)` - Crear usuario + emisor
+- `requestPasswordReset(email)` - Enviar email recuperación
+- `resetPassword(token, newPassword)` - Cambiar contraseña
+- `updateUserProfile(userId, data)` - Actualizar perfil
+
+**Cambios en BD:**
+
+```sql
+-- Nueva tabla emisores
+CREATE TABLE public.emisores (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  empresa_id INTEGER DEFAULT 1,
+  tipo TEXT CHECK (tipo IN ('empresa', 'autónomo')),
+  nombre_comercial TEXT NOT NULL,
+  nif TEXT NOT NULL UNIQUE,
+  direccion_fiscal TEXT NOT NULL,
+  telefono TEXT,
+  email TEXT,
+  web TEXT,
+  irpf_percentage DECIMAL(5,2), -- solo si tipo = 'autónomo'
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Índices
+CREATE INDEX idx_emisores_user_id ON emisores(user_id);
+CREATE INDEX idx_emisores_empresa_id ON emisores(empresa_id);
+```
+
+**UI Componentes:**
+
+- `/app/(auth)/register/page.tsx` - Página registro
+- `/components/auth/RegisterForm.tsx` - Formulario registro
+- `/components/auth/PasswordResetForm.tsx` - Recuperación contraseña
+- `/app/profile/page.tsx` - Página perfil usuario
+
+---
+
+### 1.2 CRUD de Usuarios (Admin/Superadmin)
+
+**Prioridad:** ALTA
+**Dependencias:** 1.1 completado
+**Impacto:** Gestión multi-usuario por empresa
+
+**Funcionalidades:**
+
+- Listar usuarios de la empresa
+- Crear usuario nuevo (solo admin/superadmin)
+- Editar usuario existente
+- Cambiar rol (vendedor ↔ admin)
+- Desactivar/activar usuario (no eliminar)
+- Ver historial actividad (opcional)
+
+**Server Actions:**
+
+- `getCompanyUsers(empresaId)` - Listar usuarios empresa
+- `createUser(data)` - Crear usuario (admin invita)
+- `updateUser(userId, data)` - Editar usuario
+- `toggleUserStatus(userId)` - Activar/desactivar
+- `changeUserRole(userId, newRole)` - Cambiar rol
+
+**Cambios en BD:**
+
+```sql
+ALTER TABLE public.users
+  ADD COLUMN status TEXT DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
+  ADD COLUMN invited_by UUID REFERENCES auth.users(id),
+  ADD COLUMN last_login TIMESTAMPTZ;
+```
+
+**UI:**
+
+- `/app/users/page.tsx` - Listado usuarios
+- `/app/users/create/page.tsx` - Crear usuario
+- `/app/users/[id]/edit/page.tsx` - Editar usuario
+- `/components/users/UserTable.tsx` - Tabla usuarios
+- `/components/users/UserForm.tsx` - Formulario usuario
+
+**RLS Policies:**
+
+```sql
+-- Solo admin/superadmin pueden ver usuarios de su empresa
+CREATE POLICY "users_select_admin"
+ON public.users FOR SELECT
+USING (
+  empresa_id = (SELECT empresa_id FROM users WHERE id = auth.uid())
+  AND EXISTS (
+    SELECT 1 FROM users
+    WHERE id = auth.uid()
+    AND role IN ('admin', 'superadmin')
+  )
+);
+```
+
+---
+
+## BLOQUE 2: Mejoras Incrementales en Tarifas
+
+### 2.1 Campo user_id en Tarifas
+
+**Prioridad:** ALTA
+**Complejidad:** BAJA (cambio simple)
+**Impacto:** Trazabilidad, permisos
+
+**Cambios:**
+
+```sql
+ALTER TABLE tariffs
+  ADD COLUMN user_id UUID REFERENCES auth.users(id);
+
+-- Migrar datos existentes (asignar al primer admin)
+UPDATE tariffs
+SET user_id = (
+  SELECT id FROM users
+  WHERE role = 'admin'
+  LIMIT 1
+)
+WHERE user_id IS NULL;
+
+-- Hacer obligatorio después de migración
+ALTER TABLE tariffs
+  ALTER COLUMN user_id SET NOT NULL;
+```
+
+**Server Actions modificadas:**
+
+- `createTariff()` - añadir `user_id = auth.uid()`
+- `getTariffs()` - incluir join con users para mostrar creador
+
+**UI cambios:**
+
+- Columna "Creado por" en listado tarifas
+- Filtro por usuario (admin/superadmin)
+
+---
+
+### 2.2 Detección Automática de IVAs en CSV
+
+**Prioridad:** ALTA
+**Complejidad:** BAJA
+**Impacto:** Mejora UX, preparación para IRPF/RE
+
+**Implementación:**
+
+```typescript
+// src/lib/validators/csv-converter.ts
+
+export function detectIVAsPresentes(jsonData: BudgetItem[]): number[] {
+  const ivasSet = new Set<number>();
+
+  jsonData.forEach((item) => {
+    if (item.level === "item" && item.iva_percentage) {
+      const iva = parseFloat(item.iva_percentage);
+      if (!isNaN(iva)) {
+        ivasSet.add(iva);
+      }
+    }
+  });
+
+  return Array.from(ivasSet).sort((a, b) => b - a); // desc: 21, 10, 4
+}
+```
+
+**Modificar Server Action:**
+
+```typescript
+// src/app/actions/tariffs.ts
+
+export async function createTariff(formData) {
+  // ... validación CSV existente
+
+  const jsonData = await converter.convertCSVToJSON(csvContent);
+
+  // NUEVO: detectar IVAs
+  const ivasPresentes = detectIVAsPresentes(jsonData.data);
+
+  const tariffData = {
+    ...formData,
+    json_tariff_data: jsonData.data,
+    ivas_presentes: ivasPresentes, // NUEVO campo
+  };
+
+  // ... guardar en BD
+}
+```
+
+**Cambios en BD:**
+
+```sql
+ALTER TABLE tariffs
+  ADD COLUMN ivas_presentes DECIMAL(5,2)[] DEFAULT '{}';
+
+-- Ejemplo de dato guardado: {21.00, 10.00, 4.00}
+```
+
+**Sin cambios UI** - campo invisible, usado internamente para RE.
+
+---
+
+### 2.3 Tarifa por Defecto (Plantilla)
+
+**Prioridad:** MEDIA
+**Complejidad:** BAJA
+**Impacto:** Ahorra tiempo en creación tarifas
+
+**Funcionalidades:**
+
+- Checkbox "Usar como plantilla" en listado tarifas
+- Solo 1 tarifa activa puede ser plantilla (toggle automático)
+- Al crear tarifa nueva, pre-cargar datos de plantilla excepto CSV
+
+**Cambios en BD:**
+
+```sql
+ALTER TABLE tariffs
+  ADD COLUMN is_template BOOLEAN DEFAULT FALSE;
+
+-- Trigger para asegurar solo 1 plantilla por empresa
+CREATE OR REPLACE FUNCTION ensure_single_template()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.is_template = TRUE THEN
+    UPDATE tariffs
+    SET is_template = FALSE
+    WHERE empresa_id = NEW.empresa_id
+      AND id != NEW.id
+      AND is_template = TRUE;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tariff_template_trigger
+  BEFORE INSERT OR UPDATE ON tariffs
+  FOR EACH ROW
+  EXECUTE FUNCTION ensure_single_template();
+```
+
+**Server Actions:**
+
+```typescript
+export async function setTariffAsTemplate(tariffId: string) {
+  // Marca tarifa como plantilla
+  // Automáticamente desmarca otras via trigger
+}
+
+export async function getTemplateTariff(empresaId: number) {
+  // Retorna tarifa marcada como plantilla
+  return await supabase
+    .from("tariffs")
+    .select("*")
+    .eq("empresa_id", empresaId)
+    .eq("is_template", true)
+    .single();
+}
+
+export async function createTariffFromTemplate() {
+  const template = await getTemplateTariff(empresaId);
+
+  return {
+    title: "",
+    description: "",
+    // Pre-cargar de plantilla:
+    name: template.name,
+    nif: template.nif,
+    address: template.address,
+    contact: template.contact,
+    primary_color: template.primary_color,
+    secondary_color: template.secondary_color,
+    validity: template.validity,
+    summary_note: template.summary_note,
+    conditions_note: template.conditions_note,
+    legal_note: template.legal_note,
+    template: template.template,
+    logo_url: template.logo_url,
+    // NO pre-cargar: json_tariff_data (CSV siempre nuevo)
+  };
+}
+```
+
+**UI:**
+
+- Columna "Plantilla" en listado (checkbox)
+- Al crear tarifa, detectar si hay plantilla y pre-cargar
+
+---
+
+## BLOQUE 3: Tabla de Configuración
+
+### 3.1 Tabla Config (Valores del Sistema)
+
+**Prioridad:** ALTA
+**Complejidad:** MEDIA
+**Impacto:** Desacoplar valores hardcoded, preparar IRPF/RE
+
+**Estructura:**
+
+```sql
+CREATE TABLE public.config (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  empresa_id INTEGER DEFAULT 1, -- preparar multi-tenant
+  config_key TEXT NOT NULL,
+  config_value JSONB NOT NULL,
+  description TEXT,
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(empresa_id, config_key)
+);
+
+-- Índices
+CREATE INDEX idx_config_empresa_key ON config(empresa_id, config_key);
+
+-- Datos iniciales
+INSERT INTO config (config_key, config_value, description) VALUES
+('iva_re_equivalences',
+ '{"21": 5.2, "10": 1.4, "4": 0.5}',
+ 'Equivalencias entre % IVA y % Recargo Equivalencia'),
+
+('pdf_templates',
+ '[
+   {"id": "41200-00001", "name": "Clásico", "preview": "/templates/clasico.png"},
+   {"id": "41200-00002", "name": "Moderno", "preview": "/templates/moderno.png"},
+   {"id": "41200-00003", "name": "Minimalista", "preview": "/templates/minimalista.png"}
+ ]',
+ 'Catálogo de plantillas PDF disponibles'),
+
+('default_tariff_config',
+ '{"primary_color": "#3b82f6", "secondary_color": "#1e40af", "validity_days": 30}',
+ 'Configuración por defecto al crear tarifa'),
+
+('irpf_defaults',
+ '{"autonomo": 15, "empresa": 0}',
+ 'Porcentajes IRPF por defecto según tipo emisor');
+```
+
+**Helper functions:**
+
+```typescript
+// src/lib/helpers/config-helpers.ts
+
+export async function getConfigValue<T = any>(
+  key: string,
+  empresaId: number = 1
+): Promise<T | null> {
+  const { data } = await supabase
+    .from("config")
+    .select("config_value")
+    .eq("empresa_id", empresaId)
+    .eq("config_key", key)
+    .single();
+
+  return data?.config_value as T;
+}
+
+export async function setConfigValue(
+  key: string,
+  value: any,
+  empresaId: number = 1
+) {
+  return await supabase.from("config").upsert(
+    {
+      empresa_id: empresaId,
+      config_key: key,
+      config_value: value,
+      updated_at: new Date().toISOString(),
+    },
+    {
+      onConflict: "empresa_id,config_key",
+    }
+  );
+}
+
+// Helpers específicos
+export async function getIVAtoREEquivalences(): Promise<
+  Record<number, number>
+> {
+  return (await getConfigValue("iva_re_equivalences")) || {};
+}
+
+export async function getPDFTemplates(): Promise<PDFTemplate[]> {
+  return (await getConfigValue("pdf_templates")) || [];
+}
+```
+
+**Server Actions:**
+
+```typescript
+// src/app/actions/config.ts
+"use server";
+
+export async function getSystemConfig(keys?: string[]) {
+  // Obtener configuración del sistema
+}
+
+export async function updateSystemConfig(key: string, value: any) {
+  // Solo superadmin puede actualizar
+  const user = await getServerUser();
+  if (user.role !== "superadmin") {
+    return { success: false, error: "Sin permisos" };
+  }
+
+  return setConfigValue(key, value);
+}
+```
+
+**UI:**
+
+- `/app/settings/page.tsx` - Página configuración (solo superadmin)
+- Formularios para editar cada config_key
+- Vista previa de cambios antes de guardar
+
+---
+
+### 3.2 Selector de Plantillas PDF
+
+**Prioridad:** MEDIA
+**Dependencias:** 3.1 completado
+**Complejidad:** BAJA
+
+**Cambios en formulario tarifa:**
+
+```typescript
+// src/components/tariffs/TariffForm.tsx
+
+const [templates, setTemplates] = useState<PDFTemplate[]>([]);
+const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+const [previewVisible, setPreviewVisible] = useState(false);
+
+useEffect(() => {
+  async function loadTemplates() {
+    const data = await getPDFTemplates();
+    setTemplates(data);
+    setSelectedTemplate(data[0]?.id || "");
+  }
+  loadTemplates();
+}, []);
+
+// En el JSX
+<Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+  {templates.map((t) => (
+    <SelectItem
+      key={t.id}
+      value={t.id}
+      onMouseEnter={() => setPreviewVisible(true)}
+      onMouseLeave={() => setPreviewVisible(false)}
+    >
+      {t.name}
+      {previewVisible && (
+        <Image src={t.preview} alt={t.name} className="absolute z-50 ..." />
+      )}
+    </SelectItem>
+  ))}
+</Select>;
+```
+
+**Estructura directorio:**
+
+```
+public/
+  templates/
+    clasico.png
+    moderno.png
+    minimalista.png
+```
+
+---
+
+## BLOQUE 4: IRPF y Recargo de Equivalencia
+
+### 4.1 Implementación IRPF
+
+**Prioridad:** ALTA
+**Dependencias:** Bloque 1 completado (emisores)
+**Complejidad:** MEDIA
+
+**Cambios en tabla emisores:**
+
+```sql
+-- Ya incluido en Bloque 1.1
+ALTER TABLE emisores
+  ADD COLUMN irpf_percentage DECIMAL(5,2) DEFAULT 15.00;
+```
+
+**Lógica de aplicación:**
+
+```typescript
+// src/lib/helpers/fiscal-calculations.ts
+
+export function shouldApplyIRPF(emisor: Emisor, cliente: Cliente): boolean {
+  return (
+    emisor.tipo === "autónomo" &&
+    (cliente.tipo === "empresa" || cliente.tipo === "autónomo")
+  );
+}
+
+export function calculateIRPF(
+  baseImponible: number,
+  irpfPercentage: number
+): number {
+  return baseImponible * (irpfPercentage / 100);
+}
+```
+
+**Server Actions modificadas:**
+
+```typescript
+// src/app/actions/budgets.ts
+
+export async function saveBudget(budgetData) {
+  // Obtener emisor
+  const emisor = await getEmisorByUserId(auth.uid());
+
+  // Calcular IRPF si aplica
+  const aplicaIRPF = shouldApplyIRPF(emisor, budgetData.cliente);
+  const irpfAmount = aplicaIRPF
+    ? calculateIRPF(budgetData.totales.baseImponible, emisor.irpf_percentage)
+    : 0;
+
+  // Guardar en budgets
+  const totales = {
+    ...budgetData.totales,
+    irpf: irpfAmount,
+    totalPagar: budgetData.totales.totalConIVA - irpfAmount,
+  };
+
+  // ...
+}
+```
+
+**Cambios en BD:**
+
+```sql
+-- Añadir a budgets (ya tiene json_budget_data)
+-- Los totales se guardan dentro del JSON:
+{
+  "totales": {
+    "subtotal": 5193.00,
+    "base": 4922.50,
+    "ivas": {"21": 270.50},
+    "irpf": 738.38,  // NUEVO
+    "re": {},
+    "totalPagar": 4454.62  // NUEVO
+  }
+}
+```
+
+**UI cambios:**
+
+- Mostrar IRPF en resumen totales (si aplica)
+- Tooltip explicativo: "IRPF aplicado por ser autónomo"
+
+---
+
+### 4.2 Implementación Recargo de Equivalencia
+
+**Prioridad:** ALTA
+**Dependencias:** 3.1 (tabla config), 2.2 (detección IVAs)
+**Complejidad:** MEDIA-ALTA
+
+**Cambios en formulario cliente:**
+
+```typescript
+// src/components/budgets/BudgetForm.tsx (Paso 1)
+
+const [aplicaRecargo, setAplicaRecargo] = useState(false);
+const [recargos, setRecargos] = useState<Record<number, number>>({});
+
+useEffect(() => {
+  if (clienteData.tipo === "autónomo" && aplicaRecargo) {
+    // Cargar valores por defecto desde config
+    const defaults = await getIVAtoREEquivalences();
+
+    // Solo para IVAs presentes en la tarifa
+    const recargosInicial = {};
+    tariff.ivas_presentes.forEach((iva) => {
+      recargosInicial[iva] = defaults[iva] || 0;
+    });
+
+    setRecargos(recargosInicial);
+  }
+}, [clienteData.tipo, aplicaRecargo]);
+
+// En el JSX
+{
+  clienteData.tipo === "autónomo" && (
+    <>
+      <Checkbox checked={aplicaRecargo} onCheckedChange={setAplicaRecargo}>
+        Aplicar recargo de equivalencia
+      </Checkbox>
+
+      {aplicaRecargo && (
+        <div className="border rounded p-4 mt-2">
+          <h4>Recargos por IVA</h4>
+          {tariff.ivas_presentes.map((iva) => (
+            <div key={iva} className="flex items-center gap-4">
+              <Label>{iva}% IVA</Label>
+              <Input
+                type="number"
+                step="0.1"
+                value={recargos[iva]}
+                onChange={(e) =>
+                  setRecargos({
+                    ...recargos,
+                    [iva]: parseFloat(e.target.value),
+                  })
+                }
+              />
+              <span>% RE</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+```
+
+**Lógica de cálculo:**
+
+```typescript
+// src/lib/helpers/fiscal-calculations.ts
+
+export function calculateRecargo(
+  items: BudgetItem[],
+  recargos: Record<number, number>
+): Record<number, number> {
+  const reByIVA: Record<number, number> = {};
+
+  items.forEach((item) => {
+    if (item.level !== "item") return;
+
+    const iva = parseFloat(item.iva_percentage);
+    const re = recargos[iva] || 0;
+
+    if (re > 0) {
+      const pvp = parseFloat(item.pvp);
+      const cantidad = parseFloat(item.quantity || "0");
+
+      // Base sin IVA ni RE
+      const base = (pvp * cantidad) / (1 + iva / 100 + re / 100);
+      const importeRE = base * (re / 100);
+
+      reByIVA[iva] = (reByIVA[iva] || 0) + importeRE;
+    }
+  });
+
+  return reByIVA;
+}
+```
+
+**Cambios en BD:**
+
+```sql
+-- Añadir a budgets (dentro de json_budget_data)
+{
+  "cliente": {
+    "tipo": "autónomo",
+    "aplicaRecargo": true,
+    "recargos": {
+      "21": 5.2,
+      "10": 1.4
+    }
+  },
+  "totales": {
+    "subtotal": 5193.00,
+    "base": 4922.50,
+    "ivas": {"21": 270.50},
+    "irpf": 738.38,
+    "re": {"21": 52.00},  // NUEVO
+    "totalPagar": 4506.62  // subtotal - irpf + re
+  }
+}
+```
+
+---
+
+### 4.3 Modificación Payload PDF
+
+**Prioridad:** ALTA
+**Dependencias:** 4.1, 4.2 completados
+**Complejidad:** BAJA
+
+**Cambios en payload builder:**
+
+```typescript
+// src/lib/helpers/pdf-payload-builder.ts
+
+export function buildPDFPayload(budget: Budget, tariff: Tariff) {
+  // ... código existente
+
+  const totals = {
+    subtotal: {
+      name: 'Total (IVA incluido)',
+      amount: formatCurrency(budget.totales.subtotal)
+    },
+    base: {
+      name: 'Base Imponible',
+      amount: formatCurrency(budget.totales.base)
+    },
+    ivas: Object.entries(budget.totales.ivas).map(([iva, amount]) => ({
+      name: `${iva}% IVA`,
+      amount: formatCurrency(amount)
+    })),
+    // NUEVO: IRPF
+    ...(budget.totales.irpf > 0 && {
+      irpf: {
+        name: `${budget.emisor.irpf_percentage}% IRPF`,
+        amount: `-${formatCurrency(budget.totales.irpf)}` // negativo
+      }
+    }),
+    // NUEVO: RE
+    ...(Object.keys(budget.totales.re).length > 0 && {
+      re: Object.entries(budget.totales.re).map(([iva, amount]) => ({
+        name: `${budget.cliente.recargos[iva]}% RE (IVA ${iva}%)`,
+        amount: formatCurrency(amount)
+      }))
+    }),
+    total: {
+      name: 'Total a Pagar',
+      amount: formatCurrency(budget.totales.totalPagar)
+    }
+  };
+
+  return {
+    company: {...},
+    client: {...},
+    budget: {...},
+    summary: {...},
+    totals // estructura modificada
+  };
+}
+```
+
+**Cambios en Rapid-PDF:**
+
+- Renderizar `irpf` (opcional, negativo)
+- Renderizar `re` (opcional, array)
+- Cambiar título "Total Presupuesto" → "Total a Pagar"
+
+---
+
+## BLOQUE 5: Sistema de Versiones y Notas
+
+### 5.1 Versiones de Presupuestos
+
+**Prioridad:** MEDIA
+**Complejidad:** MEDIA-ALTA
+**Impacto:** Trazabilidad, auditoría
+
+**Nuevas tablas:**
+
+```sql
+CREATE TABLE budget_versions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  budget_id UUID REFERENCES budgets(id) ON DELETE CASCADE,
+  version_number INT NOT NULL,
+  json_budget_data JSONB NOT NULL,
+  json_client_data JSONB NOT NULL,
+  created_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  notes TEXT, -- nota de versión opcional
+  UNIQUE(budget_id, version_number)
+);
+
+CREATE INDEX idx_versions_budget ON budget_versions(budget_id, version_number DESC);
+
+-- Modificar budgets
+ALTER TABLE budgets
+  ADD COLUMN json_client_data JSONB,
+  ADD COLUMN current_version INT DEFAULT 1;
+
+-- Migrar datos existentes de cliente a json_client_data
+UPDATE budgets SET json_client_data = jsonb_build_object(
+  'tipo', client_type,
+  'nombre', client_name,
+  'nif', client_nif_nie,
+  'telefono', client_phone,
+  'email', client_email,
+  'web', client_web,
+  'direccion', client_address,
+  'cp', client_postal_code,
+  'localidad', client_locality,
+  'provincia', client_province,
+  'aceptacion', client_acceptance
+);
+```
+
+**Server Actions:**
+
+```typescript
+// src/app/actions/budget-versions.ts
+"use server";
+
+export async function createBudgetVersion(budgetId: string, notes?: string) {
+  const budget = await getBudgetById(budgetId);
+  const nextVersion = budget.current_version + 1;
+
+  // Guardar snapshot
+  await supabase.from("budget_versions").insert({
+    budget_id: budgetId,
+    version_number: nextVersion,
+    json_budget_data: budget.json_budget_data,
+    json_client_data: budget.json_client_data,
+    created_by: auth.uid(),
+    notes,
+  });
+
+  // Actualizar versión actual
+  await supabase
+    .from("budgets")
+    .update({ current_version: nextVersion })
+    .eq("id", budgetId);
+
+  return { success: true, version: nextVersion };
+}
+
+export async function getBudgetVersions(budgetId: string) {
+  return await supabase
+    .from("budget_versions")
+    .select("*, created_by:users(name)")
+    .eq("budget_id", budgetId)
+    .order("version_number", { ascending: false });
+}
+
+export async function restoreBudgetVersion(
+  budgetId: string,
+  versionNumber: number
+) {
+  const version = await supabase
+    .from("budget_versions")
+    .select("*")
+    .eq("budget_id", budgetId)
+    .eq("version_number", versionNumber)
+    .single();
+
+  // Crear nueva versión con datos antiguos
+  const nextVersion = (await getCurrentVersion(budgetId)) + 1;
+
+  await supabase.from("budget_versions").insert({
+    budget_id: budgetId,
+    version_number: nextVersion,
+    json_budget_data: version.json_budget_data,
+    json_client_data: version.json_client_data,
+    created_by: auth.uid(),
+    notes: `Restaurado desde versión ${versionNumber}`,
+  });
+
+  // Actualizar presupuesto actual
+  await supabase
+    .from("budgets")
+    .update({
+      json_budget_data: version.json_budget_data,
+      json_client_data: version.json_client_data,
+      current_version: nextVersion,
+    })
+    .eq("id", budgetId);
+
+  return { success: true };
+}
+```
+
+**UI:**
+
+- `/app/budgets/[id]/versions/page.tsx` - Timeline de versiones
+- Botón "Guardar versión" en formulario edición
+- Botón "Restaurar" en cada versión del timeline
+- Confirmar restauración (AlertDialog)
+
+---
+
+### 5.2 Sistema de Notas/Bitácora
+
+**Prioridad:** MEDIA
+**Complejidad:** BAJA
+**Impacto:** Seguimiento comercial
+
+**Nueva tabla:**
+
+```sql
+CREATE TABLE budget_notes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  budget_id UUID REFERENCES budgets(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id),
+  note_text TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_notes_budget ON budget_notes(budget_id, created_at DESC);
+```
+
+**Server Actions:**
+
+```typescript
+// src/app/actions/budget-notes.ts
+"use server";
+
+export async function addBudgetNote(budgetId: string, noteText: string) {
+  return await supabase.from("budget_notes").insert({
+    budget_id: budgetId,
+    user_id: auth.uid(),
+    note_text: noteText,
+  });
+}
+
+export async function getBudgetNotes(budgetId: string) {
+  return await supabase
+    .from("budget_notes")
+    .select("*, user:users(name)")
+    .eq("budget_id", budgetId)
+    .order("created_at", { ascending: false });
+}
+
+export async function deleteBudgetNote(noteId: string) {
+  // Solo el creador o admin puede eliminar
+  return await supabase.from("budget_notes").delete().eq("id", noteId);
+}
+```
+
+**UI:**
+
+- Sección "Notas" en página edición presupuesto
+- Textarea + botón "Añadir nota"
+- Timeline cronológico con avatar, usuario, fecha, texto
+- Botón eliminar (solo creador o admin)
+- Formato fecha relativo: "hace 2 horas", "ayer", "hace 3 días"
+
+```typescript
+// src/components/budgets/BudgetNotes.tsx
+
+export function BudgetNotes({ budgetId }: { budgetId: string }) {
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [newNote, setNewNote] = useState("");
+
+  async function handleAddNote() {
+    if (!newNote.trim()) return;
+
+    await addBudgetNote(budgetId, newNote);
+    setNewNote("");
+    // Recargar notas
+    loadNotes();
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Notas del Presupuesto</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="flex gap-2">
+            <Textarea
+              value={newNote}
+              onChange={(e) => setNewNote(e.target.value)}
+              placeholder="Añadir nota..."
+              rows={3}
+            />
+            <Button onClick={handleAddNote}>
+              <Plus className="w-4 h-4" />
+              Añadir
+            </Button>
+          </div>
+
+          <Separator />
+
+          <div className="space-y-3">
+            {notes.map((note) => (
+              <div key={note.id} className="flex gap-3 p-3 bg-muted rounded">
+                <Avatar>
+                  <AvatarFallback>{note.user.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-medium">{note.user.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {formatDateRelative(note.created_at)}
+                      </p>
+                    </div>
+                    {canDelete(note) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(note.id)}
+                      >
+                        <Trash className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                  <p className="mt-2 text-sm">{note.note_text}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+---
+
+## BLOQUE 6: Navegación y Jerarquía Unificada
+
+### 6.1 Algoritmo Único de Navegación Jerárquica
+
+**Prioridad:** ALTA
+**Complejidad:** MEDIA-ALTA
+**Impacto:** Consistencia UX, mantenibilidad
+
+**Problema actual:**
+
+- Tariff preview usa un sistema
+- Budget form usa otro sistema
+- Diferentes estilos visuales
+
+**Solución: Componente compartido**
+
+```typescript
+// src/components/shared/HierarchicalNavigator.tsx
+
+interface HierarchicalItem {
+  id: string;
+  level: "chapter" | "subchapter" | "section" | "item";
+  name: string;
+  amount?: string;
+  children?: HierarchicalItem[];
+  [key: string]: any; // campos adicionales según contexto
+}
+
+interface HierarchicalNavigatorProps {
+  data: HierarchicalItem[];
+  mode: "preview" | "edit"; // preview: solo lectura, edit: interactivo
+  renderItem?: (item: HierarchicalItem) => ReactNode; // personalizable
+  onItemClick?: (item: HierarchicalItem) => void;
+  expandedIds?: string[]; // control externo
+  onExpandedChange?: (ids: string[]) => void;
+}
+
+export function HierarchicalNavigator({
+  data,
+  mode = "preview",
+  renderItem,
+  onItemClick,
+  expandedIds = [],
+  onExpandedChange,
+}: HierarchicalNavigatorProps) {
+  const [localExpanded, setLocalExpanded] = useState<Set<string>>(
+    new Set(expandedIds)
+  );
+
+  const expanded = onExpandedChange ? new Set(expandedIds) : localExpanded;
+
+  const handleToggle = (itemId: string, ancestors: string[]) => {
+    const newExpanded = new Set(expanded);
+
+    if (expanded.has(itemId)) {
+      // Cerrar: remover item y sus descendientes
+      removeDescendants(itemId, newExpanded);
+    } else {
+      // Abrir: cerrar hermanos, mantener ancestros
+      closeSiblings(itemId, ancestors, newExpanded);
+      newExpanded.add(itemId);
+      // Asegurar ancestros abiertos
+      ancestors.forEach((id) => newExpanded.add(id));
+    }
+
+    if (onExpandedChange) {
+      onExpandedChange(Array.from(newExpanded));
+    } else {
+      setLocalExpanded(newExpanded);
+    }
+  };
+
+  function closeSiblings(
+    itemId: string,
+    ancestors: string[],
+    expanded: Set<string>
+  ) {
+    // Cerrar todos los items al mismo nivel
+    const parent = ancestors[ancestors.length - 1];
+    const siblings = getSiblings(itemId, parent, data);
+
+    siblings.forEach((sibling) => {
+      if (sibling.id !== itemId) {
+        removeDescendants(sibling.id, expanded);
+      }
+    });
+  }
+
+  function removeDescendants(itemId: string, expanded: Set<string>) {
+    expanded.delete(itemId);
+    const item = findItem(itemId, data);
+    if (item?.children) {
+      item.children.forEach((child) => {
+        removeDescendants(child.id, expanded);
+      });
+    }
+  }
+
+  function renderTree(
+    items: HierarchicalItem[],
+    ancestors: string[] = [],
+    depth: number = 0
+  ) {
+    return items.map((item) => {
+      const isExpanded = expanded.has(item.id);
+      const hasChildren = item.children && item.children.length > 0;
+      const currentAncestors = [...ancestors, item.id];
+
+      return (
+        <div key={item.id} className="relative">
+          <div
+            className={cn(
+              "flex items-center gap-2 p-2 rounded cursor-pointer",
+              "hover:bg-accent transition-colors",
+              getLevelStyles(item.level),
+              isExpanded && "bg-accent"
+            )}
+            style={{ paddingLeft: `${depth * 1.5}rem` }}
+            onClick={() => {
+              handleToggle(item.id, ancestors);
+              onItemClick?.(item);
+            }}
+          >
+            {hasChildren && (
+              <ChevronRight
+                className={cn(
+                  "w-4 h-4 transition-transform",
+                  isExpanded && "rotate-90"
+                )}
+              />
+            )}
+
+            {renderItem ? (
+              renderItem(item)
+            ) : (
+              <DefaultItemRender item={item} mode={mode} />
+            )}
+          </div>
+
+          {hasChildren && isExpanded && (
+            <div>{renderTree(item.children!, currentAncestors, depth + 1)}</div>
+          )}
+        </div>
+      );
+    });
+  }
+
+  return <div className="space-y-1">{renderTree(data)}</div>;
+}
+
+function DefaultItemRender({
+  item,
+  mode,
+}: {
+  item: HierarchicalItem;
+  mode: "preview" | "edit";
+}) {
+  return (
+    <div className="flex-1 flex justify-between items-center">
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-muted-foreground">{item.id}</span>
+        <span className="font-medium">{item.name}</span>
+      </div>
+
+      {item.amount && (
+        <span className="text-sm text-muted-foreground">{item.amount}</span>
+      )}
+    </div>
+  );
+}
+
+function getLevelStyles(level: string) {
+  const styles = {
+    chapter: "font-bold text-lg",
+    subchapter: "font-semibold text-base",
+    section: "font-medium text-sm",
+    item: "text-sm",
+  };
+  return styles[level as keyof typeof styles] || "";
+}
+```
+
+**Uso en Tariff Preview:**
+
+```typescript
+// src/components/tariffs/HierarchyPreview.tsx
+
+export function HierarchyPreview({ data }: { data: BudgetItem[] }) {
+  return (
+    <HierarchicalNavigator
+      data={convertToHierarchy(data)}
+      mode="preview"
+      renderItem={(item) => (
+        <div className="flex-1 flex justify-between">
+          <span>{item.name}</span>
+          {item.level === "item" && (
+            <Badge variant="outline">
+              {item.pvp} €/{item.unit}
+            </Badge>
+          )}
+        </div>
+      )}
+    />
+  );
+}
+```
+
+**Uso en Budget Form:**
+
+```typescript
+// src/components/budgets/BudgetHierarchyForm.tsx
+
+export function BudgetHierarchyForm({ tariff, onUpdate }: Props) {
+  const [expandedIds, setExpandedIds] = useState<string[]>([]);
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
+
+  return (
+    <HierarchicalNavigator
+      data={tariff.json_tariff_data}
+      mode="edit"
+      expandedIds={expandedIds}
+      onExpandedChange={setExpandedIds}
+      renderItem={(item) => (
+        <BudgetItemEditor
+          item={item}
+          quantity={quantities[item.id] || 0}
+          onQuantityChange={(qty) => {
+            setQuantities({ ...quantities, [item.id]: qty });
+            onUpdate(item.id, qty);
+          }}
+        />
+      )}
+    />
+  );
+}
+```
+
+---
+
+## BLOQUE 7: Editor de Texto Enriquecido
+
+### 7.1 Rich Text Editor para Notas
+
+**Prioridad:** MEDIA
+**Complejidad:** MEDIA
+**Impacto:** UX profesional
+
+**Librería recomendada:** Tiptap (ligera, extensible)
+
+```bash
+npm install @tiptap/react @tiptap/starter-kit @tiptap/extension-placeholder
+```
+
+**Componente:**
+
+```typescript
+// src/components/shared/RichTextEditor.tsx
+
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Placeholder from "@tiptap/extension-placeholder";
+
+interface RichTextEditorProps {
+  value: string;
+  onChange: (html: string) => void;
+  placeholder?: string;
+}
+
+export function RichTextEditor({
+  value,
+  onChange,
+  placeholder,
+}: RichTextEditorProps) {
+  const editor = useEditor({
+    extensions: [StarterKit, Placeholder.configure({ placeholder })],
+    content: value,
+    onUpdate: ({ editor }) => {
+      onChange(editor.getHTML());
+    },
+  });
+
+  if (!editor) return null;
+
+  return (
+    <div className="border rounded">
+      <div className="flex gap-1 p-2 border-b bg-muted">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          className={editor.isActive("bold") ? "bg-accent" : ""}
+        >
+          <Bold className="w-4 h-4" />
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          className={editor.isActive("italic") ? "bg-accent" : ""}
+        >
+          <Italic className="w-4 h-4" />
+        </Button>
+
+        <Separator orientation="vertical" className="mx-1" />
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          className={editor.isActive("bulletList") ? "bg-accent" : ""}
+        >
+          <List className="w-4 h-4" />
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          className={editor.isActive("orderedList") ? "bg-accent" : ""}
+        >
+          <ListOrdered className="w-4 h-4" />
+        </Button>
+      </div>
+
+      <EditorContent
+        editor={editor}
+        className="prose prose-sm p-4 min-h-[150px]"
+      />
+    </div>
+  );
+}
+```
+
+**Uso en formulario tarifa:**
+
+```typescript
+// src/components/tariffs/TariffForm.tsx
+
+<FormField label="Texto Resumen" description="Aparecerá en el PDF">
+  <RichTextEditor
+    value={formData.summary_note}
+    onChange={(html) => setFormData({ ...formData, summary_note: html })}
+    placeholder="Condiciones de aceptación, formas de pago..."
+  />
+</FormField>
+```
+
+**Cambios en Rapid-PDF:**
+
+- Parsear HTML básico: `<strong>`, `<em>`, `<ul>`, `<ol>`
+- Convertir a formato PDF (negrita, cursiva, listas)
+- Documentar en API de Rapid-PDF
+
+---
+
+## BLOQUE 8: Import/Export y Backups
+
+### 8.1 Exportar Tarifas/Presupuestos
+
+**Prioridad:** MEDIA
+**Complejidad:** BAJA-MEDIA
+
+**Formatos soportados:**
+
+- JSON (completo, con metadata)
+- CSV (solo items, para Excel)
+
+**Server Actions:**
+
+```typescript
+// src/app/actions/export.ts
+"use server";
+
+export async function exportTariffs(
+  tariffIds: string[],
+  format: "json" | "csv"
+) {
+  const tariffs = await supabase
+    .from("tariffs")
+    .select("*")
+    .in("id", tariffIds);
+
+  if (format === "json") {
+    return {
+      success: true,
+      data: JSON.stringify(tariffs.data, null, 2),
+      filename: `tarifas_${new Date().toISOString()}.json`,
+    };
+  }
+
+  if (format === "csv") {
+    // Convertir a CSV
+    const csv = convertTariffsToCSV(tariffs.data);
+    return {
+      success: true,
+      data: csv,
+      filename: `tarifas_${new Date().toISOString()}.csv`,
+    };
+  }
+}
+
+export async function exportBudgets(
+  budgetIds: string[],
+  format: "json" | "csv"
+) {
+  // Similar a exportTariffs
+}
+```
+
+**UI:**
+
+```typescript
+// src/components/tariffs/TariffList.tsx
+
+const [selectedTariffs, setSelectedTariffs] = useState<string[]>([]);
+
+async function handleExport(format: "json" | "csv") {
+  const result = await exportTariffs(selectedTariffs, format);
+
+  // Descargar archivo
+  const blob = new Blob([result.data], {
+    type: format === "json" ? "application/json" : "text/csv",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = result.filename;
+  a.click();
+}
+
+// En el JSX
+<div className="flex gap-2">
+  <Checkbox /> {/* selección múltiple */}
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <Button disabled={selectedTariffs.length === 0}>
+        <Download className="w-4 h-4 mr-2" />
+        Exportar ({selectedTariffs.length})
+      </Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent>
+      <DropdownMenuItem onClick={() => handleExport("json")}>
+        Exportar JSON
+      </DropdownMenuItem>
+      <DropdownMenuItem onClick={() => handleExport("csv")}>
+        Exportar CSV
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>
+</div>;
+```
+
+---
+
+### 8.2 Importar Tarifas/Presupuestos
+
+**Prioridad:** MEDIA
+**Complejidad:** MEDIA
+
+**Server Actions:**
+
+```typescript
+// src/app/actions/import.ts
+"use server";
+
+export async function importTariffs(fileContent: string, format: "json") {
+  try {
+    const data = JSON.parse(fileContent);
+
+    // Validar estructura
+    if (!Array.isArray(data)) {
+      return { success: false, error: "Formato inválido" };
+    }
+
+    // Limpiar IDs (generar nuevos)
+    const tariffsToImport = data.map((t) => ({
+      ...t,
+      id: undefined, // generar nuevo UUID
+      empresa_id: getCurrentEmpresaId(),
+      user_id: auth.uid(),
+      created_at: new Date().toISOString(),
+    }));
+
+    // Insertar en BD
+    const result = await supabase.from("tariffs").insert(tariffsToImport);
+
+    return {
+      success: true,
+      imported: tariffsToImport.length,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: "Error al procesar archivo",
+    };
+  }
+}
+```
+
+**UI:**
+
+```typescript
+// src/app/tariffs/import/page.tsx
+
+export default function ImportTariffsPage() {
+  const [file, setFile] = useState<File | null>(null);
+
+  async function handleImport() {
+    if (!file) return;
+
+    const content = await file.text();
+    const result = await importTariffs(content, "json");
+
+    if (result.success) {
+      toast.success(`${result.imported} tarifas importadas`);
+      router.push("/tariffs");
+    } else {
+      toast.error(result.error);
+    }
+  }
+
+  return (
+    <div>
+      <h1>Importar Tarifas</h1>
+
+      <Input
+        type="file"
+        accept=".json"
+        onChange={(e) => setFile(e.target.files?.[0] || null)}
+      />
+
+      <Button onClick={handleImport} disabled={!file}>
+        Importar
+      </Button>
+    </div>
+  );
+}
+```
+
+---
+
+## BLOQUE 9: Responsive y Mobile-First
+
+### 9.1 Diseño Responsive Completo
+
+**Prioridad:** ALTA
+**Complejidad:** ALTA
+**Impacto:** Usabilidad tablet/móvil
+
+**Estrategia:**
+
+1. Mobile-first (< 640px)
+2. Tablet (640px - 1024px)
+3. Desktop (> 1024px)
+
+**Cambios en listados:**
+
+```typescript
+// src/components/tariffs/TariffList.tsx
+
+export function TariffList({ tariffs }: { tariffs: Tariff[] }) {
+  return (
+    <>
+      {/* Desktop: tabla */}
+      <div className="hidden md:block">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Tarifa</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead>Creado</TableHead>
+              <TableHead>Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {tariffs.map((t) => (
+              <TariffRow key={t.id} tariff={t} />
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Mobile: cards */}
+      <div className="md:hidden space-y-4">
+        {tariffs.map((t) => (
+          <TariffCard key={t.id} tariff={t} />
+        ))}
+      </div>
+    </>
+  );
+}
+
+function TariffCard({ tariff }: { tariff: Tariff }) {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="text-lg">{tariff.title}</CardTitle>
+            <CardDescription>{tariff.description}</CardDescription>
+          </div>
+          <Badge variant={tariff.status === "Activa" ? "default" : "secondary"}>
+            {tariff.status}
+          </Badge>
+        </div>
+      </CardHeader>
+
+      <CardContent>
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Empresa:</span>
+            <span className="font-medium">{tariff.name}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Creado:</span>
+            <span>{formatDate(tariff.created_at)}</span>
+          </div>
+        </div>
+      </CardContent>
+
+      <CardFooter className="flex gap-2">
+        <Button variant="outline" size="sm" asChild>
+          <Link href={`/tariffs/${tariff.id}/edit`}>
+            <Pencil className="w-4 h-4 mr-2" />
+            Editar
+          </Link>
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <Link href={`/budgets/create?tariff_id=${tariff.id}`}>
+            <Receipt className="w-4 h-4 mr-2" />
+            Presupuesto
+          </Link>
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm">
+              <MoreVertical className="w-4 h-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => handleDelete(tariff.id)}>
+              <Trash className="w-4 h-4 mr-2" />
+              Eliminar
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </CardFooter>
+    </Card>
+  );
+}
+```
+
+**Similar para presupuestos:**
+
+- Desktop: tabla completa
+- Mobile: cards con información resumida
+
+---
+
+### 9.2 Formulario Presupuesto Mobile
+
+**Prioridad:** ALTA
+**Complejidad:** ALTA
+
+**Problema:** Acordeones son difíciles en móvil
+
+**Solución:** Navegación por niveles (breadcrumb style)
+
+```typescript
+// src/components/budgets/BudgetFormMobile.tsx
+
+export function BudgetFormMobile({ tariff, onUpdate }: Props) {
+  const [navigationStack, setNavigationStack] = useState<HierarchicalItem[]>(
+    []
+  );
+  const [currentLevel, setCurrentLevel] = useState<HierarchicalItem[]>(
+    tariff.json_tariff_data
+  );
+
+  function handleNavigate(item: HierarchicalItem) {
+    if (item.children && item.children.length > 0) {
+      // Navegar a nivel inferior
+      setNavigationStack([...navigationStack, item]);
+      setCurrentLevel(item.children);
+    } else {
+      // Es una partida (item final)
+      // Mostrar modal para editar cantidad
+    }
+  }
+
+  function handleBack() {
+    const newStack = [...navigationStack];
+    const parent = newStack.pop();
+    setNavigationStack(newStack);
+
+    if (newStack.length === 0) {
+      setCurrentLevel(tariff.json_tariff_data);
+    } else {
+      setCurrentLevel(newStack[newStack.length - 1].children!);
+    }
+  }
+
+  return (
+    <div className="h-full flex flex-col">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 p-4 border-b bg-muted">
+        {navigationStack.length > 0 && (
+          <Button variant="ghost" size="sm" onClick={handleBack}>
+            <ChevronLeft className="w-4 h-4" />
+            Atrás
+          </Button>
+        )}
+
+        <div className="flex items-center gap-2 text-sm overflow-x-auto">
+          <span>Inicio</span>
+          {navigationStack.map((item, i) => (
+            <React.Fragment key={item.id}>
+              <ChevronRight className="w-4 h-4" />
+              <span className="whitespace-nowrap">{item.name}</span>
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+
+      {/* Lista actual */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-2">
+        {currentLevel.map((item) => (
+          <Card
+            key={item.id}
+            className="cursor-pointer hover:bg-accent"
+            onClick={() => handleNavigate(item)}
+          >
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle className="text-base">{item.name}</CardTitle>
+                  {item.description && (
+                    <CardDescription className="text-xs">
+                      {item.description}
+                    </CardDescription>
+                  )}
+                </div>
+
+                {item.children && item.children.length > 0 ? (
+                  <Badge variant="outline">{item.children.length} items</Badge>
+                ) : (
+                  <div className="text-right">
+                    <div className="text-sm font-medium">
+                      {item.pvp} €/{item.unit}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Cantidad: {item.quantity || 0}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardHeader>
+          </Card>
+        ))}
+      </div>
+
+      {/* Resumen sticky */}
+      <div className="border-t p-4 bg-background">
+        <div className="flex justify-between items-center">
+          <span className="font-semibold">Total:</span>
+          <span className="text-xl font-bold">
+            {formatCurrency(calculateTotal())}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+**Uso condicional:**
+
+```typescript
+// src/components/budgets/BudgetHierarchyForm.tsx
+
+export function BudgetHierarchyForm({ tariff, onUpdate }: Props) {
+  const isMobile = useMediaQuery("(max-width: 768px)");
+
+  if (isMobile) {
+    return <BudgetFormMobile tariff={tariff} onUpdate={onUpdate} />;
+  }
+
+  return <BudgetFormDesktop tariff={tariff} onUpdate={onUpdate} />;
+}
+```
+
+---
+
+## FASE 3 (Largo Plazo)
+
+### Funcionalidades postponedas:
+
+1. **Sistema de Suscripciones**
+
+   - Planes: Free, Pro, Enterprise
+   - Integración Stripe/PayPal
+   - Límites por plan (tarifas, presupuestos, usuarios)
+
+2. **Paletas de Colores y Modo Oscuro**
+
+   - 5-6 paletas predefinidas
+   - Selector de tema en configuración
+   - Dark mode completo
+
+3. **Multi-tenant completo**
+
+   - Registro público sin restricciones
+   - Dashboard de administración multi-empresa
+   - Facturación por empresa
+
+4. **Análisis y Reportes Avanzados**
+
+   - Gráficas de conversión
+   - Análisis por comercial
+   - Exportar reportes PDF
+
+5. **Notificaciones**
+
+   - Email automático al cambiar estado
+   - Recordatorios caducidad
+   - Alertas configurables
+
+6. **Integraciones**
+   - CRM (HubSpot, Salesforce)
+   - Contabilidad (Holded, A3)
+   - Calendar sync
+
+---
+
+## Resumen de Prioridades
+
+### INMEDIATO (Semanas 1-2):
+
+1. Sistema registro y autenticación completo
+2. Campo user_id en tarifas
+3. Detección automática IVAs
+
+### CORTO PLAZO (Semanas 3-4):
+
+4. CRUD usuarios
+5. Tabla config
+6. Tarifa por defecto
+7. Selector plantillas PDF
+
+### MEDIO PLAZO (Semanas 5-8):
+
+8. IRPF completo
+9. Recargo de Equivalencia
+10. Sistema versiones
+11. Sistema notas
+
+### LARGO PLAZO (Semanas 9-12):
+
+12. Navegación unificada
+13. Rich text editor
+14. Import/Export
+15. Responsive completo
+16. Mobile-first
+
+**Documento:** Fase 2 - Requisitos y Funcionalidades
+**Versión:** 1.0
+**Fecha:** 2025-01-04
+**Estado:** Aprobado

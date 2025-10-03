@@ -1,310 +1,538 @@
-# Planificación - jeyca-presu
+# Planificación - Fase 2: Evolución Funcional
 
-## FASE 1: SHARED ✅ COMPLETADO (3 semanas)
-1. **✅ Database Module** - ✅ COMPLETADO - Modelos Supabase, migraciones, tipos TypeScript, configuración RLS
-2. **✅ Auth Module** - ✅ COMPLETADO - Sistema autenticación, roles (superadmin/admin/vendedor), protección rutas
-3. **✅ Common Module** - ✅ COMPLETADO - Validadores CSV, utilidades cálculo, helpers formato, constantes
+## FASE 2: EVOLUCIÓN Y PREPARACIÓN MULTI-TENANT (12 semanas)
 
-## FASE 2: FEATURES (Uno por vez - 4 semanas)
-1. **✅ Tariff Management** - ✅ COMPLETADO - CRUD tarifas, procesamiento CSV→JSON, validación jerárquica, logo dual-mode (archivo/URL), UI unificada con tooltips
-2. **✅ Budget Creation** - ✅ COMPLETADO (100%) - Formularios dinámicos, cálculos tiempo real, gestión estados, listado, edición
-3. **✅ PDF Generation** - ✅ COMPLETADO (100%) - Integración Rapid-PDF, payload construction, almacenamiento local, sistema guardado inteligente
-4. **✅ Dashboard** - ✅ COMPLETADO (100%) - Header navegación global, estadísticas por estado, accesos rápidos, permisos por rol
+**Objetivo:** Completar funcionalidades fiscales, mejorar UX, preparar arquitectura para SaaS multi-tenant
 
-## FASE 3: INTEGRACIÓN (1 semana)
-1. **Testing E2E** - Flujo completo CSV→Formulario→PDF
-2. **Optimización** - Performance, UX tablet, validaciones finales
-3. **Deployment** - Configuración producción, variables entorno
+---
 
-## DEPENDENCIAS CRÍTICAS
-- **✅ Database** → ✅ Base para todos los módulos (COMPLETADO)
-- **✅ Auth** → ✅ Necesario antes de cualquier CRUD (COMPLETADO)
-- **✅ Common** → ✅ Utilidades para procesamiento CSV y cálculos (COMPLETADO)
-- **✅ Tariff Management** → ✅ Prerequisito para Budget Creation (COMPLETADO)
-- **✅ Budget Creation** → ✅ COMPLETADO → Prerequisito para PDF Generation
-- **✅ PDF Generation** → ✅ COMPLETADO → Prerequisito para Dashboard
+## Timeline General
 
-## HITOS CLAVE
-- **✅ Semana 3:** SHARED completo → ✅ formularios básicos funcionando
-- **✅ Semana 4:** Tariff Management → ✅ gestión completa de tarifas con CSV
-- **✅ Semana 5-6:** Budget Creation → ✅ COMPLETADO → presupuestos con gestión completa
-- **✅ Semana 7:** PDF Generation → ✅ COMPLETADO → flujo completo end-to-end
-- **✅ Semana 8:** Dashboard → ✅ COMPLETADO → **MVP FUNCIONAL** → comerciales pueden usar en campo
+```
+Semanas 1-2:  Usuarios y Autenticación (CRÍTICO)
+Semanas 3-4:  Mejoras Tarifas + Configuración
+Semanas 5-6:  IRPF y Recargo de Equivalencia
+Semanas 7-8:  Versiones y Notas
+Semanas 9-10: Navegación Unificada + Rich Text
+Semanas 11-12: Import/Export + Responsive Mobile
+```
 
-## PROGRESO ACTUAL
-**📊 Estado del Proyecto:** 100% Completado - **MVP FUNCIONAL** ✅
-- ✅ **FASE 1 (SHARED):** 100% completado
-- ✅ **Tariff Management:** 100% completado
-- ✅ **Budget Creation:** 100% completado
-  - ✅ Selector tarifa y formulario cliente (100%)
-  - ✅ Formulario jerárquico dinámico (100%)
-  - ✅ Cálculos automáticos tiempo real (100%)
-  - ✅ Gestión estados y guardado (100%)
-  - ✅ Listado y filtros (100%)
-  - ✅ Edición presupuestos (100%)
-  - ✅ Selector estados interactivo (100%)
-  - ✅ Validaciones completas (100%)
-- ✅ **PDF Generation:** 100% - **MÓDULO COMPLETADO** ✅
-  - ✅ Construcción payload desde json_budget_data (100%)
-  - ✅ Filtrado y renumeración jerárquica (100%)
-  - ✅ Generación summary con chapters (100%)
-  - ✅ Cálculo totals formato español (100%)
-  - ✅ Integración Rapid-PDF API (100%)
-  - ✅ Descarga y almacenamiento /public/pdfs/ (100%)
-  - ✅ Actualización budgets.pdf_url (100%)
-  - ✅ Columna PDF en listado (100%)
-  - ✅ Sistema guardado inteligente (100%)
-  - ✅ Advertencias PDF existente (100%)
-- ✅ **Dashboard:** 100% - **MÓDULO COMPLETADO** ✅
-  - ✅ Header navegación global (100%)
-  - ✅ Estadísticas por estado (100%)
-  - ✅ Filtrado por período (100%)
-  - ✅ Accesos rápidos (100%)
-  - ✅ Últimos presupuestos (100%)
-  - ✅ Próximos a caducar (100%)
-  - ✅ Permisos por rol (100%)
+---
 
-## BUDGET CREATION - RESUMEN DE IMPLEMENTACIÓN
+## SEMANA 1-2: Usuarios y Autenticación ⏳
 
-### Funcionalidades Completadas:
-1. **Flujo de Creación:**
-   - ✅ Selección de tarifa desde /tariffs
-   - ✅ Formulario 2 pasos: Cliente → Presupuesto
-   - ✅ Validación completa de datos cliente
-   - ✅ Formulario jerárquico dinámico con acordeones
-   - ✅ Navegación intuitiva (un item activo a la vez)
-   - ✅ Cálculos en tiempo real con propagación jerárquica
-   - ✅ Guardado manual (sin auto-guardado destructivo)
+### Objetivo: Sistema completo de gestión de usuarios
 
-2. **Gestión de Estados:**
-   - ✅ Estado inicial: BORRADOR
-   - ✅ Transiciones válidas implementadas
-   - ✅ Selector interactivo en listado
-   - ✅ Confirmación en cambios críticos
-   - ✅ Validación de permisos por usuario
+**Bloque 1: Usuarios y Seguridad**
 
-3. **Listado y Filtros:**
-   - ✅ Tabla completa con joins (tariffs, users)
-   - ✅ Filtros por estado y búsqueda
-   - ✅ Acciones: Editar, Eliminar
-   - ✅ Indicador días restantes de validez
-   - ✅ Tooltip con desglose de totales
+| Día  | Tarea                          | Responsable | Estado |
+| ---- | ------------------------------ | ----------- | ------ |
+| 1-2  | Tabla emisores + migración     | Backend     | ⏳     |
+| 3-4  | Página registro + validaciones | Frontend    | ⏳     |
+| 5-6  | Recuperación contraseña        | Full-stack  | ⏳     |
+| 7-8  | Perfil usuario + edición       | Frontend    | ⏳     |
+| 9-10 | CRUD usuarios (admin)          | Full-stack  | ⏳     |
 
-4. **Edición:**
-   - ✅ Carga correcta de presupuestos existentes
-   - ✅ Preservación de cantidades guardadas
-   - ✅ Flujo: budgets/json_budget_data → formulario → guardado
-   - ✅ Actualización sin pérdida de datos
+**Entregables:**
 
-### Correcciones Críticas Aplicadas:
-1. ✅ Formato español para números (coma decimal)
-2. ✅ Eliminado bucle infinito en useEffect
-3. ✅ Inicialización correcta de json_budget_data
-4. ✅ Flujo edición vs creación separado
-5. ✅ Sin guardado automático al cambiar pasos
-6. ✅ Cabecera con campos correctos (address, contact)
-7. ✅ Nota legal visible (legal_note)
-8. ✅ Selector estados con transiciones válidas
+- ✅ Usuarios pueden registrarse (empresa/autónomo)
+- ✅ Recuperación contraseña funcional
+- ✅ Admin gestiona usuarios de su empresa
+- ✅ RLS policies actualizadas
 
-### Server Actions Implementadas:
-- `getBudgets()` - Listar con joins
-- `getBudgetById()` - Obtener por ID
-- `createDraftBudget()` - Crear borrador
-- `updateBudgetDraft()` - Actualizar borrador
-- `saveBudget()` - Guardar como BORRADOR
-- `updateBudgetStatus()` - Cambiar estado con validación
-- `deleteBudget()` - Eliminar presupuesto
+**Criterio de completado:**
 
-## PDF GENERATION - RESUMEN DE IMPLEMENTACIÓN
+- Registro desde /register funciona
+- Email recuperación enviado correctamente
+- CRUD usuarios con permisos por rol
 
-### Funcionalidades Completadas:
-1. **Construcción Payload PDF:**
-   - ✅ Transformación json_budget_data → Rapid-PDF format
-   - ✅ Filtrado elementos con amount > 0
-   - ✅ Renumeración jerárquica automática
-   - ✅ Extracción chapters para summary
-   - ✅ Cálculo totals con formato español
-   - ✅ URLs absolutas para logos
+---
 
-2. **Integración Rapid-PDF API:**
-   - ✅ POST /generate_document con timeout 60s
-   - ✅ Descarga PDF con retry (2 intentos)
-   - ✅ Almacenamiento /public/pdfs/
-   - ✅ Formato nombre: presupuesto_nombre_nif_YYYY-MM-DD_HH-MM-SS.pdf
-   - ✅ Actualización budgets.pdf_url
-   - ✅ Manejo errores completo
+## SEMANA 3-4: Mejoras Tarifas + Configuración ⏳
 
-3. **Sistema Guardado Inteligente:**
-   - ✅ AlertDialog con 3 opciones en edición
-   - ✅ Sobrescribir con confirmación doble
-   - ✅ Crear nuevo (duplicar) preservando original
-   - ✅ Advertencia PDF existente al guardar
-   - ✅ Eliminación automática PDF anterior
-   - ✅ Guardado completo datos cliente
+### Objetivo: Preparar base para funcionalidades avanzadas
 
-4. **UI/UX:**
-   - ✅ Columna PDF en listado con botón descarga
-   - ✅ Botón "Generar PDF" con estados loading
-   - ✅ Tooltips informativos en todos los botones
-   - ✅ Botón cerrar pestaña con advertencia cambios
-   - ✅ Apertura PDF en nueva pestaña
+**Bloque 2: Mejoras Incrementales Tarifas**
 
-### Correcciones Críticas Aplicadas:
-1. ✅ Modo desarrollo llama API (no solo debug)
-2. ✅ Formato nombre archivo con timestamp completo
-3. ✅ Detección cambios sin guardar
-4. ✅ Inicio siempre en paso 1 al editar
-5. ✅ Validación items > 0 antes generar PDF
+| Día | Tarea                           | Responsable | Estado |
+| --- | ------------------------------- | ----------- | ------ |
+| 1   | user_id en tarifas + migración  | Backend     | ⏳     |
+| 2   | Detección automática IVAs       | Backend     | ⏳     |
+| 3-4 | Tarifa plantilla (trigger + UI) | Full-stack  | ⏳     |
 
-### Server Actions Añadidas:
-- `generateBudgetPDF()` - Generación completa PDF
-- `duplicateBudget()` - Crear copia presupuesto
-- `saveBudget()` - Extendida con eliminación PDF
+**Bloque 3: Tabla Configuración**
 
-### Helper Functions:
-- `buildPDFPayload()` - Construcción payload
-- `filterNonZeroItems()` - Filtrado elementos
-- `renumberHierarchicalIds()` - Renumeración IDs
-- `extractChapters()` - Extracción chapters
-- `calculateTotals()` - Cálculo totals con IVA
+| Día | Tarea                   | Responsable | Estado |
+| --- | ----------------------- | ----------- | ------ |
+| 5-7 | Tabla config + helpers  | Backend     | ⏳     |
+| 8-9 | Selector plantillas PDF | Frontend    | ⏳     |
+| 10  | Testing integración     | QA          | ⏳     |
 
-## DASHBOARD - RESUMEN DE IMPLEMENTACIÓN
+**Entregables:**
 
-### Funcionalidades Completadas:
-1. **Header Navegación Global:**
-   - ✅ Componente Header sticky con navegación
-   - ✅ Enlaces: Inicio, Tarifas, Presupuestos
-   - ✅ Botón Logout integrado
-   - ✅ Navegación responsive (desktop y mobile)
-   - ✅ Indicador página activa
-   - ✅ Layouts consistentes en todas las páginas
+- ✅ Tarifas tienen creador (user_id)
+- ✅ IVAs detectados automáticamente
+- ✅ Tarifa plantilla pre-carga datos
+- ✅ Config centralizada en BD
+- ✅ Selector plantillas con preview
 
-2. **Estadísticas y Métricas:**
-   - ✅ Cards compactas 4 columnas
-   - ✅ Total Presupuestos con desglose
-   - ✅ Valor Total acumulado
-   - ✅ Presupuestos del mes actual
-   - ✅ Tasa de conversión (Aprobados/Enviados)
-   - ✅ Filtrado por período (hoy/semana/mes/año)
-   - ✅ Loading states con Skeleton
+**Criterio de completado:**
 
-3. **Accesos Rápidos:**
-   - ✅ Crear Tarifa → /tariffs/create
-   - ✅ Ver Tarifas → /tariffs
-   - ✅ Ver Presupuestos → /budgets
-   - ✅ Botones optimizados (h-16)
+- Columna "Creado por" visible en listado
+- IVAs guardados en array
+- Plantilla funcional con toggle único
+- Config accesible vía helpers
 
-4. **Listados Dinámicos:**
-   - ✅ Últimos 5 presupuestos
-   - ✅ Próximos a caducar (< 7 días)
-   - ✅ Enlaces directos a edición
-   - ✅ Badges de estado coloreados
-   - ✅ Formato moneda español
-   - ✅ Advertencia visual para caducidad
+---
 
-5. **Permisos y Seguridad:**
-   - ✅ Filtrado por rol (vendedor: solo sus presupuestos)
-   - ✅ Admin/Superadmin: todos de la empresa
-   - ✅ Autenticación en layouts
-   - ✅ Redirect a login si no autenticado
+## SEMANA 5-6: IRPF y Recargo de Equivalencia ⏳
 
-### Correcciones Críticas Aplicadas:
-1. ✅ Imports Supabase corregidos (client vs server)
-2. ✅ Query simplificada sin JOINs problemáticos
-3. ✅ Tipo Database pasado correctamente
-4. ✅ Header único (sin duplicados)
-5. ✅ Padding-top eliminado (header sticky)
-6. ✅ Cards optimizadas (reducido altura y anchura)
+### Objetivo: Implementar cálculos fiscales completos
 
-### Server Actions Implementadas:
-- `getDashboardStats()` - Estadísticas con filtro período y rol
+**Bloque 4: IRPF y RE**
 
-### Componentes Creados:
-- `Header.tsx` - Navegación global
-- `DashboardClient.tsx` - Dashboard interactivo
-- `dashboard/page.tsx` - Página server component
-- `dashboard/layout.tsx` - Layout con Header
-- `dashboard.ts` - Server actions
+| Día | Tarea                      | Responsable | Estado |
+| --- | -------------------------- | ----------- | ------ |
+| 1-3 | Lógica IRPF completa       | Backend     | ⏳     |
+| 4-7 | Lógica RE + tabla dinámica | Full-stack  | ⏳     |
+| 8-9 | Modificar payload PDF      | Backend     | ⏳     |
+| 10  | Testing cálculos fiscales  | QA          | ⏳     |
 
-## REGLA FUNDAMENTAL
-❌ NO empezar siguiente módulo hasta que anterior esté READ-ONLY
-✅ Dashboard = ✅ COMPLETADO → **MVP FUNCIONAL COMPLETADO**
+**Entregables:**
 
-## PRÓXIMO PASO
-🎯 **FASE 3: INTEGRACIÓN** - Testing y Optimización
-- Testing E2E del flujo completo
-- Optimización de performance
-- Validaciones finales
-- Preparación para deployment
+- ✅ IRPF aplicado correctamente según matriz
+- ✅ RE configurable por IVA
+- ✅ Totales calculados: subtotal, base, IVA, IRPF, RE, total a pagar
+- ✅ Payload PDF incluye IRPF/RE
+- ✅ Documentación para Rapid-PDF
 
-## RIESGOS IDENTIFICADOS
-1. **✅ CSV Procesamiento** - Resuelto, validaciones funcionando
-2. **✅ Cálculos Tiempo Real** - Resuelto, formato español implementado
-3. **✅ UX Tablet** - Resuelto, navegación optimizada
-4. **✅ Rapid-PDF externo** - Resuelto, integración completa con timeout y retry
-5. **✅ Performance PDF** - Resuelto, generación ~1-2 segundos (muy por debajo del límite 60s)
+**Criterio de completado:**
 
-## COMMITS RECIENTES (Tariff Management - UI):
-- `18a386e` - feat: añadir confirmaciones al cambiar modo de logo
-- `ae14813` - docs: flujo completo importación CSV
-- `8bfa4db` - refactor: optimizar tamaño cards dashboard
-- `1eacc02` - fix: eliminar padding-top innecesario en layouts
+- IRPF visible solo si emisor=autónomo Y cliente=empresa|autónomo
+- RE aplicable solo si cliente=autónomo + checkbox marcado
+- Cálculos validados con casos reales
+- PDF renderiza correctamente
 
-## COMMITS RECIENTES (Dashboard):
-- `8bfa4db` - refactor: optimizar tamaño cards y actualizar accesos rápidos
-- `1eacc02` - fix: eliminar padding-top innecesario en main
-- `e016de2` - fix: eliminar Header duplicado de page.tsx
-- `5b7c4c2` - feat: añadir Header a dashboard y budgets
-- `1a85398` - fix: simplificar query de presupuestos
-- `236a526` - fix: mostrar Tarifas y corregir tipos Database
-- `a7970fe` - fix: corregir imports de Supabase
+---
 
-## COMMITS RECIENTES (PDF Generation):
-- feat: tooltips informativos en botones
-- feat: botón cerrar con advertencia cambios
-- feat: reorganización layout botones
-- fix: formato nombre PDF con timestamp
-- fix: modo desarrollo llama API correctamente
-- feat: sistema guardado inteligente con AlertDialogs
-- feat: duplicateBudget con fechas actualizadas
-- feat: integración completa Rapid-PDF
-- feat: construcción payload PDF con helpers
+## SEMANA 7-8: Versiones y Notas ⏳
 
-## COMMITS RECIENTES (Budget Creation):
-- `cb3a21a` - fix: corregir cabecera y nota legal
-- `c7f9b77` - feat: selector estados interactivo
-- `c4c5924` - fix: eliminar guardado automático
-- `176c6cc` - fix: inicializar json_budget_data
-- `d3abd34` - fix: flujo edición y guardado
-- `313e6b5` - debug: logs detallados
-- `2376321` - fix: bucle infinito useEffect
-- `7040cc3` - fix: validación formato español
-- `f5b16e0` - feat: listado completo
-- `506b20e` - feat: sistema guardado
-- `c6cc79d` - feat: formulario completo
+### Objetivo: Trazabilidad y seguimiento comercial
 
-## ESTADO ARCHIVOS
-**ARCHIVOS READ-ONLY (No modificar):**
-- ✅ src/lib/database/* (Database)
-- ✅ src/lib/types/* (Database)
-- ✅ src/lib/supabase/* (Database)
-- ✅ src/lib/auth/* (Auth)
-- ✅ src/components/auth/* (Auth)
-- ✅ src/lib/utils/* (Common)
-- ✅ src/lib/validators/* (Common)
-- ✅ src/lib/helpers/* (Common - incluye pdf-payload-builder.ts)
-- ✅ src/lib/constants/* (Common)
-- ✅ src/app/tariffs/* (Tariff Management)
-- ✅ src/components/tariffs/* (Tariff Management)
-- ✅ src/app/actions/tariffs.ts (Tariff Management)
-- ✅ src/app/budgets/* (Budget Creation)
-- ✅ src/components/budgets/* (Budget Creation)
-- ✅ src/app/actions/budgets.ts (Budget Creation + PDF Generation)
+**Bloque 5: Versiones y Notas**
 
-**ARCHIVOS DASHBOARD (Completado - READ-ONLY):**
-- ✅ src/app/dashboard/* (Dashboard)
-- ✅ src/components/dashboard/* (Dashboard)
-- ✅ src/components/layout/* (Header)
-- ✅ src/app/actions/dashboard.ts (Dashboard)
+| Día | Tarea                    | Responsable | Estado |
+| --- | ------------------------ | ----------- | ------ |
+| 1-3 | Sistema versiones + BD   | Backend     | ⏳     |
+| 4-5 | UI timeline versiones    | Frontend    | ⏳     |
+| 6-7 | Sistema notas + timeline | Full-stack  | ⏳     |
+| 8-9 | Botón "Guardar versión"  | Frontend    | ⏳     |
+| 10  | Testing restauración     | QA          | ⏳     |
 
-**MVP COMPLETADO - TODOS LOS MÓDULOS READ-ONLY** ✅
+**Entregables:**
+
+- ✅ Versiones guardan snapshot completo
+- ✅ Timeline muestra historial
+- ✅ Restaurar versión antigua funcional
+- ✅ Notas con timestamp automático
+- ✅ Timeline notas con usuario y fecha
+
+**Criterio de completado:**
+
+- Versiones incrementales funcionando
+- Restauración sin pérdida datos
+- Notas editables solo por creador/admin
+- UI intuitiva para ambas features
+
+---
+
+## SEMANA 9-10: Navegación Unificada + Rich Text ⏳
+
+### Objetivo: Consistencia UX y profesionalismo
+
+**Bloque 6: Navegación Unificada**
+
+| Día | Tarea                            | Responsable | Estado |
+| --- | -------------------------------- | ----------- | ------ |
+| 1-4 | Componente HierarchicalNavigator | Frontend    | ⏳     |
+| 5-6 | Migrar TariffPreview             | Frontend    | ⏳     |
+| 7-8 | Migrar BudgetHierarchyForm       | Frontend    | ⏳     |
+
+**Bloque 7: Rich Text Editor**
+
+| Día  | Tarea                        | Responsable | Estado |
+| ---- | ---------------------------- | ----------- | ------ |
+| 9-10 | Instalar Tiptap + componente | Frontend    | ⏳     |
+
+**Entregables:**
+
+- ✅ Navegación consistente en toda la app
+- ✅ Un elemento activo + ancestros visibles
+- ✅ Estilos unificados
+- ✅ Rich text editor funcional
+- ✅ HTML guardado en notas
+
+**Criterio de completado:**
+
+- TariffPreview y BudgetForm usan mismo componente
+- Navegación táctil fluida
+- Editor con negrita, cursiva, listas
+
+---
+
+## SEMANA 11-12: Import/Export + Responsive ⏳
+
+### Objetivo: Backup, movilidad, experiencia tablet/móvil
+
+**Bloque 8: Import/Export**
+
+| Día | Tarea                   | Responsable | Estado |
+| --- | ----------------------- | ----------- | ------ |
+| 1-2 | Exportar JSON/CSV       | Backend     | ⏳     |
+| 3-4 | Importar con validación | Backend     | ⏳     |
+| 5   | UI selección múltiple   | Frontend    | ⏳     |
+
+**Bloque 9: Responsive Mobile-First**
+
+| Día  | Tarea                         | Responsable | Estado |
+| ---- | ----------------------------- | ----------- | ------ |
+| 6-8  | Listados responsive (cards)   | Frontend    | ⏳     |
+| 9-10 | Formulario presupuesto mobile | Frontend    | ⏳     |
+
+**Entregables:**
+
+- ✅ Exportar tarifas/presupuestos a JSON/CSV
+- ✅ Importar desde archivo con validación
+- ✅ Listados adaptativos (tabla desktop, cards mobile)
+- ✅ Formulario presupuesto con navegación por niveles en móvil
+- ✅ App completamente funcional en tablet/smartphone
+
+**Criterio de completado:**
+
+- Backup/restore funcional
+- Responsive fluido sin bugs
+- Touch-friendly en todas las pantallas
+- Testing en dispositivos reales
+
+---
+
+## Dependencias Críticas
+
+```
+Bloque 1 (Usuarios) ──────────┐
+                              ├──> Bloque 4 (IRPF/RE)
+Bloque 2 (Tarifas) ───────────┤
+Bloque 3 (Config) ────────────┘
+
+Bloque 4 (IRPF/RE) ──> Bloque 5 (Versiones)
+
+Bloque 6 (Navegación) ──> Bloque 9 (Responsive)
+```
+
+**Regla fundamental:** No empezar siguiente bloque hasta que dependencias estén completadas
+
+---
+
+## Hitos de Validación
+
+### Hito 1 (Semana 2): Sistema de Usuarios
+
+**Validar:**
+
+- Registro funcional para empresa y autónomo
+- Admin puede gestionar usuarios de su empresa
+- Recuperación contraseña operativa
+
+### Hito 2 (Semana 4): Configuración Centralizada
+
+**Validar:**
+
+- Tabla config poblada y accesible
+- Plantillas PDF con selector y preview
+- Tarifa plantilla pre-carga datos
+
+### Hito 3 (Semana 6): Cálculos Fiscales
+
+**Validar:**
+
+- IRPF calculado correctamente según matriz
+- RE aplicable con valores configurables
+- PDF incluye IRPF/RE en totales
+
+### Hito 4 (Semana 8): Trazabilidad
+
+**Validar:**
+
+- Versiones incrementales funcionando
+- Notas con timeline y permisos
+- Restauración sin pérdida datos
+
+### Hito 5 (Semana 10): UX Unificada
+
+**Validar:**
+
+- Navegación consistente en toda la app
+- Rich text editor operativo
+- Estilos coherentes
+
+### Hito 6 (Semana 12): Mobile-Ready
+
+**Validar:**
+
+- App funcional en tablet/móvil
+- Backup/restore operativo
+- Testing en dispositivos reales
+
+---
+
+## Riesgos Identificados
+
+### Riesgo 1: Complejidad IRPF/RE
+
+**Probabilidad:** Media | **Impacto:** Alto
+**Mitigación:**
+
+- Matriz de aplicación clara y documentada
+- Tests exhaustivos con casos reales
+- Validación con contador antes de implementar
+
+### Riesgo 2: Migración datos existentes
+
+**Probabilidad:** Alta | **Impacto:** Medio
+**Mitigación:**
+
+- Scripts SQL probados en staging
+- Backup antes de cada migración
+- Rollback plan documentado
+
+### Riesgo 3: Responsive complejo
+
+**Probabilidad:** Media | **Impacto:** Medio
+**Mitigación:**
+
+- Mobile-first desde diseño
+- Testing continuo en dispositivos reales
+- Componentes adaptativos bien estructurados
+
+### Riesgo 4: Cambios en Rapid-PDF
+
+**Probabilidad:** Baja | **Impacto:** Alto
+**Mitigación:**
+
+- Documentar cambios payload claramente
+- Comunicación temprana con equipo Rapid-PDF
+- Plan B: renderizar HTML básico en servidor si falla
+
+---
+
+## Métricas de Progreso
+
+### Semanales:
+
+- Tareas completadas vs planificadas
+- Bugs encontrados/resueltos
+- Code review completados
+
+### Por Bloque:
+
+- % completado del bloque
+- Tiempo real vs estimado
+- Deuda técnica introducida
+
+### Global Fase 2:
+
+- **Progreso:** Tareas completadas / Total tareas
+- **Bloques completados:** X / 9
+- **Semanas consumidas:** X / 12
+- **Calidad:** Bugs críticos pendientes
+
+---
+
+## Testing y QA
+
+### Por Bloque:
+
+- Unit tests (helpers, cálculos)
+- Integration tests (Server Actions)
+- E2E tests (flujos críticos)
+
+### Testing Final (Semana 12):
+
+- Regresión completa MVP Fase 1
+- Flujos nuevos Fase 2
+- Performance (carga, queries)
+- Responsive (3 dispositivos mínimo)
+- Accesibilidad básica
+
+---
+
+## Criterios de Completado Fase 2
+
+### Funcionalidades:
+
+- ✅ Registro usuarios completo
+- ✅ CRUD usuarios operativo
+- ✅ IRPF implementado y validado
+- ✅ RE implementado y validado
+- ✅ Versiones de presupuestos funcional
+- ✅ Notas con timeline operativo
+- ✅ Navegación unificada
+- ✅ Rich text editor integrado
+- ✅ Import/Export funcional
+- ✅ Responsive completo
+
+### Calidad:
+
+- ✅ 0 bugs críticos
+- ✅ < 5 bugs menores conocidos
+- ✅ Tests unitarios > 60% coverage
+- ✅ Tests E2E flujos principales
+- ✅ Performance mantenida (< 3s carga)
+- ✅ Documentación actualizada
+
+### Preparación SaaS:
+
+- ✅ Arquitectura multi-tenant preparada
+- ✅ Configuración centralizada en BD
+- ✅ Permisos por rol robustos
+- ✅ Backup/restore operativo
+
+---
+
+## FASE 3 (Largo Plazo) - Preview
+
+### Funcionalidades Fase 3:
+
+1. **Sistema Suscripciones** (4 semanas)
+
+   - Planes: Free, Pro, Enterprise
+   - Integración Stripe
+   - Límites por plan
+
+2. **Paletas y Modo Oscuro** (2 semanas)
+
+   - 5-6 temas predefinidos
+   - Dark mode completo
+   - Selector de tema
+
+3. **Multi-tenant Completo** (3 semanas)
+
+   - Registro público
+   - Dashboard multi-empresa
+   - Facturación
+
+4. **Análisis Avanzados** (3 semanas)
+
+   - Gráficas conversión
+   - Análisis por comercial
+   - Reportes PDF
+
+5. **Notificaciones** (2 semanas)
+
+   - Email automático
+   - Recordatorios
+   - Alertas configurables
+
+6. **Integraciones** (4 semanas)
+   - CRM (HubSpot, Salesforce)
+   - Contabilidad (Holded, A3)
+   - Calendar sync
+
+**Duración estimada Fase 3:** 18 semanas adicionales
+
+---
+
+## Roadmap Visual
+
+```
+FASE 1 (COMPLETADA) ✅
+├─ Semanas 1-3: SHARED (Database, Auth, Common)
+├─ Semana 4: Tariff Management
+├─ Semanas 5-6: Budget Creation
+├─ Semana 7: PDF Generation
+└─ Semana 8: Dashboard
+
+FASE 2 (EN CURSO) ⏳
+├─ Semanas 1-2: Usuarios y Seguridad ⏳
+├─ Semanas 3-4: Mejoras Tarifas + Config ⏳
+├─ Semanas 5-6: IRPF y RE ⏳
+├─ Semanas 7-8: Versiones y Notas ⏳
+├─ Semanas 9-10: Navegación + Rich Text ⏳
+└─ Semanas 11-12: Import/Export + Responsive ⏳
+
+FASE 3 (PLANIFICADA) 📋
+├─ Suscripciones
+├─ Temas y Dark Mode
+├─ Multi-tenant
+├─ Analytics
+├─ Notificaciones
+└─ Integraciones
+```
+
+---
+
+## Próximos Pasos Inmediatos
+
+### Esta Semana:
+
+1. Crear tabla `emisores` en BD
+2. Implementar página `/register`
+3. Configurar email templates Supabase
+4. Comenzar CRUD usuarios
+
+### Próxima Semana:
+
+5. Completar recuperación contraseña
+6. Implementar perfil usuario
+7. Añadir `user_id` a tarifas
+8. Detectar IVAs automáticamente
+
+---
+
+## Comunicación y Reportes
+
+### Daily:
+
+- Slack: update progreso diario
+- Blockers identificados
+
+### Semanal:
+
+- Reunión review: viernes 16:00
+- Demo funcionalidades completadas
+- Planning próxima semana
+
+### Por Hito (cada 2 semanas):
+
+- Presentación stakeholders
+- Validación funcionalidades
+- Ajuste prioridades si necesario
+
+---
+
+## Recursos Necesarios
+
+### Desarrollo:
+
+- 1 Full-stack developer (principal)
+- 0.5 Frontend specialist (responsive)
+- 0.5 Backend specialist (cálculos fiscales)
+
+### QA:
+
+- 0.5 QA engineer (testing continuo)
+- Dispositivos: 1 tablet, 2 smartphones
+
+### Infraestructura:
+
+- Supabase (plan actual suficiente)
+- Rapid-PDF (documentar cambios)
+- Email service (recuperación contraseñas)
+
+---
+
+**Documento:** Planificación Fase 2
+**Versión:** 1.0
+**Fecha:** 2025-01-04
+**Estado:** Activo
+**Próxima revisión:** Fin Semana 2 (Hito 1)
