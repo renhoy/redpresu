@@ -38,8 +38,11 @@ $$;
 
 COMMENT ON FUNCTION public.get_user_empresa_id(uuid) IS 'Returns empresa_id for a user (SECURITY DEFINER to avoid RLS recursion)';
 
--- 3. Crear función helper para obtener role del usuario actual
-CREATE OR REPLACE FUNCTION public.get_user_role(user_id uuid)
+-- 3. Mantener función get_user_role() sin parámetros (usada por tariffs y otras tablas)
+-- Ya existe de migration 002, no necesita cambios
+
+-- 4. Crear función helper para obtener role de un usuario específico
+CREATE OR REPLACE FUNCTION public.get_user_role_by_id(user_id uuid)
 RETURNS text
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -56,9 +59,9 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.get_user_role(uuid) IS 'Returns role for a user (SECURITY DEFINER to avoid RLS recursion)';
+COMMENT ON FUNCTION public.get_user_role_by_id(uuid) IS 'Returns role for a specific user (SECURITY DEFINER to avoid RLS recursion)';
 
--- 4. Recrear políticas usando las funciones helper
+-- 5. Recrear políticas usando las funciones helper
 
 -- SELECT: Users can see users from their company
 CREATE POLICY "users_select_policy"
@@ -71,7 +74,7 @@ CREATE POLICY "users_select_policy"
 CREATE POLICY "users_insert_policy"
   ON public.users FOR INSERT
   WITH CHECK (
-    public.get_user_role(auth.uid()) IN ('admin', 'superadmin')
+    public.get_user_role_by_id(auth.uid()) IN ('admin', 'superadmin')
     AND empresa_id = public.get_user_empresa_id(auth.uid())
   );
 
@@ -84,7 +87,7 @@ CREATE POLICY "users_update_policy"
     OR
     -- Admin/superadmin updates users in their company
     (
-      public.get_user_role(auth.uid()) IN ('admin', 'superadmin')
+      public.get_user_role_by_id(auth.uid()) IN ('admin', 'superadmin')
       AND empresa_id = public.get_user_empresa_id(auth.uid())
     )
   )
@@ -93,7 +96,7 @@ CREATE POLICY "users_update_policy"
     id = auth.uid()
     OR
     (
-      public.get_user_role(auth.uid()) IN ('admin', 'superadmin')
+      public.get_user_role_by_id(auth.uid()) IN ('admin', 'superadmin')
       AND empresa_id = public.get_user_empresa_id(auth.uid())
     )
   );
@@ -102,7 +105,7 @@ CREATE POLICY "users_update_policy"
 CREATE POLICY "users_delete_policy"
   ON public.users FOR DELETE
   USING (
-    public.get_user_role(auth.uid()) = 'superadmin'
+    public.get_user_role_by_id(auth.uid()) = 'superadmin'
   );
 
 COMMIT;

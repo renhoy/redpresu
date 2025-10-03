@@ -33,7 +33,7 @@ export function TariffFilters({
   onFiltersChange,
   defaultStatus = 'all',
   defaultSearch = '',
-  defaultUserId = '',
+  defaultUserId = 'all',
   users = [],
   currentUserRole
 }: TariffFiltersProps) {
@@ -53,7 +53,8 @@ export function TariffFilters({
 
   const handleUserChange = (value: string) => {
     setUserId(value)
-    onFiltersChange({ status, search, user_id: value || undefined })
+    // Si value es 'all', pasar undefined para no filtrar
+    onFiltersChange({ status, search, user_id: value === 'all' ? undefined : value })
   }
 
   // Solo mostrar filtro de usuario si es admin/superadmin
@@ -84,7 +85,7 @@ export function TariffFilters({
             <SelectValue placeholder="Todos los usuarios" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos los usuarios</SelectItem>
+            <SelectItem value="all">Todos los usuarios</SelectItem>
             {users.map(user => (
               <SelectItem key={user.id} value={user.id}>
                 {user.nombre} {user.apellidos}
