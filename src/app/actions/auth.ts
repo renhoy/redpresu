@@ -228,7 +228,8 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
       .from('users')
       .insert({
         id: userId,
-        name: data.nombreComercial,
+        nombre: data.nombreComercial,
+        apellidos: '', // Por ahora vacío, se puede actualizar en perfil
         email: data.email.trim().toLowerCase(),
         role: 'admin', // Primer usuario de una nueva empresa = admin
         empresa_id: 1, // Por ahora todas las empresas tienen ID 1
