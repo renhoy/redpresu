@@ -490,3 +490,294 @@ export async function resetPassword(newPassword: string): Promise<PasswordResetR
     }
   }
 }
+
+/**
+ * Interfaz para datos de perfil de usuario
+ */
+export interface UserProfile {
+  // Datos usuario
+  id: string
+  name: string
+  email: string
+  role: string
+  empresa_id: number
+
+  // Datos emisor
+  emisor?: {
+    id: string
+    tipo: 'empresa' | 'autonomo'
+    nombre_comercial: string
+    nif: string
+    direccion_fiscal: string
+    codigo_postal?: string
+    ciudad?: string
+    provincia?: string
+    pais?: string
+    telefono?: string
+    email?: string
+    web?: string
+    irpf_percentage?: number
+    logo_url?: string
+  }
+}
+
+/**
+ * Interfaz para datos de actualización de perfil
+ */
+export interface UpdateProfileData {
+  // Datos emisor (editables)
+  nombre_comercial?: string
+  nif?: string
+  direccion_fiscal?: string
+  codigo_postal?: string
+  ciudad?: string
+  provincia?: string
+  pais?: string
+  telefono?: string
+  emailContacto?: string
+  web?: string
+  irpf_percentage?: number
+
+  // Cambio de contraseña (opcional)
+  currentPassword?: string
+  newPassword?: string
+}
+
+/**
+ * Interfaz para resultado de operaciones de perfil
+ */
+export interface ProfileResult {
+  success: boolean
+  error?: string
+  data?: UserProfile
+}
+
+/**
+ * Server Action para obtener el perfil del usuario actual
+ *
+ * @returns ProfileResult con datos del usuario y emisor
+ */
+export async function getUserProfile(): Promise<ProfileResult> {
+  try {
+    console.log('[getUserProfile] Iniciando...')
+
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+    // Obtener usuario autenticado
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      console.error('[getUserProfile] No autenticado:', authError)
+      return {
+        success: false,
+        error: 'No estás autenticado'
+      }
+    }
+
+    // Obtener datos del usuario desde public.users
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('id, name, email, role, empresa_id')
+      .eq('id', user.id)
+      .single()
+
+    if (userError || !userData) {
+      console.error('[getUserProfile] Error al obtener usuario:', userError)
+      return {
+        success: false,
+        error: 'Error al obtener datos del usuario'
+      }
+    }
+
+    // Obtener datos del emisor
+    const { data: emisorData, error: emisorError } = await supabase
+      .from('emisores')
+      .select('*')
+      .eq('user_id', user.id)
+      .single()
+
+    if (emisorError) {
+      console.error('[getUserProfile] Error al obtener emisor:', emisorError)
+      // No es crítico si no existe emisor (usuarios antiguos pueden no tenerlo)
+    }
+
+    const profile: UserProfile = {
+      ...userData,
+      emisor: emisorData ? {
+        id: emisorData.id,
+        tipo: emisorData.tipo,
+        nombre_comercial: emisorData.nombre_comercial,
+        nif: emisorData.nif,
+        direccion_fiscal: emisorData.direccion_fiscal,
+        codigo_postal: emisorData.codigo_postal,
+        ciudad: emisorData.ciudad,
+        provincia: emisorData.provincia,
+        pais: emisorData.pais,
+        telefono: emisorData.telefono,
+        email: emisorData.email,
+        web: emisorData.web,
+        irpf_percentage: emisorData.irpf_percentage,
+        logo_url: emisorData.logo_url
+      } : undefined
+    }
+
+    console.log('[getUserProfile] Perfil obtenido exitosamente')
+
+    return {
+      success: true,
+      data: profile
+    }
+  } catch (error) {
+    console.error('[getUserProfile] Error crítico:', error)
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error inesperado al obtener perfil'
+    }
+  }
+}
+
+/**
+ * Server Action para actualizar el perfil del usuario
+ *
+ * @param data - Datos a actualizar (emisor y/o contraseña)
+ * @returns ProfileResult indicando éxito o error
+ */
+export async function updateUserProfile(data: UpdateProfileData): Promise<ProfileResult> {
+  try {
+    console.log('[updateUserProfile] Iniciando...', { hasPasswordChange: !!data.currentPassword })
+
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+    // Obtener usuario autenticado
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      console.error('[updateUserProfile] No autenticado:', authError)
+      return {
+        success: false,
+        error: 'No estás autenticado'
+      }
+    }
+
+    // Si hay cambio de contraseña, validar y actualizar
+    if (data.currentPassword && data.newPassword) {
+      console.log('[updateUserProfile] Cambiando contraseña...')
+
+      // Validar contraseña nueva
+      if (data.newPassword.length < 8) {
+        return {
+          success: false,
+          error: 'La nueva contraseña debe tener al menos 8 caracteres'
+        }
+      }
+
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/
+      if (!passwordRegex.test(data.newPassword)) {
+        return {
+          success: false,
+          error: 'La contraseña debe contener al menos una mayúscula, una minúscula y un número'
+        }
+      }
+
+      // Verificar contraseña actual
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email!,
+        password: data.currentPassword
+      })
+
+      if (signInError) {
+        console.error('[updateUserProfile] Contraseña actual incorrecta:', signInError)
+        return {
+          success: false,
+          error: 'La contraseña actual es incorrecta'
+        }
+      }
+
+      // Actualizar contraseña
+      const { error: updatePasswordError } = await supabase.auth.updateUser({
+        password: data.newPassword
+      })
+
+      if (updatePasswordError) {
+        console.error('[updateUserProfile] Error al actualizar contraseña:', updatePasswordError)
+        return {
+          success: false,
+          error: 'Error al actualizar la contraseña'
+        }
+      }
+
+      console.log('[updateUserProfile] Contraseña actualizada exitosamente')
+    }
+
+    // Actualizar datos del emisor si se proporcionaron
+    const hasEmisorData = data.nombre_comercial || data.nif || data.direccion_fiscal ||
+                          data.codigo_postal || data.ciudad || data.provincia ||
+                          data.telefono || data.emailContacto || data.web ||
+                          data.irpf_percentage !== undefined
+
+    if (hasEmisorData) {
+      console.log('[updateUserProfile] Actualizando datos emisor...')
+
+      // Construir objeto de actualización solo con campos proporcionados
+      const updateData: any = {}
+
+      if (data.nombre_comercial) updateData.nombre_comercial = data.nombre_comercial.trim()
+      if (data.nif) updateData.nif = data.nif.trim().toUpperCase()
+      if (data.direccion_fiscal) updateData.direccion_fiscal = data.direccion_fiscal.trim()
+      if (data.codigo_postal !== undefined) updateData.codigo_postal = data.codigo_postal?.trim() || null
+      if (data.ciudad !== undefined) updateData.ciudad = data.ciudad?.trim() || null
+      if (data.provincia !== undefined) updateData.provincia = data.provincia?.trim() || null
+      if (data.pais !== undefined) updateData.pais = data.pais?.trim() || null
+      if (data.telefono !== undefined) updateData.telefono = data.telefono?.trim() || null
+      if (data.emailContacto !== undefined) updateData.email = data.emailContacto?.trim() || null
+      if (data.web !== undefined) updateData.web = data.web?.trim() || null
+      if (data.irpf_percentage !== undefined) updateData.irpf_percentage = data.irpf_percentage
+
+      // Añadir updated_at
+      updateData.updated_at = new Date().toISOString()
+
+      // Actualizar emisor
+      const { error: emisorError } = await supabase
+        .from('emisores')
+        .update(updateData)
+        .eq('user_id', user.id)
+
+      if (emisorError) {
+        console.error('[updateUserProfile] Error al actualizar emisor:', emisorError)
+        return {
+          success: false,
+          error: 'Error al actualizar los datos del emisor'
+        }
+      }
+
+      console.log('[updateUserProfile] Datos emisor actualizados exitosamente')
+    }
+
+    // Obtener perfil actualizado
+    const profileResult = await getUserProfile()
+
+    if (!profileResult.success) {
+      return {
+        success: false,
+        error: 'Error al obtener el perfil actualizado'
+      }
+    }
+
+    console.log('[updateUserProfile] Perfil actualizado exitosamente')
+
+    return {
+      success: true,
+      data: profileResult.data
+    }
+  } catch (error) {
+    console.error('[updateUserProfile] Error crítico:', error)
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error inesperado al actualizar perfil'
+    }
+  }
+}
