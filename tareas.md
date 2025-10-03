@@ -1,12 +1,14 @@
 # Tareas - Fase 2: Evolución Funcional y Multi-tenant
 
-## MÓDULO ACTIVO: Usuarios y Autenticación
+## MÓDULO ACTIVO: Mejoras Tarifas (Bloque 2)
 
-**Tareas Activas:** 0/12 (Fase 2 iniciando)
+**Tareas Activas:** 0/3
+
+**Siguiente tarea:** 2.1 - Campo user_id en tarifas
 
 ---
 
-## BLOQUE 1: USUARIOS Y SEGURIDAD (CRÍTICO) ⏳
+## ✅ BLOQUE 1: USUARIOS Y SEGURIDAD (CRÍTICO) - COMPLETADO
 
 ### Tareas Críticas:
 
@@ -79,7 +81,7 @@
 
 #### 1.4 CRUD de Usuarios (Admin)
 
-**Prioridad:** ALTA | **Estimación:** 3 días | **Estado:** ⏳ Pendiente
+**Prioridad:** ALTA | **Estimación:** 3 días | **Estado:** ✅ Completado
 
 - [ ] Tabla `users` añadir campos `status`, `invited_by`, `last_login`
 - [ ] Server Actions CRUD usuarios
@@ -93,7 +95,7 @@
 
 **Archivos nuevos:**
 
-- `migrations/005_users_status_fields.sql`
+- `migrations/007_users_status_fields.sql`
 - `src/app/users/page.tsx`
 - `src/app/users/create/page.tsx`
 - `src/app/users/[id]/edit/page.tsx`
@@ -109,17 +111,18 @@
 
 ---
 
-## PROGRESO BLOQUE 1: 3/4 tareas completadas (75%)
+## ✅ BLOQUE 1 COMPLETADO: 4/4 tareas (100%)
 
 Completado:
 ✅ 1.1 Sistema Registro (migrations 004-006, registro completo con tooltips)
 ✅ 1.2 Recuperación Contraseña (flujo completo con emails)
 ✅ 1.3 Perfil Usuario (edición datos + cambio contraseña)
+✅ 1.4 CRUD Usuarios (migration 007, gestión completa admin)
 
-Pendiente:
-⏳ 1.4 CRUD Usuarios (admin) - Siguiente tarea
-
-Migraciones ejecutadas: 004, 005, 006
+**Migraciones:** 004, 005, 006, 007
+**Archivos nuevos:** 15+ (auth, profile, users)
+**Semanas:** 1-2 completadas
+**Siguiente bloque:** Bloque 2 - Mejoras Tarifas
 
 ---
 
