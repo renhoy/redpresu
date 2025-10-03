@@ -15,13 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Building2, User } from "lucide-react";
 import {
   registerSchema,
@@ -51,7 +45,7 @@ export default function RegisterForm() {
     email: "",
     password: "",
     confirmPassword: "",
-    tipo: undefined,
+    tipo: "empresa", // Por defecto empresa
     nombreComercial: "",
     nif: "",
     direccionFiscal: "",
@@ -62,7 +56,7 @@ export default function RegisterForm() {
     telefono: "",
     emailContacto: "",
     web: "",
-    irpfPercentage: 15,
+    irpfPercentage: undefined, // Solo para autónomos
   });
 
   const [errors, setErrors] = useState<RegisterFormErrors>({});
@@ -167,11 +161,11 @@ export default function RegisterForm() {
       }
     };
 
-  const handleSelectChange = (value: "empresa" | "autonomo") => {
+  const handleTabChange = (value: "empresa" | "autonomo") => {
     setFormData((prev) => ({
       ...prev,
       tipo: value,
-      // Si cambia a empresa, limpiar IRPF
+      // Si cambia a autónomo, poner IRPF por defecto
       irpfPercentage: value === "autonomo" ? 15 : undefined,
     }));
 
@@ -205,27 +199,27 @@ export default function RegisterForm() {
           <div className="space-y-4">
             <h3 className="font-semibold text-lg">Datos de Acceso</h3>
 
-            {/* Email */}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="tu@email.com"
-                value={formData.email}
-                onChange={handleInputChange("email")}
-                className={errors.email ? "border-red-500" : ""}
-                disabled={isLoading}
-                autoComplete="email"
-              />
-              {errors.email && (
-                <p className="text-sm text-red-600">{errors.email}</p>
-              )}
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              {/* Email - 50% */}
+              <div className="md:col-span-6 space-y-2">
+                <Label htmlFor="email">Email *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="tu@email.com"
+                  value={formData.email}
+                  onChange={handleInputChange("email")}
+                  className={errors.email ? "border-red-500" : ""}
+                  disabled={isLoading}
+                  autoComplete="email"
+                />
+                {errors.email && (
+                  <p className="text-sm text-red-600">{errors.email}</p>
+                )}
+              </div>
 
-            {/* Password */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
+              {/* Contraseña - 25% */}
+              <div className="md:col-span-3 space-y-2">
                 <Label htmlFor="password">Contraseña *</Label>
                 <Input
                   id="password"
@@ -242,7 +236,8 @@ export default function RegisterForm() {
                 )}
               </div>
 
-              <div className="space-y-2">
+              {/* Confirmar Contraseña - 25% */}
+              <div className="md:col-span-3 space-y-2">
                 <Label htmlFor="confirmPassword">Confirmar Contraseña *</Label>
                 <Input
                   id="confirmPassword"
@@ -263,129 +258,153 @@ export default function RegisterForm() {
             </div>
           </div>
 
-          {/* Sección: Datos del Issuer (Emisor) */}
+          {/* Sección: Datos Fiscales */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-lg">Datos del Emisor</h3>
+            <h3 className="font-semibold text-lg">Datos Fiscales</h3>
 
-            {/* Tipo */}
+            {/* Tipo - Tabs */}
             <div className="space-y-2">
-              <Label htmlFor="tipo">Tipo de Emisor *</Label>
-              <Select
+              <Label>Tipo de Emisor *</Label>
+              <Tabs
                 value={formData.tipo}
-                onValueChange={handleSelectChange}
-                disabled={isLoading}
+                onValueChange={handleTabChange}
+                className="w-full"
               >
-                <SelectTrigger className={errors.tipo ? "border-red-500" : ""}>
-                  <SelectValue placeholder="Selecciona el tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="empresa">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4" />
-                      <span>Empresa</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="autonomo">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      <span>Autónomo</span>
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="empresa" disabled={isLoading}>
+                    <Building2 className="h-4 w-4 mr-2" />
+                    Empresa
+                  </TabsTrigger>
+                  <TabsTrigger value="autonomo" disabled={isLoading}>
+                    <User className="h-4 w-4 mr-2" />
+                    Autónomo
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
               {errors.tipo && (
                 <p className="text-sm text-red-600">{errors.tipo}</p>
               )}
             </div>
 
-            {/* Nombre Comercial y NIF */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="nombreComercial">Nombre Comercial *</Label>
-                <Input
-                  id="nombreComercial"
-                  type="text"
-                  placeholder="Mi Empresa S.L."
-                  value={formData.nombreComercial}
-                  onChange={handleInputChange("nombreComercial")}
-                  className={errors.nombreComercial ? "border-red-500" : ""}
-                  disabled={isLoading}
-                />
-                {errors.nombreComercial && (
-                  <p className="text-sm text-red-600">
-                    {errors.nombreComercial}
-                  </p>
-                )}
-              </div>
+            {/* Empresa: Nombre Comercial 75% + NIF 25% */}
+            {formData.tipo === "empresa" && (
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <div className="md:col-span-9 space-y-2">
+                  <Label htmlFor="nombreComercial">Nombre Comercial *</Label>
+                  <Input
+                    id="nombreComercial"
+                    type="text"
+                    placeholder="Mi Empresa S.L."
+                    value={formData.nombreComercial}
+                    onChange={handleInputChange("nombreComercial")}
+                    className={errors.nombreComercial ? "border-red-500" : ""}
+                    disabled={isLoading}
+                  />
+                  {errors.nombreComercial && (
+                    <p className="text-sm text-red-600">
+                      {errors.nombreComercial}
+                    </p>
+                  )}
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="nif">NIF/CIF *</Label>
-                <Input
-                  id="nif"
-                  type="text"
-                  placeholder="B12345678"
-                  value={formData.nif}
-                  onChange={handleInputChange("nif")}
-                  className={errors.nif ? "border-red-500" : ""}
-                  disabled={isLoading}
-                />
-                {errors.nif && (
-                  <p className="text-sm text-red-600">{errors.nif}</p>
-                )}
-              </div>
-            </div>
-
-            {/* IRPF (solo autónomos) */}
-            {formData.tipo === "autonomo" && (
-              <div className="space-y-2">
-                <Label htmlFor="irpfPercentage">% IRPF (opcional)</Label>
-                <Input
-                  id="irpfPercentage"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  placeholder="15"
-                  value={formData.irpfPercentage ?? ""}
-                  onChange={handleInputChange("irpfPercentage")}
-                  className={errors.irpfPercentage ? "border-red-500" : ""}
-                  disabled={isLoading}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Porcentaje de retención IRPF (por defecto 15%)
-                </p>
-                {errors.irpfPercentage && (
-                  <p className="text-sm text-red-600">
-                    {errors.irpfPercentage}
-                  </p>
-                )}
+                <div className="md:col-span-3 space-y-2">
+                  <Label htmlFor="nif">NIF/CIF *</Label>
+                  <Input
+                    id="nif"
+                    type="text"
+                    placeholder="B12345678"
+                    value={formData.nif}
+                    onChange={handleInputChange("nif")}
+                    className={errors.nif ? "border-red-500" : ""}
+                    disabled={isLoading}
+                  />
+                  {errors.nif && (
+                    <p className="text-sm text-red-600">{errors.nif}</p>
+                  )}
+                </div>
               </div>
             )}
-          </div>
 
-          {/* Sección: Dirección Fiscal */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-lg">Dirección Fiscal</h3>
+            {/* Autónomo: Nombre 50% + NIF 25% + IRPF 25% */}
+            {formData.tipo === "autonomo" && (
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <div className="md:col-span-6 space-y-2">
+                  <Label htmlFor="nombreComercial">Nombre Comercial *</Label>
+                  <Input
+                    id="nombreComercial"
+                    type="text"
+                    placeholder="Juan Pérez"
+                    value={formData.nombreComercial}
+                    onChange={handleInputChange("nombreComercial")}
+                    className={errors.nombreComercial ? "border-red-500" : ""}
+                    disabled={isLoading}
+                  />
+                  {errors.nombreComercial && (
+                    <p className="text-sm text-red-600">
+                      {errors.nombreComercial}
+                    </p>
+                  )}
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="direccionFiscal">Dirección *</Label>
-              <Input
-                id="direccionFiscal"
-                type="text"
-                placeholder="Calle Principal, 123"
-                value={formData.direccionFiscal}
-                onChange={handleInputChange("direccionFiscal")}
-                className={errors.direccionFiscal ? "border-red-500" : ""}
-                disabled={isLoading}
-              />
-              {errors.direccionFiscal && (
-                <p className="text-sm text-red-600">{errors.direccionFiscal}</p>
-              )}
-            </div>
+                <div className="md:col-span-3 space-y-2">
+                  <Label htmlFor="nif">NIF *</Label>
+                  <Input
+                    id="nif"
+                    type="text"
+                    placeholder="12345678A"
+                    value={formData.nif}
+                    onChange={handleInputChange("nif")}
+                    className={errors.nif ? "border-red-500" : ""}
+                    disabled={isLoading}
+                  />
+                  {errors.nif && (
+                    <p className="text-sm text-red-600">{errors.nif}</p>
+                  )}
+                </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="codigoPostal">Código Postal</Label>
+                <div className="md:col-span-3 space-y-2">
+                  <Label htmlFor="irpfPercentage">% IRPF *</Label>
+                  <Input
+                    id="irpfPercentage"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    placeholder="15"
+                    value={formData.irpfPercentage ?? ""}
+                    onChange={handleInputChange("irpfPercentage")}
+                    className={errors.irpfPercentage ? "border-red-500" : ""}
+                    disabled={isLoading}
+                  />
+                  {errors.irpfPercentage && (
+                    <p className="text-sm text-red-600">
+                      {errors.irpfPercentage}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Dirección - 75% + Código Postal - 25% */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              <div className="md:col-span-9 space-y-2">
+                <Label htmlFor="direccionFiscal">Dirección *</Label>
+                <Input
+                  id="direccionFiscal"
+                  type="text"
+                  placeholder="Calle Principal, 123"
+                  value={formData.direccionFiscal}
+                  onChange={handleInputChange("direccionFiscal")}
+                  className={errors.direccionFiscal ? "border-red-500" : ""}
+                  disabled={isLoading}
+                />
+                {errors.direccionFiscal && (
+                  <p className="text-sm text-red-600">{errors.direccionFiscal}</p>
+                )}
+              </div>
+
+              <div className="md:col-span-3 space-y-2">
+                <Label htmlFor="codigoPostal">Código Postal *</Label>
                 <Input
                   id="codigoPostal"
                   type="text"
@@ -400,9 +419,12 @@ export default function RegisterForm() {
                   <p className="text-sm text-red-600">{errors.codigoPostal}</p>
                 )}
               </div>
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="ciudad">Ciudad</Label>
+            {/* Localidad - 75% + Provincia - 25% */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              <div className="md:col-span-9 space-y-2">
+                <Label htmlFor="ciudad">Localidad *</Label>
                 <Input
                   id="ciudad"
                   type="text"
@@ -417,8 +439,8 @@ export default function RegisterForm() {
                 )}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="provincia">Provincia</Label>
+              <div className="md:col-span-3 space-y-2">
+                <Label htmlFor="provincia">Provincia *</Label>
                 <Input
                   id="provincia"
                   type="text"
@@ -435,14 +457,13 @@ export default function RegisterForm() {
             </div>
           </div>
 
-          {/* Sección: Datos de Contacto (Opcionales) */}
+          {/* Sección: Datos de Contacto */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-lg">
-              Datos de Contacto (Opcionales)
-            </h3>
+            <h3 className="font-semibold text-lg">Datos de Contacto</h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
+            {/* Teléfono 25% + Email 50% + Web 25% */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              <div className="md:col-span-3 space-y-2">
                 <Label htmlFor="telefono">Teléfono</Label>
                 <Input
                   id="telefono"
@@ -458,8 +479,8 @@ export default function RegisterForm() {
                 )}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="emailContacto">Email de Contacto</Label>
+              <div className="md:col-span-6 space-y-2">
+                <Label htmlFor="emailContacto">Email</Label>
                 <Input
                   id="emailContacto"
                   type="email"
@@ -469,29 +490,26 @@ export default function RegisterForm() {
                   className={errors.emailContacto ? "border-red-500" : ""}
                   disabled={isLoading}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Si es diferente al email de acceso
-                </p>
                 {errors.emailContacto && (
                   <p className="text-sm text-red-600">{errors.emailContacto}</p>
                 )}
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="web">Sitio Web</Label>
-              <Input
-                id="web"
-                type="url"
-                placeholder="https://www.tuempresa.com"
-                value={formData.web}
-                onChange={handleInputChange("web")}
-                className={errors.web ? "border-red-500" : ""}
-                disabled={isLoading}
-              />
-              {errors.web && (
-                <p className="text-sm text-red-600">{errors.web}</p>
-              )}
+              <div className="md:col-span-3 space-y-2">
+                <Label htmlFor="web">Sitio Web</Label>
+                <Input
+                  id="web"
+                  type="url"
+                  placeholder="www.empresa.com"
+                  value={formData.web}
+                  onChange={handleInputChange("web")}
+                  className={errors.web ? "border-red-500" : ""}
+                  disabled={isLoading}
+                />
+                {errors.web && (
+                  <p className="text-sm text-red-600">{errors.web}</p>
+                )}
+              </div>
             </div>
           </div>
           <Button type="submit" className="w-full" disabled={isLoading}>

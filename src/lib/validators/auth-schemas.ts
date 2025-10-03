@@ -102,13 +102,15 @@ export const registerSchema = z.object({
     .optional()
     .or(z.literal('')),
 
-  // IRPF (solo para autónomos)
+  // IRPF (obligatorio para autónomos)
   irpfPercentage: z
-    .number()
+    .number({
+      required_error: 'El % IRPF es requerido para autónomos',
+      invalid_type_error: 'El % IRPF debe ser un número'
+    })
     .min(0, 'El % IRPF no puede ser negativo')
     .max(100, 'El % IRPF no puede exceder 100%')
     .optional()
-    .or(z.literal(null))
 }).refine(
   (data) => data.password === data.confirmPassword,
   {
@@ -117,14 +119,14 @@ export const registerSchema = z.object({
   }
 ).refine(
   (data) => {
-    // Si es autónomo, IRPF es opcional pero debe ser un número válido si se proporciona
-    if (data.tipo === 'autonomo' && data.irpfPercentage !== null && data.irpfPercentage !== undefined) {
-      return data.irpfPercentage >= 0 && data.irpfPercentage <= 100;
+    // Si es autónomo, IRPF es OBLIGATORIO
+    if (data.tipo === 'autonomo') {
+      return data.irpfPercentage !== null && data.irpfPercentage !== undefined;
     }
     return true;
   },
   {
-    message: 'El % IRPF debe estar entre 0 y 100',
+    message: 'El % IRPF es obligatorio para autónomos',
     path: ['irpfPercentage']
   }
 );
