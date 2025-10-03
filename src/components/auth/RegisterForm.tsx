@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Loader2, Building2, User } from "lucide-react";
 import {
   registerSchema,
@@ -178,22 +179,23 @@ export default function RegisterForm() {
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-center">Crear Cuenta</CardTitle>
-        <CardDescription className="text-center">
-          Completa el formulario para registrarte en el sistema
-        </CardDescription>
-      </CardHeader>
+    <TooltipProvider>
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl text-center">Crear Cuenta</CardTitle>
+          <CardDescription className="text-center">
+            Completa el formulario para registrarte en el sistema
+          </CardDescription>
+        </CardHeader>
 
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-6">
-          {/* Error general */}
-          {errors.general && (
-            <Alert variant="destructive">
-              <AlertDescription>{errors.general}</AlertDescription>
-            </Alert>
-          )}
+        <form onSubmit={handleSubmit}>
+          <CardContent className="space-y-6">
+            {/* Error general */}
+            {errors.general && (
+              <Alert variant="destructive">
+                <AlertDescription>{errors.general}</AlertDescription>
+              </Alert>
+            )}
 
           {/* Sección: Datos de Acceso */}
           <div className="space-y-4">
@@ -201,56 +203,74 @@ export default function RegisterForm() {
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
               {/* Email - 50% */}
-              <div className="md:col-span-6 space-y-2">
-                <Label htmlFor="email">Email *</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="tu@email.com"
-                  value={formData.email}
-                  onChange={handleInputChange("email")}
-                  className={errors.email ? "border-red-500" : ""}
-                  disabled={isLoading}
-                  autoComplete="email"
-                />
+              <div className="md:col-span-6">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="Email *"
+                      value={formData.email}
+                      onChange={handleInputChange("email")}
+                      className={errors.email ? "border-red-500" : ""}
+                      disabled={isLoading}
+                      autoComplete="email"
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>tu@email.com</p>
+                  </TooltipContent>
+                </Tooltip>
                 {errors.email && (
-                  <p className="text-sm text-red-600">{errors.email}</p>
+                  <p className="text-sm text-red-600 mt-1">{errors.email}</p>
                 )}
               </div>
 
               {/* Contraseña - 25% */}
-              <div className="md:col-span-3 space-y-2">
-                <Label htmlFor="password">Contraseña *</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Mínimo 8 caracteres"
-                  value={formData.password}
-                  onChange={handleInputChange("password")}
-                  className={errors.password ? "border-red-500" : ""}
-                  disabled={isLoading}
-                  autoComplete="new-password"
-                />
+              <div className="md:col-span-3">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="Contraseña *"
+                      value={formData.password}
+                      onChange={handleInputChange("password")}
+                      className={errors.password ? "border-red-500" : ""}
+                      disabled={isLoading}
+                      autoComplete="new-password"
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Mínimo 8 caracteres</p>
+                  </TooltipContent>
+                </Tooltip>
                 {errors.password && (
-                  <p className="text-sm text-red-600">{errors.password}</p>
+                  <p className="text-sm text-red-600 mt-1">{errors.password}</p>
                 )}
               </div>
 
               {/* Confirmar Contraseña - 25% */}
-              <div className="md:col-span-3 space-y-2">
-                <Label htmlFor="confirmPassword">Confirmar Contraseña *</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="Repite tu contraseña"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange("confirmPassword")}
-                  className={errors.confirmPassword ? "border-red-500" : ""}
-                  disabled={isLoading}
-                  autoComplete="new-password"
-                />
+              <div className="md:col-span-3">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      placeholder="Confirmar *"
+                      value={formData.confirmPassword}
+                      onChange={handleInputChange("confirmPassword")}
+                      className={errors.confirmPassword ? "border-red-500" : ""}
+                      disabled={isLoading}
+                      autoComplete="new-password"
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Confirma contraseña</p>
+                  </TooltipContent>
+                </Tooltip>
                 {errors.confirmPassword && (
-                  <p className="text-sm text-red-600">
+                  <p className="text-sm text-red-600 mt-1">
                     {errors.confirmPassword}
                   </p>
                 )}
@@ -262,9 +282,8 @@ export default function RegisterForm() {
           <div className="space-y-4">
             <h3 className="font-semibold text-lg">Datos Fiscales</h3>
 
-            {/* Tipo - Tabs */}
-            <div className="space-y-2">
-              <Label>Tipo de Emisor *</Label>
+            {/* Tipo - Tabs (sin label) */}
+            <div>
               <Tabs
                 value={formData.tipo}
                 onValueChange={handleTabChange}
@@ -282,44 +301,56 @@ export default function RegisterForm() {
                 </TabsList>
               </Tabs>
               {errors.tipo && (
-                <p className="text-sm text-red-600">{errors.tipo}</p>
+                <p className="text-sm text-red-600 mt-1">{errors.tipo}</p>
               )}
             </div>
 
             {/* Empresa: Nombre Comercial 75% + NIF 25% */}
             {formData.tipo === "empresa" && (
               <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                <div className="md:col-span-9 space-y-2">
-                  <Label htmlFor="nombreComercial">Nombre Comercial *</Label>
-                  <Input
-                    id="nombreComercial"
-                    type="text"
-                    placeholder="Mi Empresa S.L."
-                    value={formData.nombreComercial}
-                    onChange={handleInputChange("nombreComercial")}
-                    className={errors.nombreComercial ? "border-red-500" : ""}
-                    disabled={isLoading}
-                  />
+                <div className="md:col-span-9">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Input
+                        id="nombreComercial"
+                        type="text"
+                        placeholder="Nombre Comercial *"
+                        value={formData.nombreComercial}
+                        onChange={handleInputChange("nombreComercial")}
+                        className={errors.nombreComercial ? "border-red-500" : ""}
+                        disabled={isLoading}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Mi Empresa S.L.</p>
+                    </TooltipContent>
+                  </Tooltip>
                   {errors.nombreComercial && (
-                    <p className="text-sm text-red-600">
+                    <p className="text-sm text-red-600 mt-1">
                       {errors.nombreComercial}
                     </p>
                   )}
                 </div>
 
-                <div className="md:col-span-3 space-y-2">
-                  <Label htmlFor="nif">NIF/CIF *</Label>
-                  <Input
-                    id="nif"
-                    type="text"
-                    placeholder="B12345678"
-                    value={formData.nif}
-                    onChange={handleInputChange("nif")}
-                    className={errors.nif ? "border-red-500" : ""}
-                    disabled={isLoading}
-                  />
+                <div className="md:col-span-3">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Input
+                        id="nif"
+                        type="text"
+                        placeholder="NIF/CIF *"
+                        value={formData.nif}
+                        onChange={handleInputChange("nif")}
+                        className={errors.nif ? "border-red-500" : ""}
+                        disabled={isLoading}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>B12345678</p>
+                    </TooltipContent>
+                  </Tooltip>
                   {errors.nif && (
-                    <p className="text-sm text-red-600">{errors.nif}</p>
+                    <p className="text-sm text-red-600 mt-1">{errors.nif}</p>
                   )}
                 </div>
               </div>
@@ -328,56 +359,74 @@ export default function RegisterForm() {
             {/* Autónomo: Nombre 50% + NIF 25% + IRPF 25% */}
             {formData.tipo === "autonomo" && (
               <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                <div className="md:col-span-6 space-y-2">
-                  <Label htmlFor="nombreComercial">Nombre Comercial *</Label>
-                  <Input
-                    id="nombreComercial"
-                    type="text"
-                    placeholder="Juan Pérez"
-                    value={formData.nombreComercial}
-                    onChange={handleInputChange("nombreComercial")}
-                    className={errors.nombreComercial ? "border-red-500" : ""}
-                    disabled={isLoading}
-                  />
+                <div className="md:col-span-6">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Input
+                        id="nombreComercial"
+                        type="text"
+                        placeholder="Nombre Comercial *"
+                        value={formData.nombreComercial}
+                        onChange={handleInputChange("nombreComercial")}
+                        className={errors.nombreComercial ? "border-red-500" : ""}
+                        disabled={isLoading}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Juan Pérez</p>
+                    </TooltipContent>
+                  </Tooltip>
                   {errors.nombreComercial && (
-                    <p className="text-sm text-red-600">
+                    <p className="text-sm text-red-600 mt-1">
                       {errors.nombreComercial}
                     </p>
                   )}
                 </div>
 
-                <div className="md:col-span-3 space-y-2">
-                  <Label htmlFor="nif">NIF *</Label>
-                  <Input
-                    id="nif"
-                    type="text"
-                    placeholder="12345678A"
-                    value={formData.nif}
-                    onChange={handleInputChange("nif")}
-                    className={errors.nif ? "border-red-500" : ""}
-                    disabled={isLoading}
-                  />
+                <div className="md:col-span-3">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Input
+                        id="nif"
+                        type="text"
+                        placeholder="NIF *"
+                        value={formData.nif}
+                        onChange={handleInputChange("nif")}
+                        className={errors.nif ? "border-red-500" : ""}
+                        disabled={isLoading}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>12345678A</p>
+                    </TooltipContent>
+                  </Tooltip>
                   {errors.nif && (
-                    <p className="text-sm text-red-600">{errors.nif}</p>
+                    <p className="text-sm text-red-600 mt-1">{errors.nif}</p>
                   )}
                 </div>
 
-                <div className="md:col-span-3 space-y-2">
-                  <Label htmlFor="irpfPercentage">% IRPF *</Label>
-                  <Input
-                    id="irpfPercentage"
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    placeholder="15"
-                    value={formData.irpfPercentage ?? ""}
-                    onChange={handleInputChange("irpfPercentage")}
-                    className={errors.irpfPercentage ? "border-red-500" : ""}
-                    disabled={isLoading}
-                  />
+                <div className="md:col-span-3">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Input
+                        id="irpfPercentage"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        placeholder="% IRPF *"
+                        value={formData.irpfPercentage ?? ""}
+                        onChange={handleInputChange("irpfPercentage")}
+                        className={errors.irpfPercentage ? "border-red-500" : ""}
+                        disabled={isLoading}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>15</p>
+                    </TooltipContent>
+                  </Tooltip>
                   {errors.irpfPercentage && (
-                    <p className="text-sm text-red-600">
+                    <p className="text-sm text-red-600 mt-1">
                       {errors.irpfPercentage}
                     </p>
                   )}
@@ -387,71 +436,95 @@ export default function RegisterForm() {
 
             {/* Dirección - 75% + Código Postal - 25% */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-              <div className="md:col-span-9 space-y-2">
-                <Label htmlFor="direccionFiscal">Dirección *</Label>
-                <Input
-                  id="direccionFiscal"
-                  type="text"
-                  placeholder="Calle Principal, 123"
-                  value={formData.direccionFiscal}
-                  onChange={handleInputChange("direccionFiscal")}
-                  className={errors.direccionFiscal ? "border-red-500" : ""}
-                  disabled={isLoading}
-                />
+              <div className="md:col-span-9">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Input
+                      id="direccionFiscal"
+                      type="text"
+                      placeholder="Dirección *"
+                      value={formData.direccionFiscal}
+                      onChange={handleInputChange("direccionFiscal")}
+                      className={errors.direccionFiscal ? "border-red-500" : ""}
+                      disabled={isLoading}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Calle Real, 123</p>
+                  </TooltipContent>
+                </Tooltip>
                 {errors.direccionFiscal && (
-                  <p className="text-sm text-red-600">{errors.direccionFiscal}</p>
+                  <p className="text-sm text-red-600 mt-1">{errors.direccionFiscal}</p>
                 )}
               </div>
 
-              <div className="md:col-span-3 space-y-2">
-                <Label htmlFor="codigoPostal">Código Postal *</Label>
-                <Input
-                  id="codigoPostal"
-                  type="text"
-                  placeholder="28001"
-                  maxLength={5}
-                  value={formData.codigoPostal}
-                  onChange={handleInputChange("codigoPostal")}
-                  className={errors.codigoPostal ? "border-red-500" : ""}
-                  disabled={isLoading}
-                />
+              <div className="md:col-span-3">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Input
+                      id="codigoPostal"
+                      type="text"
+                      placeholder="Código Postal *"
+                      maxLength={5}
+                      value={formData.codigoPostal}
+                      onChange={handleInputChange("codigoPostal")}
+                      className={errors.codigoPostal ? "border-red-500" : ""}
+                      disabled={isLoading}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>41200</p>
+                  </TooltipContent>
+                </Tooltip>
                 {errors.codigoPostal && (
-                  <p className="text-sm text-red-600">{errors.codigoPostal}</p>
+                  <p className="text-sm text-red-600 mt-1">{errors.codigoPostal}</p>
                 )}
               </div>
             </div>
 
             {/* Localidad - 75% + Provincia - 25% */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-              <div className="md:col-span-9 space-y-2">
-                <Label htmlFor="ciudad">Localidad *</Label>
-                <Input
-                  id="ciudad"
-                  type="text"
-                  placeholder="Madrid"
-                  value={formData.ciudad}
-                  onChange={handleInputChange("ciudad")}
-                  className={errors.ciudad ? "border-red-500" : ""}
-                  disabled={isLoading}
-                />
+              <div className="md:col-span-9">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Input
+                      id="ciudad"
+                      type="text"
+                      placeholder="Localidad *"
+                      value={formData.ciudad}
+                      onChange={handleInputChange("ciudad")}
+                      className={errors.ciudad ? "border-red-500" : ""}
+                      disabled={isLoading}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Alcalá del Río</p>
+                  </TooltipContent>
+                </Tooltip>
                 {errors.ciudad && (
-                  <p className="text-sm text-red-600">{errors.ciudad}</p>
+                  <p className="text-sm text-red-600 mt-1">{errors.ciudad}</p>
                 )}
               </div>
 
-              <div className="md:col-span-3 space-y-2">
-                <Label htmlFor="provincia">Provincia *</Label>
-                <Input
-                  id="provincia"
-                  type="text"
-                  placeholder="Madrid"
-                  value={formData.provincia}
-                  onChange={handleInputChange("provincia")}
-                  className={errors.provincia ? "border-red-500" : ""}
-                  disabled={isLoading}
-                />
+              <div className="md:col-span-3">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Input
+                      id="provincia"
+                      type="text"
+                      placeholder="Provincia *"
+                      value={formData.provincia}
+                      onChange={handleInputChange("provincia")}
+                      className={errors.provincia ? "border-red-500" : ""}
+                      disabled={isLoading}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Sevilla</p>
+                  </TooltipContent>
+                </Tooltip>
                 {errors.provincia && (
-                  <p className="text-sm text-red-600">{errors.provincia}</p>
+                  <p className="text-sm text-red-600 mt-1">{errors.provincia}</p>
                 )}
               </div>
             </div>
@@ -463,51 +536,69 @@ export default function RegisterForm() {
 
             {/* Teléfono 25% + Email 50% + Web 25% */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-              <div className="md:col-span-3 space-y-2">
-                <Label htmlFor="telefono">Teléfono</Label>
-                <Input
-                  id="telefono"
-                  type="tel"
-                  placeholder="+34 600 000 000"
-                  value={formData.telefono}
-                  onChange={handleInputChange("telefono")}
-                  className={errors.telefono ? "border-red-500" : ""}
-                  disabled={isLoading}
-                />
+              <div className="md:col-span-3">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Input
+                      id="telefono"
+                      type="tel"
+                      placeholder="Teléfono"
+                      value={formData.telefono}
+                      onChange={handleInputChange("telefono")}
+                      className={errors.telefono ? "border-red-500" : ""}
+                      disabled={isLoading}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>678 912 345</p>
+                  </TooltipContent>
+                </Tooltip>
                 {errors.telefono && (
-                  <p className="text-sm text-red-600">{errors.telefono}</p>
+                  <p className="text-sm text-red-600 mt-1">{errors.telefono}</p>
                 )}
               </div>
 
-              <div className="md:col-span-6 space-y-2">
-                <Label htmlFor="emailContacto">Email</Label>
-                <Input
-                  id="emailContacto"
-                  type="email"
-                  placeholder="contacto@empresa.com"
-                  value={formData.emailContacto}
-                  onChange={handleInputChange("emailContacto")}
-                  className={errors.emailContacto ? "border-red-500" : ""}
-                  disabled={isLoading}
-                />
+              <div className="md:col-span-6">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Input
+                      id="emailContacto"
+                      type="email"
+                      placeholder="Email"
+                      value={formData.emailContacto}
+                      onChange={handleInputChange("emailContacto")}
+                      className={errors.emailContacto ? "border-red-500" : ""}
+                      disabled={isLoading}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>contacto@empresa.com</p>
+                  </TooltipContent>
+                </Tooltip>
                 {errors.emailContacto && (
-                  <p className="text-sm text-red-600">{errors.emailContacto}</p>
+                  <p className="text-sm text-red-600 mt-1">{errors.emailContacto}</p>
                 )}
               </div>
 
-              <div className="md:col-span-3 space-y-2">
-                <Label htmlFor="web">Sitio Web</Label>
-                <Input
-                  id="web"
-                  type="url"
-                  placeholder="www.empresa.com"
-                  value={formData.web}
-                  onChange={handleInputChange("web")}
-                  className={errors.web ? "border-red-500" : ""}
-                  disabled={isLoading}
-                />
+              <div className="md:col-span-3">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Input
+                      id="web"
+                      type="url"
+                      placeholder="Sitio Web"
+                      value={formData.web}
+                      onChange={handleInputChange("web")}
+                      className={errors.web ? "border-red-500" : ""}
+                      disabled={isLoading}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>www.empresa.com</p>
+                  </TooltipContent>
+                </Tooltip>
                 {errors.web && (
-                  <p className="text-sm text-red-600">{errors.web}</p>
+                  <p className="text-sm text-red-600 mt-1">{errors.web}</p>
                 )}
               </div>
             </div>
@@ -534,5 +625,6 @@ export default function RegisterForm() {
         </CardFooter>
       </form>
     </Card>
+    </TooltipProvider>
   );
 }
