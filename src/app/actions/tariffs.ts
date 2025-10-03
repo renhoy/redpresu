@@ -5,7 +5,7 @@ import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { Database } from '@/lib/types/database.types'
 import { revalidatePath } from 'next/cache'
-import { CSV2JSONConverter } from '@/lib/validators'
+import { CSV2JSONConverter, detectIVAsPresentes } from '@/lib/validators'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 
@@ -303,6 +303,25 @@ export async function createTariff(data: TariffFormData): Promise<{
       return { success: false, error: 'No se pudo obtener la empresa del usuario' }
     }
 
+    // Detectar IVAs presentes en los datos de la tarifa
+    console.log('[createTariff] Detectando IVAs presentes...')
+    let ivasPresentes: number[] = []
+    try {
+      // Parsear json_tariff_data si es string, o usar directamente si es objeto
+      const tariffData = typeof data.json_tariff_data === 'string'
+        ? JSON.parse(data.json_tariff_data)
+        : data.json_tariff_data
+
+      // Detectar IVAs si tariffData es un array válido
+      if (Array.isArray(tariffData)) {
+        ivasPresentes = detectIVAsPresentes(tariffData)
+        console.log('[createTariff] IVAs detectados:', ivasPresentes)
+      }
+    } catch (parseError) {
+      console.warn('[createTariff] No se pudieron detectar IVAs:', parseError)
+      // Continuar sin IVAs si falla la detección
+    }
+
     // Crear tarifa
     console.log('[createTariff] Insertando tarifa en BD...')
     const { error } = await supabase
@@ -325,7 +344,8 @@ export async function createTariff(data: TariffFormData): Promise<{
         summary_note: data.summary_note,
         conditions_note: data.conditions_note,
         legal_note: data.legal_note,
-        json_tariff_data: data.json_tariff_data
+        json_tariff_data: data.json_tariff_data,
+        ivas_presentes: ivasPresentes // Guardar IVAs detectados
       })
 
     if (error) {
@@ -373,6 +393,25 @@ export async function updateTariff(id: string, data: TariffFormData): Promise<{
       return { success: false, error: 'Usuario no autenticado' }
     }
 
+    // Detectar IVAs presentes en los datos de la tarifa
+    console.log('[updateTariff] Detectando IVAs presentes...')
+    let ivasPresentes: number[] = []
+    try {
+      // Parsear json_tariff_data si es string, o usar directamente si es objeto
+      const tariffData = typeof data.json_tariff_data === 'string'
+        ? JSON.parse(data.json_tariff_data)
+        : data.json_tariff_data
+
+      // Detectar IVAs si tariffData es un array válido
+      if (Array.isArray(tariffData)) {
+        ivasPresentes = detectIVAsPresentes(tariffData)
+        console.log('[updateTariff] IVAs detectados:', ivasPresentes)
+      }
+    } catch (parseError) {
+      console.warn('[updateTariff] No se pudieron detectar IVAs:', parseError)
+      // Continuar sin IVAs si falla la detección
+    }
+
     // Actualizar tarifa
     console.log('[updateTariff] Actualizando tarifa en BD...')
     const { error } = await supabase
@@ -394,6 +433,7 @@ export async function updateTariff(id: string, data: TariffFormData): Promise<{
         conditions_note: data.conditions_note,
         legal_note: data.legal_note,
         json_tariff_data: data.json_tariff_data,
+        ivas_presentes: ivasPresentes, // Actualizar IVAs detectados
         updated_at: new Date().toISOString()
       })
       .eq('id', id)

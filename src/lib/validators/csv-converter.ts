@@ -310,3 +310,44 @@ export class CSV2JSONConverter {
     return this.transformer.groupByParent(data);
   }
 }
+
+/**
+ * Detecta los porcentajes de IVA únicos presentes en los items del presupuesto
+ * @param jsonData - Array de items del presupuesto
+ * @returns Array de porcentajes de IVA únicos, ordenados de mayor a menor
+ *
+ * @example
+ * const items = [
+ *   { iva: 21, ... },
+ *   { iva: 10, ... },
+ *   { iva: 21, ... }
+ * ]
+ * detectIVAsPresentes(items) // [21, 10]
+ */
+export function detectIVAsPresentes(jsonData: BudgetItem[]): number[] {
+  if (!jsonData || !Array.isArray(jsonData) || jsonData.length === 0) {
+    return [];
+  }
+
+  // Extraer todos los valores de IVA únicos
+  const ivasSet = new Set<number>();
+
+  jsonData.forEach(item => {
+    // Solo considerar items que tengan IVA definido y sea un número válido
+    if (
+      item.iva !== undefined &&
+      item.iva !== null &&
+      typeof item.iva === 'number' &&
+      !isNaN(item.iva) &&
+      item.iva >= 0 &&
+      item.iva <= 100
+    ) {
+      // Redondear a 2 decimales para evitar problemas de precisión
+      const ivaRedondeado = Math.round(item.iva * 100) / 100;
+      ivasSet.add(ivaRedondeado);
+    }
+  });
+
+  // Convertir Set a Array y ordenar descendente (21, 10, 4, etc.)
+  return Array.from(ivasSet).sort((a, b) => b - a);
+}

@@ -1,5 +1,5 @@
-// Exportar el conversor principal
-export { CSV2JSONConverter } from './csv-converter';
+// Exportar el conversor principal y utilidades
+export { CSV2JSONConverter, detectIVAsPresentes } from './csv-converter';
 
 // Exportar tipos principales
 export type {
