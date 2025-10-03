@@ -94,43 +94,72 @@ export async function getTariffs(
 ): Promise<Tariff[]> {
   const supabase = supabaseAdmin
 
-  let query = supabase
-    .from('tariffs')
-    .select(`
-      *,
-      creator:user_id (
-        nombre,
-        apellidos,
-        email
-      )
-    `)
-    .eq('empresa_id', empresaId)
-    .order('created_at', { ascending: false })
+  try {
+    // Primero obtener tarifas sin el JOIN
+    let query = supabase
+      .from('tariffs')
+      .select('*')
+      .eq('empresa_id', empresaId)
+      .order('created_at', { ascending: false })
 
-  // Filtro por estado
-  if (filters?.status && filters.status !== 'all') {
-    query = query.eq('status', filters.status)
+    // Filtro por estado
+    if (filters?.status && filters.status !== 'all') {
+      query = query.eq('status', filters.status)
+    }
+
+    // Filtro por usuario creador
+    if (filters?.user_id) {
+      query = query.eq('user_id', filters.user_id)
+    }
+
+    // Filtro por búsqueda (título y descripción)
+    if (filters?.search && filters.search.trim()) {
+      const searchTerm = `%${filters.search.trim()}%`
+      query = query.or(`title.ilike.${searchTerm},description.ilike.${searchTerm}`)
+    }
+
+    const { data: tariffs, error: tariffsError } = await query
+
+    if (tariffsError) {
+      console.error('Error fetching tariffs (base query):', tariffsError)
+      throw new Error('Error al obtener las tarifas: ' + JSON.stringify(tariffsError))
+    }
+
+    if (!tariffs || tariffs.length === 0) {
+      return []
+    }
+
+    // Ahora obtener la información de los creadores
+    const userIds = [...new Set(tariffs.map(t => t.user_id).filter(Boolean))]
+
+    if (userIds.length === 0) {
+      // Si no hay user_ids, retornar tarifas sin información de creador
+      return tariffs.map(t => ({ ...t, creator: null })) as Tariff[]
+    }
+
+    const { data: users, error: usersError } = await supabase
+      .from('users')
+      .select('id, nombre, apellidos, email')
+      .in('id', userIds)
+
+    if (usersError) {
+      console.error('Error fetching users:', usersError)
+      // Retornar tarifas sin información de creador si falla
+      return tariffs.map(t => ({ ...t, creator: null })) as Tariff[]
+    }
+
+    // Mapear usuarios a tarifas
+    const usersMap = new Map(users?.map(u => [u.id, u]) || [])
+
+    return tariffs.map(tariff => ({
+      ...tariff,
+      creator: tariff.user_id ? usersMap.get(tariff.user_id) || null : null
+    })) as Tariff[]
+
+  } catch (error) {
+    console.error('Unexpected error in getTariffs:', error)
+    throw error
   }
-
-  // Filtro por usuario creador
-  if (filters?.user_id) {
-    query = query.eq('user_id', filters.user_id)
-  }
-
-  // Filtro por búsqueda (título y descripción)
-  if (filters?.search && filters.search.trim()) {
-    const searchTerm = `%${filters.search.trim()}%`
-    query = query.or(`title.ilike.${searchTerm},description.ilike.${searchTerm}`)
-  }
-
-  const { data, error } = await query
-
-  if (error) {
-    console.error('Error fetching tariffs:', error)
-    throw new Error('Error al obtener las tarifas')
-  }
-
-  return data || []
 }
 
 export async function toggleTariffStatus(
