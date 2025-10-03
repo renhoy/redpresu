@@ -12,7 +12,7 @@
 
 #### 1.1 Sistema de Registro Completo
 
-**Prioridad:** CRÍTICA | **Estimación:** 3 días | **Estado:** ⏳ Pendiente
+**Prioridad:** CRÍTICA | **Estimación:** 3 días | **Estado:** ✅ Completado
 
 - [ ] Crear tabla `emisores` en BD
 - [ ] Migración SQL con índices
@@ -41,7 +41,7 @@
 
 #### 1.2 Recuperación de Contraseña
 
-**Prioridad:** ALTA | **Estimación:** 2 días | **Estado:** ⏳ Pendiente
+**Prioridad:** ALTA | **Estimación:** 2 días | **Estado:** ✅ Completado
 
 - [ ] Server Action `requestPasswordReset(email)`
 - [ ] Server Action `resetPassword(token, newPassword)`
@@ -61,7 +61,7 @@
 
 #### 1.3 Perfil de Usuario
 
-**Prioridad:** ALTA | **Estimación:** 2 días | **Estado:** ⏳ Pendiente
+**Prioridad:** ALTA | **Estimación:** 2 días | **Estado:** ✅ Completado
 
 - [ ] Página `/app/profile/page.tsx`
 - [ ] Server Action `updateUserProfile()`
@@ -106,6 +106,20 @@
 - Admin puede crear/editar usuarios de su empresa
 - Vendedor no tiene acceso a gestión usuarios
 - RLS filtra correctamente por empresa_id
+
+---
+
+## PROGRESO BLOQUE 1: 3/4 tareas completadas (75%)
+
+Completado:
+✅ 1.1 Sistema Registro (migrations 004-006, registro completo con tooltips)
+✅ 1.2 Recuperación Contraseña (flujo completo con emails)
+✅ 1.3 Perfil Usuario (edición datos + cambio contraseña)
+
+Pendiente:
+⏳ 1.4 CRUD Usuarios (admin) - Siguiente tarea
+
+Migraciones ejecutadas: 004, 005, 006
 
 ---
 
