@@ -43,7 +43,7 @@ export async function signInAction(email: string, password: string): Promise<Sig
     // Obtener datos completos del usuario desde public.users
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('role, name')
+      .select('role, nombre, apellidos')
       .eq('id', data.user.id)
       .single()
 
