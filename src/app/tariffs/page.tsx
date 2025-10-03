@@ -3,7 +3,7 @@ import { getServerUser } from '@/lib/auth/server'
 import { redirect } from 'next/navigation'
 import { TariffList } from '@/components/tariffs/TariffList'
 import { getTariffs } from '@/app/actions/tariffs'
-import { createClient } from '@/lib/supabase/server'
+import { supabaseAdmin } from '@/lib/supabase/server'
 
 export default async function TariffsPage() {
   // El layout ya maneja la autenticación, solo obtenemos el usuario
@@ -24,8 +24,7 @@ export default async function TariffsPage() {
   // Obtener usuarios de la empresa (para filtro admin)
   let users = []
   if (['admin', 'superadmin'].includes(user.role)) {
-    const supabase = await createClient()
-    const { data } = await supabase
+    const { data } = await supabaseAdmin
       .from('users')
       .select('id, nombre, apellidos')
       .eq('empresa_id', user.empresa_id)
