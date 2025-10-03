@@ -34,7 +34,13 @@ import { toggleTariffStatus, deleteTariff } from '@/app/actions/tariffs'
 import { Database } from '@/lib/types/database.types'
 import { toast } from 'sonner'
 
-type Tariff = Database['public']['Tables']['tariffs']['Row']
+type Tariff = Database['public']['Tables']['tariffs']['Row'] & {
+  creator?: {
+    nombre: string | null
+    apellidos: string | null
+    email: string | null
+  } | null
+}
 
 interface TariffRowProps {
   tariff: Tariff
@@ -166,8 +172,21 @@ export function TariffRow({ tariff, onStatusChange, onDelete }: TariffRowProps) 
         </TableCell>
 
         {/* Columna Usuario */}
-        <TableCell className="p-4 text-center text-sm text-muted-foreground">
-          N/A
+        <TableCell className="p-4 text-center text-sm">
+          {tariff.creator ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-muted-foreground cursor-help">
+                  {tariff.creator.nombre} {tariff.creator.apellidos}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{tariff.creator.email}</p>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <span className="text-muted-foreground">-</span>
+          )}
         </TableCell>
 
         {/* Columna Validez */}

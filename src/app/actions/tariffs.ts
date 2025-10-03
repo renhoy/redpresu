@@ -89,19 +89,32 @@ export async function getTariffs(
   filters?: {
     status?: 'Activa' | 'Inactiva' | 'all'
     search?: string
+    user_id?: string
   }
 ): Promise<Tariff[]> {
   const supabase = supabaseAdmin
 
   let query = supabase
     .from('tariffs')
-    .select('*')
+    .select(`
+      *,
+      creator:user_id (
+        nombre,
+        apellidos,
+        email
+      )
+    `)
     .eq('empresa_id', empresaId)
     .order('created_at', { ascending: false })
 
   // Filtro por estado
   if (filters?.status && filters.status !== 'all') {
     query = query.eq('status', filters.status)
+  }
+
+  // Filtro por usuario creador
+  if (filters?.user_id) {
+    query = query.eq('user_id', filters.user_id)
   }
 
   // Filtro por búsqueda (título y descripción)
@@ -267,6 +280,7 @@ export async function createTariff(data: TariffFormData): Promise<{
       .from('tariffs')
       .insert({
         empresa_id: userData.empresa_id,
+        user_id: user.id, // Añadir trazabilidad de creación
         title: data.title,
         description: data.description,
         validity: data.validity,

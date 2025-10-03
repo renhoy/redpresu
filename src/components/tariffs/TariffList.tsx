@@ -18,18 +18,32 @@ import { Database } from '@/lib/types/database.types'
 
 type Tariff = Database['public']['Tables']['tariffs']['Row']
 
+interface User {
+  id: string
+  nombre: string | null
+  apellidos: string | null
+}
+
 interface TariffListProps {
   empresaId: number
   initialTariffs?: Tariff[]
+  users?: User[]
+  currentUserRole?: string
 }
 
-export function TariffList({ empresaId, initialTariffs = [] }: TariffListProps) {
+export function TariffList({
+  empresaId,
+  initialTariffs = [],
+  users = [],
+  currentUserRole
+}: TariffListProps) {
   const [tariffs, setTariffs] = useState<Tariff[]>(initialTariffs)
   const [loading, setLoading] = useState(false)
   const [filters, setFilters] = useState<{
     status?: 'Activa' | 'Inactiva' | 'all'
     search?: string
-  }>({ status: 'all', search: '' })
+    user_id?: string
+  }>({ status: 'all', search: '', user_id: undefined })
 
   const loadTariffs = async () => {
     setLoading(true)
@@ -84,6 +98,9 @@ export function TariffList({ empresaId, initialTariffs = [] }: TariffListProps) 
         onFiltersChange={handleFiltersChange}
         defaultStatus={filters.status}
         defaultSearch={filters.search}
+        defaultUserId={filters.user_id}
+        users={users}
+        currentUserRole={currentUserRole}
       />
 
       {/* Table */}
