@@ -1,0 +1,105 @@
+import { redirect } from 'next/navigation'
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase/server'
+import { getUsers } from '@/app/actions/users'
+import { Button } from '@/components/ui/button'
+import { Plus } from 'lucide-react'
+import UserTable from '@/components/users/UserTable'
+
+export const metadata = {
+  title: 'Gestión de Usuarios | JEYCA Presupuestos',
+  description: 'Administrar usuarios de la empresa'
+}
+
+export default async function UsersPage() {
+  const supabase = await createClient()
+
+  // Verificar autenticación
+  const { data: { user: authUser } } = await supabase.auth.getUser()
+
+  if (!authUser) {
+    redirect('/login')
+  }
+
+  // Verificar que el usuario es admin o superadmin
+  const { data: currentUser } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', authUser.id)
+    .single()
+
+  if (!currentUser || !['admin', 'superadmin'].includes(currentUser.role)) {
+    redirect('/dashboard')
+  }
+
+  // Obtener usuarios
+  const result = await getUsers()
+
+  if (!result.success) {
+    return (
+      <div className="container mx-auto py-10">
+        <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded">
+          {result.error}
+        </div>
+      </div>
+    )
+  }
+
+  const users = result.data || []
+
+  return (
+    <div className="container mx-auto py-10">
+      <div className="flex flex-col gap-6">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Gestión de Usuarios
+            </h1>
+            <p className="text-muted-foreground">
+              Administra los usuarios de tu empresa
+            </p>
+          </div>
+
+          <Button asChild>
+            <Link href="/users/create">
+              <Plus className="mr-2 h-4 w-4" />
+              Nuevo Usuario
+            </Link>
+          </Button>
+        </div>
+
+        {/* Stats */}
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="rounded-lg border p-4">
+            <div className="text-sm font-medium text-muted-foreground">
+              Total Usuarios
+            </div>
+            <div className="text-2xl font-bold">{users.length}</div>
+          </div>
+
+          <div className="rounded-lg border p-4">
+            <div className="text-sm font-medium text-muted-foreground">
+              Usuarios Activos
+            </div>
+            <div className="text-2xl font-bold text-green-600">
+              {users.filter(u => u.status === 'active').length}
+            </div>
+          </div>
+
+          <div className="rounded-lg border p-4">
+            <div className="text-sm font-medium text-muted-foreground">
+              Pendientes
+            </div>
+            <div className="text-2xl font-bold text-orange-600">
+              {users.filter(u => u.status === 'pending').length}
+            </div>
+          </div>
+        </div>
+
+        {/* Table */}
+        <UserTable users={users} />
+      </div>
+    </div>
+  )
+}
