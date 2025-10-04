@@ -2,39 +2,16 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Building2, LogOut, Home, FileText, Receipt, Users, Settings } from 'lucide-react'
 import LogoutButton from '@/components/auth/LogoutButton'
-import { supabase } from '@/lib/supabase/client'
 
-export function Header() {
+interface HeaderProps {
+  userRole?: string
+}
+
+export function Header({ userRole }: HeaderProps) {
   const pathname = usePathname()
-  const [userRole, setUserRole] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (user) {
-        const { data: userData, error } = await supabase
-          .from('users')
-          .select('role')
-          .eq('id', user.id)
-          .single()
-
-        if (error) {
-          console.error('[Header] Error fetching user role:', error)
-        } else {
-          console.log('[Header] User role loaded:', userData?.role)
-          setUserRole(userData?.role || null)
-        }
-      }
-      setLoading(false)
-    }
-
-    fetchUserRole()
-  }, [])
 
   // Construir navegación según rol
   const isAdmin = userRole === 'admin' || userRole === 'superadmin'
@@ -48,15 +25,11 @@ export function Header() {
     { name: 'Configuración', href: '/settings', icon: Settings, show: isSuperadmin },
   ].filter(item => item.show)
 
-  // Debug: log navigation items
+  // Debug log
   useEffect(() => {
-    if (!loading) {
-      console.log('[Header] userRole:', userRole)
-      console.log('[Header] isAdmin:', isAdmin)
-      console.log('[Header] isSuperadmin:', isSuperadmin)
-      console.log('[Header] navigation items:', navigation.map(n => n.name))
-    }
-  }, [userRole, loading, isAdmin, isSuperadmin, navigation])
+    console.log('[Header] userRole:', userRole)
+    console.log('[Header] navigation items:', navigation.map(n => n.name))
+  }, [userRole, navigation])
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-sm border-b">
@@ -70,7 +43,7 @@ export function Header() {
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            {!loading && navigation.map((item) => {
+            {navigation.map((item) => {
               const isActive = pathname === item.href ||
                 (item.href !== '/dashboard' && pathname.startsWith(item.href))
               const Icon = item.icon
@@ -95,21 +68,19 @@ export function Header() {
           {/* Mobile menu button + Logout */}
           <div className="flex items-center gap-2">
             {/* Mobile navigation */}
-            {!loading && (
-              <div className="md:hidden">
-                <select
-                  className="text-sm border rounded px-2 py-1"
-                  value={pathname}
-                  onChange={(e) => window.location.href = e.target.value}
-                >
-                  {navigation.map((item) => (
-                    <option key={item.name} value={item.href}>
-                      {item.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+            <div className="md:hidden">
+              <select
+                className="text-sm border rounded px-2 py-1"
+                value={pathname}
+                onChange={(e) => window.location.href = e.target.value}
+              >
+                {navigation.map((item) => (
+                  <option key={item.name} value={item.href}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             {/* Logout Button */}
             <LogoutButton variant="ghost" size="sm" showText={false}>
