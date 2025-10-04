@@ -78,6 +78,8 @@ CREATE TABLE public.tariffs (
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
   user_id uuid NOT NULL,
+  ivas_presentes numeric(5,2)[] DEFAULT '{}',
+  is_template boolean NOT NULL DEFAULT false,
   CONSTRAINT tariffs_pkey PRIMARY KEY (id),
   CONSTRAINT tariffs_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
 );
