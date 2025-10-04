@@ -17,13 +17,18 @@ export function Header() {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (user) {
-        const { data: userData } = await supabase
+        const { data: userData, error } = await supabase
           .from('users')
           .select('role')
           .eq('id', user.id)
           .single()
 
-        setUserRole(userData?.role || null)
+        if (error) {
+          console.error('[Header] Error fetching user role:', error)
+        } else {
+          console.log('[Header] User role loaded:', userData?.role)
+          setUserRole(userData?.role || null)
+        }
       }
       setLoading(false)
     }
@@ -42,6 +47,16 @@ export function Header() {
     { name: 'Usuarios', href: '/users', icon: Users, show: isAdmin },
     { name: 'Configuración', href: '/settings', icon: Settings, show: isSuperadmin },
   ].filter(item => item.show)
+
+  // Debug: log navigation items
+  useEffect(() => {
+    if (!loading) {
+      console.log('[Header] userRole:', userRole)
+      console.log('[Header] isAdmin:', isAdmin)
+      console.log('[Header] isSuperadmin:', isSuperadmin)
+      console.log('[Header] navigation items:', navigation.map(n => n.name))
+    }
+  }, [userRole, loading, isAdmin, isSuperadmin, navigation])
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-sm border-b">
