@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { Building2, LogOut, Home, FileText, Receipt } from 'lucide-react'
+import { Building2, LogOut, Home, FileText, Receipt, Users, Settings } from 'lucide-react'
 import LogoutButton from '@/components/auth/LogoutButton'
 import { supabase } from '@/lib/supabase/client'
 
@@ -32,10 +32,15 @@ export function Header() {
   }, [])
 
   // Construir navegación según rol
+  const isAdmin = userRole === 'admin' || userRole === 'superadmin'
+  const isSuperadmin = userRole === 'superadmin'
+
   const navigation = [
     { name: 'Inicio', href: '/dashboard', icon: Home, show: true },
     { name: 'Tarifas', href: '/tariffs', icon: FileText, show: true },
     { name: 'Presupuestos', href: '/budgets', icon: Receipt, show: true },
+    { name: 'Usuarios', href: '/users', icon: Users, show: isAdmin },
+    { name: 'Configuración', href: '/settings', icon: Settings, show: isSuperadmin },
   ].filter(item => item.show)
 
   return (
