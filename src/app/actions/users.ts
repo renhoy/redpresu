@@ -109,8 +109,8 @@ export async function getUsers() {
     }
   }
 
-  // Obtener usuarios de la misma empresa con información del invitador
-  const { data: users, error } = await supabaseAdmin
+  // Construir query base
+  let query = supabaseAdmin
     .from('users')
     .select(`
       *,
@@ -121,7 +121,13 @@ export async function getUsers() {
       )
     `)
     .eq('empresa_id', currentUser.empresa_id)
-    .order('created_at', { ascending: false })
+
+  // Si el usuario NO es superadmin, filtrar para NO mostrar superadmins
+  if (currentUser.role !== 'superadmin') {
+    query = query.neq('role', 'superadmin')
+  }
+
+  const { data: users, error } = await query.order('created_at', { ascending: false })
 
   if (error) {
     console.error('Error fetching users:', error)
