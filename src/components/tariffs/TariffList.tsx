@@ -145,6 +145,7 @@ export function TariffList({
                     tariff={tariff}
                     onStatusChange={handleRefresh}
                     onDelete={handleRefresh}
+                    currentUserRole={currentUserRole}
                   />
                 ))}
               </tbody>

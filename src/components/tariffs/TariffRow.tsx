@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Pencil, Trash2, FileText, Plus, Receipt } from 'lucide-react'
+import { Pencil, Trash2, FileText, Plus, Receipt, Star } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -30,7 +30,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { formatDate } from '@/lib/validators'
-import { toggleTariffStatus, deleteTariff } from '@/app/actions/tariffs'
+import { toggleTariffStatus, deleteTariff, setTariffAsTemplate, unsetTariffAsTemplate } from '@/app/actions/tariffs'
 import { Database } from '@/lib/types/database.types'
 import { toast } from 'sonner'
 
@@ -46,11 +46,14 @@ interface TariffRowProps {
   tariff: Tariff
   onStatusChange?: () => void
   onDelete?: () => void
+  currentUserRole?: string
 }
 
-export function TariffRow({ tariff, onStatusChange, onDelete }: TariffRowProps) {
+export function TariffRow({ tariff, onStatusChange, onDelete, currentUserRole }: TariffRowProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showTemplateDialog, setShowTemplateDialog] = useState(false)
+  const [isTogglingTemplate, setIsTogglingTemplate] = useState(false)
 
   const handleStatusChange = async (newStatus: string) => {
     try {
@@ -85,6 +88,31 @@ export function TariffRow({ tariff, onStatusChange, onDelete }: TariffRowProps) 
       setIsDeleting(false)
     }
   }
+
+  const handleToggleTemplate = async () => {
+    if (isTogglingTemplate) return
+
+    setIsTogglingTemplate(true)
+    try {
+      const result = tariff.is_template
+        ? await unsetTariffAsTemplate(tariff.id)
+        : await setTariffAsTemplate(tariff.id)
+
+      if (result.success) {
+        toast.success(tariff.is_template ? 'Plantilla desmarcada' : 'Tarifa marcada como plantilla')
+        onStatusChange?.() // Refrescar lista
+        setShowTemplateDialog(false)
+      } else {
+        toast.error(result.error || 'Error al cambiar plantilla')
+      }
+    } catch {
+      toast.error('Error inesperado')
+    } finally {
+      setIsTogglingTemplate(false)
+    }
+  }
+
+  const isAdmin = currentUserRole && ['admin', 'superadmin'].includes(currentUserRole)
 
   const statusColors = {
     'Activa': 'bg-green-100 text-green-800',
@@ -208,6 +236,24 @@ export function TariffRow({ tariff, onStatusChange, onDelete }: TariffRowProps) 
         <TableCell className="p-4">
           <TooltipProvider>
             <div className="flex justify-end gap-2">
+              {/* Botón Plantilla (solo admin/superadmin) */}
+              {isAdmin && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={tariff.is_template ? "default" : "ghost"}
+                      size="icon"
+                      onClick={() => setShowTemplateDialog(true)}
+                    >
+                      <Star className={`h-4 w-4 ${tariff.is_template ? 'fill-current' : ''}`} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{tariff.is_template ? 'Plantilla actual' : 'Marcar como plantilla'}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -243,6 +289,40 @@ export function TariffRow({ tariff, onStatusChange, onDelete }: TariffRowProps) 
           </TooltipProvider>
         </TableCell>
       </TableRow>
+
+      {/* Dialog para confirmar cambio de plantilla */}
+      <AlertDialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {tariff.is_template ? '¿Desmarcar plantilla?' : '¿Marcar como plantilla?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {tariff.is_template ? (
+                <>
+                  La tarifa <strong>&quot;{tariff.title}&quot;</strong> dejará de ser la plantilla por defecto.
+                  Las nuevas tarifas no se pre-cargarán con estos datos.
+                </>
+              ) : (
+                <>
+                  La tarifa <strong>&quot;{tariff.title}&quot;</strong> se marcará como plantilla por defecto.
+                  Si existe otra plantilla activa, será reemplazada automáticamente.
+                  Las nuevas tarifas se pre-cargarán con los datos de esta tarifa (excepto el CSV).
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleToggleTemplate}
+              disabled={isTogglingTemplate}
+            >
+              {isTogglingTemplate ? 'Procesando...' : 'Confirmar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>

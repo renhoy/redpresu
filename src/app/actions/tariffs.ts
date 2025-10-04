@@ -454,6 +454,148 @@ export async function updateTariff(id: string, data: TariffFormData): Promise<{
   }
 }
 
+/**
+ * Marca una tarifa como plantilla (desmarcando las demás de la empresa)
+ */
+export async function setTariffAsTemplate(tariffId: string): Promise<{
+  success: boolean
+  error?: string
+}> {
+  try {
+    console.log('[setTariffAsTemplate] Marcando tarifa como plantilla:', tariffId)
+
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({
+      cookies: () => cookieStore
+    })
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return { success: false, error: 'Usuario no autenticado' }
+    }
+
+    // Verificar que el usuario es admin/superadmin
+    const { data: userData } = await supabase
+      .from('users')
+      .select('role, empresa_id')
+      .eq('id', user.id)
+      .single()
+
+    if (!userData || !['admin', 'superadmin'].includes(userData.role)) {
+      return { success: false, error: 'No tienes permisos para establecer plantillas' }
+    }
+
+    // Marcar como plantilla (el trigger se encargará de desmarcar las demás)
+    const { error } = await supabase
+      .from('tariffs')
+      .update({ is_template: true })
+      .eq('id', tariffId)
+      .eq('empresa_id', userData.empresa_id) // Seguridad: solo su empresa
+
+    if (error) {
+      console.error('[setTariffAsTemplate] Error:', error)
+      return { success: false, error: 'Error al establecer plantilla' }
+    }
+
+    revalidatePath('/tariffs')
+    return { success: true }
+
+  } catch (error) {
+    console.error('[setTariffAsTemplate] Critical error:', error)
+    return { success: false, error: 'Error crítico al establecer plantilla' }
+  }
+}
+
+/**
+ * Desmarca una tarifa como plantilla
+ */
+export async function unsetTariffAsTemplate(tariffId: string): Promise<{
+  success: boolean
+  error?: string
+}> {
+  try {
+    console.log('[unsetTariffAsTemplate] Desmarcando tarifa como plantilla:', tariffId)
+
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({
+      cookies: () => cookieStore
+    })
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return { success: false, error: 'Usuario no autenticado' }
+    }
+
+    // Verificar que el usuario es admin/superadmin
+    const { data: userData } = await supabase
+      .from('users')
+      .select('role, empresa_id')
+      .eq('id', user.id)
+      .single()
+
+    if (!userData || !['admin', 'superadmin'].includes(userData.role)) {
+      return { success: false, error: 'No tienes permisos para modificar plantillas' }
+    }
+
+    // Desmarcar como plantilla
+    const { error } = await supabase
+      .from('tariffs')
+      .update({ is_template: false })
+      .eq('id', tariffId)
+      .eq('empresa_id', userData.empresa_id) // Seguridad: solo su empresa
+
+    if (error) {
+      console.error('[unsetTariffAsTemplate] Error:', error)
+      return { success: false, error: 'Error al desmarcar plantilla' }
+    }
+
+    revalidatePath('/tariffs')
+    return { success: true }
+
+  } catch (error) {
+    console.error('[unsetTariffAsTemplate] Critical error:', error)
+    return { success: false, error: 'Error crítico al desmarcar plantilla' }
+  }
+}
+
+/**
+ * Obtiene la tarifa plantilla de una empresa
+ */
+export async function getTemplateTariff(empresaId: number): Promise<{
+  success: boolean
+  data?: Tariff
+  error?: string
+}> {
+  try {
+    console.log('[getTemplateTariff] Obteniendo plantilla para empresa:', empresaId)
+
+    const { data, error } = await supabaseAdmin
+      .from('tariffs')
+      .select('*')
+      .eq('empresa_id', empresaId)
+      .eq('is_template', true)
+      .single()
+
+    if (error) {
+      // Si no hay plantilla, no es un error crítico
+      if (error.code === 'PGRST116') {
+        console.log('[getTemplateTariff] No hay plantilla definida')
+        return { success: true, data: undefined }
+      }
+      console.error('[getTemplateTariff] Error:', error)
+      return { success: false, error: 'Error al obtener plantilla' }
+    }
+
+    return { success: true, data }
+
+  } catch (error) {
+    console.error('[getTemplateTariff] Critical error:', error)
+    return { success: false, error: 'Error crítico al obtener plantilla' }
+  }
+}
+
 export async function uploadLogo(formData: FormData): Promise<{
   success: boolean
   url?: string
