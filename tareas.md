@@ -1,10 +1,10 @@
 # Tareas - Fase 2: Evolución Funcional y Multi-tenant
 
-## MÓDULO ACTIVO: Mejoras Tarifas (Bloque 2)
+## MÓDULO ACTIVO: Tabla de Configuración (Bloque 3)
 
-**Tareas Activas:** 0/3
+**Tareas Activas:** 0/2
 
-**Siguiente tarea:** 2.1 - Campo user_id en tarifas
+**Siguiente tarea:** 3.1 - Tabla Config y Helpers
 
 ---
 
@@ -16,14 +16,14 @@
 
 **Prioridad:** CRÍTICA | **Estimación:** 3 días | **Estado:** ✅ Completado
 
-- [ ] Crear tabla `emisores` en BD
-- [ ] Migración SQL con índices
-- [ ] Server Action `registerUser()`
-- [ ] Página `/app/(auth)/register/page.tsx`
-- [ ] Componente `RegisterForm.tsx`
-- [ ] Validación Zod para registro
-- [ ] Integración Supabase Auth (signup)
-- [ ] Redirect automático a dashboard post-registro
+- ✅ Crear tabla `emisores` en BD
+- ✅ Migración SQL con índices
+- ✅ Server Action `registerUser()`
+- ✅ Página `/app/(auth)/register/page.tsx`
+- ✅ Componente `RegisterForm.tsx`
+- ✅ Validación Zod para registro
+- ✅ Integración Supabase Auth (signup)
+- ✅ Redirect automático a dashboard post-registro
 
 **Archivos nuevos:**
 
@@ -45,13 +45,13 @@
 
 **Prioridad:** ALTA | **Estimación:** 2 días | **Estado:** ✅ Completado
 
-- [ ] Server Action `requestPasswordReset(email)`
-- [ ] Server Action `resetPassword(token, newPassword)`
-- [ ] Página `/app/(auth)/forgot-password/page.tsx`
-- [ ] Página `/app/(auth)/reset-password/page.tsx`
-- [ ] Configurar email templates en Supabase
-- [ ] Componente `PasswordResetForm.tsx`
-- [ ] Validación tokens expiración
+- ✅ Server Action `requestPasswordReset(email)`
+- ✅ Server Action `resetPassword(token, newPassword)`
+- ✅ Página `/app/(auth)/forgot-password/page.tsx`
+- ✅ Página `/app/(auth)/reset-password/page.tsx`
+- ✅ Configurar email templates en Supabase
+- ✅ Componente `PasswordResetForm.tsx`
+- ✅ Validación tokens expiración
 
 **Archivos nuevos:**
 
@@ -65,12 +65,12 @@
 
 **Prioridad:** ALTA | **Estimación:** 2 días | **Estado:** ✅ Completado
 
-- [ ] Página `/app/profile/page.tsx`
-- [ ] Server Action `updateUserProfile()`
-- [ ] Componente `ProfileForm.tsx`
-- [ ] Editar datos fiscales emisor
-- [ ] Cambiar contraseña desde perfil
-- [ ] Upload avatar (opcional)
+- ✅ Página `/app/profile/page.tsx`
+- ✅ Server Action `updateUserProfile()`
+- ✅ Componente `ProfileForm.tsx`
+- ✅ Editar datos fiscales emisor
+- ✅ Cambiar contraseña desde perfil
+- ✅ Upload avatar (opcional)
 
 **Archivos nuevos:**
 
@@ -83,15 +83,15 @@
 
 **Prioridad:** ALTA | **Estimación:** 3 días | **Estado:** ✅ Completado
 
-- [ ] Tabla `users` añadir campos `status`, `invited_by`, `last_login`
-- [ ] Server Actions CRUD usuarios
-- [ ] Página `/app/users/page.tsx` (listado)
-- [ ] Página `/app/users/create/page.tsx`
-- [ ] Página `/app/users/[id]/edit/page.tsx`
-- [ ] Componente `UserTable.tsx`
-- [ ] Componente `UserForm.tsx`
-- [ ] RLS policies para usuarios
-- [ ] Validación permisos por rol
+- ✅ Tabla `users` añadir campos `status`, `invited_by`, `last_login`
+- ✅ Server Actions CRUD usuarios
+- ✅ Página `/app/users/page.tsx` (listado)
+- ✅ Página `/app/users/create/page.tsx`
+- ✅ Página `/app/users/[id]/edit/page.tsx`
+- ✅ Componente `UserTable.tsx`
+- ✅ Componente `UserForm.tsx`
+- ✅ RLS policies para usuarios
+- ✅ Validación permisos por rol
 
 **Archivos nuevos:**
 
@@ -126,85 +126,108 @@ Completado:
 
 ---
 
-## BLOQUE 2: MEJORAS INCREMENTALES TARIFAS ⏳
+## ✅ BLOQUE 2: MEJORAS INCREMENTALES TARIFAS - COMPLETADO
 
 ### Tareas Críticas:
 
 #### 2.1 Campo user_id en Tarifas
 
-**Prioridad:** ALTA | **Estimación:** 0.5 días | **Estado:** ⏳ Pendiente
+**Prioridad:** ALTA | **Estimación:** 0.5 días | **Estado:** ✅ Completado
 
-- [ ] Migración SQL añadir `user_id` a `tariffs`
-- [ ] Migrar datos existentes (asignar a admin)
-- [ ] Modificar `createTariff()` para incluir `user_id`
-- [ ] Modificar `getTariffs()` con join `users`
-- [ ] Añadir columna "Creado por" en listado
-- [ ] Filtro por usuario (admin/superadmin)
+- ✅ Migración SQL añadir `user_id` a `tariffs`
+- ✅ Migrar datos existentes (asignar a admin)
+- ✅ Modificar `createTariff()` para incluir `user_id`
+- ✅ Modificar `getTariffs()` con join `users`
+- ✅ Añadir columna "Creado por" en listado
+- ✅ Filtro por usuario (admin/superadmin)
 
 **Archivos modificados:**
 
-- `migrations/006_tariffs_user_id.sql`
+- `migrations/008_tariffs_user_id.sql`
 - `src/app/actions/tariffs.ts`
 - `src/components/tariffs/TariffList.tsx`
+- `src/components/tariffs/TariffRow.tsx`
+- `src/components/tariffs/TariffFilters.tsx`
 
 **Criterios de completado:**
 
-- Campo obligatorio tras migración
-- Join funcional con tabla users
-- Columna visible en UI
+- ✅ Campo obligatorio tras migración
+- ✅ Join funcional con tabla users
+- ✅ Columna visible en UI con tooltip email
+- ✅ Filtro por usuario funcionando
 
 ---
 
 #### 2.2 Detección Automática IVAs en CSV
 
-**Prioridad:** ALTA | **Estimación:** 1 día | **Estado:** ⏳ Pendiente
+**Prioridad:** ALTA | **Estimación:** 1 día | **Estado:** ✅ Completado
 
-- [ ] Función `detectIVAsPresentes()` en csv-converter
-- [ ] Migración añadir `ivas_presentes[]` a tariffs
-- [ ] Modificar `createTariff()` para detectar y guardar IVAs
-- [ ] Tests unitarios detección IVAs
+- ✅ Función `detectIVAsPresentes()` en csv-converter
+- ✅ Migración añadir `ivas_presentes[]` a tariffs
+- ✅ Modificar `createTariff()` para detectar y guardar IVAs
+- ✅ Modificar `updateTariff()` para actualizar IVAs
+- ✅ Validación y redondeo a 2 decimales
 
 **Archivos modificados:**
 
-- `migrations/007_tariffs_ivas_presentes.sql`
+- `migrations/011_tariffs_ivas_presentes.sql`
 - `src/lib/validators/csv-converter.ts`
+- `src/lib/validators/index.ts`
 - `src/app/actions/tariffs.ts`
 
 **Criterios de completado:**
 
-- IVAs detectados automáticamente al importar CSV
-- Array guardado correctamente en BD
-- Sin cambios UI (campo invisible)
+- ✅ IVAs detectados automáticamente al importar CSV
+- ✅ Array guardado correctamente en BD
+- ✅ Ordenados descendente (21, 10, 4)
+- ✅ Sin cambios UI (campo invisible)
 
 ---
 
 #### 2.3 Tarifa por Defecto (Plantilla)
 
-**Prioridad:** MEDIA | **Estimación:** 1.5 días | **Estado:** ⏳ Pendiente
+**Prioridad:** MEDIA | **Estimación:** 1.5 días | **Estado:** ✅ Completado
 
-- [ ] Migración añadir `is_template` a tariffs
-- [ ] Trigger SQL `ensure_single_template()`
-- [ ] Server Action `setTariffAsTemplate()`
-- [ ] Server Action `getTemplateTariff()`
-- [ ] Server Action `createTariffFromTemplate()`
-- [ ] Checkbox "Plantilla" en listado
-- [ ] Pre-cargar datos plantilla al crear tarifa
+- ✅ Migración añadir `is_template` a tariffs
+- ✅ Trigger SQL `ensure_single_template()`
+- ✅ Server Action `setTariffAsTemplate()`
+- ✅ Server Action `unsetTariffAsTemplate()`
+- ✅ Server Action `getTemplateTariff()`
+- ✅ Botón Star "Plantilla" en TariffRow (admin/superadmin)
+- ✅ AlertDialog confirmación
+- ✅ Pre-cargar datos plantilla al crear tarifa
 
 **Archivos nuevos:**
 
-- `migrations/008_tariffs_template.sql`
+- `migrations/012_tariffs_template.sql`
 
 **Archivos modificados:**
 
 - `src/app/actions/tariffs.ts`
 - `src/components/tariffs/TariffList.tsx`
+- `src/components/tariffs/TariffRow.tsx`
 - `src/app/tariffs/create/page.tsx`
 
 **Criterios de completado:**
 
-- Solo 1 tarifa puede ser plantilla (trigger)
-- Datos pre-cargados excepto CSV
-- Checkbox funcional en listado
+- ✅ Solo 1 tarifa puede ser plantilla (trigger BD)
+- ✅ Datos pre-cargados excepto CSV e is_template
+- ✅ Botón Star funcional en listado
+- ✅ Indicador visual cuando es plantilla
+
+---
+
+## ✅ BLOQUE 2 COMPLETADO: 3/3 tareas (100%)
+
+Completado:
+✅ 2.1 Campo user_id (migration 008, trazabilidad + filtro)
+✅ 2.2 Detección IVAs (migration 011, automática al crear/editar)
+✅ 2.3 Tarifa Plantilla (migration 012, trigger + pre-carga)
+
+**Migraciones:** 008, 011, 012
+**Archivos modificados:** 8+
+**Funcionalidad nueva:** Auditoría completa de tarifas + sistema de plantillas
+**Siguiente bloque:** Bloque 3 - Tabla de Configuración
 
 ---
 
@@ -647,11 +670,12 @@ Completado:
 
 ## ESTADO GLOBAL FASE 2
 
-**Progreso:** 0% (0/49 tareas)
-**Bloques completados:** 0/9
+**Progreso:** 14% (7/49 tareas)
+**Bloques completados:** 2/9 (Bloque 1: Usuarios ✅, Bloque 2: Mejoras Tarifas ✅)
+**Semanas transcurridas:** 2/12
 **Duración estimada:** 12 semanas
 
-**Próximo paso:** Iniciar Bloque 1 - Registro de usuarios
+**Próximo paso:** Bloque 3 - Tabla de Configuración
 
 ---
 
