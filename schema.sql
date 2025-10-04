@@ -1,6 +1,16 @@
 -- WARNING: This schema is for context only and is not meant to be run.
 -- Table order and constraints may not be valid for execution.
 
+CREATE TABLE public.config (
+  key text NOT NULL,
+  value jsonb NOT NULL,
+  description text,
+  category text NOT NULL DEFAULT 'general',
+  is_system boolean NOT NULL DEFAULT false,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT config_pkey PRIMARY KEY (key)
+);
 CREATE TABLE public.budgets (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   empresa_id integer NOT NULL DEFAULT 1 CHECK (empresa_id = 1),
@@ -78,7 +88,7 @@ CREATE TABLE public.tariffs (
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
   user_id uuid NOT NULL,
-  ivas_presentes numeric(5,2)[] DEFAULT '{}',
+  ivas_presentes ARRAY DEFAULT '{}'::numeric[],
   is_template boolean NOT NULL DEFAULT false,
   CONSTRAINT tariffs_pkey PRIMARY KEY (id),
   CONSTRAINT tariffs_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
