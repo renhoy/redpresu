@@ -92,22 +92,38 @@
 - ✅ Componente `UserForm.tsx`
 - ✅ RLS policies para usuarios
 - ✅ Validación permisos por rol
+- ✅ **Acceso vendedor**: Ver lista usuarios, editar solo su perfil
+- ✅ **Filtrado roles**: Admin no puede crear superadmin
+- ✅ **Ocultación superadmins**: Admin/vendedor no ven superadmins en lista
+- ✅ **Header**: Enlaces Usuarios (todos) y Configuración (superadmin)
 
 **Archivos nuevos:**
 
 - `migrations/007_users_status_fields.sql`
+- `migrations/014_fix_users_select_self.sql` (RLS fix)
 - `src/app/users/page.tsx`
 - `src/app/users/create/page.tsx`
 - `src/app/users/[id]/edit/page.tsx`
+- `src/app/users/layout.tsx`
+- `src/app/settings/layout.tsx`
 - `src/components/users/UserTable.tsx`
 - `src/components/users/UserForm.tsx`
 - `src/app/actions/users.ts`
 
+**Archivos modificados (permisos vendedor):**
+
+- `src/app/actions/users.ts`: función `checkUserAccess()`, filtrado superadmins
+- `src/components/users/UserTable.tsx`: permisos por rol en acciones
+- `src/components/users/UserForm.tsx`: bloqueo campos para vendedor
+- `src/components/layout/Header.tsx`: navegación visible para todos
+
 **Criterios de completado:**
 
-- Admin puede crear/editar usuarios de su empresa
-- Vendedor no tiene acceso a gestión usuarios
-- RLS filtra correctamente por empresa_id
+- ✅ Admin puede crear/editar admin y vendedor (NO superadmin)
+- ✅ Vendedor puede ver lista y editar solo su usuario
+- ✅ RLS filtra correctamente por empresa_id
+- ✅ Superadmins ocultos para admin/vendedor
+- ✅ Header muestra enlaces según rol
 
 ---
 
@@ -117,10 +133,16 @@ Completado:
 ✅ 1.1 Sistema Registro (migrations 004-006, registro completo con tooltips)
 ✅ 1.2 Recuperación Contraseña (flujo completo con emails)
 ✅ 1.3 Perfil Usuario (edición datos + cambio contraseña)
-✅ 1.4 CRUD Usuarios (migration 007, gestión completa admin)
+✅ 1.4 CRUD Usuarios (migration 007, 014, gestión completa con permisos por rol)
 
-**Migraciones:** 004, 005, 006, 007
-**Archivos nuevos:** 15+ (auth, profile, users)
+**Mejoras adicionales:**
+- ✅ Acceso vendedor a gestión usuarios (solo lectura + editar propio perfil)
+- ✅ Filtrado de roles según usuario actual (admin NO crea superadmin)
+- ✅ Ocultación de superadmins para admin/vendedor
+- ✅ Navegación header adaptada por roles
+
+**Migraciones:** 004, 005, 006, 007, 014
+**Archivos nuevos:** 18+ (auth, profile, users, layouts)
 **Semanas:** 1-2 completadas
 **Siguiente bloque:** Bloque 2 - Mejoras Tarifas
 
