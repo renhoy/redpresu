@@ -32,7 +32,7 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
     nif: initialData?.nif || "",
     address: initialData?.address || "",
     contact: initialData?.contact || "",
-    template: initialData?.template || "41200-00001",
+    template: initialData?.template || "modern",
     primary_color: initialData?.primary_color || "#e8951c",
     secondary_color: initialData?.secondary_color || "#109c61",
     summary_note: initialData?.summary_note || "",

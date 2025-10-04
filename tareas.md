@@ -1,10 +1,10 @@
 # Tareas - Fase 2: Evolución Funcional y Multi-tenant
 
-## MÓDULO ACTIVO: Tabla de Configuración (Bloque 3)
+## MÓDULO ACTIVO: IRPF y Recargo de Equivalencia (Bloque 4)
 
 **Tareas Activas:** 0/2
 
-**Siguiente tarea:** 3.1 - Tabla Config y Helpers
+**Siguiente tarea:** 4.1 - Implementación IRPF
 
 ---
 
@@ -231,58 +231,79 @@ Completado:
 
 ---
 
-## BLOQUE 3: TABLA DE CONFIGURACIÓN ⏳
+## ✅ BLOQUE 3: TABLA DE CONFIGURACIÓN - COMPLETADO
 
 ### Tareas Críticas:
 
 #### 3.1 Tabla Config y Helpers
 
-**Prioridad:** ALTA | **Estimación:** 2 días | **Estado:** ⏳ Pendiente
+**Prioridad:** ALTA | **Estimación:** 2 días | **Estado:** ✅ Completado
 
-- [ ] Crear tabla `config` en BD
-- [ ] Insertar datos iniciales (IVA-RE, plantillas PDF, defaults)
-- [ ] Helper `getConfigValue<T>(key)`
-- [ ] Helper `setConfigValue(key, value)`
-- [ ] Helpers específicos: `getIVAtoREEquivalences()`, `getPDFTemplates()`
-- [ ] Server Actions config (solo superadmin)
-- [ ] Página `/app/settings/page.tsx` (solo superadmin)
+- ✅ Crear tabla `config` en BD
+- ✅ Insertar datos iniciales (IVA-RE, plantillas PDF, defaults)
+- ✅ Helper `getConfigValue<T>(key)`
+- ✅ Helper `setConfigValue(key, value)`
+- ✅ Helpers específicos: `getIVAtoREEquivalences()`, `getPDFTemplates()`
+- ✅ Server Actions config (solo superadmin)
+- ✅ Página `/app/settings/page.tsx` (solo superadmin)
 
 **Archivos nuevos:**
 
-- `migrations/009_config_table.sql`
+- `migrations/013_config_table.sql`
 - `src/lib/helpers/config-helpers.ts`
 - `src/app/actions/config.ts`
 - `src/app/settings/page.tsx`
+- `src/components/settings/ConfigTable.tsx`
 
 **Criterios de completado:**
 
-- Tabla config poblada con datos iniciales
-- Helpers funcionando correctamente
-- Solo superadmin accede a settings
+- ✅ Tabla config poblada con datos iniciales
+- ✅ Helpers funcionando correctamente
+- ✅ Solo superadmin accede a settings
+- ✅ Eliminadas configs innecesarias (budget_validity_days, default_legal_note, tariff_validity_days)
 
 ---
 
 #### 3.2 Selector de Plantillas PDF
 
-**Prioridad:** MEDIA | **Estimación:** 2 días | **Estado:** ⏳ Pendiente
+**Prioridad:** MEDIA | **Estimación:** 2 días | **Estado:** ✅ Completado
 **Dependencia:** 3.1 completado
 
-- [ ] Añadir imágenes preview en `/public/templates/`
-- [ ] Modificar formulario tarifa: cambiar input text por Select
-- [ ] Tooltip preview al hacer hover
-- [ ] Cargar plantillas desde config al montar componente
-- [ ] Validar plantilla seleccionada existe
+- ✅ Añadir imágenes preview en `/public/templates/`
+- ✅ Modificar formulario tarifa: cambiar input text por Select
+- ✅ Tooltip preview al hacer hover
+- ✅ Cargar plantillas desde config al montar componente
+- ✅ Validar plantilla seleccionada existe
+
+**Archivos nuevos:**
+
+- `src/components/tariffs/TemplateSelector.tsx`
+- `public/templates/README.md`
 
 **Archivos modificados:**
 
+- `src/components/tariffs/TariffFormFields.tsx`
 - `src/components/tariffs/TariffForm.tsx`
-- `public/templates/` (añadir imágenes)
 
 **Criterios de completado:**
 
-- Selector desplegable funcional
-- Preview visible en hover
-- Plantilla guardada correctamente
+- ✅ Selector desplegable funcional
+- ✅ Preview visible en hover (con fallback para imágenes faltantes)
+- ✅ Plantilla guardada correctamente
+- ✅ Default actualizado a "modern"
+
+---
+
+## ✅ BLOQUE 3 COMPLETADO: 2/2 tareas (100%)
+
+Completado:
+✅ 3.1 Tabla Config (migration 013, configuración JSONB flexible)
+✅ 3.2 Selector Plantillas PDF (TemplateSelector con preview)
+
+**Migraciones:** 013
+**Archivos nuevos:** config-helpers.ts, config.ts, settings/page.tsx, ConfigTable.tsx, TemplateSelector.tsx
+**Funcionalidad nueva:** Configuración global centralizada + selector visual de plantillas
+**Siguiente bloque:** Bloque 4 - IRPF y Recargo de Equivalencia
 
 ---
 

@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { LogoUploader } from './LogoUploader'
+import { TemplateSelector } from './TemplateSelector'
 import { type TariffFormData } from '@/app/actions/tariffs'
 
 interface TariffFormFieldsProps {
@@ -170,12 +171,10 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
         <CardContent className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="template">Plantilla *</Label>
-              <Input
-                id="template"
+              <TemplateSelector
                 value={data.template}
-                onChange={(e) => handleInputChange('template', e.target.value)}
-                placeholder="41200-00001"
+                onChange={(value) => handleInputChange('template', value)}
+                error={errors.template}
               />
             </div>
 
