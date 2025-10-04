@@ -66,28 +66,8 @@ INSERT INTO public.config (key, value, description, category, is_system)
 VALUES (
   'pdf_template_default',
   '"modern"'::jsonb,
-  'Plantilla PDF por defecto para nuevas tarifas',
+  'Plantilla PDF por defecto para nuevos presupuestos',
   'pdf',
-  false
-) ON CONFLICT (key) DO NOTHING;
-
--- Validez por defecto de presupuestos (días)
-INSERT INTO public.config (key, value, description, category, is_system)
-VALUES (
-  'budget_validity_days',
-  '30'::jsonb,
-  'Días de validez por defecto para nuevos presupuestos',
-  'defaults',
-  false
-) ON CONFLICT (key) DO NOTHING;
-
--- Validez por defecto de tarifas (días)
-INSERT INTO public.config (key, value, description, category, is_system)
-VALUES (
-  'tariff_validity_days',
-  '30'::jsonb,
-  'Días de validez por defecto para nuevas tarifas',
-  'defaults',
   false
 ) ON CONFLICT (key) DO NOTHING;
 
@@ -95,18 +75,8 @@ VALUES (
 INSERT INTO public.config (key, value, description, category, is_system)
 VALUES (
   'default_colors',
-  '{"primary": "#000000", "secondary": "#666666"}'::jsonb,
-  'Colores por defecto para nuevas tarifas',
-  'defaults',
-  false
-) ON CONFLICT (key) DO NOTHING;
-
--- Notas legales por defecto
-INSERT INTO public.config (key, value, description, category, is_system)
-VALUES (
-  'default_legal_note',
-  '"Los precios indicados no incluyen IVA salvo indicación contraria. Presupuesto válido durante los días indicados."'::jsonb,
-  'Nota legal por defecto para nuevas tarifas',
+  '{"primary": "#e8951c", "secondary": "#109c61"}'::jsonb,
+  'Colores por defecto para pre-cargar en nuevas tarifas',
   'defaults',
   false
 ) ON CONFLICT (key) DO NOTHING;

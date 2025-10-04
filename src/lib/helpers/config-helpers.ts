@@ -122,23 +122,6 @@ export async function getDefaultPDFTemplate(): Promise<string> {
   return template || 'modern'
 }
 
-/**
- * Obtiene los días de validez por defecto para presupuestos
- * @returns Número de días
- */
-export async function getBudgetValidityDays(): Promise<number> {
-  const days = await getConfigValue<number>('budget_validity_days')
-  return days || 30
-}
-
-/**
- * Obtiene los días de validez por defecto para tarifas
- * @returns Número de días
- */
-export async function getTariffValidityDays(): Promise<number> {
-  const days = await getConfigValue<number>('tariff_validity_days')
-  return days || 30
-}
 
 /**
  * Tipo para colores por defecto
@@ -157,14 +140,6 @@ export async function getDefaultColors(): Promise<DefaultColors> {
   return colors || { primary: '#000000', secondary: '#666666' }
 }
 
-/**
- * Obtiene la nota legal por defecto
- * @returns Texto de la nota legal
- */
-export async function getDefaultLegalNote(): Promise<string> {
-  const note = await getConfigValue<string>('default_legal_note')
-  return note || 'Los precios indicados no incluyen IVA salvo indicación contraria. Presupuesto válido durante los días indicados.'
-}
 
 /**
  * Obtiene toda la configuración de una categoría
