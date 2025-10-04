@@ -23,6 +23,7 @@ export default async function CreateUserPage() {
       <UserForm
         mode="create"
         empresaId={user.empresa_id}
+        currentUserRole={user.role}
       />
     </div>
   )

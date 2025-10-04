@@ -16,6 +16,7 @@ interface UserFormProps {
   mode: 'create' | 'edit'
   user?: User
   empresaId: number
+  currentUserRole?: string
 }
 
 interface FormData {
@@ -26,7 +27,7 @@ interface FormData {
   status?: 'active' | 'inactive' | 'pending'
 }
 
-export default function UserForm({ mode, user, empresaId }: UserFormProps) {
+export default function UserForm({ mode, user, empresaId, currentUserRole }: UserFormProps) {
   const [formData, setFormData] = useState<FormData>({
     email: user?.email || '',
     nombre: user?.nombre || '',
@@ -162,6 +163,31 @@ export default function UserForm({ mode, user, empresaId }: UserFormProps) {
     router.push('/users')
     router.refresh()
   }
+
+  // Determinar qué roles puede asignar el usuario actual
+  const getAvailableRoles = () => {
+    if (currentUserRole === 'superadmin') {
+      // Superadmin puede crear cualquier rol
+      return [
+        { value: 'vendedor', label: 'Vendedor' },
+        { value: 'admin', label: 'Admin' },
+        { value: 'superadmin', label: 'Superadmin' }
+      ]
+    } else if (currentUserRole === 'admin') {
+      // Admin solo puede crear admin y vendedor (NO superadmin)
+      return [
+        { value: 'vendedor', label: 'Vendedor' },
+        { value: 'admin', label: 'Admin' }
+      ]
+    } else {
+      // Vendedor no puede crear usuarios (no debería llegar aquí)
+      return [
+        { value: 'vendedor', label: 'Vendedor' }
+      ]
+    }
+  }
+
+  const availableRoles = getAvailableRoles()
 
   // Si ya se creó el usuario y hay password temporal
   if (mode === 'create' && temporaryPassword) {
@@ -329,9 +355,11 @@ export default function UserForm({ mode, user, empresaId }: UserFormProps) {
                 <SelectValue placeholder="Selecciona un rol" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="vendedor">Vendedor</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="superadmin">Superadmin</SelectItem>
+                {availableRoles.map((role) => (
+                  <SelectItem key={role.value} value={role.value}>
+                    {role.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             {errors.role && (
@@ -339,7 +367,10 @@ export default function UserForm({ mode, user, empresaId }: UserFormProps) {
             )}
             <p className="text-xs text-muted-foreground">
               <strong>Vendedor:</strong> Solo crear/editar presupuestos.{' '}
-              <strong>Admin:</strong> Gestión completa empresa.
+              <strong>Admin:</strong> Gestión completa empresa.{' '}
+              {currentUserRole === 'superadmin' && (
+                <><strong>Superadmin:</strong> Acceso total al sistema.</>
+              )}
             </p>
           </div>
 

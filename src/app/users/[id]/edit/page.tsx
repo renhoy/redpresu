@@ -39,6 +39,7 @@ export default async function EditUserPage({ params }: EditUserPageProps) {
         mode="edit"
         user={result.data}
         empresaId={user.empresa_id}
+        currentUserRole={user.role}
       />
     </div>
   )
