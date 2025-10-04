@@ -81,6 +81,26 @@ async function checkAdminPermission(): Promise<{ allowed: boolean; currentUser: 
 }
 
 /**
+ * Verifica si el usuario actual tiene acceso (incluye vendedor para lectura)
+ */
+async function checkUserAccess(): Promise<{ allowed: boolean; currentUser: { id: string; role: string; empresa_id: number } | null }> {
+  const user = await getServerUser()
+
+  if (!user) {
+    return { allowed: false, currentUser: null }
+  }
+
+  return {
+    allowed: true,
+    currentUser: {
+      id: user.id,
+      role: user.role,
+      empresa_id: user.empresa_id
+    }
+  }
+}
+
+/**
  * Genera password temporal segura
  */
 function generateTemporaryPassword(): string {
@@ -100,9 +120,10 @@ function generateTemporaryPassword(): string {
  * Obtener lista de usuarios de la empresa
  */
 export async function getUsers() {
-  const { allowed, currentUser } = await checkAdminPermission()
+  // Permitir acceso a todos (vendedor verá la lista pero solo podrá editar su perfil)
+  const { allowed, currentUser } = await checkUserAccess()
 
-  if (!allowed) {
+  if (!allowed || !currentUser) {
     return {
       success: false,
       error: 'No tienes permisos para ver usuarios'
@@ -154,9 +175,18 @@ export async function getUsers() {
  * Obtener un usuario por ID
  */
 export async function getUserById(userId: string) {
-  const { allowed, currentUser } = await checkAdminPermission()
+  // Permitir acceso si es admin/superadmin O si es el mismo usuario (vendedor)
+  const { allowed, currentUser } = await checkUserAccess()
 
-  if (!allowed) {
+  if (!allowed || !currentUser) {
+    return {
+      success: false,
+      error: 'No tienes permisos para ver este usuario'
+    }
+  }
+
+  // Vendedor solo puede ver su propio usuario
+  if (currentUser.role === 'vendedor' && userId !== currentUser.id) {
     return {
       success: false,
       error: 'No tienes permisos para ver este usuario'

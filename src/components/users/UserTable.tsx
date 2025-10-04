@@ -37,9 +37,11 @@ import { useRouter } from 'next/navigation'
 
 interface UserTableProps {
   users: UserWithInviter[]
+  currentUserId: string
+  currentUserRole: string
 }
 
-export default function UserTable({ users: initialUsers }: UserTableProps) {
+export default function UserTable({ users: initialUsers, currentUserId, currentUserRole }: UserTableProps) {
   const [users, setUsers] = useState(initialUsers)
   const [selectedUser, setSelectedUser] = useState<UserWithInviter | null>(null)
   const [isToggleDialogOpen, setIsToggleDialogOpen] = useState(false)
@@ -178,51 +180,59 @@ export default function UserTable({ users: initialUsers }: UserTableProps) {
                     <span className="text-sm">{formatDate(user.last_login)}</span>
                   </TableCell>
                   <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Abrir menú</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild>
-                          <Link href={`/users/${user.id}/edit`}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Editar
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setSelectedUser(user)
-                            setIsToggleDialogOpen(true)
-                          }}
-                        >
-                          {user.status === 'active' ? (
+                    {/* Vendedor solo puede editar su propio usuario */}
+                    {currentUserRole === 'vendedor' && user.id !== currentUserId ? (
+                      <span className="text-muted-foreground text-sm">-</span>
+                    ) : (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Abrir menú</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem asChild>
+                            <Link href={`/users/${user.id}/edit`}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Editar
+                            </Link>
+                          </DropdownMenuItem>
+                          {/* Solo admin/superadmin pueden cambiar estado */}
+                          {currentUserRole !== 'vendedor' && (
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedUser(user)
+                                setIsToggleDialogOpen(true)
+                              }}
+                            >
+                              {user.status === 'active' ? (
+                                <>
+                                  <UserX className="mr-2 h-4 w-4" />
+                                  Desactivar
+                                </>
+                              ) : (
+                                <>
+                                  <UserCheck className="mr-2 h-4 w-4" />
+                                  Activar
+                                </>
+                              )}
+                            </DropdownMenuItem>
+                          )}
+                          {user.status === 'pending' && currentUserRole !== 'vendedor' && (
                             <>
-                              <UserX className="mr-2 h-4 w-4" />
-                              Desactivar
-                            </>
-                          ) : (
-                            <>
-                              <UserCheck className="mr-2 h-4 w-4" />
-                              Activar
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem>
+                                <Mail className="mr-2 h-4 w-4" />
+                                Reenviar invitación
+                              </DropdownMenuItem>
                             </>
                           )}
-                        </DropdownMenuItem>
-                        {user.status === 'pending' && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem>
-                              <Mail className="mr-2 h-4 w-4" />
-                              Reenviar invitación
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </TableCell>
                 </TableRow>
               ))

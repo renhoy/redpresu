@@ -18,9 +18,8 @@ export default async function UsersPage() {
     redirect('/login')
   }
 
-  if (!['admin', 'superadmin'].includes(user.role)) {
-    redirect('/dashboard')
-  }
+  // Permitir acceso a vendedores también (solo lectura de su propio usuario)
+  const canCreateUsers = ['admin', 'superadmin'].includes(user.role)
 
   // Obtener usuarios
   const result = await getUsers()
@@ -51,12 +50,14 @@ export default async function UsersPage() {
             </p>
           </div>
 
-          <Button asChild>
-            <Link href="/users/create">
-              <Plus className="mr-2 h-4 w-4" />
-              Nuevo Usuario
-            </Link>
-          </Button>
+          {canCreateUsers && (
+            <Button asChild>
+              <Link href="/users/create">
+                <Plus className="mr-2 h-4 w-4" />
+                Nuevo Usuario
+              </Link>
+            </Button>
+          )}
         </div>
 
         {/* Stats */}
@@ -88,7 +89,11 @@ export default async function UsersPage() {
         </div>
 
         {/* Table */}
-        <UserTable users={users} />
+        <UserTable
+          users={users}
+          currentUserId={user.id}
+          currentUserRole={user.role}
+        />
       </div>
     </div>
   )

@@ -14,14 +14,13 @@ export function Header({ userRole }: HeaderProps) {
   const pathname = usePathname()
 
   // Construir navegación según rol
-  const isAdmin = userRole === 'admin' || userRole === 'superadmin'
   const isSuperadmin = userRole === 'superadmin'
 
   const navigation = [
     { name: 'Inicio', href: '/dashboard', icon: Home, show: true },
     { name: 'Tarifas', href: '/tariffs', icon: FileText, show: true },
     { name: 'Presupuestos', href: '/budgets', icon: Receipt, show: true },
-    { name: 'Usuarios', href: '/users', icon: Users, show: isAdmin },
+    { name: 'Usuarios', href: '/users', icon: Users, show: true }, // Todos los roles ven Usuarios
     { name: 'Configuración', href: '/settings', icon: Settings, show: isSuperadmin },
   ].filter(item => item.show)
 

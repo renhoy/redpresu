@@ -22,8 +22,9 @@ export default async function EditUserPage({ params }: EditUserPageProps) {
     redirect('/login')
   }
 
-  if (!['admin', 'superadmin'].includes(user.role)) {
-    redirect('/dashboard')
+  // Vendedor solo puede editar su propio usuario
+  if (user.role === 'vendedor' && userId !== user.id) {
+    redirect('/users')
   }
 
   // Obtener usuario a editar

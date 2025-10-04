@@ -346,36 +346,48 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
           {/* Rol */}
           <div className="space-y-2">
             <Label htmlFor="role">Rol *</Label>
-            <Select
-              value={formData.role}
-              onValueChange={handleSelectChange('role')}
-              disabled={isLoading}
-            >
-              <SelectTrigger className={errors.role ? 'border-red-500' : ''}>
-                <SelectValue placeholder="Selecciona un rol" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableRoles.map((role) => (
-                  <SelectItem key={role.value} value={role.value}>
-                    {role.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {mode === 'edit' && currentUserRole === 'vendedor' ? (
+              <div className="p-3 bg-muted rounded-md text-muted-foreground">
+                {availableRoles.find(r => r.value === formData.role)?.label || formData.role}
+              </div>
+            ) : (
+              <Select
+                value={formData.role}
+                onValueChange={handleSelectChange('role')}
+                disabled={isLoading}
+              >
+                <SelectTrigger className={errors.role ? 'border-red-500' : ''}>
+                  <SelectValue placeholder="Selecciona un rol" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableRoles.map((role) => (
+                    <SelectItem key={role.value} value={role.value}>
+                      {role.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             {errors.role && (
               <p className="text-sm text-red-600">{errors.role}</p>
             )}
-            <p className="text-xs text-muted-foreground">
-              <strong>Vendedor:</strong> Solo crear/editar presupuestos.{' '}
-              <strong>Admin:</strong> Gestión completa empresa.{' '}
-              {currentUserRole === 'superadmin' && (
-                <><strong>Superadmin:</strong> Acceso total al sistema.</>
-              )}
-            </p>
+            {mode === 'edit' && currentUserRole === 'vendedor' ? (
+              <p className="text-xs text-muted-foreground">
+                No puedes cambiar tu propio rol
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                <strong>Vendedor:</strong> Solo crear/editar presupuestos.{' '}
+                <strong>Admin:</strong> Gestión completa empresa.{' '}
+                {currentUserRole === 'superadmin' && (
+                  <><strong>Superadmin:</strong> Acceso total al sistema.</>
+                )}
+              </p>
+            )}
           </div>
 
-          {/* Status (solo en edición) */}
-          {mode === 'edit' && (
+          {/* Status (solo en edición y solo admin/superadmin) */}
+          {mode === 'edit' && currentUserRole !== 'vendedor' && (
             <div className="space-y-2">
               <Label htmlFor="status">Estado</Label>
               <Select
