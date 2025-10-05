@@ -67,6 +67,8 @@ interface BudgetHierarchyFormProps {
   secondaryColor?: string
   irpf?: number
   irpfPercentage?: number
+  reByIVA?: Record<number, number>
+  totalRE?: number
 }
 
 interface IVAGroup {
@@ -87,7 +89,9 @@ export function BudgetHierarchyForm({
   primaryColor = '#3b82f6',
   secondaryColor = '#1e40af',
   irpf = 0,
-  irpfPercentage = 0
+  irpfPercentage = 0,
+  reByIVA = {},
+  totalRE = 0
 }: BudgetHierarchyFormProps) {
   const [budgetData, setBudgetData] = useState<BudgetItem[]>([])
   const [totals, setTotals] = useState<Totals>({ base: 0, ivaGroups: [], total: 0 })
@@ -719,11 +723,23 @@ export function BudgetHierarchyForm({
           </div>
         )}
 
-        {/* Total a Pagar - Solo mostrar si hay IRPF */}
-        {irpf > 0 && (
+        {/* Recargo de Equivalencia - Solo mostrar si aplica */}
+        {totalRE > 0 && Object.keys(reByIVA).length > 0 && (
+          <>
+            {Object.entries(reByIVA).map(([iva, amount]) => (
+              <div key={iva} className="flex justify-between text-sm font-mono bg-amber-50 p-3 rounded-lg text-amber-800">
+                <span>RE {iva}%</span>
+                <span className="font-bold">+{formatCurrency(amount)}</span>
+              </div>
+            ))}
+          </>
+        )}
+
+        {/* Total a Pagar - Mostrar si hay IRPF o RE */}
+        {(irpf > 0 || totalRE > 0) && (
           <div className="flex justify-between text-lg font-mono font-bold bg-green-50 p-3 rounded-lg border-2 border-green-600 text-green-700">
             <span>Total a Pagar</span>
-            <span className="font-bold">{formatCurrency(totals.total - irpf)}</span>
+            <span className="font-bold">{formatCurrency(totals.total - irpf + totalRE)}</span>
           </div>
         )}
       </div>

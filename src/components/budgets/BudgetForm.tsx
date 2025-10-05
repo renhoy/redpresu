@@ -1024,7 +1024,7 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
               <BudgetHierarchyForm
                 tariffData={
                   existingBudget?.json_budget_data
-                    ? (existingBudget.json_budget_data as unknown[])
+                    ? (existingBudget.json_budget_data as any)?.items || (existingBudget.json_budget_data as unknown[])
                     : (tariff.json_tariff_data as unknown[])
                 }
                 onBudgetDataChange={handleBudgetDataChange}
@@ -1033,6 +1033,8 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                 secondaryColor={tariff.secondary_color}
                 irpf={existingBudget?.irpf || 0}
                 irpfPercentage={existingBudget?.irpf_percentage || 0}
+                reByIVA={(existingBudget?.json_budget_data as any)?.recargo?.reByIVA || {}}
+                totalRE={(existingBudget?.json_budget_data as any)?.recargo?.totalRE || 0}
               />
             )}
           </CardContent>
