@@ -2,9 +2,9 @@
 
 ## MÓDULO ACTIVO: IRPF y Recargo de Equivalencia (Bloque 4)
 
-**Tareas Activas:** 0/2
+**Tareas Activas:** 1/3
 
-**Siguiente tarea:** 4.1 - Implementación IRPF
+**Siguiente tarea:** 4.2 - Implementación Recargo de Equivalencia
 
 ---
 
@@ -335,31 +335,38 @@ Completado:
 
 #### 4.1 Implementación IRPF
 
-**Prioridad:** ALTA | **Estimación:** 3 días | **Estado:** ⏳ Pendiente
+**Prioridad:** ALTA | **Estimación:** 3 días | **Estado:** ✅ Completado
 **Dependencia:** Bloque 1 completado (tabla emisores)
 
-- [ ] Campo `irpf_percentage` en tabla emisores (ya incluido)
-- [ ] Helper `shouldApplyIRPF(emisor, cliente)`
-- [ ] Helper `calculateIRPF(base, percentage)`
-- [ ] Modificar `saveBudget()`: calcular y guardar IRPF
-- [ ] Modificar formulario presupuesto: mostrar IRPF si aplica
-- [ ] Tooltip explicativo IRPF
-- [ ] Tests cálculo IRPF
+- ✅ Campo `irpf_percentage` en tabla emisores (ya incluido en migration 004)
+- ✅ Helper `shouldApplyIRPF(emisor, cliente)`
+- ✅ Helper `calculateIRPF(base, percentage)`
+- ✅ Modificar `saveBudget()`: calcular y guardar IRPF automáticamente
+- ✅ Añadir columnas `irpf`, `irpf_percentage`, `total_pagar` a budgets
+- ✅ Modificar formulario presupuesto: mostrar IRPF si aplica
+- ✅ Tooltip explicativo IRPF (Dialog con Info icon)
+- ✅ "Total a Pagar" visible cuando hay IRPF
+- ✅ Función `getUserIssuer()` para obtener datos fiscales
 
 **Archivos nuevos:**
 
+- `migrations/015_budgets_irpf_fields.sql`
 - `src/lib/helpers/fiscal-calculations.ts`
 
 **Archivos modificados:**
 
-- `src/app/actions/budgets.ts`
-- `src/components/budgets/BudgetForm.tsx`
+- `src/app/actions/budgets.ts` (extendido con cálculo IRPF)
+- `src/components/budgets/BudgetForm.tsx` (props IRPF)
+- `src/components/budgets/BudgetHierarchyForm.tsx` (visualización IRPF)
+- `src/lib/types/database.ts` (Budget interface extendida)
 
 **Criterios de completado:**
 
-- IRPF se aplica solo si emisor = autónomo Y cliente = empresa|autónomo
-- Cálculo correcto: base × (% IRPF / 100)
-- Visible en resumen totales
+- ✅ IRPF se aplica solo si emisor = autónomo Y cliente = empresa|autónomo
+- ✅ Cálculo correcto: base × (% IRPF / 100)
+- ✅ Visible en resumen totales con formato negativo (retención)
+- ✅ Total a Pagar = Total con IVA - IRPF
+- ✅ Logs detallados de aplicación en servidor
 
 ---
 
@@ -713,12 +720,13 @@ Completado:
 
 ## ESTADO GLOBAL FASE 2
 
-**Progreso:** 14% (7/49 tareas)
-**Bloques completados:** 2/9 (Bloque 1: Usuarios ✅, Bloque 2: Mejoras Tarifas ✅)
-**Semanas transcurridas:** 2/12
+**Progreso:** 22% (11/49 tareas)
+**Bloques completados:** 3/9 (Usuarios ✅, Mejoras Tarifas ✅, Configuración ✅)
+**Semanas transcurridas:** 4/12
 **Duración estimada:** 12 semanas
 
-**Próximo paso:** Bloque 3 - Tabla de Configuración
+**Bloque activo:** Bloque 4 - IRPF y Recargo de Equivalencia (1/3 tareas completadas)
+**Próximo paso:** Implementación Recargo de Equivalencia (4.2)
 
 ---
 
