@@ -333,17 +333,23 @@ export function detectIVAsPresentes(jsonData: BudgetItem[]): number[] {
   const ivasSet = new Set<number>();
 
   jsonData.forEach(item => {
+    // Buscar en item.iva o item.iva_percentage (compatibilidad con ambos formatos)
+    const ivaValue = item.iva_percentage !== undefined ? item.iva_percentage : item.iva;
+
+    // Convertir string a número si es necesario
+    const ivaNum = typeof ivaValue === 'string' ? parseFloat(ivaValue) : ivaValue;
+
     // Solo considerar items que tengan IVA definido y sea un número válido
     if (
-      item.iva !== undefined &&
-      item.iva !== null &&
-      typeof item.iva === 'number' &&
-      !isNaN(item.iva) &&
-      item.iva >= 0 &&
-      item.iva <= 100
+      ivaNum !== undefined &&
+      ivaNum !== null &&
+      typeof ivaNum === 'number' &&
+      !isNaN(ivaNum) &&
+      ivaNum >= 0 &&
+      ivaNum <= 100
     ) {
-      // Redondear a 2 decimales para evitar problemas de precisión
-      const ivaRedondeado = Math.round(item.iva * 100) / 100;
+      // Normalizar a 2 decimales
+      const ivaRedondeado = parseFloat(ivaNum.toFixed(2));
       ivasSet.add(ivaRedondeado);
     }
   });

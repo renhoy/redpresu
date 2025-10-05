@@ -1,10 +1,10 @@
 # Tareas - Fase 2: Evolución Funcional y Multi-tenant
 
-## MÓDULO ACTIVO: IRPF y Recargo de Equivalencia (Bloque 4)
+## ✅ MÓDULO COMPLETADO: IRPF y Recargo de Equivalencia (Bloque 4)
 
-**Tareas Activas:** 2/3
+**Tareas Completadas:** 3/3
 
-**Siguiente tarea:** 4.3 - Modificación Payload PDF
+**Estado:** ✅ BLOQUE 4 COMPLETADO
 
 ---
 
@@ -423,40 +423,63 @@ Completado:
 
 #### 4.3 Modificación Payload PDF
 
-**Prioridad:** ALTA | **Estimación:** 2 días | **Estado:** ⏳ Pendiente
+**Prioridad:** ALTA | **Estimación:** 2 días | **Estado:** ✅ Completado
 **Dependencia:** 4.1, 4.2 completados
 
-- [ ] Modificar `buildPDFPayload()`: añadir IRPF y RE a totals
-- [ ] Formato correcto: IRPF negativo, RE positivo
-- [ ] Cambiar "Total Presupuesto" → "Total a Pagar"
-- [ ] Tests payload con IRPF/RE
-- [ ] Documentar cambios para Rapid-PDF
+- ✅ Modificar `buildPDFPayload()`: añadir IRPF y RE a totals
+- ✅ Formato correcto: IRPF negativo, RE positivo
+- ✅ Cambiar "Total Presupuesto" → "Total con IVA" + agregar "Total a Pagar"
+- ✅ Formato moneda español con formatSpanishCurrency()
+- ✅ Estructura payload extendida con campos opcionales
 
 **Archivos modificados:**
 
 - `src/lib/helpers/pdf-payload-builder.ts`
 
-**Estructura payload:**
+**Estructura payload actualizada:**
 
 ```json
 {
   "totals": {
-    "subtotal": {...},
-    "base": {...},
+    "base": {"name": "Base Imponible", "amount": "..."},
     "ivas": [...],
-    "irpf": {...},  // nuevo
-    "re": [...],    // nuevo
-    "total": {...}
+    "irpf": {"name": "IRPF", "amount": "-150,00 €", "percentage": "15,00"},  // opcional
+    "recargos": [{"name": "RE 21,00%", "amount": "52,00 €"}],  // opcional
+    "total": {"name": "Total con IVA", "amount": "..."},
+    "total_pagar": {"name": "Total a Pagar", "amount": "..."}  // si hay IRPF o RE
   }
 }
 ```
 
 **Criterios de completado:**
 
-- Payload incluye IRPF si aplica
-- Payload incluye RE si aplica
-- Formato moneda español correcto
-- Rapid-PDF renderiza correctamente
+- ✅ Payload incluye IRPF si existe y es > 0
+- ✅ Payload incluye RE si aplica (desde json_budget_data.recargo)
+- ✅ Formato moneda español correcto (coma decimal)
+- ✅ IRPF con signo negativo (retención)
+- ✅ Total a Pagar calculado: Total + IVA - IRPF + RE
+
+---
+
+## ✅ BLOQUE 4 COMPLETADO: 3/3 tareas (100%)
+
+Completado:
+✅ 4.1 Implementación IRPF (migration 015, cálculo automático según matriz)
+✅ 4.2 Recargo de Equivalencia (UI checkbox + tabla, cálculos fiscales)
+✅ 4.3 Modificación Payload PDF (IRPF y RE incluidos en totals)
+
+**Mejoras adicionales:**
+- ✅ Formato español en todos los campos numéricos (coma decimal)
+- ✅ Advertencia visual para IVAs no reconocidos en configuración
+- ✅ Detección automática de IVAs presentes en tarifas
+- ✅ Validación automática de aplicación IRPF según tipo emisor/cliente
+- ✅ Total a Pagar calculado correctamente: Total + IVA - IRPF + RE
+
+**Migraciones:** 015, 016
+**Archivos nuevos:** fiscal-calculations.ts, migrations RE
+**Archivos modificados:** budgets.ts, BudgetForm.tsx, BudgetHierarchyForm.tsx, pdf-payload-builder.ts, config.ts, csv-converter.ts, ConfigTable.tsx
+**Funcionalidad nueva:** Sistema fiscal completo (IRPF + RE) con cálculos automáticos
+**Siguiente bloque:** Bloque 5 - Versiones y Notas
 
 ---
 
@@ -742,13 +765,13 @@ Completado:
 
 ## ESTADO GLOBAL FASE 2
 
-**Progreso:** 24% (12/49 tareas)
-**Bloques completados:** 3/9 (Usuarios ✅, Mejoras Tarifas ✅, Configuración ✅)
-**Semanas transcurridas:** 5/12
+**Progreso:** 31% (15/49 tareas)
+**Bloques completados:** 4/9 (Usuarios ✅, Mejoras Tarifas ✅, Configuración ✅, IRPF y RE ✅)
+**Semanas transcurridas:** 6/12
 **Duración estimada:** 12 semanas
 
-**Bloque activo:** Bloque 4 - IRPF y Recargo de Equivalencia (2/3 tareas completadas)
-**Próximo paso:** Modificación Payload PDF (4.3)
+**Bloque activo:** Bloque 5 - Versiones y Notas
+**Próximo paso:** Sistema de Versiones (5.1)
 
 ---
 

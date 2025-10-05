@@ -56,7 +56,20 @@ interface PDFPayload {
         name: string
         amount: string
       }>
+      irpf?: {
+        name: string
+        amount: string
+        percentage: string
+      }
+      recargos?: Array<{
+        name: string
+        amount: string
+      }>
       total: {
+        name: string
+        amount: string
+      }
+      total_pagar?: {
         name: string
         amount: string
       }
@@ -173,11 +186,18 @@ function extractChapters(items: BudgetDataItem[]): Array<{
 
 /**
  * Calcula totales desde los items con cantidad > 0
+ * Incluye IRPF y RE si están presentes en el presupuesto
  */
-function calculateTotals(items: BudgetDataItem[]): {
+function calculateTotals(
+  items: BudgetDataItem[],
+  budget: Budget
+): {
   base: { name: string; amount: string }
   ivas: Array<{ name: string; amount: string }>
+  irpf?: { name: string; amount: string; percentage: string }
+  recargos?: Array<{ name: string; amount: string }>
   total: { name: string; amount: string }
+  total_pagar?: { name: string; amount: string }
 } {
   let totalAmount = 0
   const ivaGroups = new Map<number, number>()
@@ -222,17 +242,66 @@ function calculateTotals(items: BudgetDataItem[]): {
       return aNum - bNum
     })
 
-  return {
+  // Construir objeto de retorno base
+  const result: {
+    base: { name: string; amount: string }
+    ivas: Array<{ name: string; amount: string }>
+    irpf?: { name: string; amount: string; percentage: string }
+    recargos?: Array<{ name: string; amount: string }>
+    total: { name: string; amount: string }
+    total_pagar?: { name: string; amount: string }
+  } = {
     base: {
-      name: 'Base',
+      name: 'Base Imponible',
       amount: formatSpanishCurrency(base)
     },
     ivas,
     total: {
-      name: 'Total Presupuesto',
+      name: 'Total con IVA',
       amount: formatSpanishCurrency(totalAmount)
     }
   }
+
+  // Agregar IRPF si existe y es mayor que 0
+  if (budget.irpf && budget.irpf > 0 && budget.irpf_percentage) {
+    result.irpf = {
+      name: 'IRPF',
+      amount: formatSpanishCurrency(-budget.irpf), // Negativo porque es una retención
+      percentage: budget.irpf_percentage.toFixed(2).replace('.', ',')
+    }
+  }
+
+  // Agregar Recargos de Equivalencia si existen
+  const budgetData = budget.json_budget_data as any
+  if (budgetData?.recargo?.aplica && budgetData.recargo.reByIVA) {
+    const recargosArray = Object.entries(budgetData.recargo.reByIVA)
+      .map(([iva, amount]) => {
+        const ivaFormatted = Number(iva).toFixed(2).replace('.', ',')
+        return {
+          name: `RE ${ivaFormatted}%`,
+          amount: formatSpanishCurrency(amount as number)
+        }
+      })
+      .sort((a, b) => {
+        const aNum = parseFloat(a.name.split(' ')[1].replace(',', '.'))
+        const bNum = parseFloat(b.name.split(' ')[1].replace(',', '.'))
+        return aNum - bNum
+      })
+
+    if (recargosArray.length > 0) {
+      result.recargos = recargosArray
+    }
+  }
+
+  // Calcular y agregar Total a Pagar si hay IRPF o RE
+  if (budget.total_pagar && (result.irpf || result.recargos)) {
+    result.total_pagar = {
+      name: 'Total a Pagar',
+      amount: formatSpanishCurrency(budget.total_pagar)
+    }
+  }
+
+  return result
 }
 
 /**
@@ -289,8 +358,8 @@ export function buildPDFPayload(budget: Budget, tariff: Tariff): PDFPayload {
   // 4. Extraer solo capítulos para summary
   const summaryLevels = extractChapters(renumberedItems)
 
-  // 5. Calcular totales
-  const totals = calculateTotals(renumberedItems)
+  // 5. Calcular totales (incluye IRPF y RE del budget)
+  const totals = calculateTotals(renumberedItems, budget)
 
   // 6. Construir payload
   // Construir URL completa del logo para que Rapid-PDF pueda acceder

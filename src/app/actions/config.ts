@@ -123,10 +123,8 @@ export async function updateConfigValue(
       return { success: false, error: 'Clave de configuración no encontrada' }
     }
 
-    // No permitir editar configs de sistema a menos que sea explícito
-    if (existing.is_system) {
-      return { success: false, error: 'No se puede modificar configuración del sistema' }
-    }
+    // Superadmin puede editar TODO, incluso configs de sistema
+    // Se elimina la restricción is_system
 
     const { error } = await supabaseAdmin
       .from('config')
@@ -242,13 +240,13 @@ export async function getIVAtoREEquivalencesAction(): Promise<{
       .single()
 
     if (error || !data) {
-      // Devolver valores por defecto si no existe en BD
+      // Devolver valores por defecto si no existe en BD (formato con 2 decimales)
       return {
         success: true,
         data: {
-          '21': 5.2,
-          '10': 1.4,
-          '4': 0.5
+          '21.00': 5.20,
+          '10.00': 1.40,
+          '4.00': 0.50
         }
       }
     }

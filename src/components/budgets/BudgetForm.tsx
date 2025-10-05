@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { ArrowLeft, ArrowRight, Trash2, Save, FileStack, Loader2, Check, X } from 'lucide-react'
 import { BudgetHierarchyForm } from './BudgetHierarchyForm'
 import { createDraftBudget, updateBudgetDraft, saveBudget, generateBudgetPDF, duplicateBudget } from '@/app/actions/budgets'
+import { getIVAtoREEquivalencesAction } from '@/app/actions/config'
 import { toast } from 'sonner'
 import {
   AlertDialog,
@@ -77,6 +78,7 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
   // Estados para Recargo de Equivalencia
   const [aplicaRecargo, setAplicaRecargo] = useState(false)
   const [recargos, setRecargos] = useState<Record<number, number>>({})
+  const [ivasReconocidos, setIvasReconocidos] = useState<Set<number>>(new Set())
 
   // Cargar budgetData del borrador existente
   useEffect(() => {
@@ -107,23 +109,33 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
   useEffect(() => {
     async function loadREDefaults() {
       if (clientData.client_type === 'autonomo' && aplicaRecargo && Object.keys(recargos).length === 0) {
-        // Importar la server action
-        const { getIVAtoREEquivalencesAction } = await import('@/app/actions/config')
         const result = await getIVAtoREEquivalencesAction()
 
         if (result.success && result.data && tariff.ivas_presentes) {
           // Solo cargar recargos para los IVAs presentes en la tarifa
           const recargosInicial: Record<number, number> = {}
+          const ivasReconocidosSet = new Set<number>()
+
           tariff.ivas_presentes.forEach((iva: number) => {
-            recargosInicial[iva] = result.data![iva.toString()] || 0
+            // Normalizar el IVA a 2 decimales para matchear las claves del objeto de equivalencias
+            const ivaKey = Number(iva).toFixed(2)
+            const reValue = result.data![ivaKey] || 0
+            recargosInicial[iva] = reValue
+
+            // Marcar como reconocido si tiene un valor > 0 en la config
+            if (reValue > 0) {
+              ivasReconocidosSet.add(iva)
+            }
           })
+
           setRecargos(recargosInicial)
+          setIvasReconocidos(ivasReconocidosSet)
         }
       }
     }
 
     loadREDefaults()
-  }, [clientData.client_type, aplicaRecargo, tariff.ivas_presentes, recargos])
+  }, [clientData.client_type, aplicaRecargo, tariff.ivas_presentes])
 
   const validateStep1 = () => {
     const newErrors: Record<string, string> = {}
@@ -794,6 +806,90 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
               )}
             </div>
 
+            {/* Recargo de Equivalencia - Checkbox (solo si cliente es autónomo) */}
+            {clientData.client_type === 'autonomo' && (
+              <div className="space-y-3 p-4 border rounded-lg bg-amber-50">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="aplica_recargo"
+                    checked={aplicaRecargo}
+                    onCheckedChange={(checked) => {
+                      setAplicaRecargo(!!checked)
+                      if (!checked) {
+                        setRecargos({})
+                      }
+                    }}
+                  />
+                  <Label htmlFor="aplica_recargo" className="text-sm font-medium">
+                    Aplicar Recargo de Equivalencia
+                  </Label>
+                </div>
+
+                {/* Tabla de recargos - Solo visible cuando checkbox está marcado */}
+                {aplicaRecargo && (
+                  <div className="space-y-3 pt-2">
+                    <p className="text-sm text-muted-foreground">
+                      Porcentajes de RE por tipo de IVA:
+                    </p>
+                    {tariff.ivas_presentes && tariff.ivas_presentes.length > 0 ? (
+                      <div className="grid gap-3">
+                        {tariff.ivas_presentes.map((iva: number) => {
+                          const ivaFormatted = Number(iva).toFixed(2).replace('.', ',')
+                          const reValue = recargos[iva] || 0
+                          const reFormatted = reValue.toFixed(2).replace('.', ',')
+                          // Usar el Set de IVAs reconocidos, no el valor actual
+                          const isIVARecognized = ivasReconocidos.has(iva)
+
+                          return (
+                            <div key={iva} className={`flex items-center gap-4 p-3 rounded border ${!isIVARecognized ? 'bg-yellow-50 border-yellow-300' : 'bg-white'}`}>
+                              <Label className="min-w-[80px] font-medium">{ivaFormatted}% IVA</Label>
+                              <div className="flex items-center gap-2 flex-1">
+                                <Input
+                                  type="text"
+                                  value={reFormatted}
+                                  onChange={(e) => {
+                                    // Convertir formato español a número
+                                    const valueStr = e.target.value.replace(',', '.')
+                                    const value = parseFloat(valueStr) || 0
+                                    setRecargos(prev => ({ ...prev, [iva]: value }))
+                                  }}
+                                  className="w-28 bg-white"
+                                />
+                                <span className="text-sm text-muted-foreground">% RE</span>
+                              </div>
+                              {!isIVARecognized && (
+                                <div className="flex items-center gap-1 text-xs text-yellow-700">
+                                  <span>⚠️</span>
+                                  <span>IVA no reconocido</span>
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        No se detectaron IVAs en esta tarifa. Por favor, verifica la tarifa.
+                      </p>
+                    )}
+                    {tariff.ivas_presentes && tariff.ivas_presentes.some((iva: number) => !ivasReconocidos.has(iva)) && (
+                      <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 p-3 rounded text-xs">
+                        <p className="font-semibold">⚠️ Advertencia de IVAs no reconocidos:</p>
+                        <p className="mt-1">
+                          Algunos porcentajes de IVA no están configurados en el sistema. El Recargo de Equivalencia por defecto es 0,00%.
+                          Puedes corregir el IVA en la tarifa o aceptar el valor 0,00% si es correcto.
+                        </p>
+                      </div>
+                    )}
+                    <p className="text-xs text-muted-foreground italic">
+                      Los valores por defecto se cargan automáticamente según la normativa.
+                      Puedes modificarlos si es necesario.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Línea 2: Nombre (75%) + NIF/NIE (25%) */}
             <div className="grid grid-cols-4 gap-4">
               <div className="col-span-3 space-y-2">
@@ -921,61 +1017,6 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                 )}
               </div>
             </div>
-
-            {/* Recargo de Equivalencia (solo si cliente es autónomo) */}
-            {clientData.client_type === 'autonomo' && (
-              <div className="space-y-4 p-4 border rounded-lg bg-amber-50">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="aplica_recargo"
-                    checked={aplicaRecargo}
-                    onCheckedChange={(checked) => {
-                      setAplicaRecargo(!!checked)
-                      if (!checked) {
-                        setRecargos({})
-                      }
-                    }}
-                  />
-                  <Label htmlFor="aplica_recargo" className="text-sm font-medium">
-                    Aplicar Recargo de Equivalencia
-                  </Label>
-                </div>
-
-                {aplicaRecargo && tariff.ivas_presentes && tariff.ivas_presentes.length > 0 && (
-                  <div className="space-y-3 pt-2">
-                    <p className="text-sm text-muted-foreground">
-                      Porcentajes de RE por tipo de IVA:
-                    </p>
-                    <div className="grid gap-3">
-                      {tariff.ivas_presentes.map((iva: number) => (
-                        <div key={iva} className="flex items-center gap-4 bg-white p-3 rounded border">
-                          <Label className="min-w-[80px] font-medium">{iva}% IVA</Label>
-                          <div className="flex items-center gap-2 flex-1">
-                            <Input
-                              type="number"
-                              step="0.1"
-                              min="0"
-                              max="100"
-                              value={recargos[iva] || 0}
-                              onChange={(e) => {
-                                const value = parseFloat(e.target.value) || 0
-                                setRecargos(prev => ({ ...prev, [iva]: value }))
-                              }}
-                              className="w-24"
-                            />
-                            <span className="text-sm text-muted-foreground">% RE</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <p className="text-xs text-muted-foreground italic">
-                      Los valores por defecto se cargan automáticamente según la normativa.
-                      Puedes modificarlos si es necesario.
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
 
             {/* Aceptación */}
             <div className="space-y-2">

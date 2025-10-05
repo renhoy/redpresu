@@ -2,9 +2,8 @@
 
 import { useState } from 'react'
 import { Database } from '@/lib/types/database.types'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Pencil, Lock } from 'lucide-react'
+import { Pencil } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -87,15 +86,14 @@ export function ConfigTable({ config }: ConfigTableProps) {
             <TableRow>
               <TableHead className="w-[200px]">Clave</TableHead>
               <TableHead>Descripción</TableHead>
-              <TableHead className="w-[300px]">Valor</TableHead>
-              <TableHead className="w-[100px] text-center">Sistema</TableHead>
+              <TableHead className="w-[400px]">Valor</TableHead>
               <TableHead className="w-[80px]">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {config.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
                   No hay configuración en esta categoría
                 </TableCell>
               </TableRow>
@@ -111,22 +109,12 @@ export function ConfigTable({ config }: ConfigTableProps) {
                       {formatValue(item.value)}
                     </pre>
                   </TableCell>
-                  <TableCell className="text-center">
-                    {item.is_system ? (
-                      <Badge variant="secondary" className="gap-1">
-                        <Lock className="h-3 w-3" />
-                        Sistema
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline">Editable</Badge>
-                    )}
-                  </TableCell>
                   <TableCell>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => handleEdit(item)}
-                      disabled={item.is_system}
+                      title="Editar configuración"
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>

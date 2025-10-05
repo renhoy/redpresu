@@ -165,7 +165,9 @@ export function calculateRecargo(
     if (item.level !== 'item') return
 
     const ivaPercentage = parseSpanishNumber(item.iva_percentage || 0)
-    const rePercentage = recargos[ivaPercentage] || 0
+    // Normalizar el IVA a 2 decimales para buscar en recargos
+    const ivaKey = Number(ivaPercentage.toFixed(2))
+    const rePercentage = recargos[ivaKey] || 0
 
     if (rePercentage > 0) {
       const pvp = parseSpanishNumber(item.pvp || 0)
@@ -183,11 +185,11 @@ export function calculateRecargo(
       // Importe RE para esta partida
       const importeRE = base * (rePercentage / 100)
 
-      // Acumular por tipo de IVA
-      if (!reByIVA[ivaPercentage]) {
-        reByIVA[ivaPercentage] = 0
+      // Acumular por tipo de IVA (usar ivaKey normalizado)
+      if (!reByIVA[ivaKey]) {
+        reByIVA[ivaKey] = 0
       }
-      reByIVA[ivaPercentage] += importeRE
+      reByIVA[ivaKey] += importeRE
     }
   })
 
