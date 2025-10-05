@@ -13,6 +13,7 @@ import { ArrowLeft, ArrowRight, Trash2, Save, FileStack, Loader2, Check, X } fro
 import { BudgetHierarchyForm } from './BudgetHierarchyForm'
 import { createDraftBudget, updateBudgetDraft, saveBudget, generateBudgetPDF, duplicateBudget } from '@/app/actions/budgets'
 import { getIVAtoREEquivalencesAction } from '@/app/actions/config'
+import { calculateRecargo, getTotalRecargo, shouldApplyIRPF, calculateIRPF, getDefaultIRPFPercentage } from '@/lib/helpers/fiscal-calculations'
 import { toast } from 'sonner'
 import {
   AlertDialog,
@@ -80,6 +81,14 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
   const [recargos, setRecargos] = useState<Record<number, number>>({})
   const [ivasReconocidos, setIvasReconocidos] = useState<Set<number>>(new Set())
 
+  // Estados para cálculos fiscales en tiempo real
+  const [calculatedIRPF, setCalculatedIRPF] = useState(0)
+  const [calculatedIRPFPercentage, setCalculatedIRPFPercentage] = useState(0)
+  const [calculatedREByIVA, setCalculatedREByIVA] = useState<Record<number, number>>({})
+  const [calculatedTotalRE, setCalculatedTotalRE] = useState(0)
+  const [issuerType, setIssuerType] = useState<'empresa' | 'autonomo'>('empresa')
+  const [issuerIRPFPercentage, setIssuerIRPFPercentage] = useState(15)
+
   // Cargar budgetData del borrador existente
   useEffect(() => {
     if (existingBudget?.json_budget_data) {
@@ -136,6 +145,64 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
 
     loadREDefaults()
   }, [clientData.client_type, aplicaRecargo, tariff.ivas_presentes])
+
+  // Cargar datos del emisor al inicio
+  useEffect(() => {
+    async function loadIssuerData() {
+      try {
+        // Crear una acción temporal para obtener datos del emisor
+        const response = await fetch('/api/user/issuer')
+        if (response.ok) {
+          const data = await response.json()
+          if (data.issuer) {
+            setIssuerType(data.issuer.issuers_type || 'empresa')
+            setIssuerIRPFPercentage(data.issuer.issuers_irpf_percentage || 15)
+          }
+        }
+      } catch (error) {
+        console.error('[loadIssuerData] Error:', error)
+      }
+    }
+
+    loadIssuerData()
+  }, [])
+
+  // Calcular IRPF y RE en tiempo real cuando cambian budgetData o totals
+  useEffect(() => {
+    // Calcular IRPF si aplica
+    if (totals.base > 0 && clientData.client_type) {
+      const aplica = shouldApplyIRPF(issuerType, clientData.client_type)
+      if (aplica) {
+        const irpfAmount = calculateIRPF(totals.base, issuerIRPFPercentage)
+        setCalculatedIRPF(irpfAmount)
+        setCalculatedIRPFPercentage(issuerIRPFPercentage)
+      } else {
+        setCalculatedIRPF(0)
+        setCalculatedIRPFPercentage(0)
+      }
+    } else {
+      setCalculatedIRPF(0)
+      setCalculatedIRPFPercentage(0)
+    }
+
+    // Calcular RE si aplica
+    if (aplicaRecargo && budgetData.length > 0 && Object.keys(recargos).length > 0) {
+      try {
+        const reByIVA = calculateRecargo(budgetData as any[], recargos)
+        const totalRE = getTotalRecargo(reByIVA)
+
+        setCalculatedREByIVA(reByIVA)
+        setCalculatedTotalRE(totalRE)
+      } catch (error) {
+        console.error('[calculateFiscalValues] Error calculating RE:', error)
+        setCalculatedREByIVA({})
+        setCalculatedTotalRE(0)
+      }
+    } else {
+      setCalculatedREByIVA({})
+      setCalculatedTotalRE(0)
+    }
+  }, [budgetData, totals, aplicaRecargo, recargos, clientData.client_type, issuerType, issuerIRPFPercentage])
 
   const validateStep1 = () => {
     const newErrors: Record<string, string> = {}
@@ -750,7 +817,7 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
         <Card>
           <CardHeader
             style={{ backgroundColor: tariff.primary_color }}
-            className="text-white rounded-t-lg"
+            className="text-white rounded-t-lg py-3"
           >
             <CardTitle className="text-white">Paso 1: Datos del Cliente</CardTitle>
             <CardDescription className="text-white/90">
@@ -1053,7 +1120,7 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
         <Card>
           <CardHeader
             style={{ backgroundColor: tariff.primary_color }}
-            className="text-white rounded-t-lg"
+            className="text-white rounded-t-lg py-3"
           >
             <CardTitle className="text-white">Presupuesto para {clientData.client_name || 'Cliente'}</CardTitle>
             <CardDescription className="text-white/90">
@@ -1072,10 +1139,10 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                 onTotalsChange={setTotals}
                 primaryColor={tariff.primary_color}
                 secondaryColor={tariff.secondary_color}
-                irpf={existingBudget?.irpf || 0}
-                irpfPercentage={existingBudget?.irpf_percentage || 0}
-                reByIVA={(existingBudget?.json_budget_data as any)?.recargo?.reByIVA || {}}
-                totalRE={(existingBudget?.json_budget_data as any)?.recargo?.totalRE || 0}
+                irpf={calculatedIRPF}
+                irpfPercentage={calculatedIRPFPercentage}
+                reByIVA={calculatedREByIVA}
+                totalRE={calculatedTotalRE}
               />
             )}
           </CardContent>

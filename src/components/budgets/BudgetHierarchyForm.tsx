@@ -676,34 +676,37 @@ export function BudgetHierarchyForm({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-2">
       {/* Totals Block */}
-      <div className="w-full max-w-md ml-auto space-y-1">
-        <div className="flex justify-between text-sm font-mono bg-white p-3 rounded-lg" style={{ color: secondaryColor }}>
+      <div className="w-full max-w-md ml-auto space-y-0.5">
+        <div className="flex justify-between text-sm font-mono bg-white px-2 py-1 rounded text-black">
           <span>Base Imponible</span>
           <span className="font-bold">{formatCurrency(totals.base)}</span>
         </div>
 
         {totals.ivaGroups.map(group => (
-          <div key={group.percentage} className="flex justify-between text-sm font-mono bg-white p-3 rounded-lg text-black">
-            <span>IVA {formatSpanishNumber(group.percentage)}%</span>
+          <div key={group.percentage} className="flex justify-between text-sm font-mono bg-white px-2 py-1 rounded text-black">
+            <span>IVA {formatSpanishNumber(group.percentage, 2)}%</span>
             <span className="font-bold">{formatCurrency(group.amount)}</span>
           </div>
         ))}
 
-        <div className="flex justify-between text-sm font-mono font-bold bg-white p-3 rounded-lg border-2" style={{ color: primaryColor, borderColor: primaryColor }}>
-          <span>Total con IVA</span>
-          <span className="font-bold">{formatCurrency(totals.total)}</span>
-        </div>
+        {/* Subtotal - Solo mostrar si hay IRPF o RE */}
+        {(irpf > 0 || totalRE > 0) && (
+          <div className="flex justify-between text-sm font-mono font-bold bg-white px-2 py-1 rounded border-2 text-black" style={{ borderColor: primaryColor }}>
+            <span>Subtotal</span>
+            <span className="font-bold">{formatCurrency(totals.total)}</span>
+          </div>
+        )}
 
         {/* IRPF - Solo mostrar si aplica */}
         {irpf > 0 && (
-          <div className="flex justify-between text-sm font-mono bg-red-50 p-3 rounded-lg text-red-700 items-center">
+          <div className="flex justify-between text-sm font-mono bg-white px-2 py-1 rounded text-black items-center">
             <div className="flex items-center gap-2">
-              <span>IRPF {formatSpanishNumber(irpfPercentage)}%</span>
+              <span>IRPF {formatSpanishNumber(irpfPercentage, 2)}%</span>
               <Dialog>
                 <DialogTrigger asChild>
-                  <button className="text-red-500 hover:text-red-700">
+                  <button className="text-gray-500 hover:text-gray-700">
                     <Info className="h-4 w-4" />
                   </button>
                 </DialogTrigger>
@@ -726,20 +729,28 @@ export function BudgetHierarchyForm({
         {/* Recargo de Equivalencia - Solo mostrar si aplica */}
         {totalRE > 0 && Object.keys(reByIVA).length > 0 && (
           <>
-            {Object.entries(reByIVA).map(([iva, amount]) => (
-              <div key={iva} className="flex justify-between text-sm font-mono bg-amber-50 p-3 rounded-lg text-amber-800">
-                <span>RE {iva}%</span>
-                <span className="font-bold">+{formatCurrency(amount)}</span>
-              </div>
-            ))}
+            {Object.entries(reByIVA).map(([iva, amount]) => {
+              const ivaNum = parseFloat(iva)
+              return (
+                <div key={iva} className="flex justify-between text-sm font-mono bg-white px-2 py-1 rounded text-black">
+                  <span>RE {formatSpanishNumber(ivaNum, 2)}%</span>
+                  <span className="font-bold">{formatCurrency(amount)}</span>
+                </div>
+              )
+            })}
           </>
         )}
 
-        {/* Total a Pagar - Mostrar si hay IRPF o RE */}
-        {(irpf > 0 || totalRE > 0) && (
-          <div className="flex justify-between text-lg font-mono font-bold bg-green-50 p-3 rounded-lg border-2 border-green-600 text-green-700">
-            <span>Total a Pagar</span>
+        {/* Total Presupuesto - Mostrar siempre */}
+        {(irpf > 0 || totalRE > 0) ? (
+          <div className="flex justify-between text-lg font-mono font-bold bg-white px-2 py-1 rounded border-2 text-black" style={{ borderColor: primaryColor }}>
+            <span>Total Presupuesto</span>
             <span className="font-bold">{formatCurrency(totals.total - irpf + totalRE)}</span>
+          </div>
+        ) : (
+          <div className="flex justify-between text-lg font-mono font-bold bg-white px-2 py-1 rounded border-2 text-black" style={{ borderColor: primaryColor }}>
+            <span>Total Presupuesto</span>
+            <span className="font-bold">{formatCurrency(totals.total)}</span>
           </div>
         )}
       </div>
