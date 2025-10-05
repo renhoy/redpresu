@@ -743,13 +743,13 @@ export function BudgetHierarchyForm({
 
         {/* Total Presupuesto - Mostrar siempre */}
         {(irpf > 0 || totalRE > 0) ? (
-          <div className="flex justify-between text-lg font-mono font-bold bg-white px-2 py-1 rounded border-2 text-black" style={{ borderColor: primaryColor }}>
-            <span>Total Presupuesto</span>
+          <div className="flex justify-between text-lg font-mono font-bold bg-white px-2 py-1 rounded border-2" style={{ borderColor: primaryColor, color: primaryColor }}>
+            <span className="font-bold">Total Presupuesto</span>
             <span className="font-bold">{formatCurrency(totals.total - irpf + totalRE)}</span>
           </div>
         ) : (
-          <div className="flex justify-between text-lg font-mono font-bold bg-white px-2 py-1 rounded border-2 text-black" style={{ borderColor: primaryColor }}>
-            <span>Total Presupuesto</span>
+          <div className="flex justify-between text-lg font-mono font-bold bg-white px-2 py-1 rounded border-2" style={{ borderColor: primaryColor, color: primaryColor }}>
+            <span className="font-bold">Total Presupuesto</span>
             <span className="font-bold">{formatCurrency(totals.total)}</span>
           </div>
         )}
