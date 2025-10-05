@@ -2,9 +2,9 @@
 
 ## MÓDULO ACTIVO: IRPF y Recargo de Equivalencia (Bloque 4)
 
-**Tareas Activas:** 1/3
+**Tareas Activas:** 2/3
 
-**Siguiente tarea:** 4.2 - Implementación Recargo de Equivalencia
+**Siguiente tarea:** 4.3 - Modificación Payload PDF
 
 ---
 
@@ -372,30 +372,52 @@ Completado:
 
 #### 4.2 Implementación Recargo de Equivalencia
 
-**Prioridad:** ALTA | **Estimación:** 4 días | **Estado:** ⏳ Pendiente
+**Prioridad:** ALTA | **Estimación:** 4 días | **Estado:** ✅ Completado
 **Dependencia:** 3.1 (config), 2.2 (detección IVAs)
 
-- [ ] Checkbox "Aplicar RE" en formulario cliente (solo si autónomo)
-- [ ] Tabla dinámica recargos por IVA presente
-- [ ] Pre-cargar valores RE desde config
-- [ ] Permitir edición manual de % RE
-- [ ] Helper `calculateRecargo(items, recargos)`
-- [ ] Guardar en `json_budget_data.cliente.recargos`
-- [ ] Guardar en `json_budget_data.totales.re`
-- [ ] Tests cálculo RE
+- ✅ Checkbox "Aplicar RE" en formulario cliente (solo si autónomo)
+- ✅ Tabla dinámica recargos por IVA presente (fondo amber-50)
+- ✅ Pre-cargar valores RE desde config (getIVAtoREEquivalencesAction)
+- ✅ Permitir edición manual de % RE (inputs numéricos)
+- ✅ Helper `calculateRecargo(items, recargos)`
+- ✅ Helper `getTotalRecargo(reByIVA)`
+- ✅ Guardar en `json_budget_data.recargo` (estructura completa)
+- ✅ Visualizar RE por IVA en totales
+- ✅ Total a Pagar = Total + IVA - IRPF + RE
+
+**Archivos nuevos:**
+
+- (Extendido) `src/lib/helpers/fiscal-calculations.ts`
 
 **Archivos modificados:**
 
-- `src/lib/helpers/fiscal-calculations.ts`
-- `src/components/budgets/BudgetForm.tsx`
-- `src/app/actions/budgets.ts`
+- `src/app/actions/config.ts` (getIVAtoREEquivalencesAction)
+- `src/app/actions/budgets.ts` (cálculo y guardado RE)
+- `src/components/budgets/BudgetForm.tsx` (UI checkbox + tabla)
+- `src/components/budgets/BudgetHierarchyForm.tsx` (visualización RE)
+- `src/lib/types/database.ts` (Tariff: ivas_presentes?)
+
+**Estructura json_budget_data:**
+
+```json
+{
+  "items": [...],
+  "recargo": {
+    "aplica": true,
+    "recargos": {"21": 5.2, "10": 1.4},
+    "reByIVA": {"21": 52.00, "10": 14.00},
+    "totalRE": 66.00
+  }
+}
+```
 
 **Criterios de completado:**
 
-- Checkbox visible solo si cliente = autónomo
-- Tabla muestra solo IVAs de la tarifa seleccionada
-- Cálculo correcto por IVA
-- Datos guardados en JSON
+- ✅ Checkbox visible solo si cliente = autónomo
+- ✅ Tabla muestra solo IVAs de la tarifa seleccionada
+- ✅ Cálculo correcto por IVA (Base = PVP / (1 + IVA% + RE%))
+- ✅ Datos guardados en JSON (estructura recargo)
+- ✅ Visualización completa en totales
 
 ---
 
@@ -720,13 +742,13 @@ Completado:
 
 ## ESTADO GLOBAL FASE 2
 
-**Progreso:** 22% (11/49 tareas)
+**Progreso:** 24% (12/49 tareas)
 **Bloques completados:** 3/9 (Usuarios ✅, Mejoras Tarifas ✅, Configuración ✅)
-**Semanas transcurridas:** 4/12
+**Semanas transcurridas:** 5/12
 **Duración estimada:** 12 semanas
 
-**Bloque activo:** Bloque 4 - IRPF y Recargo de Equivalencia (1/3 tareas completadas)
-**Próximo paso:** Implementación Recargo de Equivalencia (4.2)
+**Bloque activo:** Bloque 4 - IRPF y Recargo de Equivalencia (2/3 tareas completadas)
+**Próximo paso:** Modificación Payload PDF (4.3)
 
 ---
 
