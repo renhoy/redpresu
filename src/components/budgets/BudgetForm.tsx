@@ -9,9 +9,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import { ArrowLeft, ArrowRight, Trash2, Save, FileStack, Loader2, Check, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Trash2, Save, FileStack, Loader2, Check, X, History, GitBranch } from 'lucide-react'
 import { BudgetHierarchyForm } from './BudgetHierarchyForm'
 import { createDraftBudget, updateBudgetDraft, saveBudget, generateBudgetPDF, duplicateBudget } from '@/app/actions/budgets'
+import { createBudgetVersion } from '@/app/actions/budget-versions'
 import { getIVAtoREEquivalencesAction } from '@/app/actions/config'
 import { calculateRecargo, getTotalRecargo, shouldApplyIRPF, calculateIRPF, getDefaultIRPFPercentage } from '@/lib/helpers/fiscal-calculations'
 import { toast } from 'sonner'
@@ -58,6 +59,9 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
   const [showOverwriteConfirm, setShowOverwriteConfirm] = useState(false)
   const [showPdfConfirm, setShowPdfConfirm] = useState(false)
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
+  const [showVersionDialog, setShowVersionDialog] = useState(false)
+  const [versionName, setVersionName] = useState('')
+  const [versionNotes, setVersionNotes] = useState('')
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const isEditMode = !!existingBudget?.id
   const [clientData, setClientData] = useState<ClientData>({
@@ -582,6 +586,38 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
     window.close()
   }
 
+  const handleCreateVersion = async () => {
+    if (!budgetId) {
+      toast.error('Debe guardar el presupuesto antes de crear una versión')
+      return
+    }
+
+    // Primero guardar cambios actuales si los hay
+    if (hasUnsavedChanges) {
+      const saveResult = await handleSaveBudget()
+      if (!saveResult.success) {
+        return
+      }
+    }
+
+    // Crear la versión
+    const result = await createBudgetVersion(
+      budgetId,
+      versionName || undefined,
+      versionNotes || undefined
+    )
+
+    if (result.success) {
+      toast.success('Versión guardada correctamente')
+      setShowVersionDialog(false)
+      setVersionName('')
+      setVersionNotes('')
+      router.refresh()
+    } else {
+      toast.error(result.error || 'Error guardando versión')
+    }
+  }
+
   const executeClose = () => {
     setShowCloseConfirm(false)
     window.close()
@@ -780,6 +816,46 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
+            {/* Botón Guardar Versión - Solo en modo edición */}
+            {isEditMode && budgetId && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => setShowVersionDialog(true)}
+                      className="border-2"
+                      style={{ borderColor: tariff.primary_color, color: tariff.primary_color }}
+                    >
+                      <GitBranch className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Guardar Versión</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            {/* Botón Ver Versiones - Solo en modo edición */}
+            {isEditMode && budgetId && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => router.push(`/budgets/${budgetId}/versions`)}
+                    >
+                      <History className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Ver Historial</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
           <div className="flex gap-3">
             <TooltipProvider>
@@ -1247,6 +1323,49 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
               style={{ backgroundColor: tariff.primary_color }}
             >
               Sí, generar nuevo PDF
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* AlertDialog: Crear nueva versión */}
+      <AlertDialog open={showVersionDialog} onOpenChange={setShowVersionDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Guardar Nueva Versión</AlertDialogTitle>
+            <AlertDialogDescription>
+              Crea un snapshot del estado actual del presupuesto. Podrás restaurarlo en cualquier momento.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="version-name">Nombre de la versión (opcional)</Label>
+              <Input
+                id="version-name"
+                placeholder="Ej: Versión inicial, Revisión cliente..."
+                value={versionName}
+                onChange={(e) => setVersionName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="version-notes">Notas (opcional)</Label>
+              <Input
+                id="version-notes"
+                placeholder="Describe los cambios o motivo de esta versión..."
+                value={versionNotes}
+                onChange={(e) => setVersionNotes(e.target.value)}
+              />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setVersionName('')
+              setVersionNotes('')
+            }}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleCreateVersion}>
+              Guardar Versión
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

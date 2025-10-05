@@ -102,6 +102,7 @@ export interface Budget {
   client_province: string | null
   client_acceptance: boolean | null
   json_budget_data: JsonValue
+  json_client_data?: JsonValue
   status: string
   total: number
   iva: number
@@ -121,6 +122,27 @@ export interface Budget {
   }
   users?: {
     name: string
+  }
+}
+
+export interface BudgetVersion {
+  id: string
+  budget_id: string
+  version_number: number
+  version_name: string | null
+  json_budget_data: JsonValue
+  json_client_data: JsonValue
+  total_amount: number
+  base_amount: number
+  irpf: number | null
+  irpf_percentage: number | null
+  total_pagar: number | null
+  created_by: string | null
+  created_at: string
+  notes: string | null
+  users?: {
+    name: string
+    email: string
   }
 }
 

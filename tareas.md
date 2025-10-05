@@ -136,6 +136,7 @@ Completado:
 ✅ 1.4 CRUD Usuarios (migration 007, 014, gestión completa con permisos por rol)
 
 **Mejoras adicionales:**
+
 - ✅ Acceso vendedor a gestión usuarios (solo lectura + editar propio perfil)
 - ✅ Filtrado de roles según usuario actual (admin NO crea superadmin)
 - ✅ Ocultación de superadmins para admin/vendedor
@@ -469,6 +470,7 @@ Completado:
 ✅ 4.3 Modificación Payload PDF (IRPF y RE incluidos en totals)
 
 **Mejoras adicionales:**
+
 - ✅ Formato español en todos los campos numéricos (coma decimal)
 - ✅ Advertencia visual para IVAs no reconocidos en configuración
 - ✅ Detección automática de IVAs presentes en tarifas
