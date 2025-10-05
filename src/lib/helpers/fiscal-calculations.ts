@@ -98,3 +98,130 @@ export function calculateTotalWithIRPF(
 export function isValidIRPFPercentage(percentage: number): boolean {
   return percentage >= 0 && percentage <= 100
 }
+
+/**
+ * ========================================
+ * RECARGO DE EQUIVALENCIA (RE)
+ * ========================================
+ */
+
+/**
+ * Item de presupuesto para cálculos
+ */
+export interface BudgetItem {
+  level: string
+  quantity?: string | number
+  pvp?: string | number
+  iva_percentage?: string | number
+  [key: string]: any
+}
+
+/**
+ * Parsea un valor numérico en formato español (coma decimal)
+ */
+function parseSpanishNumber(value: string | number): number {
+  if (typeof value === 'number') return value
+
+  const str = value.toString().trim()
+
+  // Si tiene punto Y coma, asumir formato español (punto=miles, coma=decimal)
+  if (str.includes('.') && str.includes(',')) {
+    return parseFloat(str.replace(/\./g, '').replace(',', '.'))
+  }
+
+  // Si solo tiene coma, es formato español
+  if (str.includes(',')) {
+    return parseFloat(str.replace(',', '.'))
+  }
+
+  // Si solo tiene punto o ninguno, parseFloat directo
+  return parseFloat(str) || 0
+}
+
+/**
+ * Calcula el Recargo de Equivalencia por cada tipo de IVA
+ *
+ * @param items - Array de items del presupuesto
+ * @param recargos - Mapa de IVA% → RE% (ej: {21: 5.2, 10: 1.4})
+ * @returns Mapa de IVA% → importe RE calculado
+ *
+ * @example
+ * const items = [{level: 'item', quantity: '10', pvp: '121', iva_percentage: '21'}]
+ * const recargos = {21: 5.2}
+ * calculateRecargo(items, recargos) // => {21: 52.00}
+ *
+ * Fórmula:
+ * - PVP incluye IVA + RE
+ * - Base = PVP / (1 + IVA% + RE%)
+ * - Importe RE = Base × RE%
+ */
+export function calculateRecargo(
+  items: BudgetItem[],
+  recargos: Record<number, number>
+): Record<number, number> {
+  const reByIVA: Record<number, number> = {}
+
+  items.forEach((item) => {
+    if (item.level !== 'item') return
+
+    const ivaPercentage = parseSpanishNumber(item.iva_percentage || 0)
+    const rePercentage = recargos[ivaPercentage] || 0
+
+    if (rePercentage > 0) {
+      const pvp = parseSpanishNumber(item.pvp || 0)
+      const quantity = parseSpanishNumber(item.quantity || 0)
+
+      // Total de la partida (PVP × cantidad)
+      const totalPartida = pvp * quantity
+
+      // Base sin IVA ni RE
+      // PVP = Base × (1 + IVA% + RE%)
+      // Base = PVP / (1 + IVA% + RE%)
+      const divisor = 1 + (ivaPercentage / 100) + (rePercentage / 100)
+      const base = totalPartida / divisor
+
+      // Importe RE para esta partida
+      const importeRE = base * (rePercentage / 100)
+
+      // Acumular por tipo de IVA
+      if (!reByIVA[ivaPercentage]) {
+        reByIVA[ivaPercentage] = 0
+      }
+      reByIVA[ivaPercentage] += importeRE
+    }
+  })
+
+  // Redondear a 2 decimales
+  Object.keys(reByIVA).forEach((iva) => {
+    const ivaNum = parseFloat(iva)
+    reByIVA[ivaNum] = Math.round(reByIVA[ivaNum] * 100) / 100
+  })
+
+  return reByIVA
+}
+
+/**
+ * Calcula el total de RE sumando todos los tipos de IVA
+ *
+ * @param reByIVA - Mapa de IVA% → importe RE
+ * @returns Total de RE
+ *
+ * @example
+ * getTotalRecargo({21: 52.00, 10: 14.00}) // => 66.00
+ */
+export function getTotalRecargo(reByIVA: Record<number, number>): number {
+  const total = Object.values(reByIVA).reduce((sum, amount) => sum + amount, 0)
+  return Math.round(total * 100) / 100
+}
+
+/**
+ * Valida que los porcentajes de RE estén en rango válido
+ *
+ * @param recargos - Mapa de IVA% → RE%
+ * @returns true si todos están entre 0 y 100
+ */
+export function validateRecargosPercentages(
+  recargos: Record<number, number>
+): boolean {
+  return Object.values(recargos).every((re) => re >= 0 && re <= 100)
+}
