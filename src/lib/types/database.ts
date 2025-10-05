@@ -55,6 +55,9 @@ export interface Tariff {
   status: string
   validity: number | null
   json_tariff_data: JsonValue
+  ivas_presentes?: number[]
+  user_id?: string
+  is_template?: boolean
   created_at: string
   updated_at: string
 }

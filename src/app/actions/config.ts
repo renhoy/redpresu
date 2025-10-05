@@ -224,3 +224,38 @@ export async function deleteConfigValue(key: string): Promise<{
     return { success: false, error: 'Error inesperado' }
   }
 }
+
+/**
+ * Obtiene las equivalencias IVA a Recargo de Equivalencia
+ * Acción pública (no requiere superadmin)
+ */
+export async function getIVAtoREEquivalencesAction(): Promise<{
+  success: boolean
+  data?: Record<string, number>
+  error?: string
+}> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('config')
+      .select('value')
+      .eq('key', 'iva_re_equivalences')
+      .single()
+
+    if (error || !data) {
+      // Devolver valores por defecto si no existe en BD
+      return {
+        success: true,
+        data: {
+          '21': 5.2,
+          '10': 1.4,
+          '4': 0.5
+        }
+      }
+    }
+
+    return { success: true, data: data.value as Record<string, number> }
+  } catch (error) {
+    console.error('[getIVAtoREEquivalencesAction] Error:', error)
+    return { success: false, error: 'Error obteniendo equivalencias RE' }
+  }
+}

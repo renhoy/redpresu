@@ -74,6 +74,10 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const isInitialMount = useRef(true)
 
+  // Estados para Recargo de Equivalencia
+  const [aplicaRecargo, setAplicaRecargo] = useState(false)
+  const [recargos, setRecargos] = useState<Record<number, number>>({})
+
   // Cargar budgetData del borrador existente
   useEffect(() => {
     if (existingBudget?.json_budget_data) {
@@ -98,6 +102,28 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
       setHasUnsavedChanges(false)
     }
   }, [saveStatus])
+
+  // Cargar valores por defecto de RE cuando el cliente es autónomo y se activa el checkbox
+  useEffect(() => {
+    async function loadREDefaults() {
+      if (clientData.client_type === 'autonomo' && aplicaRecargo && Object.keys(recargos).length === 0) {
+        // Importar la server action
+        const { getIVAtoREEquivalencesAction } = await import('@/app/actions/config')
+        const result = await getIVAtoREEquivalencesAction()
+
+        if (result.success && result.data && tariff.ivas_presentes) {
+          // Solo cargar recargos para los IVAs presentes en la tarifa
+          const recargosInicial: Record<number, number> = {}
+          tariff.ivas_presentes.forEach((iva: number) => {
+            recargosInicial[iva] = result.data![iva.toString()] || 0
+          })
+          setRecargos(recargosInicial)
+        }
+      }
+    }
+
+    loadREDefaults()
+  }, [clientData.client_type, aplicaRecargo, tariff.ivas_presentes, recargos])
 
   const validateStep1 = () => {
     const newErrors: Record<string, string> = {}
@@ -891,6 +917,61 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                 )}
               </div>
             </div>
+
+            {/* Recargo de Equivalencia (solo si cliente es autónomo) */}
+            {clientData.client_type === 'autonomo' && (
+              <div className="space-y-4 p-4 border rounded-lg bg-amber-50">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="aplica_recargo"
+                    checked={aplicaRecargo}
+                    onCheckedChange={(checked) => {
+                      setAplicaRecargo(!!checked)
+                      if (!checked) {
+                        setRecargos({})
+                      }
+                    }}
+                  />
+                  <Label htmlFor="aplica_recargo" className="text-sm font-medium">
+                    Aplicar Recargo de Equivalencia
+                  </Label>
+                </div>
+
+                {aplicaRecargo && tariff.ivas_presentes && tariff.ivas_presentes.length > 0 && (
+                  <div className="space-y-3 pt-2">
+                    <p className="text-sm text-muted-foreground">
+                      Porcentajes de RE por tipo de IVA:
+                    </p>
+                    <div className="grid gap-3">
+                      {tariff.ivas_presentes.map((iva: number) => (
+                        <div key={iva} className="flex items-center gap-4 bg-white p-3 rounded border">
+                          <Label className="min-w-[80px] font-medium">{iva}% IVA</Label>
+                          <div className="flex items-center gap-2 flex-1">
+                            <Input
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              max="100"
+                              value={recargos[iva] || 0}
+                              onChange={(e) => {
+                                const value = parseFloat(e.target.value) || 0
+                                setRecargos(prev => ({ ...prev, [iva]: value }))
+                              }}
+                              className="w-24"
+                            />
+                            <span className="text-sm text-muted-foreground">% RE</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground italic">
+                      Los valores por defecto se cargan automáticamente según la normativa.
+                      Puedes modificarlos si es necesario.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Aceptación */}
             <div className="space-y-2">
