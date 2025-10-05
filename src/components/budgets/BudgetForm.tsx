@@ -185,8 +185,8 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
       setCalculatedIRPFPercentage(0)
     }
 
-    // Calcular RE si aplica
-    if (aplicaRecargo && budgetData.length > 0 && Object.keys(recargos).length > 0) {
+    // Calcular RE si aplica (solo para clientes autónomos)
+    if (aplicaRecargo && clientData.client_type === 'autonomo' && budgetData.length > 0 && Object.keys(recargos).length > 0) {
       try {
         const reByIVA = calculateRecargo(budgetData as any[], recargos)
         const totalRE = getTotalRecargo(reByIVA)
@@ -556,6 +556,14 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
     // Limpiar error del campo modificado
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }))
+    }
+
+    // Si se cambia el tipo de cliente y NO es autónomo, limpiar RE
+    if (field === 'client_type' && value !== 'autonomo') {
+      setAplicaRecargo(false)
+      setRecargos({})
+      setCalculatedREByIVA({})
+      setCalculatedTotalRE(0)
     }
   }
 
