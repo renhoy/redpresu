@@ -292,7 +292,8 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
 
         const newBudgetId = createResult.budgetId
 
-        const result = await saveBudget(newBudgetId, totals, budgetData, clientData)
+        const recargoData = aplicaRecargo ? { aplica: true, recargos } : undefined
+        const result = await saveBudget(newBudgetId, totals, budgetData, clientData, recargoData)
 
         if (result.success) {
           toast.success('Presupuesto creado correctamente')
@@ -305,7 +306,8 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
         }
       } else {
         // Ya existe budgetId (caso raro en create mode)
-        const result = await saveBudget(budgetId, totals, budgetData, clientData)
+        const recargoData = aplicaRecargo ? { aplica: true, recargos } : undefined
+        const result = await saveBudget(budgetId, totals, budgetData, clientData, recargoData)
 
         if (result.success) {
           toast.success('Presupuesto guardado correctamente')
@@ -331,7 +333,8 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
     try {
       if (!budgetId) return
 
-      const result = await saveBudget(budgetId, totals, budgetData, clientData)
+      const recargoData = aplicaRecargo ? { aplica: true, recargos } : undefined
+      const result = await saveBudget(budgetId, totals, budgetData, clientData, recargoData)
 
       if (result.success) {
         toast.success('Presupuesto actualizado correctamente')
@@ -420,7 +423,8 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
 
       if (!budgetId) return
 
-      const saveResult = await saveBudget(budgetId, totals, budgetData, clientData)
+      const recargoData = aplicaRecargo ? { aplica: true, recargos } : undefined
+      const saveResult = await saveBudget(budgetId, totals, budgetData, clientData, recargoData)
 
       if (!saveResult.success) {
         toast.error(saveResult.error || 'Error al guardar')

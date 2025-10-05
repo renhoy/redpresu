@@ -6,7 +6,13 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 import { Tariff, Budget, BudgetStatus } from '@/lib/types/database'
 import { revalidatePath } from 'next/cache'
 import { buildPDFPayload } from '@/lib/helpers/pdf-payload-builder'
-import { shouldApplyIRPF, calculateIRPF } from '@/lib/helpers/fiscal-calculations'
+import {
+  shouldApplyIRPF,
+  calculateIRPF,
+  calculateRecargo,
+  getTotalRecargo,
+  type BudgetItem as FiscalBudgetItem
+} from '@/lib/helpers/fiscal-calculations'
 import type { ClientType } from '@/lib/helpers/fiscal-calculations'
 
 interface ClientData {
@@ -352,6 +358,10 @@ export async function saveBudget(
     client_locality: string
     client_province: string
     client_acceptance: boolean
+  },
+  recargoData?: {
+    aplica: boolean
+    recargos: Record<number, number>
   }
 ): Promise<{ success: boolean; error?: string; had_pdf?: boolean }> {
   try {
@@ -433,8 +443,35 @@ export async function saveBudget(
       console.warn('[saveBudget] No se pudo obtener datos del emisor, IRPF = 0')
     }
 
-    // Calcular total a pagar (total con IVA - IRPF)
-    const totalPagar = totals.total - irpfAmount
+    // Calcular Recargo de Equivalencia si aplica
+    let reByIVA: Record<number, number> = {}
+    let totalRE = 0
+
+    if (recargoData?.aplica && Object.keys(recargoData.recargos).length > 0) {
+      console.log('[saveBudget] Calculando RE:', recargoData.recargos)
+      reByIVA = calculateRecargo(budgetData as FiscalBudgetItem[], recargoData.recargos)
+      totalRE = getTotalRecargo(reByIVA)
+      console.log('[saveBudget] RE calculado:', { reByIVA, totalRE })
+    }
+
+    // Calcular total a pagar (total con IVA - IRPF + RE)
+    const totalPagar = totals.total - irpfAmount + totalRE
+
+    // Preparar json_budget_data extendido con info de RE
+    let extendedBudgetData: any = budgetData
+
+    if (recargoData?.aplica) {
+      // Añadir metadatos de RE al budgetData
+      extendedBudgetData = {
+        items: budgetData,
+        recargo: {
+          aplica: true,
+          recargos: recargoData.recargos,
+          reByIVA: reByIVA,
+          totalRE: totalRE
+        }
+      }
+    }
 
     // Calcular fechas
     const startDate = new Date()
@@ -455,7 +492,7 @@ export async function saveBudget(
       irpf: irpfAmount,
       irpf_percentage: irpfPercentage,
       total_pagar: totalPagar,
-      json_budget_data: budgetData,
+      json_budget_data: extendedBudgetData,
       start_date: startDate.toISOString(),
       end_date: budget.validity_days ? endDate.toISOString() : null,
       updated_at: new Date().toISOString()
