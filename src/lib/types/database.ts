@@ -103,6 +103,9 @@ export interface Budget {
   total: number
   iva: number
   base: number
+  irpf?: number
+  irpf_percentage?: number
+  total_pagar?: number
   pdf_url: string | null
   start_date: string | null
   end_date: string | null

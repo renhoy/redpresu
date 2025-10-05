@@ -946,6 +946,8 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                 onTotalsChange={setTotals}
                 primaryColor={tariff.primary_color}
                 secondaryColor={tariff.secondary_color}
+                irpf={existingBudget?.irpf || 0}
+                irpfPercentage={existingBudget?.irpf_percentage || 0}
               />
             )}
           </CardContent>

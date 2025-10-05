@@ -65,6 +65,8 @@ interface BudgetHierarchyFormProps {
   onTotalsChange?: (totals: { base: number; total: number }) => void
   primaryColor?: string
   secondaryColor?: string
+  irpf?: number
+  irpfPercentage?: number
 }
 
 interface IVAGroup {
@@ -83,7 +85,9 @@ export function BudgetHierarchyForm({
   onBudgetDataChange,
   onTotalsChange,
   primaryColor = '#3b82f6',
-  secondaryColor = '#1e40af'
+  secondaryColor = '#1e40af',
+  irpf = 0,
+  irpfPercentage = 0
 }: BudgetHierarchyFormProps) {
   const [budgetData, setBudgetData] = useState<BudgetItem[]>([])
   const [totals, setTotals] = useState<Totals>({ base: 0, ivaGroups: [], total: 0 })
@@ -684,9 +688,44 @@ export function BudgetHierarchyForm({
         ))}
 
         <div className="flex justify-between text-sm font-mono font-bold bg-white p-3 rounded-lg border-2" style={{ color: primaryColor, borderColor: primaryColor }}>
-          <span>Total Presupuesto</span>
+          <span>Total con IVA</span>
           <span className="font-bold">{formatCurrency(totals.total)}</span>
         </div>
+
+        {/* IRPF - Solo mostrar si aplica */}
+        {irpf > 0 && (
+          <div className="flex justify-between text-sm font-mono bg-red-50 p-3 rounded-lg text-red-700 items-center">
+            <div className="flex items-center gap-2">
+              <span>IRPF {formatSpanishNumber(irpfPercentage)}%</span>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <button className="text-red-500 hover:text-red-700">
+                    <Info className="h-4 w-4" />
+                  </button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>IRPF - Retención</DialogTitle>
+                    <DialogDescription>
+                      El IRPF (Impuesto sobre la Renta de las Personas Físicas) se aplica automáticamente
+                      cuando el emisor es autónomo y el cliente es empresa o autónomo.
+                      Este importe se retiene del total a pagar.
+                    </DialogDescription>
+                  </DialogHeader>
+                </DialogContent>
+              </Dialog>
+            </div>
+            <span className="font-bold">-{formatCurrency(irpf)}</span>
+          </div>
+        )}
+
+        {/* Total a Pagar - Solo mostrar si hay IRPF */}
+        {irpf > 0 && (
+          <div className="flex justify-between text-lg font-mono font-bold bg-green-50 p-3 rounded-lg border-2 border-green-600 text-green-700">
+            <span>Total a Pagar</span>
+            <span className="font-bold">{formatCurrency(totals.total - irpf)}</span>
+          </div>
+        )}
       </div>
 
       {/* Hierarchical Form */}

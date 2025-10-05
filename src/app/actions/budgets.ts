@@ -6,6 +6,8 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 import { Tariff, Budget, BudgetStatus } from '@/lib/types/database'
 import { revalidatePath } from 'next/cache'
 import { buildPDFPayload } from '@/lib/helpers/pdf-payload-builder'
+import { shouldApplyIRPF, calculateIRPF } from '@/lib/helpers/fiscal-calculations'
+import type { ClientType } from '@/lib/helpers/fiscal-calculations'
 
 interface ClientData {
   client_type: 'particular' | 'autonomo' | 'empresa'
@@ -19,6 +21,32 @@ interface ClientData {
   client_locality: string
   client_province: string
   client_acceptance: boolean
+}
+
+/**
+ * Obtiene los datos del issuer (emisor) del usuario actual
+ */
+async function getUserIssuer(userId: string): Promise<{
+  issuers_type: 'empresa' | 'autonomo'
+  issuers_irpf_percentage: number
+} | null> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('issuers')
+      .select('issuers_type, issuers_irpf_percentage')
+      .eq('user_id', userId)
+      .single()
+
+    if (error || !data) {
+      console.error('[getUserIssuer] Error obteniendo issuer:', error)
+      return null
+    }
+
+    return data
+  } catch (error) {
+    console.error('[getUserIssuer] Error crítico:', error)
+    return null
+  }
 }
 
 /**
@@ -372,6 +400,42 @@ export async function saveBudget(
     // Calcular IVA
     const iva = totals.total - totals.base
 
+    // Obtener datos del emisor para calcular IRPF
+    const issuer = await getUserIssuer(user.id)
+
+    // Determinar tipo de cliente
+    const clientType = (clientData?.client_type || budget.client_type) as ClientType
+
+    // Calcular IRPF si aplica
+    let irpfAmount = 0
+    let irpfPercentage = 0
+
+    if (issuer) {
+      const aplicaIRPF = shouldApplyIRPF(issuer.issuers_type, clientType)
+
+      if (aplicaIRPF && issuer.issuers_irpf_percentage) {
+        irpfPercentage = issuer.issuers_irpf_percentage
+        irpfAmount = calculateIRPF(totals.base, irpfPercentage)
+        console.log('[saveBudget] IRPF aplicable:', {
+          emisorTipo: issuer.issuers_type,
+          clienteTipo: clientType,
+          porcentaje: irpfPercentage,
+          baseImponible: totals.base,
+          irpfAmount
+        })
+      } else {
+        console.log('[saveBudget] IRPF NO aplica:', {
+          emisorTipo: issuer.issuers_type,
+          clienteTipo: clientType
+        })
+      }
+    } else {
+      console.warn('[saveBudget] No se pudo obtener datos del emisor, IRPF = 0')
+    }
+
+    // Calcular total a pagar (total con IVA - IRPF)
+    const totalPagar = totals.total - irpfAmount
+
     // Calcular fechas
     const startDate = new Date()
     const endDate = new Date(startDate)
@@ -388,6 +452,9 @@ export async function saveBudget(
       total: totals.total,
       iva: iva,
       base: totals.base,
+      irpf: irpfAmount,
+      irpf_percentage: irpfPercentage,
+      total_pagar: totalPagar,
       json_budget_data: budgetData,
       start_date: startDate.toISOString(),
       end_date: budget.validity_days ? endDate.toISOString() : null,
