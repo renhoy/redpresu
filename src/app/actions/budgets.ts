@@ -196,6 +196,21 @@ export async function createDraftBudget(data: {
       amount: item.amount !== undefined ? item.amount : '0,00'
     }))
 
+    // Crear snapshot de datos del cliente para versionado
+    const jsonClientData = {
+      client_type: data.clientData.client_type,
+      client_name: data.clientData.client_name,
+      client_nif_nie: data.clientData.client_nif_nie,
+      client_phone: data.clientData.client_phone,
+      client_email: data.clientData.client_email,
+      client_web: data.clientData.client_web,
+      client_address: data.clientData.client_address,
+      client_postal_code: data.clientData.client_postal_code,
+      client_locality: data.clientData.client_locality,
+      client_province: data.clientData.client_province,
+      client_acceptance: data.clientData.client_acceptance
+    }
+
     // Crear borrador
     const { data: budget, error: insertError } = await supabaseAdmin
       .from('budgets')
@@ -205,6 +220,9 @@ export async function createDraftBudget(data: {
         user_id: user.id,
         json_tariff_data: data.tariffData,
         json_budget_data: initialBudgetData,
+        json_client_data: jsonClientData,
+        parent_budget_id: null,
+        version_number: 1,
         client_type: data.clientData.client_type,
         client_name: data.clientData.client_name,
         client_nif_nie: data.clientData.client_nif_nie,
@@ -220,6 +238,9 @@ export async function createDraftBudget(data: {
         total: data.totals.total,
         iva: iva,
         base: data.totals.base,
+        irpf: 0,
+        irpf_percentage: 0,
+        total_pagar: data.totals.total,
         validity_days: data.validity,
         start_date: null,
         end_date: null
