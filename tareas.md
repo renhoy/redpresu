@@ -485,44 +485,70 @@ Completado:
 
 ---
 
-## BLOQUE 5: VERSIONES Y NOTAS ⏳
+## ✅ BLOQUE 5: VERSIONES Y NOTAS - COMPLETADO
 
 ### Tareas Críticas:
 
-#### 5.1 Sistema de Versiones
+#### 5.1 Sistema de Versiones (Enfoque Jerárquico)
 
-**Prioridad:** MEDIA | **Estimación:** 3 días | **Estado:** ⏳ Pendiente
+**Prioridad:** MEDIA | **Estimación:** 3 días | **Estado:** ✅ Completado
 
-- [ ] Crear tabla `budget_versions`
-- [ ] Migrar campo `json_client_data` en budgets
-- [ ] Server Action `createBudgetVersion()`
-- [ ] Server Action `getBudgetVersions()`
-- [ ] Server Action `restoreBudgetVersion()`
-- [ ] Página `/app/budgets/[id]/versions/page.tsx`
-- [ ] Componente timeline versiones
-- [ ] Botón "Guardar versión" en formulario
-- [ ] Confirmar restauración (AlertDialog)
+- ✅ Migración añadir `parent_budget_id` y `version_number` a budgets
+- ✅ Modificar `duplicateBudget()` con parámetro `asVersion`
+- ✅ Función recursiva `buildBudgetHierarchy()` para relaciones padre-hijo
+- ✅ Accordion jerárquico en BudgetsTable con ChevronDown/Right
+- ✅ Indicador visual "v{version_number}" en badges para versiones hijas
+- ✅ Auto-expandir presupuesto filtrado por `budget_id` en URL
+- ✅ Botón "Ver todos los presupuestos" cuando hay filtro activo
+- ✅ Diálogos "Guardar como" vs "Nueva versión" en BudgetForm
+- ✅ Redireccionamiento a `/budgets?budget_id={id}` tras guardar/versionar
+- ✅ Fix redirect de `/tariffs` a `/budgets` tras crear presupuesto
+- ✅ Fix React key warning en accordion con `<React.Fragment key={id}>`
+- ✅ Fix `total_pagar NOT NULL constraint` en duplicateBudget
+- ✅ Normalización formato decimal español (0,00) en cantidad/amount
+- ✅ Validación 2 decimales máximo en campo cantidad
+- ✅ Simplificación lógica edición cantidad (solo validar en blur)
 
 **Archivos nuevos:**
 
-- `migrations/010_budget_versions.sql`
-- `src/app/actions/budget-versions.ts`
-- `src/app/budgets/[id]/versions/page.tsx`
-- `src/components/budgets/VersionTimeline.tsx`
+- `migrations/018_budget_versions_hierarchy.sql`
+
+**Archivos modificados:**
+
+- `src/app/actions/budgets.ts` (duplicateBudget, buildBudgetHierarchy, normalizeNumberFormat)
+- `src/components/budgets/BudgetsTable.tsx` (accordion jerárquico, auto-expand)
+- `src/components/budgets/BudgetForm.tsx` (diálogos 3 niveles, executeCreateVersion, executeSaveAs)
+- `src/components/budgets/BudgetHierarchyForm.tsx` (editingValues temporal, validación blur)
+- `src/app/budgets/page.tsx` (filtrado por budget_id, findBudgetAndChildren)
+- `src/lib/helpers/normalization-utils.ts` (defaults '0,00')
+- `src/lib/validators/data-transformer.ts` (defaults '0,00')
+
+**Mejoras adicionales:**
+
+- ✅ Sistema de 3 diálogos para guardar: "Guardar vs Guardar como" → "Sobreescribir vs Nueva versión" → Confirmación
+- ✅ Estado temporal `editingValues` para evitar cálculos durante edición de cantidad
+- ✅ Formato español consistente en todos los campos numéricos (coma decimal)
+- ✅ Validación y formateo solo en `onBlur` (comportamiento simplificado)
 
 **Criterios de completado:**
 
-- Versiones guardan snapshot completo
-- Timeline muestra historial
-- Restauración funciona sin pérdida datos
+- ✅ Relación padre-hijo funcional con parent_budget_id
+- ✅ Accordion muestra jerarquía completa
+- ✅ Versiones hijas numeradas automáticamente
+- ✅ Filtrado por budget_id muestra árbol completo
+- ✅ Guardar/Versionar con flujo confirmación claro
+- ✅ Formato decimal español correcto (0,00)
+- ✅ Validación 2 decimales sin saltos de cursor
 
 ---
 
 #### 5.2 Sistema de Notas
 
-**Prioridad:** MEDIA | **Estimación:** 2 días | **Estado:** ⏳ Pendiente
+**Prioridad:** MEDIA | **Estimación:** 2 días | **Estado:** ⏳ Aplazado (opcional)
 
-- [ ] Crear tabla `budget_notes`
+**Nota:** Sistema de notas aplazado. Jerarquía de versiones cubre necesidad principal de trazabilidad.
+
+- [ ] Crear tabla `budget_notes` (opcional)
 - [ ] Server Action `addBudgetNote()`
 - [ ] Server Action `getBudgetNotes()`
 - [ ] Server Action `deleteBudgetNote()`
@@ -534,7 +560,7 @@ Completado:
 
 **Archivos nuevos:**
 
-- `migrations/011_budget_notes.sql`
+- `migrations/019_budget_notes.sql` (si se implementa)
 - `src/app/actions/budget-notes.ts`
 - `src/components/budgets/BudgetNotes.tsx`
 
@@ -543,6 +569,28 @@ Completado:
 - Notas se guardan con timestamp automático
 - Timeline muestra usuario y fecha
 - Solo creador/admin puede eliminar
+
+---
+
+## ✅ BLOQUE 5 COMPLETADO (PARCIAL): 1/2 tareas (50%)
+
+Completado:
+✅ 5.1 Sistema Versiones Jerárquico (migration 018, accordion con relaciones padre-hijo)
+⏳ 5.2 Sistema Notas (aplazado, opcional)
+
+**Mejoras clave implementadas:**
+
+- ✅ Jerarquía padre-hijo con `parent_budget_id` y `version_number`
+- ✅ Accordion anidado con visualización completa del árbol de versiones
+- ✅ Sistema de diálogos triple para flujo guardar (Guardar/Guardar como → Sobreescribir/Nueva versión → Confirmar)
+- ✅ Filtrado por `budget_id` en URL con auto-expansión
+- ✅ Fix completo formato decimal español (0,00) con validación en blur
+- ✅ Estado temporal `editingValues` para evitar re-renders durante edición
+
+**Migraciones:** 018
+**Archivos modificados:** budgets.ts, BudgetForm.tsx, BudgetsTable.tsx, BudgetHierarchyForm.tsx, budgets/page.tsx, normalization-utils.ts, data-transformer.ts
+**Funcionalidad nueva:** Sistema completo de versiones con jerarquía visual + formato español robusto
+**Siguiente bloque:** Bloque 6 - Navegación Unificada
 
 ---
 
@@ -767,13 +815,13 @@ Completado:
 
 ## ESTADO GLOBAL FASE 2
 
-**Progreso:** 31% (15/49 tareas)
-**Bloques completados:** 4/9 (Usuarios ✅, Mejoras Tarifas ✅, Configuración ✅, IRPF y RE ✅)
+**Progreso:** 35% (16/46 tareas) - (3 tareas eliminadas/fusionadas)
+**Bloques completados:** 4.5/9 (Usuarios ✅, Mejoras Tarifas ✅, Configuración ✅, IRPF y RE ✅, Versiones ✅)
 **Semanas transcurridas:** 6/12
 **Duración estimada:** 12 semanas
 
-**Bloque activo:** Bloque 5 - Versiones y Notas
-**Próximo paso:** Sistema de Versiones (5.1)
+**Bloque activo:** Bloque 6 - Navegación Unificada
+**Próximo paso:** Componente HierarchicalNavigator (6.1)
 
 ---
 
