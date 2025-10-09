@@ -187,13 +187,23 @@ export async function createDraftBudget(data: {
     // Calcular IVA
     const iva = data.totals.total - data.totals.base
 
+    // Helper para normalizar formato de números (convertir punto a coma)
+    const normalizeNumberFormat = (value: string | undefined): string | undefined => {
+      if (value === undefined) return undefined
+      return String(value).replace('.', ',')
+    }
+
     // Inicializar json_budget_data con copia de tariffData
-    // Si tariffData ya tiene cantidades (viene de handleSaveBudget), preservarlas
-    // Si no tiene cantidades (viene de handleStep1Continue), inicializar en 0
+    // Si tariffData ya tiene cantidades (viene de handleSaveBudget), preservarlas (normalizando formato)
+    // Si no tiene cantidades (viene de handleStep1Continue), inicializar en 0,00
     const initialBudgetData = (data.tariffData as BudgetDataItem[]).map(item => ({
       ...item,
-      quantity: item.quantity !== undefined ? item.quantity : (item.level === 'item' ? '0,00' : undefined),
-      amount: item.amount !== undefined ? item.amount : '0,00'
+      quantity: item.quantity !== undefined
+        ? normalizeNumberFormat(item.quantity)
+        : (item.level === 'item' ? '0,00' : undefined),
+      amount: item.amount !== undefined
+        ? normalizeNumberFormat(item.amount)
+        : '0,00'
     }))
 
     // Crear snapshot de datos del cliente para versionado

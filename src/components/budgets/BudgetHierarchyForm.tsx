@@ -103,13 +103,24 @@ export function BudgetHierarchyForm({
   const prevBudgetDataRef = useRef<string>('')
   const isInitialMount = useRef(true)
 
+  // Normalizar formato de números: convertir puntos a comas
+  const normalizeNumberFormat = (value: string | undefined): string | undefined => {
+    if (value === undefined) return undefined
+    // Convertir punto decimal a coma
+    return value.replace('.', ',')
+  }
+
   // Initialize budget data - preserve existing quantities or set to 0
   useEffect(() => {
     const initialBudgetData = tariffData.map(item => ({
       ...item,
-      // Preservar quantity y amount si ya existen, sino inicializar a 0
-      quantity: item.quantity !== undefined ? item.quantity : (item.level === 'item' ? '0,00' : undefined),
-      amount: item.amount !== undefined ? item.amount : '0,00'
+      // Preservar quantity y amount si ya existen (normalizando formato), sino inicializar a 0,00
+      quantity: item.quantity !== undefined
+        ? normalizeNumberFormat(item.quantity)
+        : (item.level === 'item' ? '0,00' : undefined),
+      amount: item.amount !== undefined
+        ? normalizeNumberFormat(item.amount)
+        : '0,00'
     }))
 
     setBudgetData(initialBudgetData)
