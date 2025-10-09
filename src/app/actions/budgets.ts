@@ -666,17 +666,25 @@ export async function duplicateBudget(
 
     // Calcular IRPF y RE si corresponde
     const issuer = await getUserIssuer(user.id)
+
+    if (!issuer) {
+      console.warn('[duplicateBudget] Usuario sin issuer:', user.id, '- usando valores por defecto')
+    }
+
     const issuerType = issuer?.issuers_type || 'empresa'
     const issuerIRPFPercentage = issuer?.issuers_irpf_percentage || 15
 
     let irpf = 0
     let irpfPercentage = 0
     let totalPagar = newData.totals.total
+    let hasFiscalChanges = false // Track si hay IRPF o RE
 
     if (shouldApplyIRPF(issuerType, newData.clientData.client_type as ClientType)) {
       irpfPercentage = issuerIRPFPercentage
       irpf = calculateIRPF(newData.totals.base, irpfPercentage)
       totalPagar -= irpf
+      hasFiscalChanges = true
+      console.log('[duplicateBudget] IRPF aplicado:', { irpfPercentage, irpf, base: newData.totals.base })
     }
 
     // Calcular RE si aplica y hay datos
@@ -686,6 +694,7 @@ export async function duplicateBudget(
       const totalRE = getTotalRecargo(reByIVA)
 
       totalPagar += totalRE
+      hasFiscalChanges = true
 
       // Incluir datos de recargo en json_budget_data
       jsonBudgetData = {
@@ -752,7 +761,7 @@ export async function duplicateBudget(
         // Datos fiscales
         irpf: irpf > 0 ? irpf : null,
         irpf_percentage: irpfPercentage > 0 ? irpfPercentage : null,
-        total_pagar: totalPagar !== newData.totals.total ? totalPagar : null,
+        total_pagar: totalPagar, // Siempre asignar, puede ser igual a total o modificado
 
         // Fechas y validez
         validity_days: originalBudget.validity_days,
