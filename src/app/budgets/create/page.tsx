@@ -4,11 +4,11 @@ import { BudgetForm } from '@/components/budgets/BudgetForm'
 import { redirect } from 'next/navigation'
 
 interface PageProps {
-  searchParams: { tariff_id?: string; budget_id?: string }
+  searchParams: Promise<{ tariff_id?: string; budget_id?: string }>
 }
 
 export default async function CreateBudgetPage({ searchParams }: PageProps) {
-  const { tariff_id, budget_id } = searchParams
+  const { tariff_id, budget_id } = await searchParams
 
   // Si no hay tariff_id, redirigir a tariffs
   if (!tariff_id) {

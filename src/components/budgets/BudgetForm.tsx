@@ -383,7 +383,12 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
           toast.success('Presupuesto creado correctamente')
           setBudgetId(newBudgetId)
           setSaveStatus('saved')
-          setTimeout(() => setSaveStatus('idle'), 2000)
+          setHasUnsavedChanges(false)
+
+          // Redirigir a tariffs después de crear exitosamente
+          setTimeout(() => {
+            router.push('/tariffs')
+          }, 1000)
         } else {
           toast.error(result.error || 'Error al guardar')
           setSaveStatus('idle')
@@ -396,7 +401,12 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
         if (result.success) {
           toast.success('Presupuesto guardado correctamente')
           setSaveStatus('saved')
-          setTimeout(() => setSaveStatus('idle'), 2000)
+          setHasUnsavedChanges(false)
+
+          // Redirigir a tariffs después de guardar
+          setTimeout(() => {
+            router.push('/tariffs')
+          }, 1000)
         } else {
           toast.error(result.error || 'Error al guardar')
           setSaveStatus('idle')
