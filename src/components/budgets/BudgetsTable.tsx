@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Budget } from '@/lib/types/database'
 import { formatCurrency } from '@/lib/helpers/format'
 import { Badge } from '@/components/ui/badge'
@@ -145,8 +145,8 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
     const isChild = depth > 0
 
     return (
-      <>
-        <tr key={budget.id} className={`border-t hover:bg-muted/50 ${isChild ? 'bg-muted/30' : ''}`}>
+      <React.Fragment key={budget.id}>
+        <tr className={`border-t hover:bg-muted/50 ${isChild ? 'bg-muted/30' : ''}`}>
           <td className="p-4">
             <div className="flex items-center gap-2">
               {/* Indentación visual + icono expandir/colapsar */}
@@ -300,7 +300,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
 
         {/* Renderizar hijos si está expandido */}
         {hasChildren && isExpanded && budget.children!.map(child => renderBudgetRow(child, depth + 1))}
-      </>
+      </React.Fragment>
     )
   }
 

@@ -385,9 +385,9 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
           setSaveStatus('saved')
           setHasUnsavedChanges(false)
 
-          // Redirigir a tariffs después de crear exitosamente
+          // Redirigir a budgets después de crear exitosamente
           setTimeout(() => {
-            router.push('/tariffs')
+            router.push('/budgets')
           }, 1000)
         } else {
           toast.error(result.error || 'Error al guardar')
@@ -403,9 +403,9 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
           setSaveStatus('saved')
           setHasUnsavedChanges(false)
 
-          // Redirigir a tariffs después de guardar
+          // Redirigir a budgets después de guardar
           setTimeout(() => {
-            router.push('/tariffs')
+            router.push('/budgets')
           }, 1000)
         } else {
           toast.error(result.error || 'Error al guardar')
