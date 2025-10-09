@@ -103,6 +103,9 @@ export function BudgetHierarchyForm({
   const prevBudgetDataRef = useRef<string>('')
   const isInitialMount = useRef(true)
 
+  // Ref para rastrear el campo que se está editando (evitar formateo automático)
+  const editingFieldRef = useRef<string | null>(null)
+
   // Normalizar formato de números: convertir puntos a comas
   const normalizeNumberFormat = (value: string | undefined): string | undefined => {
     if (value === undefined) return undefined
@@ -122,6 +125,26 @@ export function BudgetHierarchyForm({
         ? normalizeNumberFormat(item.amount)
         : '0,00'
     }))
+
+    // Solo actualizar si el campo que se está editando no está en budgetData
+    // Esto evita que el formato se aplique mientras el usuario está escribiendo
+    if (editingFieldRef.current) {
+      // Si hay un campo en edición, preservar su valor sin formatear
+      const editingItemId = editingFieldRef.current
+      const editingItem = budgetData.find(i => i.id === editingItemId)
+
+      if (editingItem) {
+        // Mezclar datos: nuevos datos de tariffData EXCEPTO el item en edición
+        setBudgetData(prevData =>
+          initialBudgetData.map(item =>
+            item.id === editingItemId && editingItem
+              ? { ...item, quantity: editingItem.quantity } // Preservar quantity en edición
+              : item
+          )
+        )
+        return
+      }
+    }
 
     setBudgetData(initialBudgetData)
 
@@ -634,6 +657,10 @@ export function BudgetHierarchyForm({
               <Input
                 type="text"
                 value={item.quantity || '0,00'}
+                onFocus={() => {
+                  // Marcar este campo como en edición
+                  editingFieldRef.current = item.id
+                }}
                 onChange={(e) => {
                   // Permitir solo números y coma
                   let value = e.target.value.replace(/[^0-9,]/g, '')
@@ -660,6 +687,9 @@ export function BudgetHierarchyForm({
                   })
                 }}
                 onBlur={(e) => {
+                  // Limpiar marca de edición
+                  editingFieldRef.current = null
+
                   // Formatear al salir del input
                   const numericValue = parseSpanishNumber(e.target.value || '0')
                   const formattedValue = formatSpanishNumber(Math.max(0, numericValue))
