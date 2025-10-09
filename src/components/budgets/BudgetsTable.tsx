@@ -12,6 +12,7 @@ import { Pencil, Trash2, FileStack, ChevronDown, ChevronRight } from 'lucide-rea
 import { deleteBudget, updateBudgetStatus } from '@/app/actions/budgets'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
+import { BudgetNotesIcon } from './BudgetNotesIcon'
 
 interface BudgetsTableProps {
   budgets: Budget[]
@@ -171,7 +172,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
               </div>
 
               {/* Datos del cliente */}
-              <div className="space-y-1">
+              <div className="space-y-1 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-medium">
                     {budget.client_name} ({budget.client_nif_nie || 'N/A'})
@@ -191,6 +192,9 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
                   </div>
                 )}
               </div>
+
+              {/* Icono de notas */}
+              <BudgetNotesIcon budgetId={budget.id} />
             </div>
           </td>
 
