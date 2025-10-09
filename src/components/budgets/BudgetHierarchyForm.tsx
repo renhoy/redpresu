@@ -99,12 +99,12 @@ export function BudgetHierarchyForm({
   // ESTADO GLOBAL: activeItemId controla qué partida muestra controles
   const [activeItemId, setActiveItemId] = useState<string | null>(null)
 
+  // Estado local para valores en edición (no dispara cálculos)
+  const [editingValues, setEditingValues] = useState<Record<string, string>>({})
+
   // Refs para evitar bucles infinitos en useEffect
   const prevBudgetDataRef = useRef<string>('')
   const isInitialMount = useRef(true)
-
-  // Ref para rastrear el campo que se está editando (evitar formateo automático)
-  const editingFieldRef = useRef<string | null>(null)
 
   // Normalizar formato de números: convertir puntos a comas
   const normalizeNumberFormat = (value: string | undefined): string | undefined => {
@@ -125,26 +125,6 @@ export function BudgetHierarchyForm({
         ? normalizeNumberFormat(item.amount)
         : '0,00'
     }))
-
-    // Solo actualizar si el campo que se está editando no está en budgetData
-    // Esto evita que el formato se aplique mientras el usuario está escribiendo
-    if (editingFieldRef.current) {
-      // Si hay un campo en edición, preservar su valor sin formatear
-      const editingItemId = editingFieldRef.current
-      const editingItem = budgetData.find(i => i.id === editingItemId)
-
-      if (editingItem) {
-        // Mezclar datos: nuevos datos de tariffData EXCEPTO el item en edición
-        setBudgetData(prevData =>
-          initialBudgetData.map(item =>
-            item.id === editingItemId && editingItem
-              ? { ...item, quantity: editingItem.quantity } // Preservar quantity en edición
-              : item
-          )
-        )
-        return
-      }
-    }
 
     setBudgetData(initialBudgetData)
 
@@ -656,43 +636,42 @@ export function BudgetHierarchyForm({
 
               <Input
                 type="text"
-                value={item.quantity || '0,00'}
-                onFocus={() => {
-                  // Marcar este campo como en edición
-                  editingFieldRef.current = item.id
-                }}
+                value={editingValues[item.id] !== undefined ? editingValues[item.id] : (item.quantity || '0,00')}
                 onChange={(e) => {
-                  // Permitir solo números y coma
-                  let value = e.target.value.replace(/[^0-9,]/g, '')
+                  // Guardar en estado temporal sin disparar cálculos
+                  setEditingValues(prev => ({
+                    ...prev,
+                    [item.id]: e.target.value
+                  }))
+                }}
+                onBlur={(e) => {
+                  // Al perder foco: validar, formatear y calcular totales
+                  let value = e.target.value
+
+                  // Limpiar: solo números y coma
+                  value = value.replace(/[^0-9,]/g, '')
 
                   // Validar máximo 2 decimales
                   const parts = value.split(',')
                   if (parts.length > 2) {
-                    // Si hay más de una coma, solo mantener la primera
                     value = parts[0] + ',' + parts.slice(1).join('')
                   }
                   if (parts.length === 2 && parts[1].length > 2) {
-                    // Si hay más de 2 decimales, truncar a 2
                     value = parts[0] + ',' + parts[1].substring(0, 2)
                   }
 
-                  // Actualizar directamente sin formatear para permitir edición
-                  setBudgetData(prevData => {
-                    return prevData.map(i => {
-                      if (i.id === item.id) {
-                        return { ...i, quantity: value }
-                      }
-                      return i
-                    })
-                  })
-                }}
-                onBlur={(e) => {
-                  // Limpiar marca de edición
-                  editingFieldRef.current = null
-
-                  // Formatear al salir del input
-                  const numericValue = parseSpanishNumber(e.target.value || '0')
+                  // Parsear y formatear con 2 decimales formato español
+                  const numericValue = parseSpanishNumber(value || '0')
                   const formattedValue = formatSpanishNumber(Math.max(0, numericValue))
+
+                  // Limpiar estado temporal
+                  setEditingValues(prev => {
+                    const next = { ...prev }
+                    delete next[item.id]
+                    return next
+                  })
+
+                  // Actualizar con valor formateado y recalcular totales
                   updateItemQuantity(item.id, formattedValue)
                 }}
                 onClick={(e) => e.stopPropagation()}
