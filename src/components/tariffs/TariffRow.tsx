@@ -146,7 +146,7 @@ export function TariffRow({ tariff, onStatusChange, onDelete, currentUserRole }:
                   asChild
                   className="h-9 px-2"
                 >
-                  <Link href={`/budgets/create?tariff_id=${tariff.id}`}>
+                  <Link href={`/budgets/create?tariff_id=${tariff.id}`} target="_blank" rel="noopener noreferrer">
                     <Plus className="h-4 w-4 mr-1" />
                     <Receipt className="h-4 w-4" />
                   </Link>
