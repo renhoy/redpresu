@@ -43,14 +43,14 @@ export class DataTransformer {
       level,
       id: item.id || '',
       name: NormalizationUtils.normalizeText(item.nombre || ''),
-      amount: '0.00'
+      amount: '0,00'
     };
 
     // Para partidas (items), incluir campos adicionales con normalización completa
     if (item.normalizedLevel === 'partida') {
       transformed.description = NormalizationUtils.normalizeDescription(item.descripcion);
       transformed.unit = NormalizationUtils.normalizeUnit(item.ud);
-      transformed.quantity = '0.00';
+      transformed.quantity = '0,00';
       transformed.iva_percentage = this.formatAndValidateNumber(item['%iva'], 0, 100);
       transformed.pvp = this.formatAndValidateNumber(item.pvp, 0);
     }
@@ -256,7 +256,7 @@ export class DataTransformer {
       level,
       id: (normalized.id as string) || '',
       name: (normalized.name as string) || '',
-      amount: '0.00'
+      amount: '0,00'
     };
 
     // 5. Agregar campos adicionales SOLO para items (partidas)
@@ -264,7 +264,7 @@ export class DataTransformer {
     if (level === 'item') {
       transformed.description = normalized.description as string;
       transformed.unit = normalized.unit as string;
-      transformed.quantity = '0.00';
+      transformed.quantity = '0,00';
       transformed.iva_percentage = normalized.iva_percentage as string;
       transformed.pvp = normalized.pvp as string;
     }

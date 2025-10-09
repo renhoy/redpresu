@@ -281,12 +281,12 @@ export class NormalizationUtils {
    */
   static generateAdditionalFields(level: string): Record<string, string> {
     const fields: Record<string, string> = {
-      amount: '0.00'
+      amount: '0,00'
     };
 
     // Solo items (partidas) tienen quantity
     if (level === 'item') {
-      fields.quantity = '0.00';
+      fields.quantity = '0,00';
     }
 
     return fields;
