@@ -636,7 +636,19 @@ export function BudgetHierarchyForm({
                 value={item.quantity || '0,00'}
                 onChange={(e) => {
                   // Permitir solo números y coma
-                  const value = e.target.value.replace(/[^0-9,]/g, '')
+                  let value = e.target.value.replace(/[^0-9,]/g, '')
+
+                  // Validar máximo 2 decimales
+                  const parts = value.split(',')
+                  if (parts.length > 2) {
+                    // Si hay más de una coma, solo mantener la primera
+                    value = parts[0] + ',' + parts.slice(1).join('')
+                  }
+                  if (parts.length === 2 && parts[1].length > 2) {
+                    // Si hay más de 2 decimales, truncar a 2
+                    value = parts[0] + ',' + parts[1].substring(0, 2)
+                  }
+
                   // Actualizar directamente sin formatear para permitir edición
                   setBudgetData(prevData => {
                     return prevData.map(i => {
