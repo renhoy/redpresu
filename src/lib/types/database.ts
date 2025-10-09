@@ -103,6 +103,8 @@ export interface Budget {
   client_acceptance: boolean | null
   json_budget_data: JsonValue
   json_client_data?: JsonValue
+  parent_budget_id?: string | null
+  version_number?: number
   status: string
   total: number
   iva: number
@@ -123,6 +125,7 @@ export interface Budget {
   users?: {
     name: string
   }
+  children?: Budget[]
 }
 
 export interface BudgetVersion {

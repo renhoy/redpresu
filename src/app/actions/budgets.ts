@@ -575,8 +575,10 @@ export async function duplicateBudget(
     }
     budgetData: BudgetDataItem[]
     totals: { base: number; total: number }
+    recargo?: { aplica: boolean; recargos: Record<number, number> }
+    asVersion?: boolean  // Si true, se crea como versión hijo
   }
-): Promise<{ success: boolean; budgetId?: string; error?: string }> {
+): Promise<{ success: boolean; newBudgetId?: string; budgetId?: string; error?: string }> {
   try {
     console.log('[duplicateBudget] Duplicando presupuesto:', originalBudgetId)
 
@@ -618,6 +620,64 @@ export async function duplicateBudget(
       end_date: originalBudget.validity_days ? endDate.toISOString() : null
     })
 
+    // Determinar parent_budget_id y version_number si es versión
+    let parentBudgetId: string | null = null
+    let versionNumber = 1
+
+    if (newData.asVersion) {
+      parentBudgetId = originalBudgetId
+
+      // Obtener el siguiente número de versión usando la función SQL
+      const { data: nextVersionData, error: versionError } = await supabaseAdmin
+        .rpc('get_next_budget_version_number', { p_parent_budget_id: originalBudgetId })
+
+      if (versionError) {
+        console.error('[duplicateBudget] Error obteniendo version_number:', versionError)
+      } else {
+        versionNumber = nextVersionData as number
+      }
+
+      console.log('[duplicateBudget] Creando como versión hijo:', {
+        parent_budget_id: parentBudgetId,
+        version_number: versionNumber
+      })
+    }
+
+    // Calcular IRPF y RE si corresponde
+    const issuer = await getUserIssuer(user.id)
+    const issuerType = issuer?.issuers_type || 'empresa'
+    const issuerIRPFPercentage = issuer?.issuers_irpf_percentage || 15
+
+    let irpf = 0
+    let irpfPercentage = 0
+    let totalPagar = newData.totals.total
+
+    if (shouldApplyIRPF(issuerType, newData.clientData.client_type as ClientType)) {
+      irpfPercentage = issuerIRPFPercentage
+      irpf = calculateIRPF(newData.totals.base, irpfPercentage)
+      totalPagar -= irpf
+    }
+
+    // Calcular RE si aplica y hay datos
+    let jsonBudgetData: any = newData.budgetData
+    if (newData.recargo?.aplica && newData.recargo.recargos) {
+      const reByIVA = calculateRecargo(newData.budgetData as any[], newData.recargo.recargos)
+      const totalRE = getTotalRecargo(reByIVA)
+
+      totalPagar += totalRE
+
+      // Incluir datos de recargo en json_budget_data
+      jsonBudgetData = {
+        items: newData.budgetData,
+        recargo: {
+          aplica: true,
+          recargos: newData.recargo.recargos,
+          reByIVA,
+          totalRE
+        }
+      }
+    }
+
     // Crear NUEVO presupuesto con los datos actualizados
     const { data: newBudget, error: insertError } = await supabaseAdmin
       .from('budgets')
@@ -626,6 +686,10 @@ export async function duplicateBudget(
         user_id: user.id,
         tariff_id: originalBudget.tariff_id,
         status: BudgetStatus.BORRADOR,
+
+        // Jerarquía de versiones
+        parent_budget_id: parentBudgetId,
+        version_number: versionNumber,
 
         // Copiar json_tariff_data del original (requerido)
         json_tariff_data: originalBudget.json_tariff_data,
@@ -643,11 +707,31 @@ export async function duplicateBudget(
         client_province: newData.clientData.client_province,
         client_acceptance: newData.clientData.client_acceptance,
 
+        // Snapshot de datos cliente (para versionado)
+        json_client_data: {
+          client_type: newData.clientData.client_type,
+          client_name: newData.clientData.client_name,
+          client_nif_nie: newData.clientData.client_nif_nie,
+          client_phone: newData.clientData.client_phone,
+          client_email: newData.clientData.client_email,
+          client_web: newData.clientData.client_web,
+          client_address: newData.clientData.client_address,
+          client_postal_code: newData.clientData.client_postal_code,
+          client_locality: newData.clientData.client_locality,
+          client_province: newData.clientData.client_province,
+          client_acceptance: newData.clientData.client_acceptance
+        },
+
         // Datos del presupuesto (actualizados)
-        json_budget_data: newData.budgetData,
+        json_budget_data: jsonBudgetData,
         total: newData.totals.total,
         iva: iva,
         base: newData.totals.base,
+
+        // Datos fiscales
+        irpf: irpf > 0 ? irpf : null,
+        irpf_percentage: irpfPercentage > 0 ? irpfPercentage : null,
+        total_pagar: totalPagar !== newData.totals.total ? totalPagar : null,
 
         // Fechas y validez
         validity_days: originalBudget.validity_days,
@@ -668,7 +752,7 @@ export async function duplicateBudget(
     console.log('[duplicateBudget] Nuevo presupuesto creado:', newBudget.id)
     revalidatePath('/budgets')
 
-    return { success: true, budgetId: newBudget.id }
+    return { success: true, budgetId: newBudget.id, newBudgetId: newBudget.id }
 
   } catch (error) {
     console.error('[duplicateBudget] Error crítico:', error)
