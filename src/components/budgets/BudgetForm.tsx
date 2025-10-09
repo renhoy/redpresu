@@ -54,9 +54,12 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [pdfStatus, setPdfStatus] = useState<'idle' | 'generating' | 'generated'>('idle')
   const [totals, setTotals] = useState<{ base: number; total: number }>({ base: 0, total: 0 })
-  const [showSaveOptions, setShowSaveOptions] = useState(false)
-  const [showOverwriteConfirm, setShowOverwriteConfirm] = useState(false)
-  const [showVersionOrOverwriteDialog, setShowVersionOrOverwriteDialog] = useState(false)
+
+  // Nuevos diálogos según especificaciones
+  const [showSaveAsOrSaveDialog, setShowSaveAsOrSaveDialog] = useState(false) // "Guardar" vs "Guardar como"
+  const [showOverwriteOrVersionDialog, setShowOverwriteOrVersionDialog] = useState(false) // "Sobreescribir" vs "Nueva versión"
+  const [showOverwriteConfirm, setShowOverwriteConfirm] = useState(false) // Confirmación final sobreescribir
+
   const [showPdfConfirm, setShowPdfConfirm] = useState(false)
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
@@ -340,18 +343,17 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
       return
     }
 
-    // MODO EDICIÓN con cambios: Preguntar versionar o sobreescribir
-    if (isEditMode && hasUnsavedChanges) {
-      setShowVersionOrOverwriteDialog(true)
+    // NUEVA LÓGICA SEGÚN ESPECIFICACIONES:
+
+    // 1. Primera vez guardando (modo creación, no existe budgetId)
+    if (!isEditMode) {
+      await executeCreateNew()
       return
     }
 
-    // MODO EDICIÓN sin cambios o MODO CREACIÓN: Guardar directamente
-    if (isEditMode) {
-      await executeOverwrite()
-    } else {
-      await executeCreateNew()
-    }
+    // 2. Editando presupuesto existente
+    // Mostrar opciones: "Guardar" vs "Guardar como"
+    setShowSaveAsOrSaveDialog(true)
   }
 
   const executeCreateNew = async () => {
@@ -385,9 +387,9 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
           setSaveStatus('saved')
           setHasUnsavedChanges(false)
 
-          // Redirigir a budgets después de crear exitosamente
+          // Redirigir a /budgets filtrando por este presupuesto (sin hijos, es nuevo)
           setTimeout(() => {
-            router.push('/budgets')
+            router.push(`/budgets?budget_id=${newBudgetId}`)
           }, 1000)
         } else {
           toast.error(result.error || 'Error al guardar')
@@ -403,9 +405,9 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
           setSaveStatus('saved')
           setHasUnsavedChanges(false)
 
-          // Redirigir a budgets después de guardar
+          // Redirigir a /budgets filtrando por este presupuesto
           setTimeout(() => {
-            router.push('/budgets')
+            router.push(`/budgets?budget_id=${budgetId}`)
           }, 1000)
         } else {
           toast.error(result.error || 'Error al guardar')
@@ -421,8 +423,8 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
 
   const executeOverwrite = async () => {
     setShowOverwriteConfirm(false)
-    setShowSaveOptions(false)
-    setShowVersionOrOverwriteDialog(false)
+    setShowSaveAsOrSaveDialog(false)
+    setShowOverwriteOrVersionDialog(false)
     setSaveStatus('saving')
 
     try {
@@ -438,7 +440,11 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
         }
         setSaveStatus('saved')
         setHasUnsavedChanges(false)
-        setTimeout(() => setSaveStatus('idle'), 2000)
+
+        // Redirigir a /budgets filtrando por este presupuesto y todos sus hijos
+        setTimeout(() => {
+          router.push(`/budgets?budget_id=${budgetId}`)
+        }, 1000)
       } else {
         toast.error(result.error || 'Error al actualizar')
         setSaveStatus('idle')
@@ -451,13 +457,17 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
   }
 
   const executeCreateVersion = async () => {
-    setShowVersionOrOverwriteDialog(false)
+    setShowOverwriteOrVersionDialog(false)
+    setShowSaveAsOrSaveDialog(false)
     setSaveStatus('saving')
 
     try {
       if (!budgetId) return
 
-      // Duplicar el presupuesto con parent_budget_id = budgetId actual
+      // Determinar el parent_budget_id correcto
+      const parentId = existingBudget?.parent_budget_id || budgetId
+
+      // Duplicar el presupuesto con parent_budget_id = padre original
       const result = await duplicateBudget(budgetId, {
         clientData,
         budgetData: budgetData as any[],
@@ -471,9 +481,10 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
         setSaveStatus('saved')
         setHasUnsavedChanges(false)
 
-        // Redirigir a la nueva versión
-        router.push(`/budgets/${result.newBudgetId}/edit`)
-        router.refresh()
+        // Redirigir a /budgets filtrando por el padre y todos sus hijos (incluyendo nueva versión)
+        setTimeout(() => {
+          router.push(`/budgets?budget_id=${parentId}`)
+        }, 1000)
       } else {
         toast.error(result.error || 'Error al crear versión')
         setSaveStatus('idle')
@@ -485,25 +496,33 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
     }
   }
 
-  const executeDuplicate = async () => {
-    setShowSaveOptions(false)
+  const executeSaveAs = async () => {
+    setShowSaveAsOrSaveDialog(false)
     setSaveStatus('saving')
 
     try {
       if (!budgetId) return
 
+      // Crear nuevo presupuesto independiente (sin parent_budget_id)
       const result = await duplicateBudget(budgetId, {
         clientData,
         budgetData: budgetData as any[],
-        totals
+        totals,
+        recargo: aplicaRecargo ? { aplica: true, recargos } : undefined,
+        asVersion: false  // NO es versión, es nuevo presupuesto independiente
       })
 
-      if (result.success && result.budgetId) {
-        toast.success('Nuevo presupuesto creado. Original preservado.')
-        // Redirigir al nuevo presupuesto
-        router.push(`/budgets/create?tariff_id=${tariff.id}&budget_id=${result.budgetId}`)
+      if (result.success && result.newBudgetId) {
+        toast.success('Nuevo presupuesto creado como independiente')
+        setSaveStatus('saved')
+        setHasUnsavedChanges(false)
+
+        // Redirigir a /budgets filtrando por el nuevo y sus hijos (inicialmente ninguno)
+        setTimeout(() => {
+          router.push(`/budgets?budget_id=${result.newBudgetId}`)
+        }, 1000)
       } else {
-        toast.error(result.error || 'Error al duplicar')
+        toast.error(result.error || 'Error al crear nuevo presupuesto')
         setSaveStatus('idle')
       }
     } catch (error) {
@@ -1209,38 +1228,37 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
         </Card>
       )}
 
-      {/* AlertDialog: Opciones de guardado en modo edición */}
-      <AlertDialog open={showSaveOptions} onOpenChange={setShowSaveOptions}>
+      {/* Diálogo 1: "Guardar" vs "Guardar como" (en modo edición) */}
+      <AlertDialog open={showSaveAsOrSaveDialog} onOpenChange={setShowSaveAsOrSaveDialog}>
         <AlertDialogContent className="sm:max-w-[500px]">
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Cómo deseas guardar los cambios?</AlertDialogTitle>
+            <AlertDialogTitle>¿Cómo deseas guardar?</AlertDialogTitle>
             <AlertDialogDescription>
-              Has modificado este presupuesto. Elige una opción:
+              Elige si deseas guardar los cambios en este presupuesto o crear uno nuevo.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex flex-col gap-3 py-4">
             <Button
-              variant="destructive"
               onClick={() => {
-                setShowSaveOptions(false)
-                setShowOverwriteConfirm(true)
+                setShowSaveAsOrSaveDialog(false)
+                setShowOverwriteOrVersionDialog(true)
               }}
-              className="w-full flex flex-col items-start h-auto py-3"
-            >
-              <span className="font-semibold">Sobrescribir presupuesto</span>
-              <span className="text-xs font-normal opacity-90">
-                ⚠️ Los datos anteriores se perderán permanentemente
-                {existingBudget?.pdf_url && " • El PDF actual será eliminado"}
-              </span>
-            </Button>
-            <Button
-              onClick={executeDuplicate}
               className="w-full flex flex-col items-start h-auto py-3"
               style={{ backgroundColor: tariff.primary_color }}
             >
-              <span className="font-semibold">Crear nuevo presupuesto</span>
+              <span className="font-semibold">Guardar</span>
               <span className="text-xs font-normal opacity-90">
-                ✓ Mantiene el original intacto
+                Guardar cambios en este presupuesto (sobreescribir o nueva versión)
+              </span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={executeSaveAs}
+              className="w-full flex flex-col items-start h-auto py-3"
+            >
+              <span className="font-semibold">Guardar como</span>
+              <span className="text-xs font-normal opacity-90">
+                Crear un nuevo presupuesto independiente{existingBudget?.pdf_url && " (sin copiar PDF)"}
               </span>
             </Button>
           </div>
@@ -1250,21 +1268,63 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* AlertDialog: Confirmación de sobrescritura */}
+      {/* Diálogo 2: "Sobreescribir" vs "Nueva versión" (dentro de "Guardar") */}
+      <AlertDialog open={showOverwriteOrVersionDialog} onOpenChange={setShowOverwriteOrVersionDialog}>
+        <AlertDialogContent className="sm:max-w-[500px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Sobreescribir o nueva versión?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Elige cómo guardar los cambios en este presupuesto.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex flex-col gap-3 py-4">
+            <Button
+              variant="destructive"
+              onClick={() => {
+                setShowOverwriteOrVersionDialog(false)
+                setShowOverwriteConfirm(true)
+              }}
+              className="w-full flex flex-col items-start h-auto py-3"
+            >
+              <span className="font-semibold">Sobreescribir</span>
+              <span className="text-xs font-normal opacity-90">
+                ⚠️ Los datos anteriores de cliente y presupuesto serán sobreescritos{existingBudget?.pdf_url && ". Se eliminará el archivo PDF si existe"}
+              </span>
+            </Button>
+            <Button
+              onClick={executeCreateVersion}
+              className="w-full flex flex-col items-start h-auto py-3"
+              style={{ backgroundColor: tariff.primary_color }}
+            >
+              <span className="font-semibold">Nueva versión</span>
+              <span className="text-xs font-normal opacity-90">
+                ✨ Crear nueva versión como hijo del presupuesto actual
+              </span>
+            </Button>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowSaveAsOrSaveDialog(true)}>
+              Volver atrás
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Diálogo 3: Confirmación final de sobrescritura */}
       <AlertDialog open={showOverwriteConfirm} onOpenChange={setShowOverwriteConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirma que deseas sobrescribir</AlertDialogTitle>
+            <AlertDialogTitle>⚠️ Confirma que deseas sobrescribir</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
-              <p>Esta acción NO se puede deshacer. Se perderán:</p>
-              <ul className="list-disc list-inside space-y-1">
-                <li>Datos del presupuesto anterior</li>
-                {existingBudget?.pdf_url && <li>Archivo PDF generado</li>}
-              </ul>
+              <p className="font-semibold">Esta acción NO se puede deshacer.</p>
+              <p>Los datos anteriores de cliente y presupuesto serán sobreescritos por los actuales.</p>
+              {existingBudget?.pdf_url && (
+                <p className="text-destructive font-medium">Se eliminará el archivo PDF si existe.</p>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setShowSaveOptions(true)}>
+            <AlertDialogCancel onClick={() => setShowOverwriteOrVersionDialog(true)}>
               No, volver atrás
             </AlertDialogCancel>
             <AlertDialogAction
@@ -1304,45 +1364,6 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* AlertDialog: Versionar o Sobreescribir */}
-      <AlertDialog open={showVersionOrOverwriteDialog} onOpenChange={setShowVersionOrOverwriteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Cómo deseas guardar los cambios?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Puedes crear una nueva versión del presupuesto (que aparecerá como hijo en el listado) o sobreescribir el presupuesto actual.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="space-y-3 py-4">
-            <div className="p-3 border rounded-lg bg-blue-50">
-              <p className="font-semibold text-sm mb-1">✨ Crear Nueva Versión</p>
-              <p className="text-xs text-muted-foreground">
-                Se creará un nuevo presupuesto vinculado al actual. El presupuesto original permanecerá sin cambios.
-                En el listado aparecerá como versión hijo del presupuesto actual.
-              </p>
-            </div>
-            <div className="p-3 border rounded-lg bg-amber-50">
-              <p className="font-semibold text-sm mb-1">⚠️ Sobreescribir</p>
-              <p className="text-xs text-muted-foreground">
-                Se actualizará el presupuesto actual con los nuevos cambios. Los datos anteriores se perderán definitivamente.
-              </p>
-            </div>
-          </div>
-          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <Button
-              variant="outline"
-              onClick={executeOverwrite}
-              className="bg-amber-100 hover:bg-amber-200"
-            >
-              Sobreescribir
-            </Button>
-            <AlertDialogAction onClick={executeCreateVersion}>
-              Crear Nueva Versión
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* AlertDialog: Confirmación de cierre con cambios sin guardar */}
       <AlertDialog open={showCloseConfirm} onOpenChange={setShowCloseConfirm}>

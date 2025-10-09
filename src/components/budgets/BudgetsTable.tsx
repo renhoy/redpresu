@@ -15,6 +15,7 @@ import { useRouter } from 'next/navigation'
 
 interface BudgetsTableProps {
   budgets: Budget[]
+  budgetId?: string
 }
 
 const statusColors = {
@@ -26,11 +27,11 @@ const statusColors = {
   caducado: 'bg-neutral-200 text-black'
 }
 
-export function BudgetsTable({ budgets }: BudgetsTableProps) {
+export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
   const router = useRouter()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
-  const [expandedBudgets, setExpandedBudgets] = useState<Set<string>>(new Set())
+  const [expandedBudgets, setExpandedBudgets] = useState<Set<string>>(new Set(budgetId ? [budgetId] : []))
 
   // Filtrado local
   const filteredBudgets = budgets.filter(budget => {
@@ -307,7 +308,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
   return (
     <div className="space-y-4">
       {/* Filtros */}
-      <div className="flex gap-4">
+      <div className="flex gap-4 items-center">
         <Input
           placeholder="Buscar por cliente o NIF..."
           value={search}
@@ -328,6 +329,15 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
             <SelectItem value="caducado">Caducado</SelectItem>
           </SelectContent>
         </Select>
+        {budgetId && (
+          <Button
+            variant="outline"
+            onClick={() => router.push('/budgets')}
+            className="ml-auto"
+          >
+            Ver todos los presupuestos
+          </Button>
+        )}
       </div>
 
       {/* Tabla */}
