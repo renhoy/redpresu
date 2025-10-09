@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Pencil, Trash2, FileStack } from 'lucide-react'
+import { Pencil, Trash2, FileStack, ChevronDown, ChevronRight } from 'lucide-react'
 import { deleteBudget, updateBudgetStatus } from '@/app/actions/budgets'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
@@ -30,6 +30,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
   const router = useRouter()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [expandedBudgets, setExpandedBudgets] = useState<Set<string>>(new Set())
 
   // Filtrado local
   const filteredBudgets = budgets.filter(budget => {
@@ -122,6 +123,187 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
     }
   }
 
+  const toggleExpanded = (budgetId: string) => {
+    setExpandedBudgets(prev => {
+      const next = new Set(prev)
+      if (next.has(budgetId)) {
+        next.delete(budgetId)
+      } else {
+        next.add(budgetId)
+      }
+      return next
+    })
+  }
+
+  const renderBudgetRow = (budget: Budget, depth: number = 0) => {
+    const days = getDaysRemaining(budget.start_date, budget.validity_days)
+    const tariffTitle = budget.tariffs && typeof budget.tariffs === 'object' && 'title' in budget.tariffs
+      ? (budget.tariffs as { title: string }).title
+      : 'N/A'
+    const hasChildren = budget.children && budget.children.length > 0
+    const isExpanded = expandedBudgets.has(budget.id)
+    const isChild = depth > 0
+
+    return (
+      <>
+        <tr key={budget.id} className={`border-t hover:bg-muted/50 ${isChild ? 'bg-muted/30' : ''}`}>
+          <td className="p-4">
+            <div className="flex items-center gap-2">
+              {/* Indentación visual + icono expandir/colapsar */}
+              <div style={{ marginLeft: `${depth * 24}px` }} className="flex items-center gap-1">
+                {hasChildren ? (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5 p-0"
+                    onClick={() => toggleExpanded(budget.id)}
+                  >
+                    {isExpanded ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                  </Button>
+                ) : (
+                  <div className="w-5" />
+                )}
+              </div>
+
+              {/* Datos del cliente */}
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-medium">
+                    {budget.client_name} ({budget.client_nif_nie || 'N/A'})
+                  </span>
+                  <Badge variant="secondary" className="text-xs">
+                    {budget.client_type}
+                  </Badge>
+                  {isChild && (
+                    <Badge variant="outline" className="text-xs">
+                      v{budget.version_number}
+                    </Badge>
+                  )}
+                </div>
+                {days && budget.start_date && budget.end_date && (
+                  <div className={`text-xs ${days.isExpiring ? 'text-orange-600 font-medium' : 'text-muted-foreground'}`}>
+                    {formatDate(budget.start_date)} - {formatDate(budget.end_date)} ({days.remaining} de {days.total} días restantes)
+                  </div>
+                )}
+              </div>
+            </div>
+          </td>
+
+          <td className="p-4">
+            <span className="text-sm truncate max-w-[200px] block">
+              {tariffTitle}
+            </span>
+          </td>
+
+          <td className="p-4 text-right font-mono">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="cursor-help">
+                    {formatCurrency(budget.total || 0)}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="text-sm">
+                  <div className="space-y-1">
+                    <div className="flex justify-between gap-4">
+                      <span className="text-muted-foreground">Base Imponible:</span>
+                      <span className="font-medium">{formatCurrency(budget.base || 0)}</span>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <span className="text-muted-foreground">IVA:</span>
+                      <span className="font-medium">{formatCurrency(budget.iva || 0)}</span>
+                    </div>
+                    <div className="flex justify-between gap-4 border-t pt-1">
+                      <span className="font-semibold">Total:</span>
+                      <span className="font-semibold">{formatCurrency(budget.total || 0)}</span>
+                    </div>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </td>
+
+          <td className="p-4">
+            <Select
+              value={budget.status}
+              onValueChange={(newStatus) => handleStatusChange(budget.id, budget.status, newStatus, budget.client_name)}
+            >
+              <SelectTrigger className="w-[140px]">
+                <SelectValue>
+                  <Badge className={statusColors[budget.status as keyof typeof statusColors]}>
+                    {budget.status}
+                  </Badge>
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={budget.status}>
+                  <Badge className={statusColors[budget.status as keyof typeof statusColors]}>
+                    {budget.status}
+                  </Badge>
+                </SelectItem>
+                {getValidTransitions(budget.status).map((status) => (
+                  <SelectItem key={status} value={status}>
+                    <Badge className={statusColors[status as keyof typeof statusColors]}>
+                      {status}
+                    </Badge>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </td>
+
+          <td className="p-4 text-sm text-muted-foreground">
+            {getUserName(budget)}
+          </td>
+
+          <td className="p-4 text-center">
+            {budget.pdf_url ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => window.open(budget.pdf_url!, '_blank')}
+                title="Descargar PDF"
+                className="text-green-600 hover:text-green-700 hover:bg-green-50"
+              >
+                <FileStack className="h-4 w-4" />
+              </Button>
+            ) : (
+              <span className="text-xs text-muted-foreground">Sin PDF</span>
+            )}
+          </td>
+
+          <td className="p-4">
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => window.open(`/budgets/create?tariff_id=${budget.tariff_id}&budget_id=${budget.id}`, '_blank')}
+                title="Editar"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleDelete(budget.id, budget.client_name)}
+                title="Eliminar"
+              >
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
+            </div>
+          </td>
+        </tr>
+
+        {/* Renderizar hijos si está expandido */}
+        {hasChildren && isExpanded && budget.children!.map(child => renderBudgetRow(child, depth + 1))}
+      </>
+    )
+  }
+
   return (
     <div className="space-y-4">
       {/* Filtros */}
@@ -164,138 +346,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
               </tr>
             </thead>
             <tbody>
-              {filteredBudgets.map(budget => {
-                const days = getDaysRemaining(budget.start_date, budget.validity_days)
-                const tariffTitle = budget.tariffs && typeof budget.tariffs === 'object' && 'title' in budget.tariffs
-                  ? (budget.tariffs as { title: string }).title
-                  : 'N/A'
-
-                return (
-                  <tr key={budget.id} className="border-t hover:bg-muted/50">
-                    <td className="p-4">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium">
-                            {budget.client_name} ({budget.client_nif_nie || 'N/A'})
-                          </span>
-                          <Badge variant="secondary" className="text-xs">
-                            {budget.client_type}
-                          </Badge>
-                        </div>
-                        {days && budget.start_date && budget.end_date && (
-                          <div className={`text-xs ${days.isExpiring ? 'text-orange-600 font-medium' : 'text-muted-foreground'}`}>
-                            {formatDate(budget.start_date)} - {formatDate(budget.end_date)} ({days.remaining} de {days.total} días restantes)
-                          </div>
-                        )}
-                      </div>
-                    </td>
-
-                    <td className="p-4">
-                      <span className="text-sm truncate max-w-[200px] block">
-                        {tariffTitle}
-                      </span>
-                    </td>
-
-                    <td className="p-4 text-right font-mono">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="cursor-help">
-                              {formatCurrency(budget.total || 0)}
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent className="text-sm">
-                            <div className="space-y-1">
-                              <div className="flex justify-between gap-4">
-                                <span className="text-muted-foreground">Base Imponible:</span>
-                                <span className="font-medium">{formatCurrency(budget.base || 0)}</span>
-                              </div>
-                              <div className="flex justify-between gap-4">
-                                <span className="text-muted-foreground">IVA:</span>
-                                <span className="font-medium">{formatCurrency(budget.iva || 0)}</span>
-                              </div>
-                              <div className="flex justify-between gap-4 border-t pt-1">
-                                <span className="font-semibold">Total:</span>
-                                <span className="font-semibold">{formatCurrency(budget.total || 0)}</span>
-                              </div>
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </td>
-
-                    <td className="p-4">
-                      <Select
-                        value={budget.status}
-                        onValueChange={(newStatus) => handleStatusChange(budget.id, budget.status, newStatus, budget.client_name)}
-                      >
-                        <SelectTrigger className="w-[140px]">
-                          <SelectValue>
-                            <Badge className={statusColors[budget.status as keyof typeof statusColors]}>
-                              {budget.status}
-                            </Badge>
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={budget.status}>
-                            <Badge className={statusColors[budget.status as keyof typeof statusColors]}>
-                              {budget.status}
-                            </Badge>
-                          </SelectItem>
-                          {getValidTransitions(budget.status).map((status) => (
-                            <SelectItem key={status} value={status}>
-                              <Badge className={statusColors[status as keyof typeof statusColors]}>
-                                {status}
-                              </Badge>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </td>
-
-                    <td className="p-4 text-sm text-muted-foreground">
-                      {getUserName(budget)}
-                    </td>
-
-                    <td className="p-4 text-center">
-                      {budget.pdf_url ? (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => window.open(budget.pdf_url!, '_blank')}
-                          title="Descargar PDF"
-                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                        >
-                          <FileStack className="h-4 w-4" />
-                        </Button>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">Sin PDF</span>
-                      )}
-                    </td>
-
-                    <td className="p-4">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => window.open(`/budgets/create?tariff_id=${budget.tariff_id}&budget_id=${budget.id}`, '_blank')}
-                          title="Editar"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(budget.id, budget.client_name)}
-                          title="Eliminar"
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
+              {filteredBudgets.map(budget => renderBudgetRow(budget))}
             </tbody>
           </table>
         </div>

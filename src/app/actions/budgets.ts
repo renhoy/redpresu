@@ -1207,7 +1207,37 @@ export async function getBudgets(filters?: {
         users: { name: usersMap.get(budget.user_id) || 'N/A' }
       }))
 
-      return budgetsWithUsers as Budget[]
+      // Construir jerarquía: separar padres e hijos
+      const budgetsMap = new Map(budgetsWithUsers.map(b => [b.id, { ...b, children: [] }]))
+      const rootBudgets: Budget[] = []
+
+      budgetsWithUsers.forEach(budget => {
+        const budgetWithChildren = budgetsMap.get(budget.id)!
+
+        if (budget.parent_budget_id) {
+          // Es un hijo, añadir al padre
+          const parent = budgetsMap.get(budget.parent_budget_id)
+          if (parent) {
+            parent.children = parent.children || []
+            parent.children.push(budgetWithChildren)
+          } else {
+            // Padre no encontrado (filtrado), tratar como raíz
+            rootBudgets.push(budgetWithChildren)
+          }
+        } else {
+          // Es raíz
+          rootBudgets.push(budgetWithChildren)
+        }
+      })
+
+      // Ordenar hijos por version_number ascendente
+      rootBudgets.forEach(root => {
+        if (root.children && root.children.length > 0) {
+          root.children.sort((a, b) => (a.version_number || 0) - (b.version_number || 0))
+        }
+      })
+
+      return rootBudgets as Budget[]
     }
 
     return (budgets || []) as Budget[]
