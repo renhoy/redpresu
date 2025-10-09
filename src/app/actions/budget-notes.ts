@@ -42,7 +42,7 @@ export async function getBudgetNotes(budgetId: string): Promise<ActionResult> {
       .from('budget_notes')
       .select(`
         *,
-        users (
+        users!budget_notes_user_id_fkey (
           name,
           email
         )
@@ -92,7 +92,7 @@ export async function addBudgetNote(budgetId: string, content: string): Promise<
       })
       .select(`
         *,
-        users (
+        users!budget_notes_user_id_fkey (
           name,
           email
         )
@@ -141,7 +141,7 @@ export async function updateBudgetNote(noteId: string, content: string): Promise
       .eq('user_id', user.id) // Solo el creador puede editar
       .select(`
         *,
-        users (
+        users!budget_notes_user_id_fkey (
           name,
           email
         )
