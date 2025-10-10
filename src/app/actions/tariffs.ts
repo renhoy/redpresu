@@ -8,6 +8,7 @@ import { revalidatePath } from 'next/cache'
 import { CSV2JSONConverter, detectIVAsPresentes } from '@/lib/validators'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
+import { isValidNIF, getNIFErrorMessage } from '@/lib/helpers/nif-validator'
 
 type Tariff = Database['public']['Tables']['tariffs']['Row']
 
@@ -261,6 +262,12 @@ export async function createTariff(data: TariffFormData): Promise<{
   try {
     console.log('[createTariff] Iniciando creación de tarifa...')
 
+    // Validar NIF antes de continuar
+    if (!isValidNIF(data.nif)) {
+      console.error('[createTariff] NIF inválido:', data.nif)
+      return { success: false, error: getNIFErrorMessage(data.nif) }
+    }
+
     const cookieStore = await cookies()
     console.log('[createTariff] Cookies obtenidas:', { hasCookieStore: !!cookieStore })
 
@@ -369,6 +376,12 @@ export async function updateTariff(id: string, data: TariffFormData): Promise<{
 }> {
   try {
     console.log('[updateTariff] Iniciando actualización de tarifa:', { id })
+
+    // Validar NIF antes de continuar
+    if (!isValidNIF(data.nif)) {
+      console.error('[updateTariff] NIF inválido:', data.nif)
+      return { success: false, error: getNIFErrorMessage(data.nif) }
+    }
 
     const cookieStore = await cookies()
     console.log('[updateTariff] Cookies obtenidas:', { hasCookieStore: !!cookieStore })
@@ -776,5 +789,65 @@ export async function processCSV(formData: FormData): Promise<{
         severity: 'fatal'
       }]
     }
+  }
+}
+
+/**
+ * Obtiene los datos del issuer del usuario autenticado
+ * Para pre-llenar campos de una nueva tarifa cuando no hay plantilla
+ */
+export async function getUserIssuerData(userId: string): Promise<{
+  success: boolean
+  data?: {
+    name: string
+    nif: string
+    address: string
+    contact: string
+  }
+  error?: string
+}> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('issuers')
+      .select('issuers_name, issuers_nif, issuers_address, issuers_postal_code, issuers_locality, issuers_province, issuers_phone, issuers_email, issuers_web')
+      .eq('user_id', userId)
+      .single()
+
+    if (error || !data) {
+      console.error('[getUserIssuerData] Error obteniendo issuer:', error)
+      return { success: false, error: 'No se pudo obtener los datos del emisor' }
+    }
+
+    // Construir dirección completa
+    const addressParts = [
+      data.issuers_address,
+      data.issuers_postal_code,
+      data.issuers_locality,
+      data.issuers_province ? `(${data.issuers_province})` : null
+    ].filter(Boolean)
+
+    const address = addressParts.join(', ')
+
+    // Construir contacto (Teléfono - Email - Web)
+    const contactParts = [
+      data.issuers_phone,
+      data.issuers_email,
+      data.issuers_web
+    ].filter(Boolean)
+
+    const contact = contactParts.join(' - ')
+
+    return {
+      success: true,
+      data: {
+        name: data.issuers_name,
+        nif: data.issuers_nif,
+        address: address,
+        contact: contact
+      }
+    }
+  } catch (error) {
+    console.error('[getUserIssuerData] Error crítico:', error)
+    return { success: false, error: 'Error al obtener datos del emisor' }
   }
 }

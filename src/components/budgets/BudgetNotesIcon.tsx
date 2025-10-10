@@ -9,6 +9,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { BudgetNotesDialog } from './BudgetNotesDialog'
 import { getBudgetNotes, type BudgetNote } from '@/app/actions/budget-notes'
 import { formatDistanceToNow } from 'date-fns'
@@ -27,18 +33,28 @@ export function BudgetNotesIcon({ budgetId, initialCount = 0 }: BudgetNotesIconP
   const [popoverOpen, setPopoverOpen] = useState(false)
 
   const loadNotes = async () => {
+    console.log('[BudgetNotesIcon] Loading notes for budget:', budgetId)
     setLoading(true)
     const result = await getBudgetNotes(budgetId)
+    console.log('[BudgetNotesIcon] Result:', result)
     if (result.success && Array.isArray(result.data)) {
       setNotes(result.data)
       setNotesCount(result.data.length)
+      console.log('[BudgetNotesIcon] Notes loaded:', result.data.length)
+    } else {
+      console.error('[BudgetNotesIcon] Error loading notes:', result.error)
     }
     setLoading(false)
   }
 
-  // Cargar notas cuando se abre el popover
+  // Cargar contador de notas al inicio
   useEffect(() => {
-    if (popoverOpen && notes.length === 0) {
+    loadNotes()
+  }, [budgetId])
+
+  // Recargar notas cuando se abre el popover
+  useEffect(() => {
+    if (popoverOpen) {
       loadNotes()
     }
   }, [popoverOpen])
@@ -60,76 +76,88 @@ export function BudgetNotesIcon({ budgetId, initialCount = 0 }: BudgetNotesIconP
 
   return (
     <>
-      <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative h-8 w-8"
-            onClick={(e) => {
-              e.stopPropagation()
-            }}
-          >
-            <NotebookPen className="h-4 w-4 text-blue-600" />
-            {notesCount > 0 && (
-              <Badge
-                variant="secondary"
-                className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px] bg-blue-600 text-white"
-              >
-                {notesCount}
-              </Badge>
-            )}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent
-          className="w-80 p-0"
-          align="start"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-sm">Notas del presupuesto</h3>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setPopoverOpen(false)
-                  setDialogOpen(true)
-                }}
-              >
-                Editar
-              </Button>
-            </div>
-
-            {loading ? (
-              <div className="text-sm text-muted-foreground py-4 text-center">
-                Cargando notas...
-              </div>
-            ) : notes.length === 0 ? (
-              <div className="text-sm text-muted-foreground py-4 text-center">
-                No hay notas aún. Haz clic en "Editar" para añadir una.
-              </div>
-            ) : (
-              <div className="space-y-3 max-h-[300px] overflow-y-auto">
-                {notes.map((note) => (
-                  <div
-                    key={note.id}
-                    className="border-l-2 border-blue-600 pl-3 py-1"
+      <TooltipProvider>
+        <Tooltip>
+          <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+            <TooltipTrigger asChild>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="relative h-8 w-8 border-lime-600 text-lime-600 hover:bg-lime-50 hover:text-lime-700"
+                  onClick={(e) => {
+                    console.log('[BudgetNotesIcon] Button clicked')
+                    e.stopPropagation()
+                  }}
+                >
+                  <NotebookPen className="h-4 w-4" />
+                  {notesCount > 0 && (
+                    <Badge
+                      variant="secondary"
+                      className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px] bg-lime-600 text-white"
+                    >
+                      {notesCount}
+                    </Badge>
+                  )}
+                </Button>
+              </PopoverTrigger>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{notesCount > 0 ? 'Ver y editar notas' : 'Crear nota'}</p>
+            </TooltipContent>
+            <PopoverContent
+              className="w-80 p-0"
+              align="start"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-sm">Notas del presupuesto</h3>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => {
+                      console.log('[BudgetNotesIcon] Editar button clicked')
+                      e.stopPropagation()
+                      setPopoverOpen(false)
+                      setDialogOpen(true)
+                      console.log('[BudgetNotesIcon] Dialog should open now')
+                    }}
                   >
-                    <p className="text-sm whitespace-pre-wrap break-words">
-                      {note.content}
-                    </p>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {note.users?.name || 'Usuario'} • {formatDate(note.created_at)}
-                    </div>
+                    Editar
+                  </Button>
+                </div>
+
+                {loading ? (
+                  <div className="text-sm text-muted-foreground py-4 text-center">
+                    Cargando notas...
                   </div>
-                ))}
+                ) : notes.length === 0 ? (
+                  <div className="text-sm text-muted-foreground py-4 text-center">
+                    No hay notas aún. Haz clic en "Editar" para añadir una.
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                    {notes.map((note) => (
+                      <div
+                        key={note.id}
+                        className="border-l-2 border-lime-600 pl-3 py-1"
+                      >
+                        <p className="text-sm whitespace-pre-wrap break-words">
+                          {note.content}
+                        </p>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {note.users?.nombre || 'Usuario'} • {formatDate(note.created_at)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </PopoverContent>
-      </Popover>
+            </PopoverContent>
+          </Popover>
+        </Tooltip>
+      </TooltipProvider>
 
       <BudgetNotesDialog
         budgetId={budgetId}

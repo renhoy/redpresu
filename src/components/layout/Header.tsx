@@ -3,17 +3,57 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect } from 'react'
-import { Building2, LogOut, Home, FileText, Receipt, Users, Settings } from 'lucide-react'
+import { Building2, LogOut, Home, FileText, Receipt, Users, Settings, CircleUser } from 'lucide-react'
 import LogoutButton from '@/components/auth/LogoutButton'
+import { Button } from '@/components/ui/button'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 interface HeaderProps {
   userRole?: string
+  userName?: string
+  isAuthenticated?: boolean
 }
 
-export function Header({ userRole }: HeaderProps) {
+export function Header({ userRole, userName, isAuthenticated = true }: HeaderProps) {
   const pathname = usePathname()
 
-  // Construir navegación según rol
+  // Si no está autenticado, mostrar header público
+  if (!isAuthenticated) {
+    return (
+      <header className="sticky top-0 z-50 bg-white shadow-sm border-b">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-lime-500 rounded-lg flex items-center justify-center">
+                <FileText className="h-5 w-5 text-white" />
+              </div>
+              <span className="text-xl font-bold text-gray-900">Redpresu</span>
+            </Link>
+
+            {/* Botones de autenticación */}
+            <div className="flex items-center gap-4">
+              <Link href="/login">
+                <Button variant="outline">Iniciar Sesión</Button>
+              </Link>
+              <Link href="/register">
+                <Button className="bg-lime-500 hover:bg-lime-600">
+                  Registro
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </header>
+    )
+  }
+
+  // Construir navegación según rol (solo si está autenticado)
   const isSuperadmin = userRole === 'superadmin'
 
   const navigation = [
@@ -24,11 +64,22 @@ export function Header({ userRole }: HeaderProps) {
     { name: 'Configuración', href: '/settings', icon: Settings, show: isSuperadmin },
   ].filter(item => item.show)
 
+  // Formatear rol para mostrar
+  const getRoleLabel = (role?: string) => {
+    switch (role) {
+      case 'superadmin': return 'Superadmin'
+      case 'admin': return 'Admin'
+      case 'vendedor': return 'Vendedor'
+      default: return 'Usuario'
+    }
+  }
+
   // Debug log
   useEffect(() => {
     console.log('[Header] userRole:', userRole)
+    console.log('[Header] userName:', userName)
     console.log('[Header] navigation items:', navigation.map(n => n.name))
-  }, [userRole, navigation])
+  }, [userRole, userName, navigation])
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-sm border-b">
@@ -36,12 +87,14 @@ export function Header({ userRole }: HeaderProps) {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <Building2 className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold text-gray-900">Jeyca Presu</span>
+            <div className="w-8 h-8 bg-lime-500 rounded-lg flex items-center justify-center">
+              <FileText className="h-5 w-5 text-white" />
+            </div>
+            <span className="text-xl font-bold text-gray-900">Redpresu</span>
           </div>
 
-          {/* Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
+          {/* Navigation - Desktop */}
+          <nav className="hidden lg:flex items-center space-x-4">
             {navigation.map((item) => {
               const isActive = pathname === item.href ||
                 (item.href !== '/dashboard' && pathname.startsWith(item.href))
@@ -53,8 +106,8 @@ export function Header({ userRole }: HeaderProps) {
                   href={item.href}
                   className={`px-3 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${
                     isActive
-                      ? 'text-primary bg-primary/10'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      ? 'text-lime-700 bg-lime-50'
+                      : 'text-white bg-lime-500 hover:bg-lime-600'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -64,27 +117,97 @@ export function Header({ userRole }: HeaderProps) {
             })}
           </nav>
 
-          {/* Mobile menu button + Logout */}
-          <div className="flex items-center gap-2">
-            {/* Mobile navigation */}
-            <div className="md:hidden">
-              <select
-                className="text-sm border rounded px-2 py-1"
-                value={pathname}
-                onChange={(e) => window.location.href = e.target.value}
-              >
-                {navigation.map((item) => (
-                  <option key={item.name} value={item.href}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
+          {/* Navigation - Mobile/Tablet (solo iconos) */}
+          <nav className="flex lg:hidden items-center gap-2">
+            <TooltipProvider>
+              {navigation.map((item) => {
+                const isActive = pathname === item.href ||
+                  (item.href !== '/dashboard' && pathname.startsWith(item.href))
+                const Icon = item.icon
+
+                return (
+                  <Tooltip key={item.name}>
+                    <TooltipTrigger asChild>
+                      <Link
+                        href={item.href}
+                        className={`p-2 rounded-md transition-colors border ${
+                          isActive
+                            ? 'text-lime-700 bg-lime-50 border-lime-500'
+                            : 'text-green-600 bg-white border-green-600 hover:bg-green-50'
+                        }`}
+                      >
+                        <Icon className="w-5 h-5" />
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{item.name}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )
+              })}
+            </TooltipProvider>
+          </nav>
+
+          {/* User info + Logout */}
+          <div className="flex items-center gap-3">
+            {/* User info - Desktop */}
+            <div className="hidden lg:flex items-center gap-2 mr-2">
+              <CircleUser className="h-8 w-8 text-green-600" />
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-gray-900">{userName || 'Usuario'}</span>
+                <span className="text-xs text-gray-500">{getRoleLabel(userRole)}</span>
+              </div>
             </div>
 
-            {/* Logout Button */}
-            <LogoutButton variant="ghost" size="sm" showText={false}>
-              <LogOut className="h-4 w-4" />
-            </LogoutButton>
+            {/* User info - Mobile/Tablet (solo icono con tooltip) */}
+            <div className="lg:hidden">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="p-2 rounded-md border border-green-600 bg-white cursor-help">
+                      <CircleUser className="h-5 w-5 text-green-600" />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div className="flex flex-col">
+                      <span className="font-medium">{userName || 'Usuario'}</span>
+                      <span className="text-xs">{getRoleLabel(userRole)}</span>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+
+            {/* Logout Button - Desktop */}
+            <div className="hidden lg:block">
+              <LogoutButton
+                variant="outline"
+                size="sm"
+                showText={true}
+                className="border-green-600 text-green-600 hover:bg-green-50 hover:text-green-700"
+              />
+            </div>
+
+            {/* Logout Button - Mobile/Tablet (con tooltip) */}
+            <div className="lg:hidden">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <LogoutButton
+                        variant="outline"
+                        size="sm"
+                        showText={false}
+                        className="border-green-600 text-green-600 hover:bg-green-50 hover:text-green-700"
+                      />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Cerrar Sesión</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
         </div>
       </div>

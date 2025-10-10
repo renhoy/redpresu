@@ -5,7 +5,13 @@ import { TariffList } from '@/components/tariffs/TariffList'
 import { getTariffs } from '@/app/actions/tariffs'
 import { supabaseAdmin } from '@/lib/supabase/server'
 
-export default async function TariffsPage() {
+interface PageProps {
+  searchParams: Promise<{ tariff_id?: string }>
+}
+
+export default async function TariffsPage({ searchParams }: PageProps) {
+  const { tariff_id } = await searchParams
+
   // El layout ya maneja la autenticación, solo obtenemos el usuario
   const user = await getServerUser()
 
@@ -46,6 +52,7 @@ export default async function TariffsPage() {
           initialTariffs={initialTariffs}
           users={users}
           currentUserRole={user.role}
+          tariffId={tariff_id}
         />
       </Suspense>
     </div>

@@ -17,12 +17,7 @@ import {
 } from '@/components/ui/tooltip'
 import { Info } from 'lucide-react'
 import Image from 'next/image'
-
-interface PDFTemplate {
-  id: string
-  name: string
-  description: string
-}
+import { getPDFTemplatesAction, type PDFTemplate } from '@/app/actions/config'
 
 interface TemplateSelectorProps {
   value: string
@@ -38,15 +33,19 @@ export function TemplateSelector({ value, onChange, error }: TemplateSelectorPro
     // Cargar plantillas desde la configuración
     async function loadTemplates() {
       try {
-        // Por ahora usamos plantillas hardcoded, pero en el futuro
-        // podríamos cargar desde un endpoint que lea la config
-        const defaultTemplates: PDFTemplate[] = [
-          { id: 'modern', name: 'Moderna', description: 'Diseño limpio y minimalista' },
-          { id: 'classic', name: 'Clásica', description: 'Diseño tradicional profesional' },
-          { id: 'elegant', name: 'Elegante', description: 'Diseño sofisticado con detalles' }
-        ]
+        const result = await getPDFTemplatesAction()
 
-        setTemplates(defaultTemplates)
+        if (result.success && result.data) {
+          setTemplates(result.data)
+        } else {
+          console.error('[TemplateSelector] Error:', result.error)
+          // Fallback a plantillas por defecto
+          setTemplates([
+            { id: 'modern', name: 'Moderna', description: 'Diseño limpio y minimalista' },
+            { id: 'classic', name: 'Clásica', description: 'Diseño tradicional profesional' },
+            { id: 'elegant', name: 'Elegante', description: 'Diseño sofisticado con detalles' }
+          ])
+        }
       } catch (error) {
         console.error('[TemplateSelector] Error loading templates:', error)
         // Fallback a plantillas por defecto
@@ -93,12 +92,7 @@ export function TemplateSelector({ value, onChange, error }: TemplateSelectorPro
         <SelectContent>
           {templates.map((template) => (
             <SelectItem key={template.id} value={template.id}>
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{template.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  - {template.description}
-                </span>
-              </div>
+              {template.name}
             </SelectItem>
           ))}
         </SelectContent>

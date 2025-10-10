@@ -40,8 +40,8 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-2xl font-bold">Presupuestos</h1>
-              <p className="text-sm text-muted-foreground">
+              <h1 className="text-2xl font-bold text-lime-700">Presupuestos</h1>
+              <p className="text-sm text-lime-600">
                 {budget_id ? 'Mostrando presupuesto y sus versiones' : 'Gestiona tus presupuestos creados'}
               </p>
             </div>

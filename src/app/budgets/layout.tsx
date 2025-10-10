@@ -15,7 +15,7 @@ export default async function BudgetsLayout({
 
   return (
     <div className="min-h-screen bg-background">
-      <Header userRole={user.role} />
+      <Header userRole={user.role} userName={user.nombre} />
       <main>
         {children}
       </main>

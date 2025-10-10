@@ -96,7 +96,22 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
   // Cargar budgetData del borrador existente
   useEffect(() => {
     if (existingBudget?.json_budget_data) {
-      setBudgetData(existingBudget.json_budget_data as unknown[])
+      const jsonData = existingBudget.json_budget_data as any
+
+      // Si json_budget_data tiene la estructura extendida con recargo
+      if (jsonData.items && jsonData.recargo) {
+        setBudgetData(jsonData.items)
+
+        // Recuperar configuración de RE
+        if (jsonData.recargo.aplica) {
+          setAplicaRecargo(true)
+          setRecargos(jsonData.recargo.recargos || {})
+        }
+      } else {
+        // Formato antiguo: json_budget_data es directamente el array
+        setBudgetData(jsonData)
+      }
+
       // Siempre comenzar en paso 1 (datos del cliente), incluso al editar
     }
   }, [existingBudget])

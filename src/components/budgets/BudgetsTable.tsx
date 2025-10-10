@@ -8,11 +8,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Pencil, Trash2, FileStack, ChevronDown, ChevronRight } from 'lucide-react'
+import { Pencil, Trash2, FileStack, ChevronDown, ChevronRight, FileText } from 'lucide-react'
 import { deleteBudget, updateBudgetStatus } from '@/app/actions/budgets'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { BudgetNotesIcon } from './BudgetNotesIcon'
+import { BudgetCard } from './BudgetCard'
 
 interface BudgetsTableProps {
   budgets: Budget[]
@@ -86,8 +88,8 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
   }
 
   const getUserName = (budget: Budget) => {
-    if (budget.users && typeof budget.users === 'object' && 'name' in budget.users) {
-      return (budget.users as { name: string }).name
+    if (budget.users && typeof budget.users === 'object' && 'nombre' in budget.users) {
+      return (budget.users as { nombre: string }).nombre
     }
     return 'N/A'
   }
@@ -198,17 +200,32 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
             </div>
           </td>
 
-          <td className="p-4">
-            <span className="text-sm truncate max-w-[200px] block">
-              {tariffTitle}
-            </span>
+          <td className="p-4 text-center">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    asChild
+                  >
+                    <Link href={`/tariffs?tariff_id=${budget.tariff_id}`}>
+                      <FileText className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{tariffTitle}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </td>
 
           <td className="p-4 text-right font-mono">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="cursor-help">
+                  <span className="cursor-help" style={{ fontSize: '14px' }}>
                     {formatCurrency(budget.total || 0)}
                   </span>
                 </TooltipTrigger>
@@ -245,46 +262,61 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={budget.status}>
-                  <Badge className={statusColors[budget.status as keyof typeof statusColors]}>
-                    {budget.status}
+                <SelectItem value="borrador">
+                  <Badge className={statusColors['borrador']}>
+                    borrador
                   </Badge>
                 </SelectItem>
-                {getValidTransitions(budget.status).map((status) => (
-                  <SelectItem key={status} value={status}>
-                    <Badge className={statusColors[status as keyof typeof statusColors]}>
-                      {status}
-                    </Badge>
-                  </SelectItem>
-                ))}
+                <SelectItem value="pendiente">
+                  <Badge className={statusColors['pendiente']}>
+                    pendiente
+                  </Badge>
+                </SelectItem>
+                <SelectItem value="enviado">
+                  <Badge className={statusColors['enviado']}>
+                    enviado
+                  </Badge>
+                </SelectItem>
+                <SelectItem value="aprobado">
+                  <Badge className={statusColors['aprobado']}>
+                    aprobado
+                  </Badge>
+                </SelectItem>
+                <SelectItem value="rechazado">
+                  <Badge className={statusColors['rechazado']}>
+                    rechazado
+                  </Badge>
+                </SelectItem>
+                <SelectItem value="caducado">
+                  <Badge className={statusColors['caducado']}>
+                    caducado
+                  </Badge>
+                </SelectItem>
               </SelectContent>
             </Select>
           </td>
 
-          <td className="p-4 text-sm text-muted-foreground">
+          <td className="p-4 text-muted-foreground" style={{ fontSize: '12px' }}>
             {getUserName(budget)}
           </td>
 
           <td className="p-4 text-center">
-            {budget.pdf_url ? (
+            {budget.pdf_url && (
               <Button
-                variant="ghost"
+                variant="outline"
                 size="icon"
                 onClick={() => window.open(budget.pdf_url!, '_blank')}
                 title="Descargar PDF"
-                className="text-green-600 hover:text-green-700 hover:bg-green-50"
               >
                 <FileStack className="h-4 w-4" />
               </Button>
-            ) : (
-              <span className="text-xs text-muted-foreground">Sin PDF</span>
             )}
           </td>
 
           <td className="p-4">
             <div className="flex justify-end gap-2">
               <Button
-                variant="ghost"
+                variant="outline"
                 size="icon"
                 onClick={() => window.open(`/budgets/create?tariff_id=${budget.tariff_id}&budget_id=${budget.id}`, '_blank')}
                 title="Editar"
@@ -292,12 +324,13 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
                 <Pencil className="h-4 w-4" />
               </Button>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="icon"
                 onClick={() => handleDelete(budget.id, budget.client_name)}
                 title="Eliminar"
+                className="border-destructive text-destructive hover:bg-destructive/10"
               >
-                <Trash2 className="h-4 w-4 text-destructive" />
+                <Trash2 className="h-4 w-4" />
               </Button>
             </div>
           </td>
@@ -344,19 +377,19 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
         )}
       </div>
 
-      {/* Tabla */}
-      <div className="border rounded-lg overflow-hidden">
+      {/* Vista Desktop - Tabla */}
+      <div className="hidden lg:block border rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-muted">
               <tr>
-                <th className="text-left p-4 font-medium">Cliente</th>
-                <th className="text-left p-4 font-medium">Tarifa</th>
-                <th className="text-right p-4 font-medium">Total</th>
-                <th className="text-left p-4 font-medium">Estado</th>
-                <th className="text-left p-4 font-medium">Usuario</th>
-                <th className="text-center p-4 font-medium">PDF</th>
-                <th className="text-right p-4 font-medium">Acciones</th>
+                <th className="text-left p-4 font-medium w-[40%]">Cliente</th>
+                <th className="text-center p-4 font-medium w-[60px]">Tarifa</th>
+                <th className="text-right p-4 font-medium w-[150px]">Total</th>
+                <th className="text-left p-4 font-medium w-[120px]">Estado</th>
+                <th className="text-left p-4 font-medium w-[120px]">Usuario</th>
+                <th className="text-center p-4 font-medium w-[60px]">PDF</th>
+                <th className="text-right p-4 font-medium w-[120px]">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -369,6 +402,29 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
           <div className="text-center py-12 text-muted-foreground">
             No se encontraron presupuestos
           </div>
+        )}
+      </div>
+
+      {/* Vista Mobile/Tablet - Cards */}
+      <div className="lg:hidden">
+        {filteredBudgets.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            No se encontraron presupuestos
+          </div>
+        ) : (
+          filteredBudgets.map(budget => (
+            <BudgetCard
+              key={budget.id}
+              budget={budget}
+              onStatusChange={handleStatusChange}
+              onDelete={handleDelete}
+              statusColors={statusColors}
+              getValidTransitions={getValidTransitions}
+              getUserName={getUserName}
+              formatDate={formatDate}
+              getDaysRemaining={getDaysRemaining}
+            />
+          ))
         )}
       </div>
     </div>

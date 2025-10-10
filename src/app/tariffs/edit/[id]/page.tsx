@@ -21,5 +21,9 @@ export default async function EditTariffPage({ params }: PageProps) {
     redirect('/tariffs')
   }
 
-  return <TariffForm mode="edit" tariffId={tariffId} initialData={tariff} />
+  return (
+    <div className="min-h-screen bg-white">
+      <TariffForm mode="edit" tariffId={tariffId} initialData={tariff} />
+    </div>
+  )
 }

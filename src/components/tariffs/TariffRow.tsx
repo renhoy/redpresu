@@ -127,9 +127,9 @@ export function TariffRow({ tariff, onStatusChange, onDelete, currentUserRole }:
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <FileText className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">{tariff.title}</span>
+              <span className="font-medium" style={{ fontSize: '12px' }}>{tariff.title}</span>
             </div>
-            <div className="text-sm text-muted-foreground max-w-xs truncate">
+            <div className="text-muted-foreground max-w-xs truncate" style={{ fontSize: '12px' }}>
               {tariff.description || 'Sin descripción'}
             </div>
           </div>
@@ -141,7 +141,7 @@ export function TariffRow({ tariff, onStatusChange, onDelete, currentUserRole }:
             <TooltipTrigger asChild>
               {tariff.status === 'Activa' ? (
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
                   asChild
                   className="h-9 px-2"
@@ -153,7 +153,7 @@ export function TariffRow({ tariff, onStatusChange, onDelete, currentUserRole }:
                 </Button>
               ) : (
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
                   disabled
                   className="h-9 px-2 cursor-not-allowed"
@@ -200,7 +200,7 @@ export function TariffRow({ tariff, onStatusChange, onDelete, currentUserRole }:
         </TableCell>
 
         {/* Columna Usuario */}
-        <TableCell className="p-4 text-center text-sm">
+        <TableCell className="p-4 text-center" style={{ fontSize: '12px' }}>
           {tariff.creator ? (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -229,7 +229,7 @@ export function TariffRow({ tariff, onStatusChange, onDelete, currentUserRole }:
         </TableCell>
 
         {/* Columna Fecha */}
-        <TableCell className="p-4 text-center text-sm text-muted-foreground">
+        <TableCell className="p-4 text-center text-muted-foreground" style={{ fontSize: '12px' }}>
           {formatDate(tariff.created_at)}
         </TableCell>
 
@@ -241,7 +241,7 @@ export function TariffRow({ tariff, onStatusChange, onDelete, currentUserRole }:
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant={tariff.is_template ? "default" : "ghost"}
+                      variant={tariff.is_template ? "default" : "outline"}
                       size="icon"
                       onClick={() => setShowTemplateDialog(true)}
                     >
@@ -257,7 +257,7 @@ export function TariffRow({ tariff, onStatusChange, onDelete, currentUserRole }:
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="icon"
                     asChild
                   >
@@ -274,11 +274,12 @@ export function TariffRow({ tariff, onStatusChange, onDelete, currentUserRole }:
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="icon"
                     onClick={() => setShowDeleteDialog(true)}
+                    className="border-destructive text-destructive hover:bg-destructive/10"
                   >
-                    <Trash2 className="h-4 w-4 text-destructive" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>

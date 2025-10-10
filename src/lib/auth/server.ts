@@ -33,8 +33,11 @@ export async function getServerUser() {
 
   console.log('[getServerUser] User data loaded:', userData.email, userData.role)
 
+  // Retornar solo datos de la tabla users + id y email del auth
+  // Evitar spread de user.* para no sobreescribir campos con metadata de auth
   return {
-    ...user,
+    id: user.id,
+    email: user.email,
     ...userData
   }
 }

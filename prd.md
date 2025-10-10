@@ -532,6 +532,7 @@ public/
 **Prioridad:** ALTA
 **Dependencias:** Bloque 1 completado (emisores)
 **Complejidad:** MEDIA
+**Estado:** ✅ Completado
 
 **Cambios en tabla emisores:**
 
@@ -616,6 +617,7 @@ export async function saveBudget(budgetData) {
 **Prioridad:** ALTA
 **Dependencias:** 3.1 (tabla config), 2.2 (detección IVAs)
 **Complejidad:** MEDIA-ALTA
+**Estado:** ✅ Completado
 
 **Cambios en formulario cliente:**
 
@@ -711,26 +713,34 @@ export function calculateRecargo(
 **Cambios en BD:**
 
 ```sql
--- Añadir a budgets (dentro de json_budget_data)
+-- Añadir columnas para persistencia (Migration 024)
+ALTER TABLE public.budgets
+  ADD COLUMN IF NOT EXISTS re_aplica BOOLEAN DEFAULT false,
+  ADD COLUMN IF NOT EXISTS re_total DECIMAL(10,2) DEFAULT 0.00;
+
+-- Datos detallados en json_budget_data:
 {
-  "cliente": {
-    "tipo": "autónomo",
-    "aplicaRecargo": true,
-    "recargos": {
-      "21": 5.2,
-      "10": 1.4
-    }
-  },
-  "totales": {
-    "subtotal": 5193.00,
-    "base": 4922.50,
-    "ivas": {"21": 270.50},
-    "irpf": 738.38,
-    "re": {"21": 52.00},  // NUEVO
-    "totalPagar": 4506.62  // subtotal - irpf + re
+  "items": [...],
+  "recargo": {
+    "aplica": true,
+    "recargos": {"21": 5.2, "10": 1.4},
+    "reByIVA": {"21": 52.00, "10": 14.00},
+    "totalRE": 66.00
   }
 }
 ```
+
+**Estrategia de persistencia implementada:**
+
+1. **Columnas `re_aplica` y `re_total`** para queries rápidas y cálculos
+2. **JSON `json_budget_data.recargo`** para datos detallados (recargos por IVA, montos parciales)
+3. **Restauración automática** al editar: lee JSON y restaura estado checkbox + tabla
+
+**Archivos implementados:**
+
+- ✅ `migrations/024_budgets_re_fields.sql` - Columnas RE + inicialización
+- ✅ `src/app/actions/budgets.ts` - Guardado doble (columnas + JSON)
+- ✅ `src/components/budgets/BudgetForm.tsx` - Restauración desde JSON
 
 ---
 
@@ -933,6 +943,7 @@ export async function restoreBudgetVersion(
 **Prioridad:** MEDIA
 **Complejidad:** BAJA
 **Impacto:** Seguimiento comercial
+**Estado:** ✅ Completado
 
 **Nueva tabla:**
 
@@ -941,8 +952,9 @@ CREATE TABLE budget_notes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   budget_id UUID REFERENCES budgets(id) ON DELETE CASCADE,
   user_id UUID REFERENCES auth.users(id),
-  note_text TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  content TEXT NOT NULL,  -- Cambio: 'content' en lugar de 'note_text'
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE INDEX idx_notes_budget ON budget_notes(budget_id, created_at DESC);
@@ -954,20 +966,28 @@ CREATE INDEX idx_notes_budget ON budget_notes(budget_id, created_at DESC);
 // src/app/actions/budget-notes.ts
 "use server";
 
-export async function addBudgetNote(budgetId: string, noteText: string) {
+export async function addBudgetNote(budgetId: string, content: string) {
   return await supabase.from("budget_notes").insert({
     budget_id: budgetId,
     user_id: auth.uid(),
-    note_text: noteText,
+    content: content,
   });
 }
 
 export async function getBudgetNotes(budgetId: string) {
+  // IMPORTANTE: usar 'nombre' en lugar de 'name'
   return await supabase
     .from("budget_notes")
-    .select("*, user:users(name)")
+    .select("*, users(nombre, email)")  // cambio crítico
     .eq("budget_id", budgetId)
     .order("created_at", { ascending: false });
+}
+
+export async function updateBudgetNote(noteId: string, content: string) {
+  return await supabase
+    .from("budget_notes")
+    .update({ content, updated_at: new Date().toISOString() })
+    .eq("id", noteId);
 }
 
 export async function deleteBudgetNote(noteId: string) {
@@ -976,87 +996,34 @@ export async function deleteBudgetNote(noteId: string) {
 }
 ```
 
-**UI:**
+**UI implementada:**
 
-- Sección "Notas" en página edición presupuesto
-- Textarea + botón "Añadir nota"
-- Timeline cronológico con avatar, usuario, fecha, texto
-- Botón eliminar (solo creador o admin)
-- Formato fecha relativo: "hace 2 horas", "ayer", "hace 3 días"
+- ✅ **BudgetNotesIcon** - Botón con badge contador en listado presupuestos
+- ✅ **Popover preview** - Muestra últimas 3 notas al hacer hover
+- ✅ **BudgetNotesDialog** - Modal completo para gestión de notas
+- ✅ **Funcionalidades**: Añadir, editar, eliminar notas
+- ✅ **Timeline** cronológico con formato relativo
+- ✅ **Permisos**: Solo creador y admin pueden eliminar
 
-```typescript
-// src/components/budgets/BudgetNotes.tsx
+**Correcciones críticas implementadas:**
 
-export function BudgetNotes({ budgetId }: { budgetId: string }) {
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [newNote, setNewNote] = useState("");
+1. **Fix Radix UI Triggers** (Migration 024):
+   - Problema: Popover no abría debido a conflicto Tooltip + Popover
+   - Solución: Reestructurada jerarquía de componentes
+   - Antes: `Popover > PopoverTrigger > Tooltip > TooltipTrigger > Button`
+   - Después: `Tooltip > Popover > (TooltipTrigger + PopoverTrigger) > Button`
 
-  async function handleAddNote() {
-    if (!newNote.trim()) return;
+2. **Campo 'nombre' vs 'name'**:
+   - Todas las queries SELECT usan `users.nombre` (no `name`)
+   - Corregido `getServerUser()` para no sobreescribir con auth metadata
+   - Actualizado interface `BudgetNote` con `users?: { nombre: string }`
 
-    await addBudgetNote(budgetId, newNote);
-    setNewNote("");
-    // Recargar notas
-    loadNotes();
-  }
+**Archivos implementados:**
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Notas del Presupuesto</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="flex gap-2">
-            <Textarea
-              value={newNote}
-              onChange={(e) => setNewNote(e.target.value)}
-              placeholder="Añadir nota..."
-              rows={3}
-            />
-            <Button onClick={handleAddNote}>
-              <Plus className="w-4 h-4" />
-              Añadir
-            </Button>
-          </div>
-
-          <Separator />
-
-          <div className="space-y-3">
-            {notes.map((note) => (
-              <div key={note.id} className="flex gap-3 p-3 bg-muted rounded">
-                <Avatar>
-                  <AvatarFallback>{note.user.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-medium">{note.user.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatDateRelative(note.created_at)}
-                      </p>
-                    </div>
-                    {canDelete(note) && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(note.id)}
-                      >
-                        <Trash className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-                  <p className="mt-2 text-sm">{note.note_text}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-```
+- ✅ `migrations/019_budget_notes.sql`
+- ✅ `src/app/actions/budget-notes.ts`
+- ✅ `src/components/budgets/BudgetNotesIcon.tsx`
+- ✅ `src/components/budgets/BudgetNotesDialog.tsx`
 
 ---
 
@@ -1897,35 +1864,75 @@ export function BudgetHierarchyForm({ tariff, onUpdate }: Props) {
 
 ## Resumen de Prioridades
 
-### INMEDIATO (Semanas 1-2):
+### ✅ INMEDIATO (Semanas 1-2): COMPLETADO
 
-1. Sistema registro y autenticación completo
-2. Campo user_id en tarifas
-3. Detección automática IVAs
+1. ✅ Sistema registro y autenticación completo
+2. ✅ Campo user_id en tarifas
+3. ✅ Detección automática IVAs
 
-### CORTO PLAZO (Semanas 3-4):
+### ✅ CORTO PLAZO (Semanas 3-4): COMPLETADO
 
-4. CRUD usuarios
-5. Tabla config
-6. Tarifa por defecto
-7. Selector plantillas PDF
+4. ✅ CRUD usuarios
+5. ✅ Tabla config
+6. ✅ Tarifa por defecto
+7. ✅ Selector plantillas PDF
 
-### MEDIO PLAZO (Semanas 5-8):
+### ✅ MEDIO PLAZO (Semanas 5-8): COMPLETADO
 
-8. IRPF completo
-9. Recargo de Equivalencia
-10. Sistema versiones
-11. Sistema notas
+8. ✅ IRPF completo
+9. ✅ Recargo de Equivalencia (con persistencia mejorada)
+10. ✅ Sistema versiones
+11. ✅ Sistema notas (con correcciones UX críticas)
 
-### LARGO PLAZO (Semanas 9-12):
+### ⏳ LARGO PLAZO (Semanas 9-12): PENDIENTE
 
-12. Navegación unificada
-13. Rich text editor
-14. Import/Export
-15. Responsive completo
-16. Mobile-first
+12. ⏳ Navegación unificada
+13. ⏳ Rich text editor
+14. ⏳ Import/Export
+15. ⏳ Responsive completo
+16. ⏳ Mobile-first
+
+---
+
+## MEJORAS ADICIONALES IMPLEMENTADAS (2025-01-10)
+
+### Correcciones Críticas UX
+
+#### 1. Fix: Botón Notas - Radix UI Triggers
+**Problema:** Popover no abría por conflicto Tooltip + Popover
+**Solución:** Reestructurada jerarquía de triggers en BudgetNotesIcon.tsx
+**Impacto:** Funcionalidad notas ahora completamente operativa
+
+#### 2. Persistencia Recargo de Equivalencia
+**Problema:** Datos RE no se guardaban, se perdían al editar
+**Solución:** Estrategia dual storage (columnas + JSON)
+- Migration 024: campos `re_aplica` y `re_total`
+- Restauración automática desde `json_budget_data.recargo`
+**Impacto:** RE completamente persistente y editable
+
+#### 3. Visualización Campo 'nombre' Usuarios
+**Problema:** Nombre de usuario incorrecto (mostraba metadata auth)
+**Solución:** Corregido `getServerUser()` + todos los layouts
+- 6 layouts actualizados
+- BudgetsTable corregido
+- budget-notes.ts: todas las queries usan 'nombre'
+**Impacto:** Nombre correcto visible en toda la app
+
+#### 4. Pre-carga Datos Issuer en Nueva Tarifa
+**Problema:** Al crear tarifa sin plantilla, campos vacíos
+**Solución:** Función `getUserIssuerData()` pre-llena datos emisor
+- Nombre, NIF, dirección completa, contacto
+- Fusión con valores config (colores, plantilla)
+**Impacto:** UX mejorada, menos trabajo manual
+
+**Migraciones:** 024 (budgets_re_fields)
+**Archivos críticos modificados:** 15+
+**Funcionalidades corregidas:** 4
+
+---
 
 **Documento:** Fase 2 - Requisitos y Funcionalidades
-**Versión:** 1.0
-**Fecha:** 2025-01-04
+**Versión:** 1.1
+**Fecha:** 2025-01-10
 **Estado:** Aprobado
+**Última actualización:** Correcciones UX críticas + persistencia RE

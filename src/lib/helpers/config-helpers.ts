@@ -169,3 +169,30 @@ export async function getConfigByCategory(category: string): Promise<Array<{
     return []
   }
 }
+
+/**
+ * Obtiene el modo de aplicación (development/production)
+ * @returns 'development' o 'production'
+ */
+export async function getAppMode(): Promise<'development' | 'production'> {
+  const mode = await getConfigValue<string>('app_mode')
+  return (mode === 'production' ? 'production' : 'development') as 'development' | 'production'
+}
+
+/**
+ * Verifica si la aplicación está en modo desarrollo
+ * @returns true si está en desarrollo
+ */
+export async function isDevelopmentMode(): Promise<boolean> {
+  const mode = await getAppMode()
+  return mode === 'development'
+}
+
+/**
+ * Verifica si el registro público está habilitado
+ * @returns true si el registro público está habilitado
+ */
+export async function isPublicRegistrationEnabled(): Promise<boolean> {
+  const enabled = await getConfigValue<boolean>('public_registration_enabled')
+  return enabled ?? true // Por defecto está habilitado
+}

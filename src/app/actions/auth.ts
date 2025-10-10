@@ -95,8 +95,8 @@ export async function signOutAction(): Promise<SignInResult> {
     }
 
     if (!session) {
-      console.log('[Server Action] No hay sesión activa, redirigiendo a login')
-      redirect('/login')
+      console.log('[Server Action] No hay sesión activa, redirigiendo a inicio')
+      redirect('/')
       return { success: true }
     }
 
@@ -108,7 +108,7 @@ export async function signOutAction(): Promise<SignInResult> {
     }
 
     console.log('[Server Action] Logout exitoso')
-    redirect('/login')
+    redirect('/')
 
   } catch (error) {
     console.error('[Server Action] Error crítico en logout:', error)
@@ -129,6 +129,8 @@ export async function signOutAction(): Promise<SignInResult> {
  * Interfaz para datos de registro
  */
 export interface RegisterData {
+  nombre: string
+  apellidos: string
   email: string
   password: string
   tipo: 'empresa' | 'autonomo'
@@ -170,13 +172,12 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
 
-    // 1. Validar que el NIF no esté ya registrado
+    // 1. Validar que el NIF no esté ya registrado en TODA la base de datos
     const { data: existingIssuer, error: checkError } = await supabase
       .from('issuers')
-      .select('id, nif')
-      .eq('nif', data.nif.trim().toUpperCase())
-      .eq('empresa_id', 1) // Por ahora solo empresa_id = 1
-      .single()
+      .select('id, issuers_nif')
+      .eq('issuers_nif', data.nif.trim().toUpperCase())
+      .maybeSingle()
 
     if (existingIssuer) {
       console.error('[registerUser] NIF ya registrado:', data.nif)
@@ -186,15 +187,48 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
       }
     }
 
-    // 2. Crear usuario en auth.users
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    // 2. Crear cliente admin de Supabase con service role key
+    const { createClient } = await import('@supabase/supabase-js')
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    )
+
+    // 3. Crear nueva empresa para este emisor
+    const { data: empresaData, error: empresaError } = await supabaseAdmin
+      .from('empresas')
+      .insert({
+        nombre: data.nombreComercial,
+        status: 'active'
+      })
+      .select('id')
+      .single()
+
+    if (empresaError || !empresaData) {
+      console.error('[registerUser] Error al crear empresa:', empresaError)
+      return {
+        success: false,
+        error: 'Error al crear la empresa'
+      }
+    }
+
+    const empresaId = empresaData.id
+    console.log('[registerUser] Empresa creada:', empresaId)
+
+    // 4. Crear usuario en auth.users usando admin API para evitar confirmación de email
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: data.email.trim().toLowerCase(),
       password: data.password,
-      options: {
-        data: {
-          nombre_comercial: data.nombreComercial,
-          tipo: data.tipo
-        }
+      email_confirm: true, // Auto-confirmar email en desarrollo
+      user_metadata: {
+        nombre_comercial: data.nombreComercial,
+        tipo: data.tipo
       }
     })
 
@@ -223,24 +257,26 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
 
     console.log('[registerUser] Usuario auth creado:', userId)
 
-    // 3. Crear registro en public.users (con rol admin por defecto para nuevos registros)
-    const { error: userError } = await supabase
+    // 5. Crear registro en public.users (con rol admin por defecto para nuevos registros)
+    // Usar supabaseAdmin para bypass RLS policies
+    const { error: userError } = await supabaseAdmin
       .from('users')
       .insert({
         id: userId,
-        nombre: data.nombreComercial,
-        apellidos: '', // Por ahora vacío, se puede actualizar en perfil
+        nombre: data.nombre.trim(),
+        apellidos: data.apellidos.trim(),
         email: data.email.trim().toLowerCase(),
         role: 'admin', // Primer usuario de una nueva empresa = admin
-        empresa_id: 1, // Por ahora todas las empresas tienen ID 1
+        empresa_id: empresaId, // ID de la empresa recién creada
         status: 'active'
       })
 
     if (userError) {
       console.error('[registerUser] Error al crear registro en users:', userError)
 
-      // Intentar eliminar el usuario de auth si falla la creación en public.users
-      await supabase.auth.admin.deleteUser(userId)
+      // Intentar eliminar el usuario de auth y la empresa si falla la creación en public.users
+      await supabaseAdmin.auth.admin.deleteUser(userId)
+      await supabaseAdmin.from('empresas').delete().eq('id', empresaId)
 
       return {
         success: false,
@@ -251,11 +287,12 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
     console.log('[registerUser] Registro en users creado')
 
     // 4. Crear registro en public.issuers
-    const { data: issuerData, error: issuerError } = await supabase
+    // Usar supabaseAdmin para bypass RLS policies
+    const { data: issuerData, error: issuerError } = await supabaseAdmin
       .from('issuers')
       .insert({
         user_id: userId,
-        company_id: 1,
+        company_id: empresaId, // ID de la empresa recién creada
         issuers_type: data.tipo,
         issuers_name: data.nombreComercial.trim(),
         issuers_nif: data.nif.trim().toUpperCase(),
@@ -275,9 +312,10 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
     if (issuerError) {
       console.error('[registerUser] Error al crear issuer:', issuerError)
 
-      // Intentar rollback: eliminar usuario de public.users y auth.users
-      await supabase.from('users').delete().eq('id', userId)
-      await supabase.auth.admin.deleteUser(userId)
+      // Intentar rollback: eliminar usuario, auth y empresa
+      await supabaseAdmin.from('users').delete().eq('id', userId)
+      await supabaseAdmin.auth.admin.deleteUser(userId)
+      await supabaseAdmin.from('empresas').delete().eq('id', empresaId)
 
       return {
         success: false,
@@ -288,9 +326,10 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
     if (!issuerData) {
       console.error('[registerUser] No se obtuvo el issuer creado')
 
-      // Rollback
-      await supabase.from('users').delete().eq('id', userId)
-      await supabase.auth.admin.deleteUser(userId)
+      // Rollback: eliminar usuario, auth y empresa
+      await supabaseAdmin.from('users').delete().eq('id', userId)
+      await supabaseAdmin.auth.admin.deleteUser(userId)
+      await supabaseAdmin.from('empresas').delete().eq('id', empresaId)
 
       return {
         success: false,

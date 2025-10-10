@@ -544,39 +544,46 @@ Completado:
 
 #### 5.2 Sistema de Notas
 
-**Prioridad:** MEDIA | **Estimación:** 2 días | **Estado:** ⏳ Aplazado (opcional)
+**Prioridad:** MEDIA | **Estimación:** 2 días | **Estado:** ✅ Completado
 
-**Nota:** Sistema de notas aplazado. Jerarquía de versiones cubre necesidad principal de trazabilidad.
-
-- [ ] Crear tabla `budget_notes` (opcional)
-- [ ] Server Action `addBudgetNote()`
-- [ ] Server Action `getBudgetNotes()`
-- [ ] Server Action `deleteBudgetNote()`
-- [ ] Componente `BudgetNotes.tsx`
-- [ ] Textarea + botón añadir
-- [ ] Timeline cronológico notas
-- [ ] Formato fecha relativo
-- [ ] Botón eliminar (solo creador/admin)
+- ✅ Crear tabla `budget_notes`
+- ✅ Server Action `addBudgetNote()`
+- ✅ Server Action `getBudgetNotes()`
+- ✅ Server Action `deleteBudgetNote()`
+- ✅ Componente `BudgetNotesDialog.tsx` con Timeline
+- ✅ Componente `BudgetNotesIcon.tsx` (icono con badge contador)
+- ✅ Textarea + botón añadir
+- ✅ Timeline cronológico notas con formato relativo
+- ✅ Botón eliminar (solo creador/admin)
+- ✅ Integrado en BudgetsTable (icono MessageSquare)
 
 **Archivos nuevos:**
 
-- `migrations/019_budget_notes.sql` (si se implementa)
+- `migrations/019_budget_notes.sql`
 - `src/app/actions/budget-notes.ts`
-- `src/components/budgets/BudgetNotes.tsx`
+- `src/components/budgets/BudgetNotesDialog.tsx`
+- `src/components/budgets/BudgetNotesIcon.tsx`
+
+**Archivos modificados:**
+
+- `src/components/budgets/BudgetsTable.tsx` (integración icono notas)
 
 **Criterios de completado:**
 
-- Notas se guardan con timestamp automático
-- Timeline muestra usuario y fecha
-- Solo creador/admin puede eliminar
+- ✅ Notas se guardan con timestamp automático
+- ✅ Timeline muestra usuario y fecha con formato relativo
+- ✅ Solo creador/admin puede eliminar
+- ✅ Contador de notas en badge
+- ✅ Dialog modal para gestión de notas
+- ✅ RLS policies para seguridad
 
 ---
 
-## ✅ BLOQUE 5 COMPLETADO (PARCIAL): 1/2 tareas (50%)
+## ✅ BLOQUE 5 COMPLETADO: 2/2 tareas (100%)
 
 Completado:
 ✅ 5.1 Sistema Versiones Jerárquico (migration 018, accordion con relaciones padre-hijo)
-⏳ 5.2 Sistema Notas (aplazado, opcional)
+✅ 5.2 Sistema Notas (migration 019, timeline completo con dialog modal)
 
 **Mejoras clave implementadas:**
 
@@ -586,10 +593,15 @@ Completado:
 - ✅ Filtrado por `budget_id` en URL con auto-expansión
 - ✅ Fix completo formato decimal español (0,00) con validación en blur
 - ✅ Estado temporal `editingValues` para evitar re-renders durante edición
+- ✅ Sistema de notas con timeline cronológico
+- ✅ Dialog modal para gestión de notas
+- ✅ Icono con badge contador de notas
+- ✅ Permisos: solo creador/admin puede eliminar
 
-**Migraciones:** 018
+**Migraciones:** 018, 019
+**Archivos nuevos:** budget-notes.ts, BudgetNotesDialog.tsx, BudgetNotesIcon.tsx
 **Archivos modificados:** budgets.ts, BudgetForm.tsx, BudgetsTable.tsx, BudgetHierarchyForm.tsx, budgets/page.tsx, normalization-utils.ts, data-transformer.ts
-**Funcionalidad nueva:** Sistema completo de versiones con jerarquía visual + formato español robusto
+**Funcionalidad nueva:** Sistema completo de versiones + notas con jerarquía visual + formato español robusto
 **Siguiente bloque:** Bloque 6 - Navegación Unificada
 
 ---
@@ -813,10 +825,170 @@ Completado:
 
 ---
 
+---
+
+## 🚀 NUEVO: ARQUITECTURA MULTI-TENANT IMPLEMENTADA
+
+### Cambios Críticos Implementados (2025-01-10)
+
+#### Multi-Tenant Registration System
+
+**Prioridad:** CRÍTICA | **Estado:** ✅ Completado
+
+**Cambios realizados:**
+
+- ✅ Creada tabla `empresas` para multi-tenant
+- ✅ Eliminados constraints `empresa_id = 1` de todas las tablas
+- ✅ Actualizado `registerUser()` para crear empresa automáticamente
+- ✅ Cada registro crea su propia empresa aislada
+- ✅ Usuario se vuelve admin de su empresa
+- ✅ RLS policies actualizadas para multi-tenant en todas las tablas
+- ✅ Función helper `get_user_empresa_id()` para obtener empresa del usuario
+- ✅ Validación NIF ahora verifica en todas las empresas (no solo empresa_id=1)
+
+**Migraciones creadas:**
+
+- `migrations/020_empresas_table.sql` - Tabla empresas + eliminar constraints
+- `migrations/021_fix_rls_multi_tenant.sql` - RLS policies multi-tenant
+
+**Archivos modificados:**
+
+- `src/app/actions/auth.ts` - `registerUser()` ahora crea empresa
+- `src/components/auth/RegisterForm.tsx` - Validación mejorada de errores
+- `src/components/layout/Header.tsx` - Botón logout verde
+
+**Políticas RLS actualizadas:**
+
+- ✅ `tariffs` - Filtro por `empresa_id = get_user_empresa_id()`
+- ✅ `budgets` - Filtro por `empresa_id = get_user_empresa_id()`
+- ✅ `issuers` - Filtro por `company_id = get_user_empresa_id()`
+- ✅ `empresas` - Superadmin ve todas, usuarios ven solo la suya
+
+**Flujo de registro actualizado:**
+
+1. Usuario se registra en `/register`
+2. Se crea nueva empresa en tabla `empresas`
+3. Se crea usuario auth en Supabase (sin email confirmation en dev)
+4. Se crea registro en `users` con `empresa_id` de la nueva empresa
+5. Se crea registro en `issuers` con `company_id` de la nueva empresa
+6. Usuario queda como `admin` de su empresa
+7. Aislamiento completo: solo ve tarifas/presupuestos de su empresa
+
+**Rollback implementado:**
+
+- Si falla creación de usuario: elimina auth + empresa
+- Si falla creación de issuer: elimina usuario + auth + empresa
+- Transacciones completas aseguradas
+
+**Criterios de completado:**
+
+- ✅ Cada registro crea empresa independiente
+- ✅ empresa_id autoincrementado (no hardcoded)
+- ✅ RLS filtra correctamente por empresa_id
+- ✅ Superadmin puede ver todas las empresas
+- ✅ Admin solo ve su empresa
+- ✅ NIFs únicos validados globalmente
+
+**Mejoras UI:**
+
+- ✅ Validación Zod muestra errores agrupados por campo
+- ✅ Alert roja con todos los errores de validación visible
+- ✅ Botón logout con borde y texto verde
+- ✅ useEffect para debug de estado errors
+
+---
+
+---
+
+## ✅ MEJORAS ADICIONALES IMPLEMENTADAS (2025-01-10)
+
+### Correcciones y Mejoras UX
+
+**Prioridad:** ALTA | **Estado:** ✅ Completado
+
+#### Fix: Botón Notas en Listado Presupuestos
+- ✅ Solucionado conflicto de triggers Tooltip + Popover en Radix UI
+- ✅ Reestructurada jerarquía de componentes en BudgetNotesIcon.tsx
+- ✅ Popover ahora abre correctamente al hacer clic
+- ✅ Mantiene tooltip en hover + apertura de dialog
+
+**Archivos modificados:**
+- `src/components/budgets/BudgetNotesIcon.tsx` - Jerarquía de triggers corregida
+
+---
+
+#### Persistencia de Recargo de Equivalencia (RE)
+- ✅ Añadidos campos `re_aplica` y `re_total` en tabla budgets
+- ✅ Guardado doble: columnas (queries rápidas) + JSON (datos completos)
+- ✅ Restauración correcta de datos RE al editar presupuesto
+- ✅ Checkbox y tabla de recargos recuperan valores guardados
+
+**Migraciones creadas:**
+- `migrations/024_budgets_re_fields.sql` - Columnas RE + inicialización desde JSON
+
+**Archivos modificados:**
+- `src/app/actions/budgets.ts` - saveBudget(), createDraftBudget() (guardar `re_aplica` y `re_total`)
+- `src/components/budgets/BudgetForm.tsx` - Restaurar RE desde `json_budget_data`
+
+**Criterios de completado:**
+- ✅ Checkbox RE persistido correctamente
+- ✅ Recargos por IVA recuperados al editar
+- ✅ Cálculos RE se mantienen en versiones del presupuesto
+
+---
+
+#### Visualización Campo 'nombre' de Usuarios
+- ✅ Corregido `getServerUser()` para no sobreescribir campo `nombre` con metadata de auth
+- ✅ Actualizados todos los layouts para usar `user.nombre`
+- ✅ Actualizado `getUserName()` en BudgetsTable.tsx
+- ✅ Actualizadas todas las queries en budget-notes.ts para usar `nombre`
+- ✅ Actualizados componentes de visualización de notas
+
+**Archivos modificados:**
+- `src/lib/auth/server.ts` - getServerUser() solo spread de datos `users` table
+- `src/app/tariffs/layout.tsx` - userName={user.nombre}
+- `src/app/budgets/layout.tsx` - userName={user.nombre}
+- `src/app/settings/layout.tsx` - userName={user.nombre}
+- `src/app/dashboard/layout.tsx` - userName={user.nombre}
+- `src/app/users/layout.tsx` - userName={user.nombre}
+- `src/app/(dashboard)/layout.tsx` - userName={user.nombre}
+- `src/components/budgets/BudgetsTable.tsx` - getUserName() usa 'nombre'
+- `src/app/actions/budget-notes.ts` - Todas las queries SELECT usan 'nombre'
+- `src/components/budgets/BudgetNotesIcon.tsx` - Muestra note.users?.nombre
+- `src/components/budgets/BudgetNotesDialog.tsx` - Muestra note.users?.nombre
+
+**Criterios de completado:**
+- ✅ Nombre correcto visible en headers de todas las páginas
+- ✅ Nombre correcto en listado de presupuestos
+- ✅ Nombre correcto en notas de presupuesto
+- ✅ Sin conflictos entre auth metadata y datos de tabla users
+
+---
+
+#### Pre-carga de Datos Issuer en Nueva Tarifa
+- ✅ Creada función `getUserIssuerData()` en tariffs.ts
+- ✅ Pre-carga de datos issuer cuando no hay tarifa favorita
+- ✅ Construcción de dirección completa desde campos separados
+- ✅ Construcción de contacto desde phone, email, web
+
+**Archivos modificados:**
+- `src/app/actions/tariffs.ts` - Nueva función getUserIssuerData()
+- `src/app/tariffs/create/page.tsx` - Cargar datos issuer si no hay plantilla
+
+**Criterios de completado:**
+- ✅ Nombre emisor pre-llenado desde issuers_name
+- ✅ NIF pre-llenado desde issuers_nif
+- ✅ Dirección completa construida desde address, postal_code, locality, province
+- ✅ Contacto construido desde phone - email - web
+- ✅ Funciona con y sin plantilla favorita
+
+---
+
 ## ESTADO GLOBAL FASE 2
 
-**Progreso:** 35% (16/46 tareas) - (3 tareas eliminadas/fusionadas)
-**Bloques completados:** 4.5/9 (Usuarios ✅, Mejoras Tarifas ✅, Configuración ✅, IRPF y RE ✅, Versiones ✅)
+**Progreso:** 40% (19/47 tareas) - Multi-tenant + Notas + Mejoras UX completados
+**Bloques completados:** 5/9 (Usuarios ✅, Mejoras Tarifas ✅, Configuración ✅, IRPF y RE ✅, Versiones y Notas ✅)
+**Mejoras adicionales:** 4 correcciones críticas de UX implementadas
 **Semanas transcurridas:** 6/12
 **Duración estimada:** 12 semanas
 
@@ -826,6 +998,6 @@ Completado:
 ---
 
 **Documento:** Tareas Fase 2
-**Versión:** 1.0
-**Fecha:** 2025-01-04
+**Versión:** 1.1
+**Fecha:** 2025-01-10
 **Estado:** Activo

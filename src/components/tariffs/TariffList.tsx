@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Plus, FileText } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -13,6 +14,7 @@ import {
 } from '@/components/ui/table'
 import { TariffFilters } from './TariffFilters'
 import { TariffRow } from './TariffRow'
+import { TariffCard } from './TariffCard'
 import { getTariffs } from '@/app/actions/tariffs'
 import { Database } from '@/lib/types/database.types'
 
@@ -29,21 +31,30 @@ interface TariffListProps {
   initialTariffs?: Tariff[]
   users?: User[]
   currentUserRole?: string
+  tariffId?: string
 }
 
 export function TariffList({
   empresaId,
   initialTariffs = [],
   users = [],
-  currentUserRole
+  currentUserRole,
+  tariffId
 }: TariffListProps) {
+  const router = useRouter()
   const [tariffs, setTariffs] = useState<Tariff[]>(initialTariffs)
   const [loading, setLoading] = useState(false)
   const [filters, setFilters] = useState<{
     status?: 'Activa' | 'Inactiva' | 'all'
     search?: string
     user_id?: string
-  }>({ status: 'all', search: '', user_id: undefined })
+    tariff_id?: string
+  }>({ status: 'all', search: '', user_id: undefined, tariff_id: tariffId })
+
+  // Filtrar tarifas si hay tariff_id
+  const filteredTariffs = tariffId
+    ? tariffs.filter(t => t.id === tariffId)
+    : tariffs
 
   const loadTariffs = async () => {
     setLoading(true)
@@ -80,8 +91,8 @@ export function TariffList({
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Tarifas</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-2xl font-bold text-lime-700">Tarifas</h1>
+          <p className="text-sm text-lime-600">
             Gestiona las tarifas de tu empresa
           </p>
         </div>
@@ -93,6 +104,22 @@ export function TariffList({
         </Button>
       </div>
 
+      {/* Filtro activo por tariff_id */}
+      {tariffId && (
+        <div className="mb-4 flex items-center gap-2">
+          <p className="text-sm text-muted-foreground">
+            Mostrando tarifa específica
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push('/tariffs')}
+          >
+            Ver todas las tarifas
+          </Button>
+        </div>
+      )}
+
       {/* Filters */}
       <TariffFilters
         onFiltersChange={handleFiltersChange}
@@ -103,10 +130,10 @@ export function TariffList({
         currentUserRole={currentUserRole}
       />
 
-      {/* Table */}
-      <div className="border rounded-lg overflow-hidden">
+      {/* Vista Desktop - Tabla */}
+      <div className="hidden lg:block border rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
-          {tariffs.length === 0 ? (
+          {filteredTariffs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <FileText className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-2">No hay tarifas</h3>
@@ -139,7 +166,7 @@ export function TariffList({
                 </tr>
               </thead>
               <tbody>
-                {tariffs.map((tariff) => (
+                {filteredTariffs.map((tariff) => (
                   <TariffRow
                     key={tariff.id}
                     tariff={tariff}
@@ -152,6 +179,40 @@ export function TariffList({
             </table>
           )}
         </div>
+      </div>
+
+      {/* Vista Mobile/Tablet - Cards */}
+      <div className="lg:hidden">
+        {filteredTariffs.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">No hay tarifas</h3>
+            <p className="text-muted-foreground mb-4">
+              {filters.status !== 'all' || filters.search?.trim()
+                ? 'No se encontraron tarifas con los filtros aplicados'
+                : 'Aún no has creado ninguna tarifa'
+              }
+            </p>
+            {(!filters.status || filters.status === 'all') && !filters.search?.trim() && (
+              <Button asChild>
+                <Link href="/tariffs/create">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Crear primera tarifa
+                </Link>
+              </Button>
+            )}
+          </div>
+        ) : (
+          filteredTariffs.map((tariff) => (
+            <TariffCard
+              key={tariff.id}
+              tariff={tariff}
+              onStatusChange={handleRefresh}
+              onDelete={handleRefresh}
+              currentUserRole={currentUserRole}
+            />
+          ))
+        )}
       </div>
     </>
   )

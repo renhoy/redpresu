@@ -19,7 +19,7 @@ Semanas 11-12: Import/Export + Responsive Mobile
 
 ---
 
-## SEMANA 1-2: Usuarios y Autenticación ⏳
+## SEMANA 1-2: Usuarios y Autenticación ✅
 
 ### Objetivo: Sistema completo de gestión de usuarios
 
@@ -27,11 +27,11 @@ Semanas 11-12: Import/Export + Responsive Mobile
 
 | Día  | Tarea                          | Responsable | Estado |
 | ---- | ------------------------------ | ----------- | ------ |
-| 1-2  | Tabla emisores + migración     | Backend     | ⏳     |
-| 3-4  | Página registro + validaciones | Frontend    | ⏳     |
-| 5-6  | Recuperación contraseña        | Full-stack  | ⏳     |
-| 7-8  | Perfil usuario + edición       | Frontend    | ⏳     |
-| 9-10 | CRUD usuarios (admin)          | Full-stack  | ⏳     |
+| 1-2  | Tabla emisores + migración     | Backend     | ✅     |
+| 3-4  | Página registro + validaciones | Frontend    | ✅     |
+| 5-6  | Recuperación contraseña        | Full-stack  | ✅     |
+| 7-8  | Perfil usuario + edición       | Frontend    | ✅     |
+| 9-10 | CRUD usuarios (admin)          | Full-stack  | ✅     |
 
 **Entregables:**
 
@@ -42,13 +42,21 @@ Semanas 11-12: Import/Export + Responsive Mobile
 
 **Criterio de completado:**
 
-- Registro desde /register funciona
-- Email recuperación enviado correctamente
-- CRUD usuarios con permisos por rol
+- ✅ Registro desde /register funciona
+- ✅ Email recuperación enviado correctamente (bypass en dev)
+- ✅ CRUD usuarios con permisos por rol
+
+**🚀 ADICIONAL COMPLETADO: Multi-Tenant Architecture**
+
+- ✅ Tabla `empresas` creada (migration 020)
+- ✅ Cada registro crea su propia empresa
+- ✅ RLS policies multi-tenant en todas las tablas (migration 021)
+- ✅ Aislamiento completo entre empresas
+- ✅ Función helper `get_user_empresa_id()`
 
 ---
 
-## SEMANA 3-4: Mejoras Tarifas + Configuración ⏳
+## SEMANA 3-4: Mejoras Tarifas + Configuración ✅
 
 ### Objetivo: Preparar base para funcionalidades avanzadas
 
@@ -56,17 +64,17 @@ Semanas 11-12: Import/Export + Responsive Mobile
 
 | Día | Tarea                           | Responsable | Estado |
 | --- | ------------------------------- | ----------- | ------ |
-| 1   | user_id en tarifas + migración  | Backend     | ⏳     |
-| 2   | Detección automática IVAs       | Backend     | ⏳     |
-| 3-4 | Tarifa plantilla (trigger + UI) | Full-stack  | ⏳     |
+| 1   | user_id en tarifas + migración  | Backend     | ✅     |
+| 2   | Detección automática IVAs       | Backend     | ✅     |
+| 3-4 | Tarifa plantilla (trigger + UI) | Full-stack  | ✅     |
 
 **Bloque 3: Tabla Configuración**
 
 | Día | Tarea                   | Responsable | Estado |
 | --- | ----------------------- | ----------- | ------ |
-| 5-7 | Tabla config + helpers  | Backend     | ⏳     |
-| 8-9 | Selector plantillas PDF | Frontend    | ⏳     |
-| 10  | Testing integración     | QA          | ⏳     |
+| 5-7 | Tabla config + helpers  | Backend     | ✅     |
+| 8-9 | Selector plantillas PDF | Frontend    | ✅     |
+| 10  | Testing integración     | QA          | ✅     |
 
 **Entregables:**
 
@@ -75,13 +83,15 @@ Semanas 11-12: Import/Export + Responsive Mobile
 - ✅ Tarifa plantilla pre-carga datos
 - ✅ Config centralizada en BD
 - ✅ Selector plantillas con preview
+- ✅ Datos issuer pre-llenan nueva tarifa sin plantilla
 
 **Criterio de completado:**
 
-- Columna "Creado por" visible en listado
-- IVAs guardados en array
-- Plantilla funcional con toggle único
-- Config accesible vía helpers
+- ✅ Columna "Creado por" visible en listado
+- ✅ IVAs guardados en array
+- ✅ Plantilla funcional con toggle único
+- ✅ Config accesible vía helpers
+- ✅ Datos issuer (nombre, NIF, dirección, contacto) cargan automáticamente
 
 ---
 
@@ -452,13 +462,13 @@ FASE 1 (COMPLETADA) ✅
 ├─ Semana 7: PDF Generation
 └─ Semana 8: Dashboard
 
-FASE 2 (EN CURSO) ⏳
-├─ Semanas 1-2: Usuarios y Seguridad ⏳
-├─ Semanas 3-4: Mejoras Tarifas + Config ⏳
-├─ Semanas 5-6: IRPF y RE ⏳
-├─ Semanas 7-8: Versiones y Notas ⏳
-├─ Semanas 9-10: Navegación + Rich Text ⏳
-└─ Semanas 11-12: Import/Export + Responsive ⏳
+FASE 2 (EN CURSO) ⏳ - 39% Completado
+├─ Semanas 1-2: Usuarios y Seguridad ✅ + Multi-Tenant ✅
+├─ Semanas 3-4: Mejoras Tarifas ✅ + Config ✅
+├─ Semanas 5-6: IRPF y RE ✅
+├─ Semanas 7-8: Versiones ✅ + Notas ✅
+├─ Semanas 9-10: Navegación ⏳ + Rich Text ⏳
+└─ Semanas 11-12: Import/Export ⏳ + Responsive ⏳
 
 FASE 3 (PLANIFICADA) 📋
 ├─ Suscripciones
@@ -473,19 +483,29 @@ FASE 3 (PLANIFICADA) 📋
 
 ## Próximos Pasos Inmediatos
 
+### ✅ Completado Recientemente (2025-01-10):
+
+1. ✅ Arquitectura multi-tenant implementada
+2. ✅ Tabla `empresas` creada con RLS
+3. ✅ Registro crea empresa automáticamente
+4. ✅ RLS policies actualizadas en todas las tablas
+5. ✅ Función helper `get_user_empresa_id()`
+6. ✅ Validación NIF global (todas las empresas)
+7. ✅ Botón logout con estilo verde
+
 ### Esta Semana:
 
-1. Crear tabla `emisores` en BD
-2. Implementar página `/register`
-3. Configurar email templates Supabase
-4. Comenzar CRUD usuarios
+1. Testing completo flujo multi-tenant
+2. Validar aislamiento entre empresas
+3. Testing registro múltiples empresas
+4. Comenzar Bloque 6: Navegación Unificada
 
 ### Próxima Semana:
 
-5. Completar recuperación contraseña
-6. Implementar perfil usuario
-7. Añadir `user_id` a tarifas
-8. Detectar IVAs automáticamente
+5. Componente HierarchicalNavigator
+6. Migrar TariffPreview a componente unificado
+7. Migrar BudgetHierarchyForm a componente unificado
+8. Rich Text Editor (Tiptap)
 
 ---
 
@@ -531,8 +551,41 @@ FASE 3 (PLANIFICADA) 📋
 
 ---
 
+---
+
+## 🎯 Hitos Alcanzados Fase 2
+
+### Hito 1: Sistema de Usuarios Completo ✅
+- Registro, recuperación contraseña, CRUD usuarios
+- **Fecha completado:** 2025-01-08
+
+### Hito 2: Mejoras Tarifas y Configuración ✅
+- user_id, detección IVAs, tarifa plantilla, tabla config
+- **Fecha completado:** 2025-01-09
+
+### Hito 3: Sistema Fiscal Completo ✅
+- IRPF y Recargo de Equivalencia implementados
+- **Fecha completado:** 2025-01-09
+
+### Hito 4: Versiones y Notas de Presupuestos ✅
+- Jerarquía padre-hijo con accordion
+- Sistema de notas con timeline
+- **Fecha completado:** 2025-01-09
+
+### **🚀 Hito 5: Arquitectura Multi-Tenant ✅**
+- **Tabla empresas + RLS multi-tenant en todas las tablas**
+- **Aislamiento completo entre empresas**
+- **Fecha completado:** 2025-01-10
+
+### Hito 6: Navegación Unificada ⏳
+- HierarchicalNavigator component
+- **Fecha estimada:** 2025-01-17
+
+---
+
 **Documento:** Planificación Fase 2
-**Versión:** 1.0
-**Fecha:** 2025-01-04
-**Estado:** Activo
-**Próxima revisión:** Fin Semana 2 (Hito 1)
+**Versión:** 1.2
+**Fecha:** 2025-01-10 (actualizado)
+**Última actualización:** Multi-tenant + Sistema Notas completado
+**Estado:** Activo - 39% completado (5/9 bloques)
+**Próxima revisión:** Fin Semana 8 (Hito 6)

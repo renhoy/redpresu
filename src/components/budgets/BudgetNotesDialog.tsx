@@ -67,19 +67,23 @@ export function BudgetNotesDialog({
   }
 
   useEffect(() => {
+    console.log('[BudgetNotesDialog] Dialog open state changed:', open)
     if (open) {
       loadNotes()
     }
   }, [open, budgetId])
 
   const handleAddNote = async () => {
+    console.log('[BudgetNotesDialog] handleAddNote called, content:', newNoteContent)
     if (!newNoteContent.trim()) {
       toast.error('Escribe algo antes de guardar')
       return
     }
 
     setSaving(true)
+    console.log('[BudgetNotesDialog] Calling addBudgetNote...')
     const result = await addBudgetNote(budgetId, newNoteContent)
+    console.log('[BudgetNotesDialog] addBudgetNote result:', result)
 
     if (result.success) {
       toast.success('Nota añadida')
@@ -212,7 +216,7 @@ export function BudgetNotesDialog({
                     notes.map((note) => (
                       <div
                         key={note.id}
-                        className="border-l-4 border-blue-600 pl-3 pr-2 py-2 bg-card rounded-r"
+                        className="border-l-4 border-lime-600 pl-3 pr-2 py-2 bg-card rounded-r"
                       >
                         {editingNoteId === note.id ? (
                           <div className="space-y-2">
@@ -249,7 +253,7 @@ export function BudgetNotesDialog({
                             </p>
                             <div className="flex items-center justify-between text-xs text-muted-foreground">
                               <div>
-                                <span className="font-medium">{note.users?.name || 'Usuario'}</span>
+                                <span className="font-medium">{note.users?.nombre || 'Usuario'}</span>
                                 <span className="mx-1">•</span>
                                 <span>{formatDate(note.created_at)}</span>
                                 {note.updated_at !== note.created_at && (

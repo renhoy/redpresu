@@ -14,14 +14,6 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -31,9 +23,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { MoreHorizontal, Edit, UserX, UserCheck, Mail } from 'lucide-react'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import { Pencil, UserX, UserCheck, Mail } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
+import { UserCard } from './UserCard'
 
 interface UserTableProps {
   users: UserWithInviter[]
@@ -133,15 +132,20 @@ export default function UserTable({ users: initialUsers, currentUserId, currentU
     })
   }
 
+  const handleToggleStatusFromCard = (user: UserWithInviter) => {
+    setSelectedUser(user)
+    setIsToggleDialogOpen(true)
+  }
+
   return (
     <>
-      <div className="rounded-md border">
+      {/* Vista Desktop - Tabla */}
+      <div className="hidden lg:block rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nombre</TableHead>
+              <TableHead>Usuario</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Rol</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead>Invitado por</TableHead>
               <TableHead>Último acceso</TableHead>
@@ -151,7 +155,7 @@ export default function UserTable({ users: initialUsers, currentUserId, currentU
           <TableBody>
             {users.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                <TableCell colSpan={6} className="text-center text-muted-foreground">
                   No hay usuarios registrados
                 </TableCell>
               </TableRow>
@@ -159,10 +163,12 @@ export default function UserTable({ users: initialUsers, currentUserId, currentU
               users.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">
-                    {user.nombre} {user.apellidos}
+                    <div className="flex flex-col">
+                      <span>{user.nombre} {user.apellidos}</span>
+                      <span className="text-xs text-muted-foreground">{getRoleBadge(user.role)}</span>
+                    </div>
                   </TableCell>
                   <TableCell>{user.email}</TableCell>
-                  <TableCell>{getRoleBadge(user.role)}</TableCell>
                   <TableCell>{getStatusBadge(user.status)}</TableCell>
                   <TableCell>
                     {user.inviter_name ? (
@@ -180,65 +186,104 @@ export default function UserTable({ users: initialUsers, currentUserId, currentU
                     <span className="text-sm">{formatDate(user.last_login)}</span>
                   </TableCell>
                   <TableCell className="text-right">
-                    {/* Vendedor solo puede editar su propio usuario */}
-                    {currentUserRole === 'vendedor' && user.id !== currentUserId ? (
-                      <span className="text-muted-foreground text-sm">-</span>
-                    ) : (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Abrir menú</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem asChild>
-                            <Link href={`/users/${user.id}/edit`}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Editar
-                            </Link>
-                          </DropdownMenuItem>
-                          {/* Solo admin/superadmin pueden cambiar estado */}
-                          {currentUserRole !== 'vendedor' && (
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setSelectedUser(user)
-                                setIsToggleDialogOpen(true)
-                              }}
-                            >
-                              {user.status === 'active' ? (
-                                <>
-                                  <UserX className="mr-2 h-4 w-4" />
-                                  Desactivar
-                                </>
-                              ) : (
-                                <>
-                                  <UserCheck className="mr-2 h-4 w-4" />
-                                  Activar
-                                </>
-                              )}
-                            </DropdownMenuItem>
-                          )}
-                          {user.status === 'pending' && currentUserRole !== 'vendedor' && (
-                            <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem>
-                                <Mail className="mr-2 h-4 w-4" />
-                                Reenviar invitación
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
+                    <TooltipProvider>
+                      <div className="flex justify-end gap-2">
+                        {/* Vendedor solo puede editar su propio usuario */}
+                        {currentUserRole === 'vendedor' && user.id !== currentUserId ? (
+                          <span className="text-muted-foreground text-sm">-</span>
+                        ) : (
+                          <>
+                            {/* Botón Editar */}
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  asChild
+                                >
+                                  <Link href={`/users/${user.id}/edit`}>
+                                    <Pencil className="h-4 w-4" />
+                                  </Link>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Editar</p>
+                              </TooltipContent>
+                            </Tooltip>
+
+                            {/* Botón Activar/Desactivar - Solo admin/superadmin */}
+                            {currentUserRole !== 'vendedor' && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => {
+                                      setSelectedUser(user)
+                                      setIsToggleDialogOpen(true)
+                                    }}
+                                    className={user.status === 'active' ? 'border-orange-500 text-orange-600 hover:bg-orange-50' : 'border-green-600 text-green-600 hover:bg-green-50'}
+                                  >
+                                    {user.status === 'active' ? (
+                                      <UserX className="h-4 w-4" />
+                                    ) : (
+                                      <UserCheck className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>{user.status === 'active' ? 'Desactivar' : 'Activar'}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+
+                            {/* Botón Reenviar invitación - Solo si pending */}
+                            {user.status === 'pending' && currentUserRole !== 'vendedor' && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                                  >
+                                    <Mail className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Reenviar invitación</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </TooltipProvider>
                   </TableCell>
                 </TableRow>
               ))
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Vista Mobile/Tablet - Cards */}
+      <div className="lg:hidden">
+        {users.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground border rounded-lg">
+            No hay usuarios registrados
+          </div>
+        ) : (
+          users.map((user) => (
+            <UserCard
+              key={user.id}
+              user={user}
+              currentUserId={currentUserId}
+              currentUserRole={currentUserRole}
+              onToggleStatus={handleToggleStatusFromCard}
+              formatDate={formatDate}
+            />
+          ))
+        )}
       </div>
 
       {/* Dialog confirmar cambio de estado */}

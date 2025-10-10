@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { registerUser, type RegisterData } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,10 @@ import {
 } from "@/lib/validators/auth-schemas";
 
 interface RegisterFormErrors {
+  nombre?: string;
+  apellidos?: string;
   email?: string;
+  confirmEmail?: string;
   password?: string;
   confirmPassword?: string;
   tipo?: string;
@@ -43,7 +46,10 @@ interface RegisterFormErrors {
 
 export default function RegisterForm() {
   const [formData, setFormData] = useState<Partial<RegisterFormData>>({
+    nombre: "",
+    apellidos: "",
     email: "",
+    confirmEmail: "",
     password: "",
     confirmPassword: "",
     tipo: "empresa", // Por defecto empresa
@@ -63,42 +69,74 @@ export default function RegisterForm() {
   const [errors, setErrors] = useState<RegisterFormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
 
+  // Debug: Ver cambios en errors
+  useEffect(() => {
+    console.log('[RegisterForm] Estado de errors cambió:', errors);
+  }, [errors]);
+
   const validateForm = (): boolean => {
     try {
+      console.log('[RegisterForm] Validando formulario con datos:', formData);
       // Validar con Zod schema
       registerSchema.parse(formData);
+      console.log('[RegisterForm] Validación exitosa');
       setErrors({});
       return true;
     } catch (error: any) {
+      console.error('[RegisterForm] Error capturado:', error);
+      console.error('[RegisterForm] Tipo de error:', error.constructor.name);
+      console.error('[RegisterForm] Tiene .issues?:', !!error.issues);
+      console.error('[RegisterForm] Tiene .errors?:', !!error.errors);
+
       const newErrors: RegisterFormErrors = {};
 
-      if (error.errors) {
-        error.errors.forEach((err: any) => {
+      // Zod usa .issues, no .errors
+      const errorList = error.issues || error.errors || [];
+      console.log('[RegisterForm] Lista de errores:', errorList);
+
+      if (errorList.length > 0) {
+        // Agrupar errores por campo
+        const errorsByField: Record<string, string[]> = {};
+
+        errorList.forEach((err: any) => {
           const field = err.path[0];
-          newErrors[field as keyof RegisterFormErrors] = err.message;
+          if (!errorsByField[field]) {
+            errorsByField[field] = [];
+          }
+          errorsByField[field].push(err.message);
+        });
+
+        // Combinar múltiples errores del mismo campo
+        Object.keys(errorsByField).forEach(field => {
+          newErrors[field as keyof RegisterFormErrors] = errorsByField[field].join('. ');
+          console.log(`[RegisterForm] Error en campo ${field}:`, errorsByField[field].join('. '));
         });
       }
 
+      console.log('[RegisterForm] newErrors object:', newErrors);
       setErrors(newErrors);
+      console.log('[RegisterForm] Después de setErrors');
       return false;
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('[RegisterForm] Submit iniciado');
 
-    // Limpiar errores anteriores
-    setErrors({});
-
-    // Validar formulario
+    // Validar formulario (validateForm ya limpia los errores si es exitoso)
     if (!validateForm()) {
+      console.log('[RegisterForm] Validación falló, deteniendo submit');
       return;
     }
 
+    console.log('[RegisterForm] Iniciando registro...');
     setIsLoading(true);
 
     try {
       const registerData: RegisterData = {
+        nombre: formData.nombre!,
+        apellidos: formData.apellidos!,
         email: formData.email!,
         password: formData.password!,
         tipo: formData.tipo!,
@@ -190,18 +228,82 @@ export default function RegisterForm() {
 
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-6">
+            {/* Debug: Mostrar todos los errores */}
+            {Object.keys(errors).length > 0 && (
+              <Alert variant="destructive">
+                <AlertDescription>
+                  <div className="font-semibold mb-2">Errores de validación:</div>
+                  <ul className="list-disc pl-4 space-y-1">
+                    {Object.entries(errors).map(([field, message]) => (
+                      <li key={field}>
+                        <strong>{field}:</strong> {message}
+                      </li>
+                    ))}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Error general */}
-            {errors.general && (
+            {errors.general && !Object.keys(errors).some(k => k !== 'general') && (
               <Alert variant="destructive">
                 <AlertDescription>{errors.general}</AlertDescription>
               </Alert>
             )}
 
-          {/* Sección: Datos de Acceso */}
+          {/* Sección: Datos de Acceso (Administrador) */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-lg">Datos de Acceso</h3>
+            <h3 className="font-semibold text-lg">Datos de Acceso (Administrador)</h3>
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              {/* Nombre - 50% */}
+              <div className="md:col-span-6">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Input
+                      id="nombre"
+                      type="text"
+                      placeholder="Nombre *"
+                      value={formData.nombre}
+                      onChange={handleInputChange("nombre")}
+                      className={errors.nombre ? "border-red-500" : ""}
+                      disabled={isLoading}
+                      autoComplete="given-name"
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Nombre del administrador de la cuenta</p>
+                  </TooltipContent>
+                </Tooltip>
+                {errors.nombre && (
+                  <p className="text-sm text-red-600 mt-1">{errors.nombre}</p>
+                )}
+              </div>
+
+              {/* Apellidos - 50% */}
+              <div className="md:col-span-6">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Input
+                      id="apellidos"
+                      type="text"
+                      placeholder="Apellidos *"
+                      value={formData.apellidos}
+                      onChange={handleInputChange("apellidos")}
+                      className={errors.apellidos ? "border-red-500" : ""}
+                      disabled={isLoading}
+                      autoComplete="family-name"
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Apellidos del administrador de la cuenta</p>
+                  </TooltipContent>
+                </Tooltip>
+                {errors.apellidos && (
+                  <p className="text-sm text-red-600 mt-1">{errors.apellidos}</p>
+                )}
+              </div>
+
               {/* Email - 50% */}
               <div className="md:col-span-6">
                 <Tooltip>
@@ -226,8 +328,32 @@ export default function RegisterForm() {
                 )}
               </div>
 
-              {/* Contraseña - 25% */}
-              <div className="md:col-span-3">
+              {/* Confirmar Email - 50% */}
+              <div className="md:col-span-6">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Input
+                      id="confirmEmail"
+                      type="email"
+                      placeholder="Confirmar Email *"
+                      value={formData.confirmEmail}
+                      onChange={handleInputChange("confirmEmail")}
+                      className={errors.confirmEmail ? "border-red-500" : ""}
+                      disabled={isLoading}
+                      autoComplete="email"
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Confirma tu email</p>
+                  </TooltipContent>
+                </Tooltip>
+                {errors.confirmEmail && (
+                  <p className="text-sm text-red-600 mt-1">{errors.confirmEmail}</p>
+                )}
+              </div>
+
+              {/* Contraseña - 50% */}
+              <div className="md:col-span-6">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Input
@@ -242,7 +368,7 @@ export default function RegisterForm() {
                     />
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Mínimo 8 caracteres</p>
+                    <p>Mínimo 8 caracteres, 1 mayúscula, 1 minúscula, 1 número</p>
                   </TooltipContent>
                 </Tooltip>
                 {errors.password && (
@@ -250,14 +376,14 @@ export default function RegisterForm() {
                 )}
               </div>
 
-              {/* Confirmar Contraseña - 25% */}
-              <div className="md:col-span-3">
+              {/* Confirmar Contraseña - 50% */}
+              <div className="md:col-span-6">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Input
                       id="confirmPassword"
                       type="password"
-                      placeholder="Confirmar *"
+                      placeholder="Confirmar Contraseña *"
                       value={formData.confirmPassword}
                       onChange={handleInputChange("confirmPassword")}
                       className={errors.confirmPassword ? "border-red-500" : ""}

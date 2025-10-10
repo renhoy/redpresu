@@ -250,6 +250,8 @@ export async function createDraftBudget(data: {
         base: data.totals.base,
         irpf: 0,
         irpf_percentage: 0,
+        re_aplica: false,
+        re_total: 0,
         total_pagar: data.totals.total,
         validity_days: data.validity,
         start_date: null,
@@ -522,6 +524,8 @@ export async function saveBudget(
       base: totals.base,
       irpf: irpfAmount,
       irpf_percentage: irpfPercentage,
+      re_aplica: recargoData?.aplica || false,
+      re_total: totalRE,
       total_pagar: totalPagar,
       json_budget_data: extendedBudgetData,
       start_date: startDate.toISOString(),
@@ -985,6 +989,10 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
     console.log('[generateBudgetPDF] Construyendo payload...')
     const payload = buildPDFPayload(budgetTyped, tariffTyped)
 
+    // Obtener modo de aplicación para logs
+    const { isDevelopmentMode } = await import('@/lib/helpers/config-helpers')
+    const isDev = await isDevelopmentMode()
+
     // MODO DEBUG: Solo mostrar payload, no llamar API (activar con RAPID_PDF_DEBUG_ONLY=true)
     if (process.env.RAPID_PDF_DEBUG_ONLY === 'true') {
       console.log('[generateBudgetPDF] Modo debug: payload construido, no se llama a Rapid-PDF')
@@ -995,6 +1003,15 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
         debug: true,
         payload
       }
+    }
+
+    // En modo desarrollo, imprimir payload en consola antes de enviar a Rapid-PDF
+    if (isDev) {
+      console.log('\n' + '='.repeat(80))
+      console.log('[generateBudgetPDF] 🔍 DEVELOPMENT MODE - PAYLOAD COMPLETO:')
+      console.log('='.repeat(80))
+      console.log(JSON.stringify(payload, null, 2))
+      console.log('='.repeat(80) + '\n')
     }
 
     // FLUJO COMPLETO (desarrollo y producción)

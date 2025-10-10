@@ -15,7 +15,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-background">
-      <Header userRole={user.role} />
+      <Header userRole={user.role} userName={user.nombre} />
       <main className="pt-16">
         {children}
       </main>

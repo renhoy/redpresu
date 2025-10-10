@@ -16,8 +16,13 @@ export async function middleware(req: NextRequest) {
     const pathname = req.nextUrl.pathname
 
     // Definir rutas públicas que no requieren autenticación
-    const publicRoutes = ['/login', '/forgot-password', '/reset-password', '/signup']
-    const isPublicRoute = publicRoutes.some(path => pathname.startsWith(path))
+    const publicRoutes = ['/', '/login', '/forgot-password', '/reset-password', '/signup', '/register']
+    const isPublicRoute = publicRoutes.some(path => {
+      if (path === '/') {
+        return pathname === '/'
+      }
+      return pathname === path || pathname.startsWith(path + '/')
+    })
 
     // Verificar si hay sesión válida
     const isAuthenticated = !error && !!session
@@ -33,20 +38,12 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(redirectUrl)
     }
 
-    // Usuario autenticado intentando acceder a ruta pública
-    if (isAuthenticated && isPublicRoute) {
-      console.log(`[Middleware] Redirect autenticado: ${pathname} → /tariffs`)
+    // Usuario autenticado intentando acceder a ruta pública (excepto home)
+    if (isAuthenticated && isPublicRoute && pathname !== '/') {
+      console.log(`[Middleware] Redirect autenticado: ${pathname} → /dashboard`)
       const redirectUrl = req.nextUrl.clone()
-      redirectUrl.pathname = '/tariffs'
+      redirectUrl.pathname = '/dashboard'
       redirectUrl.searchParams.delete('redirectedFrom') // Limpiar parámetros previos
-      return NextResponse.redirect(redirectUrl)
-    }
-
-    // Usuario autenticado accediendo a home
-    if (isAuthenticated && pathname === '/') {
-      console.log(`[Middleware] Redirect home: / → /tariffs`)
-      const redirectUrl = req.nextUrl.clone()
-      redirectUrl.pathname = '/tariffs'
       return NextResponse.redirect(redirectUrl)
     }
 
@@ -58,8 +55,13 @@ export async function middleware(req: NextRequest) {
 
     // En caso de error, crear response limpia y redirect a login por seguridad
     const pathname = req.nextUrl.pathname
-    const publicRoutes = ['/login', '/forgot-password', '/reset-password', '/signup']
-    const isPublicRoute = publicRoutes.some(path => pathname.startsWith(path))
+    const publicRoutes = ['/', '/login', '/forgot-password', '/reset-password', '/signup', '/register']
+    const isPublicRoute = publicRoutes.some(path => {
+      if (path === '/') {
+        return pathname === '/'
+      }
+      return pathname === path || pathname.startsWith(path + '/')
+    })
 
     if (!isPublicRoute) {
       console.log(`[Middleware] Error fallback: ${pathname} → /login`)

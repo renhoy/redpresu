@@ -3,15 +3,36 @@
  */
 
 import { z } from 'zod';
+import { isValidNIF, getNIFErrorMessage } from '@/lib/helpers/nif-validator';
 
 /**
  * Schema para registro de usuario
  */
 export const registerSchema = z.object({
+  // Datos del administrador (usuario que gestiona la cuenta)
+  nombre: z
+    .string()
+    .min(1, 'El nombre es requerido')
+    .max(50, 'El nombre no puede exceder 50 caracteres')
+    .trim(),
+
+  apellidos: z
+    .string()
+    .min(1, 'Los apellidos son requeridos')
+    .max(100, 'Los apellidos no pueden exceder 100 caracteres')
+    .trim(),
+
   // Datos de autenticación
   email: z
     .string()
     .min(1, 'El email es requerido')
+    .email('Email inválido')
+    .toLowerCase()
+    .trim(),
+
+  confirmEmail: z
+    .string()
+    .min(1, 'Debes confirmar el email')
     .email('Email inválido')
     .toLowerCase()
     .trim(),
@@ -40,14 +61,13 @@ export const registerSchema = z.object({
 
   nif: z
     .string()
-    .min(1, 'El NIF/CIF es requerido')
-    .max(20, 'El NIF/CIF no puede exceder 20 caracteres')
-    .regex(
-      /^[A-Z0-9]+$/i,
-      'El NIF/CIF solo puede contener letras y números'
-    )
+    .min(1, 'El NIF/NIE/CIF es requerido')
     .trim()
-    .toUpperCase(),
+    .toUpperCase()
+    .refine(
+      (val) => isValidNIF(val),
+      (val) => ({ message: getNIFErrorMessage(val) })
+    ),
 
   // Dirección fiscal
   direccionFiscal: z
@@ -112,6 +132,12 @@ export const registerSchema = z.object({
     .max(100, 'El % IRPF no puede exceder 100%')
     .optional()
 }).refine(
+  (data) => data.email === data.confirmEmail,
+  {
+    message: 'Los emails no coinciden',
+    path: ['confirmEmail']
+  }
+).refine(
   (data) => data.password === data.confirmPassword,
   {
     message: 'Las contraseñas no coinciden',

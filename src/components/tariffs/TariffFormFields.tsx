@@ -11,6 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import { Info } from 'lucide-react'
 import { LogoUploader } from './LogoUploader'
 import { TemplateSelector } from './TemplateSelector'
 import { type TariffFormData } from '@/app/actions/tariffs'
@@ -35,7 +42,21 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="title">Título *</Label>
+            <div className="flex items-center gap-2 mb-2">
+              <Label htmlFor="title">Título *</Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs">
+                      Nombre identificativo de esta tarifa. Se utiliza para identificarla en el listado y al crear presupuestos.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <Input
               id="title"
               value={data.title}
@@ -49,7 +70,21 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
           </div>
 
           <div>
-            <Label htmlFor="description">Descripción</Label>
+            <div className="flex items-center gap-2 mb-2">
+              <Label htmlFor="description">Descripción</Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs">
+                      Descripción opcional de la tarifa. Solo para uso interno, no se muestra en presupuestos ni PDFs.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <Textarea
               id="description"
               value={data.description}
@@ -61,7 +96,21 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="validity">Validez (días) *</Label>
+              <div className="flex items-center gap-2 mb-2">
+                <Label htmlFor="validity">Validez (días) *</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">
+                        Número de días que tendrá validez el presupuesto desde su fecha de emisión. Este valor se mostrará en el PDF generado.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <Input
                 id="validity"
                 type="number"
@@ -73,7 +122,21 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
             </div>
 
             <div>
-              <Label htmlFor="status">Estado *</Label>
+              <div className="flex items-center gap-2 mb-2">
+                <Label htmlFor="status">Estado *</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">
+                        Si la tarifa está activa, podrá usarse para crear presupuestos. Las tarifas inactivas no aparecen en el selector.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <Select
                 value={data.status}
                 onValueChange={(value: 'Activa' | 'Inactiva') => handleInputChange('status', value)}
@@ -105,7 +168,21 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
 
           <div className="grid grid-cols-4 gap-4">
             <div className="col-span-3">
-              <Label htmlFor="name">Nombre *</Label>
+              <div className="flex items-center gap-2 mb-2">
+                <Label htmlFor="name">Nombre *</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">
+                        Nombre completo de tu empresa o nombre como autónomo. Se mostrará en los presupuestos y en los PDFs generados.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <Input
                 id="name"
                 value={data.name}
@@ -119,7 +196,21 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
             </div>
 
             <div className="col-span-1">
-              <Label htmlFor="nif">NIF *</Label>
+              <div className="flex items-center gap-2 mb-2">
+                <Label htmlFor="nif">NIF *</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">
+                        NIF/CIF de tu empresa o DNI/NIE como autónomo. Se mostrará en los presupuestos y en los PDFs generados.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <Input
                 id="nif"
                 value={data.nif}
@@ -134,7 +225,21 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
           </div>
 
           <div>
-            <Label htmlFor="address">Dirección fiscal completa *</Label>
+            <div className="flex items-center gap-2 mb-2">
+              <Label htmlFor="address">Dirección fiscal completa *</Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs">
+                      Dirección completa de tu empresa o domicilio fiscal (calle, código postal, ciudad, provincia). Se mostrará en los presupuestos y PDFs.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <Input
               id="address"
               value={data.address}
@@ -148,7 +253,21 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
           </div>
 
           <div>
-            <Label htmlFor="contact">Teléfono, email, web *</Label>
+            <div className="flex items-center gap-2 mb-2">
+              <Label htmlFor="contact">Teléfono, email, web *</Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs">
+                      Información de contacto (teléfono, email, web). Se mostrará en los presupuestos y PDFs para que tus clientes puedan contactarte.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <Input
               id="contact"
               value={data.contact}
@@ -179,8 +298,22 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
             </div>
 
             <div>
-              <Label htmlFor="primary_color">Color Primario *</Label>
-              <div className="flex items-center gap-2 mt-1">
+              <div className="flex items-center gap-2 mb-2">
+                <Label htmlFor="primary_color">Color Primario *</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">
+                        Color principal que se utilizará en la página de presupuestos y en las plantillas PDF que usan colores.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <div className="flex items-center gap-2">
                 <Input
                   id="primary_color"
                   type="color"
@@ -198,8 +331,22 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
             </div>
 
             <div>
-              <Label htmlFor="secondary_color">Color Secundario *</Label>
-              <div className="flex items-center gap-2 mt-1">
+              <div className="flex items-center gap-2 mb-2">
+                <Label htmlFor="secondary_color">Color Secundario *</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">
+                        Color secundario que se utilizará en la página de presupuestos y en las plantillas PDF que usan colores.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <div className="flex items-center gap-2">
                 <Input
                   id="secondary_color"
                   type="color"
@@ -226,7 +373,21 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="summary_note">Texto resumen PDF *</Label>
+            <div className="flex items-center gap-2 mb-2">
+              <Label htmlFor="summary_note">Texto resumen PDF *</Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs">
+                      Texto que aparecerá en la sección de resumen del PDF generado. Puedes incluir información adicional sobre el presupuesto.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <Textarea
               id="summary_note"
               value={data.summary_note}
@@ -241,7 +402,21 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
           </div>
 
           <div>
-            <Label htmlFor="conditions_note">Texto condiciones PDF *</Label>
+            <div className="flex items-center gap-2 mb-2">
+              <Label htmlFor="conditions_note">Texto condiciones PDF *</Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs">
+                      Condiciones generales que aparecerán en el PDF. Por ejemplo: forma de pago, plazos de entrega, garantías, etc.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <Textarea
               id="conditions_note"
               value={data.conditions_note}
@@ -264,7 +439,21 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
         </CardHeader>
         <CardContent>
           <div>
-            <Label htmlFor="legal_note">Notas legales página presupuesto *</Label>
+            <div className="flex items-center gap-2 mb-2">
+              <Label htmlFor="legal_note">Notas legales página presupuesto *</Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs">
+                      Notas legales que aparecerán en la página web del presupuesto. Por ejemplo: política de privacidad, RGPD, avisos legales, etc.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <Textarea
               id="legal_note"
               value={data.legal_note}
