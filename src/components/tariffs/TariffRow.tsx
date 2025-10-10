@@ -144,7 +144,7 @@ export function TariffRow({ tariff, onStatusChange, onDelete, currentUserRole }:
                   variant="outline"
                   size="sm"
                   asChild
-                  className="h-9 px-2"
+                  className="h-9 px-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
                 >
                   <Link href={`/budgets/create?tariff_id=${tariff.id}`} target="_blank" rel="noopener noreferrer">
                     <Plus className="h-4 w-4 mr-1" />
@@ -244,6 +244,7 @@ export function TariffRow({ tariff, onStatusChange, onDelete, currentUserRole }:
                       variant={tariff.is_template ? "default" : "outline"}
                       size="icon"
                       onClick={() => setShowTemplateDialog(true)}
+                      className={tariff.is_template ? "bg-cyan-600 hover:bg-cyan-700" : "border-cyan-600 text-cyan-600 hover:bg-cyan-50"}
                     >
                       <Star className={`h-4 w-4 ${tariff.is_template ? 'fill-current' : ''}`} />
                     </Button>
@@ -260,6 +261,7 @@ export function TariffRow({ tariff, onStatusChange, onDelete, currentUserRole }:
                     variant="outline"
                     size="icon"
                     asChild
+                    className="border-cyan-600 text-cyan-600 hover:bg-cyan-50"
                   >
                     <Link href={`/tariffs/edit/${tariff.id}`}>
                       <Pencil className="h-4 w-4" />

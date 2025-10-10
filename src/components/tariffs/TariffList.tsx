@@ -91,8 +91,8 @@ export function TariffList({
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-lime-700">Tarifas</h1>
-          <p className="text-sm text-lime-600">
+          <h1 className="text-2xl font-bold text-cyan-600">Tarifas</h1>
+          <p className="text-sm text-cyan-600">
             Gestiona las tarifas de tu empresa
           </p>
         </div>
