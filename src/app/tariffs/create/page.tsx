@@ -91,7 +91,7 @@ export default async function CreateTariffPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-lime-50">
       <TariffForm mode="create" initialData={templateData as any} />
     </div>
   )

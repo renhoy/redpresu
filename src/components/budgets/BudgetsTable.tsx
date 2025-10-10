@@ -150,7 +150,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
 
     return (
       <React.Fragment key={budget.id}>
-        <tr className={`border-t hover:bg-muted/50 ${isChild ? 'bg-muted/30' : ''}`}>
+        <tr className={`bg-white border-t hover:bg-lime-50/50 ${isChild ? 'bg-lime-50/30' : ''}`}>
           <td className="p-4">
             <div className="flex items-center gap-2">
               {/* Indentación visual + icono expandir/colapsar */}
@@ -254,14 +254,14 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
               value={budget.status}
               onValueChange={(newStatus) => handleStatusChange(budget.id, budget.status, newStatus, budget.client_name)}
             >
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-[140px] bg-white">
                 <SelectValue>
                   <Badge className={statusColors[budget.status as keyof typeof statusColors]}>
                     {budget.status}
                   </Badge>
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white">
                 <SelectItem value="borrador">
                   <Badge className={statusColors['borrador']}>
                     borrador
@@ -350,13 +350,13 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
           placeholder="Buscar por cliente o NIF..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="max-w-xs"
+          className="max-w-xs bg-white"
         />
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="max-w-[200px]">
+          <SelectTrigger className="max-w-[200px] bg-white">
             <SelectValue placeholder="Estado" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white">
             <SelectItem value="all">Todos los estados</SelectItem>
             <SelectItem value="borrador">Borrador</SelectItem>
             <SelectItem value="pendiente">Pendiente</SelectItem>

@@ -121,7 +121,7 @@ export function TariffRow({ tariff, onStatusChange, onDelete, currentUserRole }:
 
   return (
     <>
-      <TableRow className="border-t hover:bg-muted/50">
+      <TableRow className="bg-white border-t hover:bg-lime-50/50">
         {/* Columna Tarifa (Nombre + Descripción) */}
         <TableCell className="p-4">
           <div className="space-y-1">
@@ -176,14 +176,14 @@ export function TariffRow({ tariff, onStatusChange, onDelete, currentUserRole }:
               value={tariff.status || 'Activa'}
               onValueChange={handleStatusChange}
             >
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-[140px] bg-white">
                 <SelectValue>
                   <Badge className={statusColors[tariff.status as keyof typeof statusColors] || 'bg-gray-200 text-gray-700'}>
                     {tariff.status || 'Activa'}
                   </Badge>
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white">
                 <SelectItem value="Activa">
                   <Badge className="bg-green-100 text-green-800">
                     Activa

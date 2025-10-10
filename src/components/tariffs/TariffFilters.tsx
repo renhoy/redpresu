@@ -66,13 +66,13 @@ export function TariffFilters({
         placeholder="Buscar por título o descripción..."
         value={search}
         onChange={(e) => handleSearchChange(e.target.value)}
-        className="max-w-xs"
+        className="max-w-xs bg-white"
       />
       <Select value={status} onValueChange={handleStatusChange}>
-        <SelectTrigger className="max-w-[200px]">
+        <SelectTrigger className="max-w-[200px] bg-white">
           <SelectValue placeholder="Estado" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="bg-white">
           <SelectItem value="all">Todos los estados</SelectItem>
           <SelectItem value="Activa">Activas</SelectItem>
           <SelectItem value="Inactiva">Inactivas</SelectItem>
@@ -81,10 +81,10 @@ export function TariffFilters({
 
       {showUserFilter && users.length > 0 && (
         <Select value={userId} onValueChange={handleUserChange}>
-          <SelectTrigger className="max-w-[200px]">
+          <SelectTrigger className="max-w-[200px] bg-white">
             <SelectValue placeholder="Todos los usuarios" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white">
             <SelectItem value="all">Todos los usuarios</SelectItem>
             {users.map(user => (
               <SelectItem key={user.id} value={user.id}>

@@ -37,8 +37,9 @@ export default async function UsersPage() {
   const users = result.data || []
 
   return (
-    <div className="container mx-auto py-10">
-      <div className="flex flex-col gap-6">
+    <div className="min-h-screen bg-lime-50">
+      <div className="container mx-auto py-10">
+        <div className="flex flex-col gap-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
@@ -62,14 +63,14 @@ export default async function UsersPage() {
 
         {/* Stats */}
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-lg border p-4">
+          <div className="rounded-lg border p-4 bg-white">
             <div className="text-sm font-medium text-muted-foreground">
               Total Usuarios
             </div>
             <div className="text-2xl font-bold">{users.length}</div>
           </div>
 
-          <div className="rounded-lg border p-4">
+          <div className="rounded-lg border p-4 bg-white">
             <div className="text-sm font-medium text-muted-foreground">
               Usuarios Activos
             </div>
@@ -78,7 +79,7 @@ export default async function UsersPage() {
             </div>
           </div>
 
-          <div className="rounded-lg border p-4">
+          <div className="rounded-lg border p-4 bg-white">
             <div className="text-sm font-medium text-muted-foreground">
               Pendientes
             </div>
@@ -88,12 +89,13 @@ export default async function UsersPage() {
           </div>
         </div>
 
-        {/* Table */}
-        <UserTable
-          users={users}
-          currentUserId={user.id}
-          currentUserRole={user.role}
-        />
+          {/* Table */}
+          <UserTable
+            users={users}
+            currentUserId={user.id}
+            currentUserRole={user.role}
+          />
+        </div>
       </div>
     </div>
   )

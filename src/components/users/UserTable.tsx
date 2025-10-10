@@ -161,7 +161,7 @@ export default function UserTable({ users: initialUsers, currentUserId, currentU
               </TableRow>
             ) : (
               users.map((user) => (
-                <TableRow key={user.id}>
+                <TableRow key={user.id} className="bg-white hover:bg-lime-50/50">
                   <TableCell className="font-medium">
                     <div className="flex flex-col">
                       <span>{user.nombre} {user.apellidos}</span>

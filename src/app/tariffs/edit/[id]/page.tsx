@@ -22,7 +22,7 @@ export default async function EditTariffPage({ params }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-lime-50">
       <TariffForm mode="edit" tariffId={tariffId} initialData={tariff} />
     </div>
   )

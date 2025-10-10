@@ -83,29 +83,30 @@ export function DashboardClient({ initialStats, userRole }: DashboardClientProps
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
-      {/* Header con filtro de período */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-lime-700">Dashboard</h1>
-          <p className="text-lime-600 mt-1">Resumen y estadísticas de presupuestos</p>
-        </div>
+    <div className="min-h-screen bg-lime-50">
+      <div className="container mx-auto px-4 py-8 space-y-8">
+        {/* Header con filtro de período */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-lime-700">Dashboard</h1>
+            <p className="text-lime-600 mt-1">Resumen y estadísticas de presupuestos</p>
+          </div>
 
-        <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-gray-500" />
-          <Select value={periodo} onValueChange={(value) => handlePeriodoChange(value as Periodo)}>
-            <SelectTrigger className="w-[150px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="hoy">Hoy</SelectItem>
-              <SelectItem value="semana">Esta semana</SelectItem>
-              <SelectItem value="mes">Este mes</SelectItem>
-              <SelectItem value="año">Este año</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-gray-500" />
+            <Select value={periodo} onValueChange={(value) => handlePeriodoChange(value as Periodo)}>
+              <SelectTrigger className="w-[150px] bg-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-white">
+                <SelectItem value="hoy">Hoy</SelectItem>
+                <SelectItem value="semana">Esta semana</SelectItem>
+                <SelectItem value="mes">Este mes</SelectItem>
+                <SelectItem value="año">Este año</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-      </div>
 
       {/* Estadísticas principales - Grid 2x2 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -304,6 +305,7 @@ export function DashboardClient({ initialStats, userRole }: DashboardClientProps
             )}
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   )

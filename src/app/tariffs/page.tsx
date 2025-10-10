@@ -41,20 +41,22 @@ export default async function TariffsPage({ searchParams }: PageProps) {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <Suspense fallback={
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      }>
-        <TariffList
-          empresaId={user.empresa_id}
-          initialTariffs={initialTariffs}
-          users={users}
-          currentUserRole={user.role}
-          tariffId={tariff_id}
-        />
-      </Suspense>
+    <div className="min-h-screen bg-lime-50">
+      <div className="container mx-auto px-4 py-6">
+        <Suspense fallback={
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        }>
+          <TariffList
+            empresaId={user.empresa_id}
+            initialTariffs={initialTariffs}
+            users={users}
+            currentUserRole={user.role}
+            tariffId={tariff_id}
+          />
+        </Suspense>
+      </div>
     </div>
   )
 }

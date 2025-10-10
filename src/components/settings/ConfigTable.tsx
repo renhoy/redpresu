@@ -99,7 +99,7 @@ export function ConfigTable({ config }: ConfigTableProps) {
               </TableRow>
             ) : (
               config.map((item) => (
-                <TableRow key={item.key}>
+                <TableRow key={item.key} className="bg-white hover:bg-lime-50/50">
                   <TableCell className="font-mono text-sm">{item.key}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {item.description || '-'}

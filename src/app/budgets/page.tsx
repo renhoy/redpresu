@@ -36,9 +36,10 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
-          {/* Header */}
-          <div className="flex justify-between items-center mb-6">
+    <div className="min-h-screen bg-lime-50">
+      <div className="container mx-auto px-4 py-6">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
             <div>
               <h1 className="text-2xl font-bold text-lime-700">Presupuestos</h1>
               <p className="text-sm text-lime-600">
@@ -53,8 +54,9 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
             </Link>
           </div>
 
-      {/* Tabla de presupuestos */}
-      <BudgetsTable budgets={filteredBudgets} budgetId={budget_id} />
+        {/* Tabla de presupuestos */}
+        <BudgetsTable budgets={filteredBudgets} budgetId={budget_id} />
+      </div>
     </div>
   )
 }
