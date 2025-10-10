@@ -96,7 +96,7 @@ export function TariffList({
             Gestiona las tarifas de tu empresa
           </p>
         </div>
-        <Button asChild>
+        <Button asChild className="bg-cyan-600 hover:bg-cyan-700">
           <Link href="/tariffs/create">
             <Plus className="mr-2 h-4 w-4" />
             Nueva Tarifa
@@ -144,7 +144,7 @@ export function TariffList({
                 }
               </p>
               {(!filters.status || filters.status === 'all') && !filters.search?.trim() && (
-                <Button asChild>
+                <Button asChild className="bg-cyan-600 hover:bg-cyan-700">
                   <Link href="/tariffs/create">
                     <Plus className="mr-2 h-4 w-4" />
                     Crear primera tarifa
@@ -194,7 +194,7 @@ export function TariffList({
               }
             </p>
             {(!filters.status || filters.status === 'all') && !filters.search?.trim() && (
-              <Button asChild>
+              <Button asChild className="bg-cyan-600 hover:bg-cyan-700">
                 <Link href="/tariffs/create">
                   <Plus className="mr-2 h-4 w-4" />
                   Crear primera tarifa

@@ -99,6 +99,7 @@ export function Header({ userRole, userName, isAuthenticated = true }: HeaderPro
               const isActive = pathname === item.href ||
                 (item.href !== '/dashboard' && pathname.startsWith(item.href))
               const Icon = item.icon
+              const isTarifasButton = item.href === '/tariffs'
 
               return (
                 <Link
@@ -107,6 +108,8 @@ export function Header({ userRole, userName, isAuthenticated = true }: HeaderPro
                   className={`px-3 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${
                     isActive
                       ? 'text-lime-700 bg-lime-50'
+                      : isTarifasButton
+                      ? 'text-white bg-cyan-600 hover:bg-cyan-700'
                       : 'text-white bg-lime-500 hover:bg-lime-600'
                   }`}
                 >
