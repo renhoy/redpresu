@@ -378,7 +378,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
       </div>
 
       {/* Vista Desktop - Tabla */}
-      <div className="hidden lg:block border rounded-lg overflow-hidden">
+      <div className="hidden lg:block border rounded-lg overflow-hidden bg-white">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-muted">
@@ -399,7 +399,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
         </div>
 
         {filteredBudgets.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground">
+          <div className="text-center py-12 text-muted-foreground bg-white">
             No se encontraron presupuestos
           </div>
         )}

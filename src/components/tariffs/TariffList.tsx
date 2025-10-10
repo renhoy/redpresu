@@ -131,10 +131,10 @@ export function TariffList({
       />
 
       {/* Vista Desktop - Tabla */}
-      <div className="hidden lg:block border rounded-lg overflow-hidden">
+      <div className="hidden lg:block border rounded-lg overflow-hidden bg-white">
         <div className="overflow-x-auto">
           {filteredTariffs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="flex flex-col items-center justify-center py-12 text-center bg-white">
               <FileText className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-2">No hay tarifas</h3>
               <p className="text-muted-foreground mb-4">
