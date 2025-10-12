@@ -40,7 +40,7 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
         <CardHeader>
           <CardTitle>Datos Tarifa</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 bg-cyan-50">
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Label htmlFor="title">Título *</Label>
@@ -159,7 +159,7 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
         <CardHeader>
           <CardTitle>Datos Empresa</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 bg-cyan-50">
           <LogoUploader
             value={data.logo_url}
             onChange={(url) => handleInputChange('logo_url', url)}
@@ -287,7 +287,7 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
         <CardHeader>
           <CardTitle>Configuración Visual</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 bg-cyan-50">
           <div className="grid grid-cols-3 gap-4">
             <div>
               <TemplateSelector
@@ -371,7 +371,7 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
         <CardHeader>
           <CardTitle>Notas PDF</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 bg-cyan-50">
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Label htmlFor="summary_note">Texto resumen PDF *</Label>
@@ -437,7 +437,7 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
         <CardHeader>
           <CardTitle>Notas Formulario</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="bg-cyan-50">
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Label htmlFor="legal_note">Notas legales página presupuesto *</Label>
