@@ -282,7 +282,7 @@ export function LogoUploader({ value, onChange, error, disabled }: LogoUploaderP
         </TabsList>
 
         <TabsContent value="upload" className="space-y-4">
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white">
             <div className="flex flex-col items-center gap-2">
               <Upload className="h-8 w-8 text-gray-400" />
               <div>
@@ -327,7 +327,7 @@ export function LogoUploader({ value, onChange, error, disabled }: LogoUploaderP
                 value={urlInput}
                 onChange={(e) => handleUrlChange(e.target.value)}
                 disabled={disabled}
-                className={error ? 'border-destructive' : ''}
+                className={`bg-white ${error ? 'border-destructive' : ''}`}
               />
               <Button
                 type="button"

@@ -88,7 +88,7 @@ export function CSVUploadPreview({
         <CardContent>
           <div className="space-y-4">
             {/* Selector de archivo */}
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-white">
               <div className="flex flex-col items-center gap-4">
                 <FileText className="h-12 w-12 text-gray-400" />
                 <div>
