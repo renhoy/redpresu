@@ -540,7 +540,7 @@ export function BudgetHierarchyForm({
               {/* Contenido */}
               <div className="flex-1 flex items-center justify-between pr-2">
                 <span className="font-medium">{item.name}</span>
-                <span className="font-mono text-sm">
+                <span className="text-sm">
                   {formatCurrency(parseSpanishNumber(item.amount || "0"))}
                 </span>
               </div>
@@ -628,7 +628,7 @@ export function BudgetHierarchyForm({
             </div>
 
             {/* Importe de la partida */}
-            <span className="font-mono text-sm">
+            <span className="text-sm">
               {formatCurrency(parseSpanishNumber(item.amount || "0"))}
             </span>
           </div>
@@ -647,12 +647,12 @@ export function BudgetHierarchyForm({
             }}
           >
             {/* Unidad - alineada con el nombre */}
-            <span className="font-mono">
+            <span>
               <strong>Unidad:</strong> {item.unit || "ud"}
             </span>
 
             {/* IVA */}
-            <span className="font-mono">
+            <span>
               <strong>%IVA:</strong>{" "}
               {formatSpanishNumber(
                 parseSpanishNumber(item.iva_percentage || "0")
@@ -661,7 +661,7 @@ export function BudgetHierarchyForm({
 
             {/* Cantidad con controles */}
             <div className="flex items-center gap-2">
-              <span className="font-mono">
+              <span>
                 <strong>Cantidad:</strong>
               </span>
               <Button
@@ -740,7 +740,7 @@ export function BudgetHierarchyForm({
             </div>
 
             {/* Precio - 20px más a la izquierda */}
-            <span className="font-mono font-bold mr-5">
+            <span className="font-bold mr-5">
               <strong>Precio:</strong>{" "}
               {formatCurrency(parseSpanishNumber(item.pvp || "0"))}
             </span>
