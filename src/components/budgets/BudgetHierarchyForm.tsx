@@ -711,8 +711,8 @@ export function BudgetHierarchyForm({
     <div className="space-y-2">
       {/* Totals Block */}
       <div className="w-full max-w-md ml-auto space-y-0.5">
-        {/* Base Imponible - Color Secundario, negrita itálica, mayúscula, 14px */}
-        <div className="flex justify-between font-medium font-mono font-bold italic bg-white px-2 py-1 rounded uppercase" style={{ color: secondaryColor, fontSize: '14px' }}>
+        {/* Base Imponible - Color Secundario, negrita (sin itálica), mayúscula, 14px */}
+        <div className="flex justify-between font-medium font-mono font-bold bg-white px-2 py-1 rounded uppercase" style={{ color: secondaryColor, fontSize: '14px' }}>
           <span>Base Imponible</span>
           <span>{formatCurrency(totals.base)}</span>
         </div>
@@ -725,9 +725,9 @@ export function BudgetHierarchyForm({
           </div>
         ))}
 
-        {/* Subtotal - Color Primario, negrita itálica, mayúscula, border-top 2px, 14px - Solo mostrar si hay IRPF o RE */}
+        {/* Subtotal - Color Primario, negrita (sin itálica), mayúscula, border-top 2px, 14px - Solo mostrar si hay IRPF o RE */}
         {(irpf > 0 || totalRE > 0) && (
-          <div className="flex justify-between font-medium font-mono font-bold italic bg-white px-2 py-1 rounded uppercase border-t-2" style={{ color: primaryColor, borderColor: primaryColor, fontSize: '14px' }}>
+          <div className="flex justify-between font-medium font-mono font-bold bg-white px-2 py-1 rounded uppercase border-t-2" style={{ color: primaryColor, borderColor: primaryColor, fontSize: '14px' }}>
             <span>Subtotal</span>
             <span>{formatCurrency(totals.total)}</span>
           </div>
@@ -781,14 +781,14 @@ export function BudgetHierarchyForm({
           </>
         )}
 
-        {/* Total Presupuesto - Color Primario, negrita itálica, mayúscula, border 2px, sin border-radius, 14px - Mostrar siempre */}
+        {/* Total Presupuesto - Color Primario, negrita (sin itálica), mayúscula, border 2px, sin border-radius, 14px - Mostrar siempre */}
         {(irpf > 0 || totalRE > 0) ? (
-          <div className="flex justify-between font-medium font-mono font-bold italic bg-white px-2 py-1 border-2 uppercase" style={{ borderColor: primaryColor, color: primaryColor, borderRadius: 0, fontSize: '14px' }}>
+          <div className="flex justify-between font-medium font-mono font-bold bg-white px-2 py-1 border-2 uppercase" style={{ borderColor: primaryColor, color: primaryColor, borderRadius: 0, fontSize: '14px' }}>
             <span>Total Presupuesto</span>
             <span>{formatCurrency(totals.total - irpf + totalRE)}</span>
           </div>
         ) : (
-          <div className="flex justify-between font-medium font-mono font-bold italic bg-white px-2 py-1 border-2 uppercase" style={{ borderColor: primaryColor, color: primaryColor, borderRadius: 0, fontSize: '14px' }}>
+          <div className="flex justify-between font-medium font-mono font-bold bg-white px-2 py-1 border-2 uppercase" style={{ borderColor: primaryColor, color: primaryColor, borderRadius: 0, fontSize: '14px' }}>
             <span>Total Presupuesto</span>
             <span>{formatCurrency(totals.total)}</span>
           </div>
