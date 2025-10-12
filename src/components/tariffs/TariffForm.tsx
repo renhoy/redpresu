@@ -211,6 +211,7 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
                 variant="outline"
                 onClick={handleCancel}
                 disabled={isLoading}
+                className="border-cyan-600 text-cyan-600 hover:bg-cyan-50"
               >
                 Cancelar
               </Button>

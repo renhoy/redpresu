@@ -266,9 +266,19 @@ export function LogoUploader({ value, onChange, error, disabled }: LogoUploaderP
       <Label>Logo de la empresa *</Label>
 
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="upload">Subir archivo</TabsTrigger>
-          <TabsTrigger value="url">URL externa</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 bg-muted">
+          <TabsTrigger
+            value="upload"
+            className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white"
+          >
+            Subir archivo
+          </TabsTrigger>
+          <TabsTrigger
+            value="url"
+            className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white"
+          >
+            URL externa
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="upload" className="space-y-4">
