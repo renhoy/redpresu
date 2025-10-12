@@ -62,7 +62,7 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
               value={data.title}
               onChange={(e) => handleInputChange('title', e.target.value)}
               placeholder="Nombre de la tarifa"
-              className={errors.title ? 'border-destructive' : ''}
+              className={`bg-white ${errors.title ? 'border-destructive' : ''}`}
             />
             {errors.title && (
               <p className="text-sm text-destructive mt-1">{errors.title}</p>
@@ -91,6 +91,7 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
               onChange={(e) => handleInputChange('description', e.target.value)}
               placeholder="Descripción de la tarifa (opcional)"
               rows={3}
+              className="bg-white"
             />
           </div>
 
@@ -118,6 +119,7 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                 onChange={(e) => handleInputChange('validity', parseInt(e.target.value) || 30)}
                 min="1"
                 max="365"
+                className={`bg-white ${errors.validity ? 'border-destructive' : ''}`}
               />
             </div>
 
@@ -141,7 +143,7 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                 value={data.status}
                 onValueChange={(value: 'Activa' | 'Inactiva') => handleInputChange('status', value)}
               >
-                <SelectTrigger>
+                <SelectTrigger className={`bg-white ${errors.status ? 'border-destructive' : ''}`}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -188,7 +190,7 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                 value={data.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 placeholder="Nombre completo de la empresa"
-                className={errors.name ? 'border-destructive' : ''}
+                className={`bg-white ${errors.name ? 'border-destructive' : ''}`}
               />
               {errors.name && (
                 <p className="text-sm text-destructive mt-1">{errors.name}</p>
@@ -216,7 +218,7 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                 value={data.nif}
                 onChange={(e) => handleInputChange('nif', e.target.value.toUpperCase())}
                 placeholder="12345678A"
-                className={errors.nif ? 'border-destructive' : ''}
+                className={`bg-white ${errors.nif ? 'border-destructive' : ''}`}
               />
               {errors.nif && (
                 <p className="text-sm text-destructive mt-1">{errors.nif}</p>
@@ -245,7 +247,7 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
               value={data.address}
               onChange={(e) => handleInputChange('address', e.target.value)}
               placeholder="Dirección, código postal, ciudad, provincia"
-              className={errors.address ? 'border-destructive' : ''}
+              className={`bg-white ${errors.address ? 'border-destructive' : ''}`}
             />
             {errors.address && (
               <p className="text-sm text-destructive mt-1">{errors.address}</p>
@@ -273,7 +275,7 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
               value={data.contact}
               onChange={(e) => handleInputChange('contact', e.target.value)}
               placeholder="Información de contacto"
-              className={errors.contact ? 'border-destructive' : ''}
+              className={`bg-white ${errors.contact ? 'border-destructive' : ''}`}
             />
             {errors.contact && (
               <p className="text-sm text-destructive mt-1">{errors.contact}</p>
@@ -319,13 +321,13 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                   type="color"
                   value={data.primary_color}
                   onChange={(e) => handleInputChange('primary_color', e.target.value)}
-                  className="w-10 h-10 p-1 border rounded cursor-pointer"
+                  className="w-10 h-10 p-1 border rounded cursor-pointer bg-white"
                 />
                 <Input
                   value={data.primary_color}
                   onChange={(e) => handleInputChange('primary_color', e.target.value)}
                   placeholder="#e8951c"
-                  className="flex-1 text-xs"
+                  className="flex-1 text-xs bg-white"
                 />
               </div>
             </div>
@@ -352,13 +354,13 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                   type="color"
                   value={data.secondary_color}
                   onChange={(e) => handleInputChange('secondary_color', e.target.value)}
-                  className="w-10 h-10 p-1 border rounded cursor-pointer"
+                  className="w-10 h-10 p-1 border rounded cursor-pointer bg-white"
                 />
                 <Input
                   value={data.secondary_color}
                   onChange={(e) => handleInputChange('secondary_color', e.target.value)}
                   placeholder="#109c61"
-                  className="flex-1 text-xs"
+                  className="flex-1 text-xs bg-white"
                 />
               </div>
             </div>
@@ -394,7 +396,7 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
               onChange={(e) => handleInputChange('summary_note', e.target.value)}
               placeholder="Texto que aparecerá en el resumen del PDF"
               rows={4}
-              className={errors.summary_note ? 'border-destructive' : ''}
+              className={`bg-white ${errors.summary_note ? 'border-destructive' : ''}`}
             />
             {errors.summary_note && (
               <p className="text-sm text-destructive mt-1">{errors.summary_note}</p>
@@ -423,7 +425,7 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
               onChange={(e) => handleInputChange('conditions_note', e.target.value)}
               placeholder="Condiciones generales que aparecerán en el PDF"
               rows={4}
-              className={errors.conditions_note ? 'border-destructive' : ''}
+              className={`bg-white ${errors.conditions_note ? 'border-destructive' : ''}`}
             />
             {errors.conditions_note && (
               <p className="text-sm text-destructive mt-1">{errors.conditions_note}</p>
@@ -460,7 +462,7 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
               onChange={(e) => handleInputChange('legal_note', e.target.value)}
               placeholder="Notas legales que aparecerán en la página de presupuesto"
               rows={3}
-              className={errors.legal_note ? 'border-destructive' : ''}
+              className={`bg-white ${errors.legal_note ? 'border-destructive' : ''}`}
             />
             {errors.legal_note && (
               <p className="text-sm text-destructive mt-1">{errors.legal_note}</p>

@@ -81,7 +81,7 @@ export function CSVUploadPreview({
   // Estado inicial: sin datos CSV cargados
   if (!data) {
     return (
-      <Card>
+      <Card className="bg-cyan-50">
         <CardHeader>
           <CardTitle>Estructura Tarifa</CardTitle>
         </CardHeader>
@@ -236,7 +236,7 @@ export function CSVUploadPreview({
 
   // Estado con datos CSV cargados: mostrar preview
   return (
-    <Card>
+    <Card className="bg-cyan-50">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Previsualización Tarifa</CardTitle>
