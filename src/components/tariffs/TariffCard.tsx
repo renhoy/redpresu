@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Pencil, Trash2, Plus, Receipt, Star, FileText } from 'lucide-react'
+import { Pencil, Trash2, Plus, Receipt, Star, FileText, Eye } from 'lucide-react'
 import { formatDate } from '@/lib/validators'
 import { toggleTariffStatus, deleteTariff, setTariffAsTemplate, unsetTariffAsTemplate } from '@/app/actions/tariffs'
 import {
@@ -186,13 +186,13 @@ export function TariffCard({ tariff, onStatusChange, onDelete, currentUserRole }
               )}
 
               {/* Contador de presupuestos */}
-              {tariff.budget_count && tariff.budget_count > 0 && (
-                <Link
-                  href={`/budgets?tariff_id=${tariff.id}`}
-                  className="h-7 px-2 text-cyan-600 hover:text-cyan-700 font-medium text-xs underline flex items-center"
-                >
-                  {tariff.budget_count}
-                </Link>
+              {tariff.budget_count !== undefined && tariff.budget_count > 0 && (
+                <Button variant="outline" size="sm" asChild className="h-7 px-2">
+                  <Link href={`/budgets?tariff_id=${tariff.id}`}>
+                    <span className="text-xs font-medium">{tariff.budget_count}</span>
+                    <Eye className="h-3 w-3 ml-1" />
+                  </Link>
+                </Button>
               )}
 
               {isAdmin && (

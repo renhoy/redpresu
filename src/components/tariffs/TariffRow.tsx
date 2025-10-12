@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Pencil, Trash2, FileText, Plus, Receipt, Star } from "lucide-react";
+import { Pencil, Trash2, FileText, Plus, Receipt, Star, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -202,15 +202,20 @@ export function TariffRow({
             </Tooltip>
 
             {/* Contador de presupuestos */}
-            {tariff.budget_count && tariff.budget_count > 0 && (
+            {tariff.budget_count !== undefined && tariff.budget_count > 0 && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Link
-                    href={`/budgets?tariff_id=${tariff.id}`}
-                    className="text-cyan-600 hover:text-cyan-700 font-medium text-sm underline"
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    asChild
+                    className="h-9 px-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
                   >
-                    {tariff.budget_count}
-                  </Link>
+                    <Link href={`/budgets?tariff_id=${tariff.id}`}>
+                      <span className="font-medium">{tariff.budget_count}</span>
+                      <Eye className="h-4 w-4 ml-1" />
+                    </Link>
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Ver {tariff.budget_count} presupuesto{tariff.budget_count !== 1 ? 's' : ''}</p>
