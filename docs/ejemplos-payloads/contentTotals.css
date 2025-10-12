@@ -1,170 +1,146 @@
-/* Estilos CSS para ContentTotals con IRPF y RE */
-/* {"_META_file_path_": "template/41200-00001/css/contentTotals.css"} */
+/* template/41200-00001/css/contentTotals.css */
+/* Versión actualizada para soportar IRPF y Recargo de Equivalencia */
 
 .content-totals {
-  display: flex;
   width: 100%;
-  margin-top: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  box-sizing: border-box;
 }
 
-.totals-mizq {
-  flex: 1;
+.content-totals .totals-mizq {
+  grid-column: 1;
+  width: 100%;
 }
 
-.totals {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.content-totals .totals {
+  grid-column: 2;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-/* Subtotal (opcional) */
-.totals .subtotal {
+.content-totals .totals > div {
   display: flex;
   justify-content: space-between;
-  padding: 8px 12px;
-  background-color: #f8f9fa;
-  border-radius: 4px;
-  font-size: 14px;
+  padding: 5px 8px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.totals .subtotal .name {
+/* Subtotal (opcional - solo cuando hay IRPF o RE) */
+.content-totals .totals .subtotal {
+  background-color: #f8f9fa;
   font-weight: 500;
+}
+
+.content-totals .totals .subtotal .name {
   color: #6c757d;
 }
 
-.totals .subtotal .amount {
-  font-weight: 600;
+.content-totals .totals .subtotal .amount {
   color: #495057;
+  font-weight: 600;
 }
 
 /* Base Imponible */
-.totals .base {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 12px;
-  font-size: 14px;
-}
-
-.totals .base .name {
+.content-totals .totals .base {
   font-weight: 500;
 }
 
-.totals .base .amount {
+.content-totals .totals .base .amount {
   font-weight: 600;
 }
 
 /* IVAs */
-.totals .ivas {
+.content-totals .ivas {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  width: 100%;
+  box-sizing: border-box;
   padding-left: 12px;
   border-left: 2px solid #e9ecef;
 }
 
-.totals .ivas > div {
+.content-totals .ivas > div {
   display: flex;
   justify-content: space-between;
-  padding: 6px 12px;
-  font-size: 13px;
+  width: 100%;
+  padding: 3px 8px;
 }
 
-.totals .ivas .name {
+.content-totals .ivas .name {
   color: #6c757d;
+  font-size: 0.95em;
 }
 
-.totals .ivas .amount {
-  font-weight: 500;
+.content-totals .ivas .amount {
   color: #495057;
+  font-weight: 500;
 }
 
-/* IRPF (retención negativa) */
-.totals .irpf {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 12px;
+/* IRPF (retención negativa - opcional) */
+.content-totals .totals .irpf {
   background-color: #fff3cd;
   border-left: 3px solid #ffc107;
-  border-radius: 4px;
-  font-size: 14px;
-}
-
-.totals .irpf .name {
   font-weight: 500;
+}
+
+.content-totals .totals .irpf .name {
   color: #856404;
 }
 
-.totals .irpf .amount {
+.content-totals .totals .irpf .amount {
+  color: #856404;
   font-weight: 600;
-  color: #856404;
 }
 
-.totals .irpf .amount.irpf-negative {
+.content-totals .totals .irpf .amount.irpf-negative {
   color: #d63384;
 }
 
-/* Recargos de Equivalencia */
-.totals .recargos {
+/* Recargos de Equivalencia (opcional - array) */
+.content-totals .recargos {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding-left: 12px;
-  border-left: 2px solid #d1ecf1;
+  width: 100%;
+  box-sizing: border-box;
   background-color: #d1ecf1;
-  border-radius: 4px;
-  padding: 8px 12px;
+  padding: 5px 8px;
+  border-left: 3px solid #17a2b8;
 }
 
-.totals .recargos > div {
+.content-totals .recargos > div {
   display: flex;
   justify-content: space-between;
-  padding: 4px 0;
-  font-size: 13px;
+  width: 100%;
+  padding: 3px 8px;
 }
 
-.totals .recargos .name {
+.content-totals .recargos .name {
   color: #0c5460;
   font-weight: 500;
+  font-size: 0.95em;
 }
 
-.totals .recargos .amount {
-  font-weight: 600;
+.content-totals .recargos .amount {
   color: #0c5460;
+  font-weight: 600;
 }
 
 /* Total a Pagar */
-.totals .total {
-  display: flex;
-  justify-content: space-between;
-  padding: 12px 16px;
+.content-totals .totals .total {
   background-color: #109c61;
   color: white;
-  border-radius: 4px;
-  font-size: 16px;
-  margin-top: 8px;
+  font-weight: 700;
+  margin-top: 5px;
+  padding: 8px;
 }
 
-.totals .total .name {
+.content-totals .totals .total .name {
   font-weight: 700;
 }
 
-.totals .total .amount {
+.content-totals .totals .total .amount {
   font-weight: 700;
-  font-size: 18px;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .content-totals {
-    flex-direction: column;
-  }
-
-  .totals-mizq {
-    display: none;
-  }
-
-  .totals {
-    width: 100%;
-  }
+  font-size: 1.1em;
 }
