@@ -193,16 +193,16 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-lime-50">
       {/* Línea 2: Título + Botones (sticky) */}
-      <div className="sticky top-16 z-40 bg-background border-b shadow-sm">
+      <div className="sticky top-16 z-40 bg-lime-50 border-b shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold">
+              <h1 className="text-2xl font-bold text-cyan-600">
                 {mode === "create" ? "Nueva Tarifa" : "Editar Tarifa"}
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-sm text-cyan-600">
                 Complete los datos de la tarifa
               </p>
             </div>
@@ -217,7 +217,7 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
               <Button
                 onClick={handleSave}
                 disabled={isLoading}
-                className="min-w-[100px]"
+                className="min-w-[100px] bg-cyan-600 hover:bg-cyan-700"
               >
                 {isLoading ? "Guardando..." : "Guardar"}
               </Button>

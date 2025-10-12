@@ -122,7 +122,7 @@ export function CSVUploadPreview({
               <a
                 href="/tarifa-plantilla.csv"
                 download="tarifa-plantilla.csv"
-                className="inline-flex items-center gap-2 bg-green-600 text-white hover:bg-green-700 px-6 py-3 rounded-md text-sm font-medium transition-colors"
+                className="inline-flex items-center gap-2 bg-cyan-600 text-white hover:bg-cyan-700 px-6 py-3 rounded-md text-sm font-medium transition-colors"
               >
                 <FileText className="h-4 w-4" />
                 Descargar plantilla de ejemplo
