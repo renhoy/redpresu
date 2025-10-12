@@ -28,6 +28,21 @@ export function RichTextEditor({
         heading: false, // Desactivar headings para simplificar
         code: false,
         codeBlock: false,
+        bulletList: {
+          HTMLAttributes: {
+            class: 'list-disc pl-4',
+          },
+        },
+        orderedList: {
+          HTMLAttributes: {
+            class: 'list-decimal pl-4',
+          },
+        },
+        listItem: {
+          HTMLAttributes: {
+            class: 'ml-2',
+          },
+        },
       }),
       Placeholder.configure({
         placeholder,
@@ -96,10 +111,12 @@ export function RichTextEditor({
       </div>
 
       {/* Editor content */}
-      <EditorContent
-        editor={editor}
-        className="prose prose-sm max-w-none p-4 min-h-[120px] focus:outline-none"
-      />
+      <div className="p-4 min-h-[120px]">
+        <EditorContent
+          editor={editor}
+          className="prose prose-sm max-w-none focus:outline-none [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:ml-0"
+        />
+      </div>
     </div>
   )
 }
