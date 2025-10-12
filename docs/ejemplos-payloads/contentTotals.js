@@ -13,25 +13,27 @@ class ContentTotals {
     const hasIRPF = !!this.element.irpf;
     const hasRE = re.length > 0;
 
+    // DEBUG: Log para verificar valores
+    console.log('[ContentTotals] Rendering with:', {
+      hasSubtotal,
+      hasIRPF,
+      hasRE,
+      irpf_data: this.element.irpf,
+      irpf_name: this.element.irpf_name,
+      irpf_amount: this.element.irpf_amount
+    });
+
     let html = `<div class="content-totals">
       <div class="totals-mizq"></div>
       <div class="totals">`;
 
-    // Subtotal (opcional - solo si hay IRPF o RE)
-    if (hasSubtotal) {
-      html += `<div class="subtotal">
-          <div class="name">${this.element.subtotal_name || ''}</div>
-          <div class="amount">${this.element.subtotal_amount || ''}</div>
-        </div>`;
-    }
-
-    // Base Imponible
+    // 1. Base Imponible
     html += `<div class="base">
           <div class="name">${this.element.base_name || ''}</div>
           <div class="amount">${this.element.base_amount || ''}</div>
         </div>`;
 
-    // IVAs
+    // 2. IVAs
     if (ivas.length > 0) {
       html += '<div class="ivas">';
       ivas.forEach((iva, index) => {
@@ -41,6 +43,14 @@ class ContentTotals {
         </div>`;
       });
       html += '</div>';
+    }
+
+    // 3. Subtotal (opcional - solo si hay IRPF o RE)
+    if (hasSubtotal) {
+      html += `<div class="subtotal">
+          <div class="name">${this.element.subtotal_name || ''}</div>
+          <div class="amount">${this.element.subtotal_amount || ''}</div>
+        </div>`;
     }
 
     // IRPF (opcional - retención negativa)
