@@ -100,7 +100,7 @@ export function CSVUploadPreview({
                   </p>
                   <Label
                     htmlFor="csv-upload"
-                    className="cursor-pointer inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md text-sm font-medium"
+                    className="cursor-pointer inline-flex items-center gap-2 bg-cyan-600 text-white hover:bg-cyan-700 px-4 py-2 rounded-md text-sm font-medium"
                   >
                     <Upload className="h-4 w-4" />
                     {isProcessing ? "Procesando..." : "Seleccionar archivo CSV"}

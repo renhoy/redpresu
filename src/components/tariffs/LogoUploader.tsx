@@ -278,7 +278,7 @@ export function LogoUploader({ value, onChange, error, disabled }: LogoUploaderP
               <div>
                 <Label
                   htmlFor="logo-upload"
-                  className={`cursor-pointer inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md text-sm font-medium ${disabled || isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`cursor-pointer inline-flex items-center gap-2 bg-cyan-600 text-white hover:bg-cyan-700 px-4 py-2 rounded-md text-sm font-medium ${disabled || isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {isUploading ? (
                     <>
