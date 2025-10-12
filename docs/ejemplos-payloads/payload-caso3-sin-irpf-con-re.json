@@ -49,7 +49,7 @@
     ],
     "totals": {
       "subtotal": {
-        "name": "Total (IVA incluido)",
+        "name": "Subtotal",
         "amount": "5.193,00 €"
       },
       "base": {
@@ -68,16 +68,16 @@
       ],
       "re": [
         {
-          "name": "0,50% RE (IVA 5%)",
+          "name": "0,50% RE (IVA 5,00%)",
           "amount": "23,79 €"
         },
         {
-          "name": "5,20% RE (IVA 21%)",
+          "name": "5,20% RE (IVA 21,00%)",
           "amount": "8,51 €"
         }
       ],
       "total": {
-        "name": "Total a Pagar",
+        "name": "TOTAL PRESUPUESTO",
         "amount": "5.225,30 €"
       }
     }
@@ -89,47 +89,47 @@
         "level": "chapter",
         "id": "1",
         "name": "Instalaciones Eléctricas",
-        "amount": "4995.00"
+        "amount": "4.995,00 €"
       },
       {
         "level": "subchapter",
         "id": "1.1",
         "name": "Cableado Estructurado",
-        "amount": "4995.00"
+        "amount": "4.995,00 €"
       },
       {
         "level": "section",
         "id": "1.1.1",
         "name": "Cableado de Baja Tensión",
-        "amount": "4995.00"
+        "amount": "4.995,00 €"
       },
       {
         "level": "item",
         "id": "1.1.1.1",
         "name": "Instalación de Cable UTP Cat6",
-        "amount": "4995.00",
+        "amount": "4.995,00 €",
         "description": "Instalación de cable UTP categoría 6 para redes de datos incluye conectores y canalización.",
         "unit": "m",
-        "quantity": "333.00",
-        "iva_percentage": "5.00",
-        "pvp": "15.00"
+        "quantity": "333,00",
+        "iva_percentage": "5,00",
+        "pvp": "15,00 €"
       },
       {
         "level": "chapter",
         "id": "2",
         "name": "Pintura",
-        "amount": "198.00"
+        "amount": "198,00 €"
       },
       {
         "level": "item",
         "id": "2.1",
         "name": "Pintura de Paredes Interiores",
-        "amount": "198.00",
+        "amount": "198,00 €",
         "description": "Aplicación de pintura plástica en paredes interiores incluye preparación de superficie.",
         "unit": "m²",
-        "quantity": "33.00",
-        "iva_percentage": "21.00",
-        "pvp": "6.00"
+        "quantity": "33,00",
+        "iva_percentage": "21,00",
+        "pvp": "6,00 €"
       }
     ]
   },

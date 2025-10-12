@@ -107,6 +107,17 @@ function formatSpanishCurrency(value: number): string {
 }
 
 /**
+ * Formatea un número a formato español sin símbolo de euro
+ * Ejemplo: 1234.56 → "1.234,56"
+ */
+function formatSpanishNumber(value: number, decimals: number = 2): string {
+  return new Intl.NumberFormat('es-ES', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  }).format(value)
+}
+
+/**
  * Filtra elementos con amount > 0
  */
 function filterNonZeroItems(items: BudgetDataItem[]): BudgetDataItem[] {
@@ -371,6 +382,46 @@ function formatDate(dateString: string): string {
 }
 
 /**
+ * Formatea campos numéricos de items en formato español
+ * - amount y pvp: '1.234,56 €'
+ * - quantity: '1.234,56'
+ * - iva_percentage: '21,00'
+ */
+function formatItemNumbers(items: BudgetDataItem[]): BudgetDataItem[] {
+  return items.map(item => {
+    const formatted: BudgetDataItem = {
+      ...item
+    }
+
+    // Formatear amount con símbolo de euro
+    if (item.amount) {
+      const amountNum = parseSpanishNumber(item.amount)
+      formatted.amount = formatSpanishCurrency(amountNum)
+    }
+
+    // Formatear pvp con símbolo de euro (solo para items)
+    if (item.level === 'item' && item.pvp) {
+      const pvpNum = parseSpanishNumber(item.pvp)
+      formatted.pvp = formatSpanishCurrency(pvpNum)
+    }
+
+    // Formatear quantity sin símbolo (solo para items)
+    if (item.level === 'item' && item.quantity) {
+      const quantityNum = parseSpanishNumber(item.quantity)
+      formatted.quantity = formatSpanishNumber(quantityNum, 2)
+    }
+
+    // Formatear iva_percentage sin símbolo (solo para items)
+    if (item.level === 'item' && item.iva_percentage) {
+      const ivaNum = parseSpanishNumber(item.iva_percentage)
+      formatted.iva_percentage = formatSpanishNumber(ivaNum, 2)
+    }
+
+    return formatted
+  })
+}
+
+/**
  * Construye el payload completo para Rapid-PDF API
  */
 export function buildPDFPayload(budget: Budget, tariff: Tariff): PDFPayload {
@@ -383,11 +434,14 @@ export function buildPDFPayload(budget: Budget, tariff: Tariff): PDFPayload {
   // 3. Renumerar IDs jerárquicos
   const renumberedItems = renumberHierarchicalIds(filteredItems)
 
-  // 4. Extraer solo capítulos para summary
-  const summaryLevels = extractChapters(renumberedItems)
+  // 4. Formatear números en formato español
+  const formattedItems = formatItemNumbers(renumberedItems)
 
-  // 5. Calcular totales (incluye IRPF y RE del budget)
-  const totals = calculateTotals(renumberedItems, budget)
+  // 5. Extraer solo capítulos para summary
+  const summaryLevels = extractChapters(formattedItems)
+
+  // 6. Calcular totales (incluye IRPF y RE del budget)
+  const totals = calculateTotals(formattedItems, budget)
 
   // 6. Construir payload
   // Construir URL completa del logo para que Rapid-PDF pueda acceder
@@ -434,7 +488,7 @@ export function buildPDFPayload(budget: Budget, tariff: Tariff): PDFPayload {
     },
     budget: {
       title: 'Detalles del Presupuesto',
-      levels: renumberedItems
+      levels: formattedItems
     },
     conditions: {
       title: 'Condiciones del Presupuesto',
