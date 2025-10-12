@@ -269,13 +269,13 @@ export function LogoUploader({ value, onChange, error, disabled }: LogoUploaderP
         <TabsList className="grid w-full grid-cols-2 bg-muted">
           <TabsTrigger
             value="upload"
-            className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white"
+            className="bg-cyan-600 text-white hover:bg-cyan-700 data-[state=active]:bg-white data-[state=active]:text-cyan-600"
           >
             Subir archivo
           </TabsTrigger>
           <TabsTrigger
             value="url"
-            className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white"
+            className="bg-cyan-600 text-white hover:bg-cyan-700 data-[state=active]:bg-white data-[state=active]:text-cyan-600"
           >
             URL externa
           </TabsTrigger>
