@@ -2,7 +2,7 @@
   "company": {
     "logo": "https://jeyca.net/wp-content/uploads/2025/04/logo-tpvguay.svg",
     "name": "Caso 3: Sin IRPF, Con RE (Empresa → Autónomo RE)",
-    "cif": "B91707703",
+    "nif": "B91707703",
     "address": "C/ Pimienta, 6 - 41200, Alcalá del Río (Sevilla)",
     "contact": "955 650 626 - soporte@jeyca.net",
     "template": "41200-00001",
@@ -25,7 +25,7 @@
   "summary": {
     "client": {
       "name": "José Ramón Espinosa Recio",
-      "cif": "29833834M",
+      "nif_nie": "29833834M",
       "address": "Plaza Lope de Vega, 1 - 44207, Villar del Salz (Teruel)",
       "contact": "679987763 - 751uzrkn@journalism.com",
       "budget_date": "22-04-2025",
