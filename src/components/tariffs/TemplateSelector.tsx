@@ -86,7 +86,7 @@ export function TemplateSelector({ value, onChange, error }: TemplateSelectorPro
         onValueChange={onChange}
         disabled={isLoading}
       >
-        <SelectTrigger className={error ? 'border-destructive' : ''}>
+        <SelectTrigger className={`bg-white ${error ? 'border-destructive' : ''}`}>
           <SelectValue placeholder="Selecciona una plantilla" />
         </SelectTrigger>
         <SelectContent>
