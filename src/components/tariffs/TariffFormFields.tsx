@@ -36,11 +36,11 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
   return (
     <div className="space-y-6">
       {/* Card 1: Datos Tarifa */}
-      <Card>
+      <Card className="bg-cyan-50">
         <CardHeader>
           <CardTitle>Datos Tarifa</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 bg-cyan-50">
+        <CardContent className="space-y-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Label htmlFor="title">Título *</Label>
@@ -155,11 +155,11 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
       </Card>
 
       {/* Card 2: Datos Empresa */}
-      <Card>
+      <Card className="bg-cyan-50">
         <CardHeader>
           <CardTitle>Datos Empresa</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 bg-cyan-50">
+        <CardContent className="space-y-4">
           <LogoUploader
             value={data.logo_url}
             onChange={(url) => handleInputChange('logo_url', url)}
@@ -283,11 +283,11 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
       </Card>
 
       {/* Card 3: Configuración Visual */}
-      <Card>
+      <Card className="bg-cyan-50">
         <CardHeader>
           <CardTitle>Configuración Visual</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 bg-cyan-50">
+        <CardContent className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
             <div>
               <TemplateSelector
@@ -367,11 +367,11 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
       </Card>
 
       {/* Card 4: Notas PDF */}
-      <Card>
+      <Card className="bg-cyan-50">
         <CardHeader>
           <CardTitle>Notas PDF</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 bg-cyan-50">
+        <CardContent className="space-y-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Label htmlFor="summary_note">Texto resumen PDF *</Label>
@@ -433,11 +433,11 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
       </Card>
 
       {/* Card 5: Notas Formulario */}
-      <Card>
+      <Card className="bg-cyan-50">
         <CardHeader>
           <CardTitle>Notas Formulario</CardTitle>
         </CardHeader>
-        <CardContent className="bg-cyan-50">
+        <CardContent>
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Label htmlFor="legal_note">Notas legales página presupuesto *</Label>
