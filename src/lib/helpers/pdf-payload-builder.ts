@@ -48,6 +48,10 @@ interface PDFPayload {
       amount: string
     }>
     totals: {
+      subtotal?: {
+        name: string
+        amount: string
+      }
       base: {
         name: string
         amount: string
@@ -59,17 +63,12 @@ interface PDFPayload {
       irpf?: {
         name: string
         amount: string
-        percentage: string
       }
-      recargos?: Array<{
+      re?: Array<{
         name: string
         amount: string
       }>
       total: {
-        name: string
-        amount: string
-      }
-      total_pagar?: {
         name: string
         amount: string
       }
@@ -192,12 +191,12 @@ function calculateTotals(
   items: BudgetDataItem[],
   budget: Budget
 ): {
+  subtotal?: { name: string; amount: string }
   base: { name: string; amount: string }
   ivas: Array<{ name: string; amount: string }>
-  irpf?: { name: string; amount: string; percentage: string }
-  recargos?: Array<{ name: string; amount: string }>
+  irpf?: { name: string; amount: string }
+  re?: Array<{ name: string; amount: string }>
   total: { name: string; amount: string }
-  total_pagar?: { name: string; amount: string }
 } {
   let totalAmount = 0
   const ivaGroups = new Map<number, number>()
@@ -242,14 +241,19 @@ function calculateTotals(
       return aNum - bNum
     })
 
+  // Calcular total a pagar (base + IVA - IRPF + RE)
+  let totalPagar = totalAmount
+  let hasIRPF = false
+  let hasRE = false
+
   // Construir objeto de retorno base
   const result: {
+    subtotal?: { name: string; amount: string }
     base: { name: string; amount: string }
     ivas: Array<{ name: string; amount: string }>
-    irpf?: { name: string; amount: string; percentage: string }
-    recargos?: Array<{ name: string; amount: string }>
+    irpf?: { name: string; amount: string }
+    re?: Array<{ name: string; amount: string }>
     total: { name: string; amount: string }
-    total_pagar?: { name: string; amount: string }
   } = {
     base: {
       name: 'Base Imponible',
@@ -257,49 +261,73 @@ function calculateTotals(
     },
     ivas,
     total: {
-      name: 'Total con IVA',
+      name: 'TOTAL PRESUPUESTO',
       amount: formatSpanishCurrency(totalAmount)
     }
   }
 
   // Agregar IRPF si existe y es mayor que 0
   if (budget.irpf && budget.irpf > 0 && budget.irpf_percentage) {
+    hasIRPF = true
+    const percentageFormatted = budget.irpf_percentage.toFixed(2).replace('.', ',')
     result.irpf = {
-      name: 'IRPF',
-      amount: formatSpanishCurrency(-budget.irpf), // Negativo porque es una retención
-      percentage: budget.irpf_percentage.toFixed(2).replace('.', ',')
+      name: `${percentageFormatted}% IRPF`,
+      amount: formatSpanishCurrency(-budget.irpf) // Negativo porque es una retención
     }
+    totalPagar -= budget.irpf
   }
 
   // Agregar Recargos de Equivalencia si existen
   const budgetData = budget.json_budget_data as any
   if (budgetData?.recargo?.aplica && budgetData.recargo.reByIVA) {
-    const recargosArray = Object.entries(budgetData.recargo.reByIVA)
-      .map(([iva, amount]) => {
-        const ivaFormatted = Number(iva).toFixed(2).replace('.', ',')
-        return {
-          name: `RE ${ivaFormatted}%`,
-          amount: formatSpanishCurrency(amount as number)
-        }
+    const recargosArray: Array<{ name: string; amount: string }> = []
+
+    // Iterar sobre cada IVA y su recargo
+    Object.entries(budgetData.recargo.reByIVA).forEach(([ivaPercentage, reAmount]) => {
+      const ivaNum = Number(ivaPercentage)
+      const reAmountNum = reAmount as number
+
+      // Calcular porcentaje de RE según IVA
+      // RE = (reAmount / baseIVA) * 100
+      // Necesitamos encontrar la base del IVA correspondiente
+      const ivaAmountFromMap = ivaGroups.get(ivaNum) || 0
+      const baseIVA = ivaAmountFromMap / (ivaNum / 100)
+      const rePercentage = baseIVA > 0 ? (reAmountNum / baseIVA) * 100 : 0
+
+      const rePercentageFormatted = rePercentage.toFixed(2).replace('.', ',')
+      const ivaFormatted = ivaNum.toFixed(2).replace('.', ',')
+
+      recargosArray.push({
+        name: `${rePercentageFormatted}% RE (IVA ${ivaFormatted}%)`,
+        amount: formatSpanishCurrency(reAmountNum)
       })
-      .sort((a, b) => {
-        const aNum = parseFloat(a.name.split(' ')[1].replace(',', '.'))
-        const bNum = parseFloat(b.name.split(' ')[1].replace(',', '.'))
-        return aNum - bNum
-      })
+
+      totalPagar += reAmountNum
+    })
+
+    // Ordenar por IVA ascendente
+    recargosArray.sort((a, b) => {
+      const aIva = parseFloat(a.name.match(/IVA\s+([\d,]+)%/)?.[1].replace(',', '.') || '0')
+      const bIva = parseFloat(b.name.match(/IVA\s+([\d,]+)%/)?.[1].replace(',', '.') || '0')
+      return aIva - bIva
+    })
 
     if (recargosArray.length > 0) {
-      result.recargos = recargosArray
+      hasRE = true
+      result.re = recargosArray
     }
   }
 
-  // Calcular y agregar Total a Pagar si hay IRPF o RE
-  if (budget.total_pagar && (result.irpf || result.recargos)) {
-    result.total_pagar = {
-      name: 'Total a Pagar',
-      amount: formatSpanishCurrency(budget.total_pagar)
+  // Añadir subtotal SOLO si hay IRPF o RE
+  if (hasIRPF || hasRE) {
+    result.subtotal = {
+      name: 'Subtotal',
+      amount: formatSpanishCurrency(totalAmount)
     }
   }
+
+  // Actualizar total a pagar
+  result.total.amount = formatSpanishCurrency(totalPagar)
 
   return result
 }
