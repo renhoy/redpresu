@@ -32,7 +32,7 @@
       "validity": "30"
     },
     "title": "Resumen del Presupuesto",
-    "note": "ACEPTACIÓN Y FORMAS DE PAGO...",
+    "note": "<p><strong>ACEPTACIÓN Y FORMAS DE PAGO</strong></p><p>El presente presupuesto tiene una validez de <strong>30 días</strong> desde su emisión. Para su aceptación, deberá firmarse y devolverse junto con:</p><ul><li>Copia del <em>DNI/NIF</em> del titular</li><li>Justificante del pago del anticipo (<strong>50%</strong> del importe total)</li><li>Autorización firmada para inicio de obras</li></ul><p>Las formas de pago aceptadas son:</p><ol><li><strong>Transferencia bancaria</strong> - ES91 1234 5678 9012 3456 7890</li><li><strong>Tarjeta de crédito/débito</strong> - A través de TPV virtual</li><li><strong>Bizum</strong> - Al teléfono 955 650 626</li></ol><p><em>Nota: Los precios incluyen IVA y están sujetos a retención de IRPF según normativa vigente.</em></p>",
     "levels": [
       {
         "level": "chapter",
@@ -139,7 +139,7 @@
   },
   "conditions": {
     "title": "Condiciones del Presupuesto",
-    "note": "CONDICIONES GENERALES DEL PRESUPUESTO DE SERVICIO TPV..."
+    "note": "<p><strong>CONDICIONES GENERALES DEL PRESUPUESTO</strong></p><p>El cliente acepta las siguientes condiciones al firmar este presupuesto:</p><p><strong>1. ALCANCE DE LOS TRABAJOS</strong></p><ul><li>Los trabajos se realizarán según lo especificado en el apartado <em>\"Detalles del Presupuesto\"</em></li><li>Cualquier modificación deberá ser <strong>autorizada por escrito</strong> y podrá suponer un incremento del coste</li><li>Se incluyen materiales de primera calidad con <em>garantía del fabricante</em></li></ul><p><strong>2. PLAZO DE EJECUCIÓN</strong></p><ul><li>Inicio de obras: <strong>7 días hábiles</strong> desde la firma del contrato</li><li>Duración estimada: Según planificación técnica adjunta</li><li>Posibles retrasos por causas de fuerza mayor serán comunicados con antelación</li></ul><p><strong>3. GARANTÍAS</strong></p><ol><li><strong>Mano de obra:</strong> <em>2 años</em> desde finalización</li><li><strong>Materiales:</strong> Según garantía del fabricante (mínimo 1 año)</li><li><strong>Instalaciones eléctricas:</strong> Certificado por instalador autorizado</li></ol><p><strong>4. OBLIGACIONES DEL CLIENTE</strong></p><ul><li>Facilitar el acceso a la zona de trabajo en horario convenido</li><li>Proporcionar suministro eléctrico y agua si fuera necesario</li><li>Comunicar cualquier incidencia en un plazo máximo de <strong>48 horas</strong></li></ul><p><em>El incumplimiento de estas condiciones podrá dar lugar a la suspensión temporal de los trabajos hasta su resolución.</em></p><p><strong>5. NORMATIVA APLICABLE</strong></p><p>Todos los trabajos se ejecutarán conforme a:</p><ul><li>Código Técnico de la Edificación (<em>CTE</em>)</li><li>Reglamento Electrotécnico de Baja Tensión (<em>REBT</em>)</li><li>Normativa <strong>vigente en materia de prevención de riesgos laborales</strong></li></ul>"
   },
   "mode": "produccion"
 }
