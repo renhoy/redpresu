@@ -711,31 +711,33 @@ export function BudgetHierarchyForm({
     <div className="space-y-2">
       {/* Totals Block */}
       <div className="w-full max-w-md ml-auto space-y-0.5">
-        <div className="flex justify-between text-sm font-mono bg-white px-2 py-1 rounded text-black">
+        {/* Base Imponible - Color Secundario, negrita itálica, mayúscula */}
+        <div className="flex justify-between text-sm font-mono font-bold italic bg-white px-2 py-1 rounded uppercase" style={{ color: secondaryColor }}>
           <span>Base Imponible</span>
-          <span className="font-bold">{formatCurrency(totals.base)}</span>
+          <span>{formatCurrency(totals.base)}</span>
         </div>
 
+        {/* IVAs - Color Negro, negrita itálica, mayúscula, margen-izquierdo 12px */}
         {totals.ivaGroups.map(group => (
-          <div key={group.percentage} className="flex justify-between text-sm font-mono bg-white px-2 py-1 rounded text-black">
-            <span>IVA {formatSpanishNumber(group.percentage, 2)}%</span>
-            <span className="font-bold">{formatCurrency(group.amount)}</span>
+          <div key={group.percentage} className="flex justify-between text-sm font-mono font-bold italic bg-white px-2 py-1 rounded uppercase text-black">
+            <span style={{ marginLeft: '12px' }}>{formatSpanishNumber(group.percentage, 2)}% IVA</span>
+            <span>{formatCurrency(group.amount)}</span>
           </div>
         ))}
 
-        {/* Subtotal - Solo mostrar si hay IRPF o RE */}
+        {/* Subtotal - Color Primario, negrita itálica, mayúscula, border-top 2px - Solo mostrar si hay IRPF o RE */}
         {(irpf > 0 || totalRE > 0) && (
-          <div className="flex justify-between text-sm font-mono font-bold bg-white px-2 py-1 rounded border-2 text-black" style={{ borderColor: primaryColor }}>
+          <div className="flex justify-between text-sm font-mono font-bold italic bg-white px-2 py-1 rounded uppercase border-t-2" style={{ color: primaryColor, borderColor: primaryColor }}>
             <span>Subtotal</span>
-            <span className="font-bold">{formatCurrency(totals.total)}</span>
+            <span>{formatCurrency(totals.total)}</span>
           </div>
         )}
 
-        {/* IRPF - Solo mostrar si aplica */}
+        {/* IRPF - Color Negro, negrita itálica, mayúscula, margen-izquierdo 12px - Solo mostrar si aplica */}
         {irpf > 0 && (
-          <div className="flex justify-between text-sm font-mono bg-white px-2 py-1 rounded text-black items-center">
+          <div className="flex justify-between text-sm font-mono font-bold italic bg-white px-2 py-1 rounded uppercase text-black items-center">
             <div className="flex items-center gap-2">
-              <span>IRPF {formatSpanishNumber(irpfPercentage, 2)}%</span>
+              <span style={{ marginLeft: '12px' }}>{formatSpanishNumber(irpfPercentage, 2)}% IRPF</span>
               <Dialog>
                 <DialogTrigger asChild>
                   <button className="text-gray-500 hover:text-gray-700">
@@ -754,35 +756,41 @@ export function BudgetHierarchyForm({
                 </DialogContent>
               </Dialog>
             </div>
-            <span className="font-bold">-{formatCurrency(irpf)}</span>
+            <span>-{formatCurrency(irpf)}</span>
           </div>
         )}
 
-        {/* Recargo de Equivalencia - Solo mostrar si aplica */}
+        {/* Recargo de Equivalencia - Color Negro, negrita itálica, mayúscula, margen-izquierdo 12px - Solo mostrar si aplica */}
         {totalRE > 0 && Object.keys(reByIVA).length > 0 && (
           <>
             {Object.entries(reByIVA).map(([iva, amount]) => {
               const ivaNum = parseFloat(iva)
+              // Calcular porcentaje de RE: necesitamos baseIVA
+              const ivaGroup = totals.ivaGroups.find(g => g.percentage === ivaNum)
+              const ivaAmount = ivaGroup?.amount || 0
+              const baseIVA = ivaAmount / (ivaNum / 100)
+              const rePercentage = baseIVA > 0 ? (amount / baseIVA) * 100 : 0
+
               return (
-                <div key={iva} className="flex justify-between text-sm font-mono bg-white px-2 py-1 rounded text-black">
-                  <span>RE {formatSpanishNumber(ivaNum, 2)}%</span>
-                  <span className="font-bold">{formatCurrency(amount)}</span>
+                <div key={iva} className="flex justify-between text-sm font-mono font-bold italic bg-white px-2 py-1 rounded uppercase text-black">
+                  <span style={{ marginLeft: '12px' }}>{formatSpanishNumber(rePercentage, 2)}% RE (IVA {formatSpanishNumber(ivaNum, 2)}%)</span>
+                  <span>{formatCurrency(amount)}</span>
                 </div>
               )
             })}
           </>
         )}
 
-        {/* Total Presupuesto - Mostrar siempre */}
+        {/* Total Presupuesto - Color Primario, negrita itálica, mayúscula, border 2px, sin border-radius - Mostrar siempre */}
         {(irpf > 0 || totalRE > 0) ? (
-          <div className="flex justify-between text-lg font-mono font-bold bg-white px-2 py-1 rounded border-2" style={{ borderColor: primaryColor, color: primaryColor }}>
-            <span className="font-bold">Total Presupuesto</span>
-            <span className="font-bold">{formatCurrency(totals.total - irpf + totalRE)}</span>
+          <div className="flex justify-between text-lg font-mono font-bold italic bg-white px-2 py-1 border-2 uppercase" style={{ borderColor: primaryColor, color: primaryColor, borderRadius: 0 }}>
+            <span>Total Presupuesto</span>
+            <span>{formatCurrency(totals.total - irpf + totalRE)}</span>
           </div>
         ) : (
-          <div className="flex justify-between text-lg font-mono font-bold bg-white px-2 py-1 rounded border-2" style={{ borderColor: primaryColor, color: primaryColor }}>
-            <span className="font-bold">Total Presupuesto</span>
-            <span className="font-bold">{formatCurrency(totals.total)}</span>
+          <div className="flex justify-between text-lg font-mono font-bold italic bg-white px-2 py-1 border-2 uppercase" style={{ borderColor: primaryColor, color: primaryColor, borderRadius: 0 }}>
+            <span>Total Presupuesto</span>
+            <span>{formatCurrency(totals.total)}</span>
           </div>
         )}
       </div>
