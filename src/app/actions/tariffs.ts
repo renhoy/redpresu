@@ -152,9 +152,28 @@ export async function getTariffs(
     // Mapear usuarios a tarifas
     const usersMap = new Map(users?.map(u => [u.id, u]) || [])
 
+    // Obtener conteo de presupuestos por tarifa
+    const tariffIds = tariffs.map(t => t.id)
+    const { data: budgetCounts, error: budgetCountsError } = await supabase
+      .from('budgets')
+      .select('tariff_id')
+      .in('tariff_id', tariffIds)
+
+    if (budgetCountsError) {
+      console.error('Error fetching budget counts:', budgetCountsError)
+    }
+
+    // Contar presupuestos por tarifa
+    const budgetCountMap = new Map<string, number>()
+    budgetCounts?.forEach(budget => {
+      const count = budgetCountMap.get(budget.tariff_id) || 0
+      budgetCountMap.set(budget.tariff_id, count + 1)
+    })
+
     return tariffs.map(tariff => ({
       ...tariff,
-      creator: tariff.user_id ? usersMap.get(tariff.user_id) || null : null
+      creator: tariff.user_id ? usersMap.get(tariff.user_id) || null : null,
+      budget_count: budgetCountMap.get(tariff.id) || 0
     })) as Tariff[]
 
   } catch (error) {

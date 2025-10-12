@@ -28,6 +28,7 @@ type Tariff = Database['public']['Tables']['tariffs']['Row'] & {
     apellidos: string | null
     email: string | null
   } | null
+  budget_count?: number
 }
 
 interface TariffCardProps {
@@ -182,6 +183,16 @@ export function TariffCard({ tariff, onStatusChange, onDelete, currentUserRole }
                   <Receipt className="h-3 w-3 mr-1" />
                   <span className="text-xs">Presup.</span>
                 </Button>
+              )}
+
+              {/* Contador de presupuestos */}
+              {tariff.budget_count && tariff.budget_count > 0 && (
+                <Link
+                  href={`/budgets?tariff_id=${tariff.id}`}
+                  className="h-7 px-2 text-cyan-600 hover:text-cyan-700 font-medium text-xs underline flex items-center"
+                >
+                  {tariff.budget_count}
+                </Link>
               )}
 
               {isAdmin && (
