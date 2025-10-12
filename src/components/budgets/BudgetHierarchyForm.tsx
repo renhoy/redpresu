@@ -651,14 +651,6 @@ export function BudgetHierarchyForm({
               <strong>Unidad:</strong> {item.unit || "ud"}
             </span>
 
-            {/* IVA */}
-            <span>
-              <strong>%IVA:</strong>{" "}
-              {formatSpanishNumber(
-                parseSpanishNumber(item.iva_percentage || "0")
-              )}
-            </span>
-
             {/* Cantidad con controles */}
             <div className="flex items-center gap-2">
               <span>
@@ -740,9 +732,18 @@ export function BudgetHierarchyForm({
             </div>
 
             {/* Precio - 20px más a la izquierda */}
-            <span className="font-bold mr-5">
+            <span>
               <strong>Precio:</strong>{" "}
               {formatCurrency(parseSpanishNumber(item.pvp || "0"))}
+            </span>
+
+            {/* IVA */}
+            <span className="mr-10">
+              <strong>IVA:</strong>{" "}
+              {formatSpanishNumber(
+                parseSpanishNumber(item.iva_percentage || "0")
+              )}
+              %
             </span>
           </div>
         )}
