@@ -20,6 +20,7 @@ import {
 import { Info } from 'lucide-react'
 import { LogoUploader } from './LogoUploader'
 import { TemplateSelector } from './TemplateSelector'
+import { RichTextEditor } from '@/components/shared/RichTextEditor'
 import { type TariffFormData } from '@/app/actions/tariffs'
 
 interface TariffFormFieldsProps {
@@ -390,13 +391,11 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                 </Tooltip>
               </TooltipProvider>
             </div>
-            <Textarea
-              id="summary_note"
+            <RichTextEditor
               value={data.summary_note}
-              onChange={(e) => handleInputChange('summary_note', e.target.value)}
+              onChange={(html) => handleInputChange('summary_note', html)}
               placeholder="Texto que aparecerá en el resumen del PDF"
-              rows={4}
-              className={`bg-white ${errors.summary_note ? 'border-destructive' : ''}`}
+              className={errors.summary_note ? 'border-destructive' : ''}
             />
             {errors.summary_note && (
               <p className="text-sm text-destructive mt-1">{errors.summary_note}</p>
@@ -419,13 +418,11 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                 </Tooltip>
               </TooltipProvider>
             </div>
-            <Textarea
-              id="conditions_note"
+            <RichTextEditor
               value={data.conditions_note}
-              onChange={(e) => handleInputChange('conditions_note', e.target.value)}
+              onChange={(html) => handleInputChange('conditions_note', html)}
               placeholder="Condiciones generales que aparecerán en el PDF"
-              rows={4}
-              className={`bg-white ${errors.conditions_note ? 'border-destructive' : ''}`}
+              className={errors.conditions_note ? 'border-destructive' : ''}
             />
             {errors.conditions_note && (
               <p className="text-sm text-destructive mt-1">{errors.conditions_note}</p>
@@ -456,13 +453,11 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                 </Tooltip>
               </TooltipProvider>
             </div>
-            <Textarea
-              id="legal_note"
+            <RichTextEditor
               value={data.legal_note}
-              onChange={(e) => handleInputChange('legal_note', e.target.value)}
+              onChange={(html) => handleInputChange('legal_note', html)}
               placeholder="Notas legales que aparecerán en la página de presupuesto"
-              rows={3}
-              className={`bg-white ${errors.legal_note ? 'border-destructive' : ''}`}
+              className={errors.legal_note ? 'border-destructive' : ''}
             />
             {errors.legal_note && (
               <p className="text-sm text-destructive mt-1">{errors.legal_note}</p>
