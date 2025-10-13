@@ -50,13 +50,13 @@ function generateJSONFilename(
  * Genera nombre de archivo para presupuesto JSON
  */
 function generateBudgetFilename(
-  budgetCode: string,
+  clientName: string,
   index: number,
   date: string
 ): string {
-  const code = budgetCode.replace(/\s+/g, '-')
+  const name = clientName.replace(/\s+/g, '-')
   const position = String(index + 1).padStart(2, '0')
-  return `exp-presupuesto_${code}_${date}_${position}.json`
+  return `exp-presupuesto_${name}_${date}_${position}.json`
 }
 
 /**
@@ -240,7 +240,7 @@ export async function exportBudgets(
     // JSON: siempre múltiples archivos si hay más de un presupuesto
     if (budgets.length === 1) {
       const content = convertBudgetsToJSON(budgets)
-      const filename = generateBudgetFilename(budgets[0].budget_code, 0, date)
+      const filename = generateBudgetFilename(budgets[0].client_name, 0, date)
       console.log('[exportBudgets] Éxito:', { count: 1, format, filename })
       return {
         success: true,
@@ -254,7 +254,7 @@ export async function exportBudgets(
       // Múltiples presupuestos: generar un archivo JSON por presupuesto
       const files = budgets.map((budget, index) => ({
         content: convertBudgetsToJSON([budget]),
-        filename: generateBudgetFilename(budget.budget_code, index, date),
+        filename: generateBudgetFilename(budget.client_name, index, date),
         mimeType: 'application/json'
       }))
       console.log('[exportBudgets] Éxito:', { count: files.length, format, filesCount: files.length })

@@ -511,7 +511,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
                   variant="outline"
                   disabled={!isSomeSelected || exporting}
                   onClick={handleExport}
-                  className="border-cyan-600 text-cyan-600 hover:bg-cyan-50"
+                  className="border-lime-600 text-lime-600 hover:bg-lime-50"
                 >
                   <Download className="mr-2 h-4 w-4" />
                   {isSomeSelected
@@ -539,7 +539,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
             />
             <Button
               variant="outline"
-              className="border-cyan-600 text-cyan-600 hover:bg-cyan-50"
+              className="border-lime-600 text-lime-600 hover:bg-lime-50"
               onClick={() => document.getElementById('import-budget-file-input')?.click()}
               disabled={importing}
             >
@@ -557,7 +557,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
             </Button>
           )}
 
-          <Button asChild className="bg-cyan-600 hover:bg-cyan-700">
+          <Button asChild className="bg-lime-600 hover:bg-lime-700">
             <Link href="/budgets/create">
               <Plus className="mr-2 h-4 w-4" />
               Nuevo Presupuesto
