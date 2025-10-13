@@ -642,36 +642,50 @@ Completado:
 
 ---
 
-## BLOQUE 7: RICH TEXT EDITOR ⏳
+## ✅ BLOQUE 7: RICH TEXT EDITOR - COMPLETADO
 
-### Tareas Medias:
+### Tareas Completadas:
 
 #### 7.1 Editor de Texto Enriquecido
 
-**Prioridad:** MEDIA | **Estimación:** 3 días | **Estado:** ⏳ Pendiente
+**Prioridad:** MEDIA | **Estimación:** 3 días | **Estado:** ✅ Completado (2025-01-13)
 
-- [ ] Instalar Tiptap: `@tiptap/react`, `@tiptap/starter-kit`
-- [ ] Componente `RichTextEditor.tsx`
-- [ ] Toolbar: negrita, cursiva, listas
-- [ ] Integrar en formulario tarifa (summary_note, conditions_note, legal_note)
-- [ ] Guardar HTML en BD
-- [ ] Modificar `buildPDFPayload()` para parsear HTML
-- [ ] Documentar cambios Rapid-PDF (renderizar HTML básico)
+- ✅ Instalar Tiptap: `@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/extension-placeholder`, `@tiptap/extension-link`
+- ✅ Componente `RichTextEditor.tsx` con toolbar completo
+- ✅ Componente `RichTextEditorDialog.tsx` para edición en modal
+- ✅ Toolbar: negrita, cursiva, listas (viñetas y numeradas), enlaces
+- ✅ Sistema completo de enlaces:
+  - Tooltip hover (500ms) con botón "Editar"
+  - Botón "Probar enlace" en diálogo
+  - Sistema de edición: borra → edita → restaura si cancela
+- ✅ Integrar en formulario tarifa (summary_note, conditions_note, legal_note)
+- ✅ Botones "Editar" junto a labels con preview HTML
+- ✅ Dialog responsive (90% viewport)
+- ✅ Guardar HTML en BD
+- ✅ Documentar cambios Rapid-PDF en `docs/CAMBIOS_RAPID_PDF.md`
+- ✅ Actualizar payload ejemplo con HTML rico
 
 **Archivos nuevos:**
 
 - `src/components/shared/RichTextEditor.tsx`
+- `src/components/shared/RichTextEditorDialog.tsx`
+- `docs/CAMBIOS_RAPID_PDF.md`
 
 **Archivos modificados:**
 
-- `src/components/tariffs/TariffForm.tsx`
-- `src/lib/helpers/pdf-payload-builder.ts`
+- `src/components/tariffs/TariffFormFields.tsx` - Integración RichTextEditorDialog
+- `docs/ejemplos-payloads/payload-caso4-con-irpf-con-re.json` - Ejemplos HTML
 
 **Criterios de completado:**
 
-- Editor funcional con toolbar básico
-- HTML guardado correctamente
-- Rapid-PDF renderiza negritas, cursivas, listas
+- ✅ Editor funcional con toolbar básico + enlaces
+- ✅ HTML guardado correctamente
+- ✅ Preview HTML en campos de solo lectura
+- ✅ Sistema de edición de enlaces robusto
+- ✅ Dialog responsive para mejor UX
+- ✅ Documentación completa para Rapid-PDF
+
+**Commit:** `feat(rich-editor): implementar rich text editor con Tiptap` (52b2371)
 
 ---
 

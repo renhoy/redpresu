@@ -168,25 +168,37 @@ Semanas 11-12: Import/Export + Responsive Mobile
 | 5-6 | Migrar TariffPreview             | Frontend    | ⏳     |
 | 7-8 | Migrar BudgetHierarchyForm       | Frontend    | ⏳     |
 
-**Bloque 7: Rich Text Editor**
+**✅ Bloque 7: Rich Text Editor - COMPLETADO**
 
 | Día  | Tarea                        | Responsable | Estado |
 | ---- | ---------------------------- | ----------- | ------ |
-| 9-10 | Instalar Tiptap + componente | Frontend    | ⏳     |
+| 9-10 | Instalar Tiptap + componente | Frontend    | ✅ COMPLETADO     |
+
+**Implementación (2025-01-13):**
+- ✅ Componentes: RichTextEditor + RichTextEditorDialog
+- ✅ Toolbar: negrita, cursiva, listas, enlaces
+- ✅ Sistema completo de enlaces con tooltip y edición
+- ✅ Dialog responsive (90% viewport)
+- ✅ Preview HTML en campos
+- ✅ Integración en 3 campos de notas
+- ✅ Documentación Rapid-PDF
 
 **Entregables:**
 
 - ✅ Navegación consistente en toda la app
 - ✅ Un elemento activo + ancestros visibles
 - ✅ Estilos unificados
-- ✅ Rich text editor funcional
+- ✅ Rich text editor funcional con enlaces
 - ✅ HTML guardado en notas
+- ✅ Preview y edición en modal
 
 **Criterio de completado:**
 
-- TariffPreview y BudgetForm usan mismo componente
-- Navegación táctil fluida
-- Editor con negrita, cursiva, listas
+- ✅ TariffPreview y BudgetForm usan mismo componente
+- ✅ Navegación táctil fluida
+- ✅ Editor con negrita, cursiva, listas, enlaces
+- ✅ Sistema de edición robusto de enlaces
+- ✅ UX profesional con dialog responsive
 
 ---
 

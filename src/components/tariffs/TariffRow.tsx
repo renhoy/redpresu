@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Pencil, Trash2, FileText, Plus, Receipt, Star, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -53,6 +54,8 @@ interface TariffRowProps {
   onStatusChange?: () => void;
   onDelete?: () => void;
   currentUserRole?: string;
+  selected?: boolean;
+  onSelectChange?: (checked: boolean) => void;
 }
 
 export function TariffRow({
@@ -60,6 +63,8 @@ export function TariffRow({
   onStatusChange,
   onDelete,
   currentUserRole,
+  selected = false,
+  onSelectChange,
 }: TariffRowProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -141,6 +146,14 @@ export function TariffRow({
   return (
     <>
       <TableRow className="bg-white border-t hover:bg-lime-50/50">
+        {/* Checkbox */}
+        <TableCell className="p-4 w-12">
+          <Checkbox
+            checked={selected}
+            onCheckedChange={onSelectChange}
+          />
+        </TableCell>
+
         {/* Columna Tarifa (Nombre + Descripción) */}
         <TableCell className="p-4">
           <div className="space-y-1">

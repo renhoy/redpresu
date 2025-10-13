@@ -1266,13 +1266,14 @@ export function BudgetHierarchyForm({ tariff, onUpdate }: Props) {
 
 ---
 
-## BLOQUE 7: Editor de Texto Enriquecido
+## ✅ BLOQUE 7: Editor de Texto Enriquecido - COMPLETADO
 
 ### 7.1 Rich Text Editor para Notas
 
 **Prioridad:** MEDIA
 **Complejidad:** MEDIA
 **Impacto:** UX profesional
+**Estado:** ✅ COMPLETADO (2025-01-13)
 
 **Librería recomendada:** Tiptap (ligera, extensible)
 
@@ -1375,11 +1376,46 @@ export function RichTextEditor({
 </FormField>
 ```
 
-**Cambios en Rapid-PDF:**
+**Implementación Realizada:**
 
-- Parsear HTML básico: `<strong>`, `<em>`, `<ul>`, `<ol>`
-- Convertir a formato PDF (negrita, cursiva, listas)
-- Documentar en API de Rapid-PDF
+✅ **Componentes creados:**
+- `src/components/shared/RichTextEditor.tsx` - Editor Tiptap con toolbar
+- `src/components/shared/RichTextEditorDialog.tsx` - Modal para edición cómoda
+
+✅ **Funcionalidades:**
+- Editor con formato básico (negrita, cursiva, listas)
+- Sistema completo de enlaces:
+  - Añadir enlace con botón toolbar
+  - Tooltip hover (500ms) con botón "Editar"
+  - Botón "Probar enlace" para abrir en nueva pestaña
+  - Sistema de edición: borra → edita → restaura si cancela
+- Dialog responsive (90% viewport)
+- Preview HTML en campos de solo lectura
+- Botones "Editar" junto a labels (estilo cyan-600)
+
+✅ **Integración:**
+- Reemplazados 3 campos Textarea en `TariffFormFields.tsx`:
+  - `summary_note` - Texto resumen PDF
+  - `conditions_note` - Condiciones PDF
+  - `legal_note` - Notas legales formulario
+
+✅ **HTML Soportado:**
+- `<p>` - Párrafos
+- `<strong>` - Negrita
+- `<em>` - Cursiva
+- `<ul>` + `<li>` - Listas con viñetas
+- `<ol>` + `<li>` - Listas numeradas
+- `<a href="..." target="_blank">` - Enlaces
+
+✅ **Documentación:**
+- Creado `docs/CAMBIOS_RAPID_PDF.md` con especificaciones HTML
+- Actualizado payload ejemplo con HTML rico
+
+**Cambios para Rapid-PDF:**
+
+- Parsear HTML básico: `<p>`, `<strong>`, `<em>`, `<ul>`, `<ol>`, `<a>`
+- Convertir a formato PDF (negrita, cursiva, listas, enlaces)
+- Ver `docs/CAMBIOS_RAPID_PDF.md` para detalles completos
 
 ---
 

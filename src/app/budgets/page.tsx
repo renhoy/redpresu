@@ -1,8 +1,9 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Plus } from 'lucide-react'
+import { Plus, Upload } from 'lucide-react'
 import { getBudgets } from '@/app/actions/budgets'
 import { BudgetsTable } from '@/components/budgets/BudgetsTable'
+import { getServerUser } from '@/lib/auth/server'
 
 interface PageProps {
   searchParams: Promise<{ budget_id?: string; tariff_id?: string }>
@@ -11,6 +12,10 @@ interface PageProps {
 export default async function BudgetsPage({ searchParams }: PageProps) {
   const { budget_id, tariff_id } = await searchParams
   const budgets = await getBudgets()
+  const user = await getServerUser()
+
+  // Verificar permisos de importación
+  const canImport = user?.role === 'admin' || user?.role === 'superadmin'
 
   // Filtrar por budget_id si se proporciona
   let filteredBudgets = budgets
@@ -55,12 +60,22 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
                     : 'Gestiona tus presupuestos creados'}
               </p>
             </div>
-            <Link href="/tariffs">
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Nuevo Presupuesto
-              </Button>
-            </Link>
+            <div className="flex gap-2">
+              {canImport && (
+                <Button variant="outline" asChild>
+                  <Link href="/budgets/import">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Importar
+                  </Link>
+                </Button>
+              )}
+              <Link href="/tariffs">
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nuevo Presupuesto
+                </Button>
+              </Link>
+            </div>
           </div>
 
         {/* Filtro activo por tariff_id */}

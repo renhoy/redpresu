@@ -1,10 +1,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, FileText } from 'lucide-react'
+import { Plus, FileText, Download, Upload } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   Table,
   TableBody,
@@ -16,7 +23,10 @@ import { TariffFilters } from './TariffFilters'
 import { TariffRow } from './TariffRow'
 import { TariffCard } from './TariffCard'
 import { getTariffs } from '@/app/actions/tariffs'
+import { exportTariffs } from '@/app/actions/export'
+import { downloadFile } from '@/lib/helpers/export-helpers'
 import { Database } from '@/lib/types/database.types'
+import { toast } from 'sonner'
 
 type Tariff = Database['public']['Tables']['tariffs']['Row']
 
@@ -34,6 +44,11 @@ interface TariffListProps {
   tariffId?: string
 }
 
+// Verificar si puede importar (admin/superadmin)
+const canImport = (role?: string) => {
+  return role === 'admin' || role === 'superadmin'
+}
+
 export function TariffList({
   empresaId,
   initialTariffs = [],
@@ -44,6 +59,8 @@ export function TariffList({
   const router = useRouter()
   const [tariffs, setTariffs] = useState<Tariff[]>(initialTariffs)
   const [loading, setLoading] = useState(false)
+  const [selectedTariffs, setSelectedTariffs] = useState<string[]>([])
+  const [exporting, setExporting] = useState(false)
   const [filters, setFilters] = useState<{
     status?: 'Activa' | 'Inactiva' | 'all'
     search?: string
@@ -86,6 +103,47 @@ export function TariffList({
     loadTariffs()
   }
 
+  // Selección múltiple
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedTariffs(filteredTariffs.map(t => t.id))
+    } else {
+      setSelectedTariffs([])
+    }
+  }
+
+  const handleSelectTariff = (tariffId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedTariffs(prev => [...prev, tariffId])
+    } else {
+      setSelectedTariffs(prev => prev.filter(id => id !== tariffId))
+    }
+  }
+
+  const isAllSelected = filteredTariffs.length > 0 && selectedTariffs.length === filteredTariffs.length
+  const isSomeSelected = selectedTariffs.length > 0
+
+  // Exportación
+  const handleExport = async (format: 'json' | 'csv') => {
+    if (selectedTariffs.length === 0) {
+      toast.error('Selecciona al menos una tarifa')
+      return
+    }
+
+    setExporting(true)
+    const result = await exportTariffs(selectedTariffs, format)
+
+    if (result.success && result.data) {
+      downloadFile(result.data.content, result.data.filename, result.data.mimeType)
+      toast.success(`${selectedTariffs.length} tarifa(s) exportada(s)`)
+      setSelectedTariffs([])
+    } else {
+      toast.error(result.error || 'Error al exportar')
+    }
+
+    setExporting(false)
+  }
+
   return (
     <>
       {/* Header */}
@@ -96,12 +154,40 @@ export function TariffList({
             Gestiona las tarifas de tu empresa
           </p>
         </div>
-        <Button asChild className="bg-cyan-600 hover:bg-cyan-700">
-          <Link href="/tariffs/create">
-            <Plus className="mr-2 h-4 w-4" />
-            Nueva Tarifa
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          {isSomeSelected && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" disabled={exporting}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Exportar ({selectedTariffs.length})
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => handleExport('json')}>
+                  Exportar JSON
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport('csv')}>
+                  Exportar CSV
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          {canImport(currentUserRole) && (
+            <Button variant="outline" asChild>
+              <Link href="/tariffs/import">
+                <Upload className="mr-2 h-4 w-4" />
+                Importar
+              </Link>
+            </Button>
+          )}
+          <Button asChild className="bg-cyan-600 hover:bg-cyan-700">
+            <Link href="/tariffs/create">
+              <Plus className="mr-2 h-4 w-4" />
+              Nueva Tarifa
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Filtro activo por tariff_id */}
@@ -156,6 +242,12 @@ export function TariffList({
             <table className="w-full">
               <thead className="bg-muted">
                 <tr>
+                  <th className="text-left p-4 font-medium w-12">
+                    <Checkbox
+                      checked={isAllSelected}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </th>
                   <th className="text-left p-4 font-medium">Tarifa</th>
                   <th className="text-center p-4 font-medium">Presupuesto</th>
                   <th className="text-center p-4 font-medium">Estado</th>
@@ -173,6 +265,8 @@ export function TariffList({
                     onStatusChange={handleRefresh}
                     onDelete={handleRefresh}
                     currentUserRole={currentUserRole}
+                    selected={selectedTariffs.includes(tariff.id)}
+                    onSelectChange={(checked) => handleSelectTariff(tariff.id, checked)}
                   />
                 ))}
               </tbody>

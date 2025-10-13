@@ -5,11 +5,20 @@ import { Budget } from '@/lib/types/database'
 import { formatCurrency } from '@/lib/helpers/format'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Pencil, Trash2, FileStack, ChevronDown, ChevronRight, FileText } from 'lucide-react'
+import { Pencil, Trash2, FileStack, ChevronDown, ChevronRight, FileText, Download } from 'lucide-react'
 import { deleteBudget, updateBudgetStatus } from '@/app/actions/budgets'
+import { exportBudgets } from '@/app/actions/export'
+import { downloadFile } from '@/lib/helpers/export-helpers'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -35,6 +44,8 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [expandedBudgets, setExpandedBudgets] = useState<Set<string>>(new Set(budgetId ? [budgetId] : []))
+  const [selectedBudgets, setSelectedBudgets] = useState<string[]>([])
+  const [exporting, setExporting] = useState(false)
 
   // Filtrado local
   const filteredBudgets = budgets.filter(budget => {
@@ -94,6 +105,74 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
     return 'N/A'
   }
 
+  // Selección múltiple
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      // Aplanar todos los presupuestos (padres e hijos)
+      const allBudgetIds: string[] = []
+      const collectIds = (budgets: Budget[]) => {
+        budgets.forEach(b => {
+          allBudgetIds.push(b.id)
+          if (b.children && b.children.length > 0) {
+            collectIds(b.children)
+          }
+        })
+      }
+      collectIds(filteredBudgets)
+      setSelectedBudgets(allBudgetIds)
+    } else {
+      setSelectedBudgets([])
+    }
+  }
+
+  const handleSelectBudget = (budgetId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedBudgets(prev => [...prev, budgetId])
+    } else {
+      setSelectedBudgets(prev => prev.filter(id => id !== budgetId))
+    }
+  }
+
+  // Aplanar estructura para calcular total de presupuestos
+  const getAllBudgetIds = (budgets: Budget[]): string[] => {
+    const ids: string[] = []
+    const collectIds = (budgets: Budget[]) => {
+      budgets.forEach(b => {
+        ids.push(b.id)
+        if (b.children && b.children.length > 0) {
+          collectIds(b.children)
+        }
+      })
+    }
+    collectIds(budgets)
+    return ids
+  }
+
+  const allBudgetIds = getAllBudgetIds(filteredBudgets)
+  const isAllSelected = allBudgetIds.length > 0 && selectedBudgets.length === allBudgetIds.length
+  const isSomeSelected = selectedBudgets.length > 0
+
+  // Exportación
+  const handleExport = async (format: 'json' | 'csv') => {
+    if (selectedBudgets.length === 0) {
+      toast.error('Selecciona al menos un presupuesto')
+      return
+    }
+
+    setExporting(true)
+    const result = await exportBudgets(selectedBudgets, format)
+
+    if (result.success && result.data) {
+      downloadFile(result.data.content, result.data.filename, result.data.mimeType)
+      toast.success(`${selectedBudgets.length} presupuesto(s) exportado(s)`)
+      setSelectedBudgets([])
+    } else {
+      toast.error(result.error || 'Error al exportar')
+    }
+
+    setExporting(false)
+  }
+
   // Transiciones válidas de estado
   const getValidTransitions = (currentStatus: string): string[] => {
     const transitions: Record<string, string[]> = {
@@ -151,6 +230,15 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
     return (
       <React.Fragment key={budget.id}>
         <tr className={`bg-white border-t hover:bg-lime-50/50 ${isChild ? 'bg-lime-50/30' : ''}`}>
+          {/* Checkbox */}
+          <td className="p-4 w-12">
+            <Checkbox
+              checked={selectedBudgets.includes(budget.id)}
+              onCheckedChange={(checked) => handleSelectBudget(budget.id, !!checked)}
+            />
+          </td>
+
+          {/* Cliente */}
           <td className="p-4">
             <div className="flex items-center gap-2">
               {/* Indentación visual + icono expandir/colapsar */}
@@ -366,15 +454,34 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
             <SelectItem value="caducado">Caducado</SelectItem>
           </SelectContent>
         </Select>
-        {budgetId && (
-          <Button
-            variant="outline"
-            onClick={() => router.push('/budgets')}
-            className="ml-auto"
-          >
-            Ver todos los presupuestos
-          </Button>
-        )}
+        <div className="flex gap-2 ml-auto">
+          {isSomeSelected && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" disabled={exporting}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Exportar ({selectedBudgets.length})
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => handleExport('json')}>
+                  Exportar JSON
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport('csv')}>
+                  Exportar CSV
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          {budgetId && (
+            <Button
+              variant="outline"
+              onClick={() => router.push('/budgets')}
+            >
+              Ver todos los presupuestos
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Vista Desktop - Tabla */}
@@ -383,6 +490,12 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
           <table className="w-full">
             <thead className="bg-muted">
               <tr>
+                <th className="text-left p-4 font-medium w-12">
+                  <Checkbox
+                    checked={isAllSelected}
+                    onCheckedChange={handleSelectAll}
+                  />
+                </th>
                 <th className="text-left p-4 font-medium w-[40%]">Cliente</th>
                 <th className="text-center p-4 font-medium w-[60px]">Tarifa</th>
                 <th className="text-right p-4 font-medium w-[150px]">Total</th>
