@@ -153,10 +153,7 @@ export async function importBudgets(
       return { success: false, error: 'No autenticado' }
     }
 
-    // 2. Autorización (solo admin/superadmin)
-    if (user.role === 'vendedor') {
-      return { success: false, error: 'Sin permisos para importar presupuestos' }
-    }
+    // 2. Autorización (todos los roles pueden importar presupuestos)
 
     // 3. Parsear JSON
     let budgets: any[]
@@ -164,11 +161,17 @@ export async function importBudgets(
       budgets = JSON.parse(content)
     } catch (e) {
       console.error('[importBudgets] Error parsing JSON:', e)
-      return { success: false, error: 'JSON inválido' }
+      return {
+        success: false,
+        error: 'El archivo JSON de presupuesto importado no es válido. Puedes exportar un presupuesto existente para obtener un ejemplo del formato correcto.\n\nExporta tus presupuestos para tener una copia de seguridad fuera de Redpresu. Si deseas generar nuevos presupuestos hazlo desde Redpresu para evitar errores.'
+      }
     }
 
     if (!Array.isArray(budgets)) {
-      return { success: false, error: 'El JSON debe contener un array de presupuestos' }
+      return {
+        success: false,
+        error: 'El archivo JSON de presupuesto importado no es válido. Puedes exportar un presupuesto existente para obtener un ejemplo del formato correcto.\n\nExporta tus presupuestos para tener una copia de seguridad fuera de Redpresu. Si deseas generar nuevos presupuestos hazlo desde Redpresu para evitar errores.'
+      }
     }
 
     if (budgets.length === 0) {
@@ -179,45 +182,49 @@ export async function importBudgets(
     const validatedBudgets = []
     const errors: string[] = []
 
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({ cookies: () => cookieStore })
+
     for (let i = 0; i < budgets.length; i++) {
       const budget = budgets[i]
 
       // Campos requeridos
-      if (!budget.tariff_id || !budget.client_name) {
-        errors.push(`Presupuesto ${i + 1}: falta campo obligatorio (tariff_id o client_name)`)
+      if (!budget.client_name) {
+        errors.push(`Presupuesto ${i + 1}: falta campo obligatorio (client_name)`)
         continue
       }
 
-      // Validar tarifa existe
-      const cookieStore = await cookies()
-      const supabase = createServerActionClient({ cookies: () => cookieStore })
+      // Validar si tarifa existe (opcional, no falla si no existe)
+      let tariffId = budget.tariff_id
+      if (tariffId) {
+        const { data: tariffExists } = await supabase
+          .from('tariffs')
+          .select('id')
+          .eq('id', tariffId)
+          .eq('empresa_id', user.empresa_id)
+          .single()
 
-      const { data: tariffExists } = await supabase
-        .from('tariffs')
-        .select('id')
-        .eq('id', budget.tariff_id)
-        .eq('empresa_id', user.empresa_id)
-        .single()
-
-      if (!tariffExists) {
-        errors.push(`Presupuesto ${i + 1}: tariff_id no existe o no pertenece a tu empresa`)
-        continue
+        if (!tariffExists) {
+          console.log(`[importBudgets] Presupuesto ${i + 1}: tariff_id no existe, se establecerá como null`)
+          tariffId = null
+        }
       }
 
-      // Limpiar campos internos
+      // Eliminar campos internos y regenerables
+      const { id, created_at, updated_at, empresa_id, user_id, parent_budget_id, version_number, ...budgetData } = budget
+
+      // Construir presupuesto limpio
       const cleanBudget = {
-        ...budget,
-        // Regenerar campos
-        id: undefined, // nuevo ID generado por DB
-        created_at: undefined,
-        updated_at: undefined,
+        ...budgetData,
+        // Asignar tarifa (null si no existe)
+        tariff_id: tariffId,
         // Asignar a usuario actual
         empresa_id: user.empresa_id,
         user_id: user.id,
         // Resetear relaciones de versiones
         parent_budget_id: null,
         version_number: 1,
-        // Resetear estado
+        // Forzar estado borrador
         status: 'borrador',
       }
 
@@ -230,9 +237,6 @@ export async function importBudgets(
     }
 
     // 5. Insertar en BD
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
-
     const { data, error } = await supabase
       .from('budgets')
       .insert(validatedBudgets)

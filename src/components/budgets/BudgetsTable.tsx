@@ -9,9 +9,10 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Pencil, Trash2, FileStack, ChevronDown, ChevronRight, FileText, Download } from 'lucide-react'
+import { Pencil, Trash2, FileStack, ChevronDown, ChevronRight, FileText, Download, Upload, Plus } from 'lucide-react'
 import { deleteBudget, updateBudgetStatus } from '@/app/actions/budgets'
 import { exportBudgets } from '@/app/actions/export'
+import { importBudgets } from '@/app/actions/import'
 import { downloadFile } from '@/lib/helpers/export-helpers'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
@@ -40,6 +41,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
   const [expandedBudgets, setExpandedBudgets] = useState<Set<string>>(new Set(budgetId ? [budgetId] : []))
   const [selectedBudgets, setSelectedBudgets] = useState<string[]>([])
   const [exporting, setExporting] = useState(false)
+  const [importing, setImporting] = useState(false)
 
   // Filtrado local
   const filteredBudgets = budgets.filter(budget => {
@@ -157,14 +159,67 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
     const result = await exportBudgets(selectedBudgets, 'json')
 
     if (result.success && result.data) {
-      downloadFile(result.data.content, result.data.filename, result.data.mimeType)
-      toast.success(`${selectedBudgets.length} presupuesto(s) exportado(s)`)
+      // Detectar si es un array de archivos o un único archivo
+      if ('files' in result.data) {
+        // Múltiples archivos: descargar con delay
+        for (const file of result.data.files) {
+          downloadFile(file.content, file.filename, file.mimeType)
+          await new Promise(resolve => setTimeout(resolve, 300)) // delay 300ms
+        }
+        toast.success(`${result.data.files.length} archivo(s) exportado(s)`)
+      } else {
+        // Un único archivo
+        downloadFile(result.data.content, result.data.filename, result.data.mimeType)
+        toast.success(`Presupuesto exportado`)
+      }
       setSelectedBudgets([])
     } else {
       toast.error(result.error || 'Error al exportar')
     }
 
     setExporting(false)
+  }
+
+  // Importación
+  const handleFileImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validar extensión
+    if (!file.name.endsWith('.json')) {
+      toast.error('Solo se permiten archivos JSON')
+      return
+    }
+
+    // Validar tamaño (máximo 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('El archivo es demasiado grande (máximo 5MB)')
+      return
+    }
+
+    setImporting(true)
+
+    try {
+      // Leer contenido del archivo
+      const content = await file.text()
+
+      // Importar presupuestos
+      const result = await importBudgets(content)
+
+      if (result.success && result.data) {
+        toast.success(`${result.data.count} presupuesto(s) importado(s) correctamente`)
+        // Recargar página
+        router.refresh()
+      } else {
+        toast.error(result.error || 'Error al importar presupuestos')
+      }
+    } catch (error) {
+      toast.error('Error al leer el archivo')
+    } finally {
+      setImporting(false)
+      // Limpiar input
+      e.target.value = ''
+    }
   }
 
   // Transiciones válidas de estado
@@ -456,6 +511,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
                   variant="outline"
                   disabled={!isSomeSelected || exporting}
                   onClick={handleExport}
+                  className="border-cyan-600 text-cyan-600 hover:bg-cyan-50"
                 >
                   <Download className="mr-2 h-4 w-4" />
                   {isSomeSelected
@@ -472,6 +528,26 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
             </Tooltip>
           </TooltipProvider>
 
+          <>
+            <input
+              id="import-budget-file-input"
+              type="file"
+              accept=".json"
+              onChange={handleFileImport}
+              className="hidden"
+              disabled={importing}
+            />
+            <Button
+              variant="outline"
+              className="border-cyan-600 text-cyan-600 hover:bg-cyan-50"
+              onClick={() => document.getElementById('import-budget-file-input')?.click()}
+              disabled={importing}
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              {importing ? 'Importando...' : 'Importar'}
+            </Button>
+          </>
+
           {budgetId && (
             <Button
               variant="outline"
@@ -480,6 +556,13 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
               Ver todos los presupuestos
             </Button>
           )}
+
+          <Button asChild className="bg-cyan-600 hover:bg-cyan-700">
+            <Link href="/budgets/create">
+              <Plus className="mr-2 h-4 w-4" />
+              Nuevo Presupuesto
+            </Link>
+          </Button>
         </div>
       </div>
 

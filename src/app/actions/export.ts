@@ -47,6 +47,19 @@ function generateJSONFilename(
 }
 
 /**
+ * Genera nombre de archivo para presupuesto JSON
+ */
+function generateBudgetFilename(
+  budgetCode: string,
+  index: number,
+  date: string
+): string {
+  const code = budgetCode.replace(/\s+/g, '-')
+  const position = String(index + 1).padStart(2, '0')
+  return `exp-presupuesto_${code}_${date}_${position}.json`
+}
+
+/**
  * Exporta tarifas en formato especificado
  * @param ids - Array de IDs de tarifas a exportar
  * @param format - Formato de exportación: 'json' | 'csv' | 'price-structure'
@@ -175,12 +188,15 @@ export async function exportTariffs(
 /**
  * Exporta presupuestos en formato especificado
  * @param ids - Array de IDs de presupuestos a exportar
- * @param format - Formato de exportación: 'json' | 'csv'
+ * @param format - Formato de exportación: 'json' (solo JSON soportado)
  */
 export async function exportBudgets(
   ids: string[],
-  format: 'json' | 'csv'
-): Promise<ActionResult<{ content: string; filename: string; mimeType: string }>> {
+  format: 'json'
+): Promise<ActionResult<
+  | { content: string; filename: string; mimeType: string }
+  | { files: Array<{ content: string; filename: string; mimeType: string }> }
+>> {
   try {
     console.log('[exportBudgets] Iniciando...', { ids, format })
 
@@ -189,8 +205,8 @@ export async function exportBudgets(
       return { success: false, error: 'Debe seleccionar al menos un presupuesto' }
     }
 
-    if (!['json', 'csv'].includes(format)) {
-      return { success: false, error: 'Formato no válido' }
+    if (format !== 'json') {
+      return { success: false, error: 'Solo se soporta formato JSON para presupuestos' }
     }
 
     // 2. Autenticación
@@ -219,28 +235,32 @@ export async function exportBudgets(
     }
 
     // 4. Convertir según formato
-    let content: string
-    let filename: string
-    let mimeType: string
+    const date = new Date().toISOString().split('T')[0]
 
-    if (format === 'json') {
-      content = convertBudgetsToJSON(budgets)
-      filename = `presupuestos_export_${new Date().toISOString().split('T')[0]}.json`
-      mimeType = 'application/json'
+    // JSON: siempre múltiples archivos si hay más de un presupuesto
+    if (budgets.length === 1) {
+      const content = convertBudgetsToJSON(budgets)
+      const filename = generateBudgetFilename(budgets[0].budget_code, 0, date)
+      console.log('[exportBudgets] Éxito:', { count: 1, format, filename })
+      return {
+        success: true,
+        data: {
+          content,
+          filename,
+          mimeType: 'application/json'
+        }
+      }
     } else {
-      content = convertBudgetsToCSV(budgets)
-      filename = `presupuestos_export_${new Date().toISOString().split('T')[0]}.csv`
-      mimeType = 'text/csv;charset=utf-8;'
-    }
-
-    console.log('[exportBudgets] Éxito:', { count: budgets.length, format, filename })
-
-    return {
-      success: true,
-      data: {
-        content,
-        filename,
-        mimeType
+      // Múltiples presupuestos: generar un archivo JSON por presupuesto
+      const files = budgets.map((budget, index) => ({
+        content: convertBudgetsToJSON([budget]),
+        filename: generateBudgetFilename(budget.budget_code, index, date),
+        mimeType: 'application/json'
+      }))
+      console.log('[exportBudgets] Éxito:', { count: files.length, format, filesCount: files.length })
+      return {
+        success: true,
+        data: { files }
       }
     }
   } catch (error) {
