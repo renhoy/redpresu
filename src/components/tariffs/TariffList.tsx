@@ -13,6 +13,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import {
   Table,
   TableBody,
   TableHead,
@@ -155,24 +161,42 @@ export function TariffList({
           </p>
         </div>
         <div className="flex gap-2">
-          {isSomeSelected && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" disabled={exporting}>
-                  <Download className="mr-2 h-4 w-4" />
-                  Exportar ({selectedTariffs.length})
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => handleExport('json')}>
-                  Exportar JSON
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport('csv')}>
-                  Exportar CSV
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        disabled={!isSomeSelected || exporting}
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        {isSomeSelected
+                          ? `Exportar (${selectedTariffs.length})`
+                          : 'Exportar'
+                        }
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => handleExport('json')}>
+                        Exportar JSON
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleExport('csv')}>
+                        Exportar CSV
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </TooltipTrigger>
+              {!isSomeSelected && (
+                <TooltipContent>
+                  <p>Selecciona uno o varios elementos de la lista para exportar</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+
           {canImport(currentUserRole) && (
             <Button variant="outline" asChild>
               <Link href="/tariffs/import">

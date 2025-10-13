@@ -455,24 +455,42 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
           </SelectContent>
         </Select>
         <div className="flex gap-2 ml-auto">
-          {isSomeSelected && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" disabled={exporting}>
-                  <Download className="mr-2 h-4 w-4" />
-                  Exportar ({selectedBudgets.length})
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => handleExport('json')}>
-                  Exportar JSON
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport('csv')}>
-                  Exportar CSV
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        disabled={!isSomeSelected || exporting}
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        {isSomeSelected
+                          ? `Exportar (${selectedBudgets.length})`
+                          : 'Exportar'
+                        }
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => handleExport('json')}>
+                        Exportar JSON
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleExport('csv')}>
+                        Exportar CSV
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </TooltipTrigger>
+              {!isSomeSelected && (
+                <TooltipContent>
+                  <p>Selecciona uno o varios elementos de la lista para exportar</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+
           {budgetId && (
             <Button
               variant="outline"
