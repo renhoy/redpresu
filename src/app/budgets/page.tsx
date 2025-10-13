@@ -42,18 +42,6 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
   return (
     <div className="min-h-screen bg-lime-50">
       <div className="container mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-lime-700">Presupuestos</h1>
-          <p className="text-sm text-lime-600">
-            {budget_id
-              ? 'Mostrando presupuesto y sus versiones'
-              : tariff_id
-                ? 'Presupuestos generados con esta tarifa'
-                : 'Gestiona tus presupuestos creados'}
-          </p>
-        </div>
-
         {/* Filtro activo por tariff_id */}
         {tariff_id && (
           <div className="mb-4 flex items-center gap-2">

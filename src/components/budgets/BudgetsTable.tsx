@@ -481,29 +481,15 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
 
   return (
     <div className="space-y-4">
-      {/* Filtros */}
-      <div className="flex gap-4 items-center">
-        <Input
-          placeholder="Buscar por cliente o NIF..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="max-w-xs bg-white"
-        />
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="max-w-[200px] bg-white">
-            <SelectValue placeholder="Estado" />
-          </SelectTrigger>
-          <SelectContent className="bg-white">
-            <SelectItem value="all">Todos los estados</SelectItem>
-            <SelectItem value="borrador">Borrador</SelectItem>
-            <SelectItem value="pendiente">Pendiente</SelectItem>
-            <SelectItem value="enviado">Enviado</SelectItem>
-            <SelectItem value="aprobado">Aprobado</SelectItem>
-            <SelectItem value="rechazado">Rechazado</SelectItem>
-            <SelectItem value="caducado">Caducado</SelectItem>
-          </SelectContent>
-        </Select>
-        <div className="flex gap-2 ml-auto">
+      {/* Header con botones */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-lime-700">Presupuestos</h1>
+          <p className="text-sm text-lime-600">
+            Gestiona tus presupuestos creados
+          </p>
+        </div>
+        <div className="flex gap-2">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -548,15 +534,6 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
             </Button>
           </>
 
-          {budgetId && (
-            <Button
-              variant="outline"
-              onClick={() => router.push('/budgets')}
-            >
-              Ver todos los presupuestos
-            </Button>
-          )}
-
           <Button asChild className="bg-lime-600 hover:bg-lime-700">
             <Link href="/budgets/create">
               <Plus className="mr-2 h-4 w-4" />
@@ -564,6 +541,46 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
             </Link>
           </Button>
         </div>
+      </div>
+
+      {/* Filtro activo por budgetId */}
+      {budgetId && (
+        <div className="flex items-center gap-2">
+          <p className="text-sm text-muted-foreground">
+            Mostrando presupuesto específico
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push('/budgets')}
+          >
+            Ver todos los presupuestos
+          </Button>
+        </div>
+      )}
+
+      {/* Filtros */}
+      <div className="flex gap-4 items-center">
+        <Input
+          placeholder="Buscar por cliente o NIF..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="max-w-xs bg-white"
+        />
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="max-w-[200px] bg-white">
+            <SelectValue placeholder="Estado" />
+          </SelectTrigger>
+          <SelectContent className="bg-white">
+            <SelectItem value="all">Todos los estados</SelectItem>
+            <SelectItem value="borrador">Borrador</SelectItem>
+            <SelectItem value="pendiente">Pendiente</SelectItem>
+            <SelectItem value="enviado">Enviado</SelectItem>
+            <SelectItem value="aprobado">Aprobado</SelectItem>
+            <SelectItem value="rechazado">Rechazado</SelectItem>
+            <SelectItem value="caducado">Caducado</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Vista Desktop - Tabla */}
