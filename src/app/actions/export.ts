@@ -223,7 +223,7 @@ export async function exportBudgets(
       .from('budgets')
       .select('*')
       .in('id', ids)
-      .order('budget_code', { ascending: true })
+      .order('client_name', { ascending: true })
 
     if (error) {
       console.error('[exportBudgets] Error BD:', error)
