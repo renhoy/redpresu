@@ -92,12 +92,6 @@ export function CSVUploadPreview({
               <div className="flex flex-col items-center gap-4">
                 <Upload className="h-12 w-12 text-gray-400" />
                 <div>
-                  <h3 className="font-medium text-gray-900 mb-2">
-                    Seleccionar archivo
-                  </h3>
-                  <p className="text-sm text-gray-500 mb-4">
-                    CSV con formato de precios
-                  </p>
                   <Label
                     htmlFor="csv-upload"
                     className="cursor-pointer inline-flex items-center gap-2 bg-cyan-600 text-white hover:bg-cyan-700 px-4 py-2 rounded-md text-sm font-medium"
@@ -113,20 +107,11 @@ export function CSVUploadPreview({
                     disabled={isProcessing}
                     className="hidden"
                   />
+                  <p className="text-sm text-gray-500 mb-4">
+                    CSV con formato de precios
+                  </p>
                 </div>
               </div>
-            </div>
-
-            {/* Botón de descarga de plantilla */}
-            <div className="flex justify-center">
-              <a
-                href="/tarifa-plantilla.csv"
-                download="tarifa-plantilla.csv"
-                className="inline-flex items-center gap-2 bg-cyan-600 text-white hover:bg-cyan-700 px-6 py-3 rounded-md text-sm font-medium transition-colors"
-              >
-                <FileText className="h-4 w-4" />
-                Descargar plantilla de ejemplo
-              </a>
             </div>
 
             {/* Información explicativa */}
@@ -142,14 +127,17 @@ export function CSVUploadPreview({
                   • <strong>Codificación:</strong> UTF-8
                 </p>
                 <p>
-                  • <strong>Columnas obligatorias:</strong> Nivel, ID, Nombre, Descripción, Ud, %IVA, PVP
+                  • <strong>Columnas obligatorias:</strong> Nivel, ID, Nombre,
+                  Descripción, Ud, %IVA, PVP
                 </p>
                 <ul className="list-disc list-inside ml-4 mt-2 space-y-1">
                   <li>
-                    <strong>Nivel:</strong> Capítulo, Subcapítulo, Apartado o Partida
+                    <strong>Nivel:</strong> Capítulo, Subcapítulo, Apartado o
+                    Partida
                   </li>
                   <li>
-                    <strong>ID:</strong> Numérico jerárquico (ejemplos: 1, 1.1, 1.1.1, 1.1.1.1)
+                    <strong>ID:</strong> Numérico jerárquico (ejemplos: 1, 1.1,
+                    1.1.1, 1.1.1.1)
                   </li>
                   <li>
                     Los demás campos son texto o números según corresponda
@@ -158,11 +146,24 @@ export function CSVUploadPreview({
               </div>
             </div>
 
+            {/* Botón de descarga de plantilla */}
+            <div className="flex justify-center">
+              <a
+                href="/tarifa-plantilla.csv"
+                download="tarifa-plantilla.csv"
+                className="inline-flex items-center gap-2 bg-cyan-600 text-white hover:bg-cyan-700 px-6 py-3 rounded-md text-sm font-medium transition-colors"
+              >
+                <FileText className="h-4 w-4" />
+                Descargar plantilla de ejemplo
+              </a>
+            </div>
+
             {/* Errores y advertencias de procesamiento */}
             {processingErrors.length > 0 && (
               <div className="space-y-3">
                 {/* Separar errores de advertencias */}
-                {processingErrors.filter((e) => e.severity !== 'warning').length > 0 && (
+                {processingErrors.filter((e) => e.severity !== "warning")
+                  .length > 0 && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                     <div className="flex items-start gap-2">
                       <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
@@ -172,14 +173,19 @@ export function CSVUploadPreview({
                         </h4>
                         <div className="space-y-2">
                           {processingErrors
-                            .filter((e) => e.severity !== 'warning')
+                            .filter((e) => e.severity !== "warning")
                             .map((error, index) => (
                               <div key={index} className="text-sm text-red-800">
                                 <p className="mb-1">
                                   {error.line ? `Línea ${error.line}: ` : ""}
-                                  {error.message.replace('Descarga plantilla: /tarifa-plantilla.csv', '')}
+                                  {error.message.replace(
+                                    "Descarga plantilla: /tarifa-plantilla.csv",
+                                    ""
+                                  )}
                                 </p>
-                                {error.message.includes('/tarifa-plantilla.csv') && (
+                                {error.message.includes(
+                                  "/tarifa-plantilla.csv"
+                                ) && (
                                   <a
                                     href="/tarifa-plantilla.csv"
                                     download="tarifa-plantilla.csv"
@@ -198,19 +204,24 @@ export function CSVUploadPreview({
                 )}
 
                 {/* Advertencias */}
-                {processingErrors.filter((e) => e.severity === 'warning').length > 0 && (
+                {processingErrors.filter((e) => e.severity === "warning")
+                  .length > 0 && (
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                     <div className="flex items-start gap-2">
                       <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
                       <div className="flex-1">
                         <h4 className="font-medium text-yellow-900 mb-2">
-                          ⚠️ Advertencias encontradas (no bloquean la importación)
+                          ⚠️ Advertencias encontradas (no bloquean la
+                          importación)
                         </h4>
                         <div className="space-y-2">
                           {processingErrors
-                            .filter((e) => e.severity === 'warning')
+                            .filter((e) => e.severity === "warning")
                             .map((warning, index) => (
-                              <p key={index} className="text-sm text-yellow-800">
+                              <p
+                                key={index}
+                                className="text-sm text-yellow-800"
+                              >
                                 {warning.message}
                               </p>
                             ))}

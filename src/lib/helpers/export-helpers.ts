@@ -8,22 +8,21 @@ import type { Tariff } from '@/lib/types/database'
 
 /**
  * Convierte una tarifa a formato CSV de estructura de precios
- * Formato compatible con plantilla de importación (sin IDs ni metadata)
+ * Formato compatible con plantilla de importación
  */
 export function convertTariffToPriceStructureCSV(tariff: Tariff): string {
   // Headers CSV (mismo formato que plantilla)
   const headers = [
-    'Capítulo',
-    'Subcapítulo',
-    'Sección',
-    'Código',
+    'Nivel',
+    'ID',
+    'Nombre',
     'Descripción',
-    'Precio Venta',
-    'IVA (%)',
-    'Precio Final'
+    'Ud',
+    '%IVA',
+    'PVP'
   ]
 
-  const rows: string[] = [headers.join(',')]
+  const rows: string[] = [headers.map(h => `"${h}"`).join(',')]
 
   // Parsear json_tariff_data
   let items: any[] = []
@@ -45,71 +44,74 @@ export function convertTariffToPriceStructureCSV(tariff: Tariff): string {
 }
 
 /**
+ * Mapeo de niveles internos a nombres de visualización
+ */
+const LEVEL_NAMES: Record<string, string> = {
+  'chapter': 'Capítulo',
+  'subchapter': 'Subcapítulo',
+  'section': 'Apartado',
+  'item': 'Partida'
+}
+
+/**
  * Aplana la jerarquía para formato de estructura de precios
  */
 function flattenHierarchyForPriceStructure(
   items: any[],
-  rows: string[],
-  parentPath: { chapter?: string; subchapter?: string; section?: string } = {}
+  rows: string[]
 ) {
   for (const item of items) {
     const level = item.level || 'item'
-    const currentPath = { ...parentPath }
+    const levelName = LEVEL_NAMES[level] || level
 
-    // Actualizar path según nivel
-    if (level === 'chapter') {
-      currentPath.chapter = item.description
-      currentPath.subchapter = undefined
-      currentPath.section = undefined
-    } else if (level === 'subchapter') {
-      currentPath.subchapter = item.description
-      currentPath.section = undefined
-    } else if (level === 'section') {
-      currentPath.section = item.description
-    }
-
-    // Construir fila CSV
+    // Construir fila CSV según formato plantilla
     const row = [
-      escapeCsvValue(currentPath.chapter || ''),
-      escapeCsvValue(currentPath.subchapter || ''),
-      escapeCsvValue(currentPath.section || ''),
-      escapeCsvValue(item.code || ''),
-      escapeCsvValue(item.description || ''),
-      item.price_sell || '',
-      item.iva || '',
-      item.price_final || ''
+      `"${levelName}"`,                                    // Nivel
+      item.code || item.id,                                // ID
+      escapeCsvValue(item.name || ''),                     // Nombre
+      level === 'item' ? escapeCsvValue(item.description || '') : '', // Descripción (solo items)
+      level === 'item' ? escapeCsvValue(item.unit || '') : '',        // Ud (solo items)
+      level === 'item' ? (item.iva || item.iva_percentage || '') : '', // %IVA (solo items)
+      level === 'item' ? (item.price_sell || '') : ''                  // PVP (solo items)
     ]
 
     rows.push(row.join(','))
 
     // Recursión para hijos
     if (item.children && item.children.length > 0) {
-      flattenHierarchyForPriceStructure(item.children, rows, currentPath)
+      flattenHierarchyForPriceStructure(item.children, rows)
     }
   }
 }
 
 /**
  * Convierte múltiples tarifas a CSV de estructura de precios
- * Cada tarifa se separa con un encabezado
+ * Genera un CSV por tarifa con el nombre de la tarifa en el filename
+ * Para múltiples tarifas, se concatenan todas en un solo CSV con separación por línea vacía
  */
 export function convertMultipleTariffsToPriceStructureCSV(tariffs: Tariff[]): string {
   if (tariffs.length === 0) {
     return ''
   }
 
+  // Si es solo una tarifa, usar la función singular
+  if (tariffs.length === 1) {
+    return convertTariffToPriceStructureCSV(tariffs[0])
+  }
+
   const sections: string[] = []
 
-  for (const tariff of tariffs) {
-    // Encabezado de tarifa
-    sections.push(`\n# TARIFA: ${tariff.name}`)
-    sections.push(`# ID: ${tariff.id}`)
-    sections.push('')
+  for (let i = 0; i < tariffs.length; i++) {
+    const tariff = tariffs[i]
 
     // Estructura de precios
     const csv = convertTariffToPriceStructureCSV(tariff)
     sections.push(csv)
-    sections.push('')
+
+    // Separación entre tarifas (excepto la última)
+    if (i < tariffs.length - 1) {
+      sections.push('') // Línea vacía de separación
+    }
   }
 
   return sections.join('\n')
