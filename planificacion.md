@@ -202,19 +202,36 @@ Semanas 11-12: Import/Export + Responsive Mobile
 
 ---
 
-## SEMANA 11-12: Import/Export + Responsive ⏳
+## ✅ SEMANA 11-12: Import/Export + Responsive
 
 ### Objetivo: Backup, movilidad, experiencia tablet/móvil
 
-**Bloque 8: Import/Export**
+**✅ Bloque 8: Import/Export (COMPLETADO 2025-01-13)**
 
 | Día | Tarea                   | Responsable | Estado |
 | --- | ----------------------- | ----------- | ------ |
-| 1-2 | Exportar JSON/CSV       | Backend     | ⏳     |
-| 3-4 | Importar con validación | Backend     | ⏳     |
-| 5   | UI selección múltiple   | Frontend    | ⏳     |
+| 1-2 | Exportar JSON/CSV       | Backend     | ✅     |
+| 3-4 | Importar con validación | Backend     | ✅     |
+| 5   | UI selección múltiple   | Frontend    | ✅     |
 
-**Bloque 9: Responsive Mobile-First**
+**Implementación completada:**
+
+- ✅ Server Actions exportTariffs() y exportBudgets()
+- ✅ Helpers conversión CSV con aplanado jerárquico
+- ✅ Checkboxes selección múltiple en TariffList y BudgetsTable
+- ✅ Dropdown menu export con contador de seleccionados
+- ✅ Server Actions importTariffs() y importBudgets()
+- ✅ Validación completa estructura JSON
+- ✅ Regeneración automática de IDs
+- ✅ Páginas /tariffs/import y /budgets/import
+- ✅ Componentes ImportTariffsForm y ImportBudgetsForm
+- ✅ Instrucciones detalladas y validación archivos
+- ✅ Permisos por rol (solo admin/superadmin)
+- ✅ Botones "Importar" en headers de listados
+
+**Commit:** `feat(import-export): implementar sistema completo import/export` (4b44717)
+
+**⏳ Bloque 9: Responsive Mobile-First**
 
 | Día  | Tarea                         | Responsable | Estado |
 | ---- | ----------------------------- | ----------- | ------ |
@@ -225,16 +242,22 @@ Semanas 11-12: Import/Export + Responsive Mobile
 
 - ✅ Exportar tarifas/presupuestos a JSON/CSV
 - ✅ Importar desde archivo con validación
-- ✅ Listados adaptativos (tabla desktop, cards mobile)
-- ✅ Formulario presupuesto con navegación por niveles en móvil
-- ✅ App completamente funcional en tablet/smartphone
+- ⏳ Listados adaptativos (tabla desktop, cards mobile)
+- ⏳ Formulario presupuesto con navegación por niveles en móvil
+- ⏳ App completamente funcional en tablet/smartphone
 
-**Criterio de completado:**
+**Criterio de completado Bloque 8:**
 
-- Backup/restore funcional
-- Responsive fluido sin bugs
-- Touch-friendly en todas las pantallas
-- Testing en dispositivos reales
+- ✅ Backup/restore funcional con export/import
+- ✅ Validación exhaustiva en importación
+- ✅ Limpieza de campos internos y regeneración IDs
+- ✅ UI intuitiva con instrucciones detalladas
+
+**Criterio de completado Bloque 9 (pendiente):**
+
+- ⏳ Responsive fluido sin bugs
+- ⏳ Touch-friendly en todas las pantallas
+- ⏳ Testing en dispositivos reales
 
 ---
 
@@ -597,7 +620,7 @@ FASE 3 (PLANIFICADA) 📋
 
 **Documento:** Planificación Fase 2
 **Versión:** 1.2
-**Fecha:** 2025-01-10 (actualizado)
-**Última actualización:** Multi-tenant + Sistema Notas completado
-**Estado:** Activo - 39% completado (5/9 bloques)
-**Próxima revisión:** Fin Semana 8 (Hito 6)
+**Fecha:** 2025-01-13 (actualizado)
+**Última actualización:** Bloque 8 Import/Export completado
+**Estado:** Activo - 78% completado (7/9 bloques)
+**Próxima revisión:** Fin Semana 12 (Hito 8)

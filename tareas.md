@@ -689,21 +689,24 @@ Completado:
 
 ---
 
-## BLOQUE 8: IMPORT/EXPORT ⏳
+## ✅ BLOQUE 8: IMPORT/EXPORT - COMPLETADO
 
-### Tareas Medias:
+### Tareas Completadas:
 
 #### 8.1 Exportar Tarifas/Presupuestos
 
-**Prioridad:** MEDIA | **Estimación:** 2 días | **Estado:** ⏳ Pendiente
+**Prioridad:** MEDIA | **Estimación:** 2 días | **Estado:** ✅ Completado (2025-01-13)
 
-- [ ] Server Action `exportTariffs(ids, format)`
-- [ ] Server Action `exportBudgets(ids, format)`
-- [ ] Función `convertTariffsToCSV()`
-- [ ] Función `convertBudgetsToCSV()`
-- [ ] UI: checkboxes selección múltiple
-- [ ] DropdownMenu exportar (JSON/CSV)
-- [ ] Generar y descargar archivo
+- ✅ Server Action `exportTariffs(ids, format)`
+- ✅ Server Action `exportBudgets(ids, format)`
+- ✅ Función `convertTariffsToCSV()` con aplanado jerárquico
+- ✅ Función `convertBudgetsToCSV()` con aplanado jerárquico
+- ✅ Función `convertTariffsToJSON()` y `convertBudgetsToJSON()`
+- ✅ Función `downloadFile()` para descarga automática
+- ✅ UI: checkboxes selección múltiple en TariffList
+- ✅ UI: checkboxes selección múltiple en BudgetsTable (con jerarquía)
+- ✅ DropdownMenu exportar (JSON/CSV) con contador
+- ✅ Generar y descargar archivo automáticamente
 
 **Archivos nuevos:**
 
@@ -712,40 +715,90 @@ Completado:
 
 **Archivos modificados:**
 
-- `src/components/tariffs/TariffList.tsx`
-- `src/components/budgets/BudgetList.tsx`
+- `src/components/tariffs/TariffList.tsx` (checkboxes, export dropdown)
+- `src/components/tariffs/TariffRow.tsx` (checkbox prop)
+- `src/components/budgets/BudgetsTable.tsx` (checkboxes, export dropdown)
 
 **Criterios de completado:**
 
-- Exportar JSON completo
-- Exportar CSV solo items
-- Descarga archivo automática
+- ✅ Exportar JSON completo con estructura limpia
+- ✅ Exportar CSV con items aplanados y path jerárquico
+- ✅ Descarga archivo automática con nombre timestamped
+- ✅ Solo admin/superadmin pueden exportar
+- ✅ Contador de elementos seleccionados
+- ✅ Estados de carga y toast notifications
 
 ---
 
 #### 8.2 Importar Tarifas/Presupuestos
 
-**Prioridad:** MEDIA | **Estimación:** 2 días | **Estado:** ⏳ Pendiente
+**Prioridad:** MEDIA | **Estimación:** 2 días | **Estado:** ✅ Completado (2025-01-13)
 
-- [ ] Server Action `importTariffs(content, format)`
-- [ ] Server Action `importBudgets(content, format)`
-- [ ] Validar estructura JSON
-- [ ] Limpiar IDs (generar nuevos)
-- [ ] Página `/app/tariffs/import/page.tsx`
-- [ ] Página `/app/budgets/import/page.tsx`
-- [ ] Input file + validación
+- ✅ Server Action `importTariffs(content)`
+- ✅ Server Action `importBudgets(content)`
+- ✅ Validar estructura JSON completa
+- ✅ Validar campos requeridos por tarifa/presupuesto
+- ✅ Limpiar IDs (regenerar automáticamente)
+- ✅ Asignar empresa_id y user_id actual
+- ✅ Verificar tarifas existentes para presupuestos
+- ✅ Resetear relaciones (parent_budget_id, is_template)
+- ✅ Página `/app/tariffs/import/page.tsx`
+- ✅ Página `/app/budgets/import/page.tsx`
+- ✅ Componente `ImportTariffsForm.tsx`
+- ✅ Componente `ImportBudgetsForm.tsx`
+- ✅ Input file + validación formato y tamaño
+- ✅ Instrucciones detalladas en cards
+- ✅ Botones "Importar" en headers de listados
 
 **Archivos nuevos:**
 
 - `src/app/actions/import.ts`
 - `src/app/tariffs/import/page.tsx`
 - `src/app/budgets/import/page.tsx`
+- `src/components/tariffs/ImportTariffsForm.tsx`
+- `src/components/budgets/ImportBudgetsForm.tsx`
+
+**Archivos modificados:**
+
+- `src/app/budgets/page.tsx` (botón importar)
 
 **Criterios de completado:**
 
-- Importar JSON válido
-- IDs regenerados correctamente
-- Errores manejados con mensajes claros
+- ✅ Importar JSON válido con validación completa
+- ✅ IDs regenerados correctamente en BD
+- ✅ Errores manejados con mensajes claros
+- ✅ Solo admin/superadmin pueden importar
+- ✅ Validación tamaño archivo (máx 5MB)
+- ✅ Revalidación automática después de importar
+- ✅ Redirección automática tras éxito
+
+---
+
+## ✅ BLOQUE 8 COMPLETADO: 2/2 tareas (100%)
+
+Completado:
+✅ 8.1 Exportar Tarifas/Presupuestos (JSON + CSV con aplanado jerárquico)
+✅ 8.2 Importar Tarifas/Presupuestos (validación completa + permisos)
+
+**Funcionalidades clave implementadas:**
+
+- ✅ Sistema completo de selección múltiple con checkboxes
+- ✅ Exportación JSON/CSV con dropdown menu
+- ✅ Aplanado jerárquico para CSV con path completo
+- ✅ Importación con validación exhaustiva
+- ✅ Regeneración automática de IDs
+- ✅ Limpieza de campos internos
+- ✅ Verificación de relaciones (tarifas existentes)
+- ✅ Páginas de importación con instrucciones
+- ✅ Permisos por rol (solo admin/superadmin)
+- ✅ UX completa: loading, toasts, redirects
+
+**Archivos nuevos:** 7 (actions, helpers, pages, components)
+**Archivos modificados:** 4 (TariffList, TariffRow, BudgetsTable, budgets/page)
+**Funcionalidad nueva:** Import/Export completo con validación y permisos
+**Siguiente bloque:** Bloque 9 - Responsive Mobile-First
+
+**Commit:** `feat(import-export): implementar sistema completo import/export` (4b44717)
 
 ---
 
