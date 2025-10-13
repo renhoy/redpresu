@@ -85,13 +85,12 @@ export async function importTariffs(
         // Continuar sin IVAs presentes si hay error
       }
 
-      // Limpiar campos internos
+      // Eliminar campos internos y regenerables
+      const { id, created_at, updated_at, empresa_id, user_id, ...tariffData } = tariff
+
+      // Construir tarifa limpia
       const cleanTariff = {
-        ...tariff,
-        // Regenerar campos
-        id: undefined, // nuevo ID generado por DB
-        created_at: undefined,
-        updated_at: undefined,
+        ...tariffData,
         // Asignar a usuario actual
         empresa_id: user.empresa_id,
         user_id: user.id,
