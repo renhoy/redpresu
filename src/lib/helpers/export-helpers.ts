@@ -84,38 +84,6 @@ function flattenHierarchyForPriceStructure(
   }
 }
 
-/**
- * Convierte múltiples tarifas a CSV de estructura de precios
- * Genera un CSV por tarifa con el nombre de la tarifa en el filename
- * Para múltiples tarifas, se concatenan todas en un solo CSV con separación por línea vacía
- */
-export function convertMultipleTariffsToPriceStructureCSV(tariffs: Tariff[]): string {
-  if (tariffs.length === 0) {
-    return ''
-  }
-
-  // Si es solo una tarifa, usar la función singular
-  if (tariffs.length === 1) {
-    return convertTariffToPriceStructureCSV(tariffs[0])
-  }
-
-  const sections: string[] = []
-
-  for (let i = 0; i < tariffs.length; i++) {
-    const tariff = tariffs[i]
-
-    // Estructura de precios
-    const csv = convertTariffToPriceStructureCSV(tariff)
-    sections.push(csv)
-
-    // Separación entre tarifas (excepto la última)
-    if (i < tariffs.length - 1) {
-      sections.push('') // Línea vacía de separación
-    }
-  }
-
-  return sections.join('\n')
-}
 
 /**
  * Convierte un array de tarifas a formato CSV

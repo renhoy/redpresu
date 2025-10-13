@@ -14,10 +14,37 @@ import {
   convertTariffsToCSV,
   convertTariffsToJSON,
   convertTariffToPriceStructureCSV,
-  convertMultipleTariffsToPriceStructureCSV,
   convertBudgetsToCSV,
   convertBudgetsToJSON
 } from '@/lib/helpers/export-helpers'
+
+/**
+ * Genera nombre de archivo para estructura de precios CSV
+ */
+function generatePriceStructureFilename(
+  tariffName: string,
+  index: number,
+  total: number,
+  date: string
+): string {
+  const name = tariffName.replace(/\s+/g, '-')
+  const position = String(index + 1).padStart(2, '0')
+  const totalStr = String(total).padStart(2, '0')
+  return `exp_precios_${name}_${date}_${position}de${totalStr}.csv`
+}
+
+/**
+ * Genera nombre de archivo para tarifa JSON
+ */
+function generateJSONFilename(
+  tariffName: string,
+  index: number,
+  date: string
+): string {
+  const name = tariffName.replace(/\s+/g, '-')
+  const position = String(index + 1).padStart(2, '0')
+  return `exp-tarifa_${name}_${date}_${position}.json`
+}
 
 /**
  * Exporta tarifas en formato especificado
@@ -27,7 +54,10 @@ import {
 export async function exportTariffs(
   ids: string[],
   format: 'json' | 'csv' | 'price-structure'
-): Promise<ActionResult<{ content: string; filename: string; mimeType: string }>> {
+): Promise<ActionResult<
+  | { content: string; filename: string; mimeType: string }
+  | { files: Array<{ content: string; filename: string; mimeType: string }> }
+>> {
   try {
     console.log('[exportTariffs] Iniciando...', { ids, format })
 
@@ -66,38 +96,74 @@ export async function exportTariffs(
     }
 
     // 4. Convertir según formato
-    let content: string
-    let filename: string
-    let mimeType: string
+    const date = new Date().toISOString().split('T')[0]
 
     if (format === 'json') {
-      content = convertTariffsToJSON(tariffs)
-      filename = `tarifas_export_${new Date().toISOString().split('T')[0]}.json`
-      mimeType = 'application/json'
-    } else if (format === 'price-structure') {
-      // Exportar estructura de precios (CSV compatible con plantilla)
+      // JSON: siempre múltiples archivos si hay más de una tarifa
       if (tariffs.length === 1) {
-        content = convertTariffToPriceStructureCSV(tariffs[0])
-        filename = `estructura_precios_${tariffs[0].name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`
+        const content = convertTariffsToJSON(tariffs)
+        const filename = generateJSONFilename(tariffs[0].name, 0, date)
+        console.log('[exportTariffs] Éxito:', { count: 1, format, filename })
+        return {
+          success: true,
+          data: {
+            content,
+            filename,
+            mimeType: 'application/json'
+          }
+        }
       } else {
-        content = convertMultipleTariffsToPriceStructureCSV(tariffs)
-        filename = `estructuras_precios_${new Date().toISOString().split('T')[0]}.csv`
+        // Múltiples tarifas: generar un archivo JSON por tarifa
+        const files = tariffs.map((tariff, index) => ({
+          content: convertTariffsToJSON([tariff]),
+          filename: generateJSONFilename(tariff.name, index, date),
+          mimeType: 'application/json'
+        }))
+        console.log('[exportTariffs] Éxito:', { count: files.length, format, filesCount: files.length })
+        return {
+          success: true,
+          data: { files }
+        }
       }
-      mimeType = 'text/csv;charset=utf-8;'
+    } else if (format === 'price-structure') {
+      // CSV estructura de precios: siempre múltiples archivos si hay más de una tarifa
+      if (tariffs.length === 1) {
+        const content = convertTariffToPriceStructureCSV(tariffs[0])
+        const filename = generatePriceStructureFilename(tariffs[0].name, 0, 1, date)
+        console.log('[exportTariffs] Éxito:', { count: 1, format, filename })
+        return {
+          success: true,
+          data: {
+            content,
+            filename,
+            mimeType: 'text/csv;charset=utf-8;'
+          }
+        }
+      } else {
+        // Múltiples tarifas: generar un archivo CSV por tarifa
+        const files = tariffs.map((tariff, index) => ({
+          content: convertTariffToPriceStructureCSV(tariff),
+          filename: generatePriceStructureFilename(tariff.name, index, tariffs.length, date),
+          mimeType: 'text/csv;charset=utf-8;'
+        }))
+        console.log('[exportTariffs] Éxito:', { count: files.length, format, filesCount: files.length })
+        return {
+          success: true,
+          data: { files }
+        }
+      }
     } else {
-      content = convertTariffsToCSV(tariffs)
-      filename = `tarifas_export_${new Date().toISOString().split('T')[0]}.csv`
-      mimeType = 'text/csv;charset=utf-8;'
-    }
-
-    console.log('[exportTariffs] Éxito:', { count: tariffs.length, format, filename })
-
-    return {
-      success: true,
-      data: {
-        content,
-        filename,
-        mimeType
+      // CSV completo: siempre un único archivo
+      const content = convertTariffsToCSV(tariffs)
+      const filename = `tarifas_export_${date}.csv`
+      console.log('[exportTariffs] Éxito:', { count: tariffs.length, format, filename })
+      return {
+        success: true,
+        data: {
+          content,
+          filename,
+          mimeType: 'text/csv;charset=utf-8;'
+        }
       }
     }
   } catch (error) {

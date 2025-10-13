@@ -147,11 +147,22 @@ export function TariffList({
     const result = await exportTariffs(selectedTariffs, format)
 
     if (result.success && result.data) {
-      downloadFile(result.data.content, result.data.filename, result.data.mimeType)
-      if (format === 'json') {
-        toast.success(`${selectedTariffs.length} tarifa(s) exportada(s) a JSON`)
+      // Detectar si es un array de archivos o un único archivo
+      if ('files' in result.data) {
+        // Múltiples archivos: descargar con delay
+        for (const file of result.data.files) {
+          downloadFile(file.content, file.filename, file.mimeType)
+          await new Promise(resolve => setTimeout(resolve, 300)) // delay 300ms
+        }
+        toast.success(`${result.data.files.length} archivo(s) exportado(s)`)
       } else {
-        toast.success(`Estructura de precios exportada a CSV`)
+        // Un único archivo
+        downloadFile(result.data.content, result.data.filename, result.data.mimeType)
+        if (format === 'json') {
+          toast.success(`Tarifa exportada a JSON`)
+        } else {
+          toast.success(`Estructura de precios exportada a CSV`)
+        }
       }
       setSelectedTariffs([])
     } else {
