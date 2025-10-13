@@ -8,12 +8,6 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Pencil, Trash2, FileStack, ChevronDown, ChevronRight, FileText, Download } from 'lucide-react'
 import { deleteBudget, updateBudgetStatus } from '@/app/actions/budgets'
@@ -153,14 +147,14 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
   const isSomeSelected = selectedBudgets.length > 0
 
   // Exportación
-  const handleExport = async (format: 'json' | 'csv') => {
+  const handleExport = async () => {
     if (selectedBudgets.length === 0) {
       toast.error('Selecciona al menos un presupuesto')
       return
     }
 
     setExporting(true)
-    const result = await exportBudgets(selectedBudgets, format)
+    const result = await exportBudgets(selectedBudgets, 'json')
 
     if (result.success && result.data) {
       downloadFile(result.data.content, result.data.filename, result.data.mimeType)
@@ -458,30 +452,17 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        disabled={!isSomeSelected || exporting}
-                      >
-                        <Download className="mr-2 h-4 w-4" />
-                        {isSomeSelected
-                          ? `Exportar (${selectedBudgets.length})`
-                          : 'Exportar'
-                        }
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem onClick={() => handleExport('json')}>
-                        Exportar JSON
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleExport('csv')}>
-                        Exportar CSV
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                <Button
+                  variant="outline"
+                  disabled={!isSomeSelected || exporting}
+                  onClick={handleExport}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  {isSomeSelected
+                    ? `Exportar (${selectedBudgets.length})`
+                    : 'Exportar'
+                  }
+                </Button>
               </TooltipTrigger>
               {!isSomeSelected && (
                 <TooltipContent>

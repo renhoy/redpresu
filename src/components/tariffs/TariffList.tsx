@@ -7,12 +7,6 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -130,14 +124,14 @@ export function TariffList({
   const isSomeSelected = selectedTariffs.length > 0
 
   // Exportación
-  const handleExport = async (format: 'json' | 'csv') => {
+  const handleExport = async () => {
     if (selectedTariffs.length === 0) {
       toast.error('Selecciona al menos una tarifa')
       return
     }
 
     setExporting(true)
-    const result = await exportTariffs(selectedTariffs, format)
+    const result = await exportTariffs(selectedTariffs, 'json')
 
     if (result.success && result.data) {
       downloadFile(result.data.content, result.data.filename, result.data.mimeType)
@@ -164,30 +158,17 @@ export function TariffList({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        disabled={!isSomeSelected || exporting}
-                      >
-                        <Download className="mr-2 h-4 w-4" />
-                        {isSomeSelected
-                          ? `Exportar (${selectedTariffs.length})`
-                          : 'Exportar'
-                        }
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem onClick={() => handleExport('json')}>
-                        Exportar JSON
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleExport('csv')}>
-                        Exportar CSV
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                <Button
+                  variant="outline"
+                  disabled={!isSomeSelected || exporting}
+                  onClick={handleExport}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  {isSomeSelected
+                    ? `Exportar (${selectedTariffs.length})`
+                    : 'Exportar'
+                  }
+                </Button>
               </TooltipTrigger>
               {!isSomeSelected && (
                 <TooltipContent>
