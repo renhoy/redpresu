@@ -21,6 +21,7 @@ interface RichTextEditorDialogProps {
   description?: string
   placeholder?: string
   disabled?: boolean
+  buttonOnly?: boolean
 }
 
 export function RichTextEditorDialog({
@@ -29,7 +30,8 @@ export function RichTextEditorDialog({
   label,
   description,
   placeholder = 'Escribe aquí...',
-  disabled = false
+  disabled = false,
+  buttonOnly = false
 }: RichTextEditorDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [tempValue, setTempValue] = useState(value)
@@ -59,34 +61,76 @@ export function RichTextEditorDialog({
   const plainText = getPlainText(value)
   const preview = plainText.trim() ? (plainText.length > 100 ? plainText.substring(0, 100) + '...' : plainText) : 'Sin contenido'
 
-  return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <div className="space-y-2">
-        {/* Campo de solo lectura con preview */}
-        <div className="relative">
-          <div className="bg-gray-50 border border-gray-300 rounded-md p-3 pr-24 min-h-[80px] text-sm text-gray-700">
-            <div
-              className="prose prose-sm max-w-none"
-              dangerouslySetInnerHTML={{ __html: value || '<p class="text-gray-400">Sin contenido</p>' }}
+  // Si buttonOnly es true, solo mostrar el botón (usado en labels)
+  if (buttonOnly) {
+    return (
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleOpen}
+            disabled={disabled}
+            className="gap-2 bg-cyan-600 text-white hover:bg-cyan-700 hover:text-white border-cyan-600"
+          >
+            <Edit className="h-3 w-3" />
+            Editar
+          </Button>
+        </DialogTrigger>
+
+        <DialogContent className="max-w-[90vw] max-h-[90vh] w-full">
+          <DialogHeader>
+            <DialogTitle>{label}</DialogTitle>
+            {description && (
+              <DialogDescription>{description}</DialogDescription>
+            )}
+          </DialogHeader>
+
+          <div className="overflow-y-auto max-h-[calc(90vh-200px)]">
+            <RichTextEditor
+              value={tempValue}
+              onChange={setTempValue}
+              placeholder={placeholder}
+              disabled={disabled}
             />
           </div>
-          <DialogTrigger asChild>
+
+          <DialogFooter>
             <Button
               type="button"
               variant="outline"
-              size="sm"
-              onClick={handleOpen}
-              disabled={disabled}
-              className="absolute top-2 right-2 gap-2 bg-cyan-600 text-white hover:bg-cyan-700 border-cyan-600"
+              onClick={handleCancel}
+              className="border-gray-600 text-gray-600 hover:bg-gray-50"
             >
-              <Edit className="h-3 w-3" />
-              Editar
+              Cancelar
             </Button>
-          </DialogTrigger>
-        </div>
+            <Button
+              type="button"
+              onClick={handleSave}
+              className="bg-cyan-600 hover:bg-cyan-700 text-white"
+            >
+              Guardar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
+  // Modo completo con preview
+  return (
+    <>
+      {/* Campo de solo lectura con preview */}
+      <div className="bg-gray-50 border border-gray-300 rounded-md p-3 min-h-[80px] text-sm text-gray-700">
+        <div
+          className="prose prose-sm max-w-none"
+          dangerouslySetInnerHTML={{ __html: value || '<p class="text-gray-400">Sin contenido</p>' }}
+        />
       </div>
 
-      <DialogContent className="max-w-3xl max-h-[80vh]">
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="max-w-[90vw] max-h-[90vh] w-full">
         <DialogHeader>
           <DialogTitle>{label}</DialogTitle>
           {description && (
@@ -94,33 +138,34 @@ export function RichTextEditorDialog({
           )}
         </DialogHeader>
 
-        <div className="overflow-y-auto max-h-[calc(80vh-200px)]">
-          <RichTextEditor
-            value={tempValue}
-            onChange={setTempValue}
-            placeholder={placeholder}
-            disabled={disabled}
-          />
-        </div>
+          <div className="overflow-y-auto max-h-[calc(90vh-200px)]">
+            <RichTextEditor
+              value={tempValue}
+              onChange={setTempValue}
+              placeholder={placeholder}
+              disabled={disabled}
+            />
+          </div>
 
-        <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCancel}
-            className="border-gray-600 text-gray-600 hover:bg-gray-50"
-          >
-            Cancelar
-          </Button>
-          <Button
-            type="button"
-            onClick={handleSave}
-            className="bg-cyan-600 hover:bg-cyan-700"
-          >
-            Guardar
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCancel}
+              className="border-gray-600 text-gray-600 hover:bg-gray-50"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSave}
+              className="bg-cyan-600 hover:bg-cyan-700 text-white"
+            >
+              Guardar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
