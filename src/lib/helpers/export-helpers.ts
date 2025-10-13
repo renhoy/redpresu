@@ -71,8 +71,8 @@ function flattenHierarchyForPriceStructure(
       escapeCsvValue(item.name || ''),                     // Nombre
       level === 'item' ? escapeCsvValue(item.description || '') : '', // Descripción (solo items)
       level === 'item' ? escapeCsvValue(item.unit || '') : '',        // Ud (solo items)
-      level === 'item' ? (item.iva || item.iva_percentage || '') : '', // %IVA (solo items)
-      level === 'item' ? (item.price_sell || '') : ''                  // PVP (solo items)
+      level === 'item' ? (item.iva_percentage || item.iva || '') : '', // %IVA (solo items)
+      level === 'item' ? (item.pvp || '') : ''                         // PVP (solo items)
     ]
 
     rows.push(row.join(','))
