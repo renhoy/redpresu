@@ -20,7 +20,7 @@ import {
 import { Info } from 'lucide-react'
 import { LogoUploader } from './LogoUploader'
 import { TemplateSelector } from './TemplateSelector'
-import { RichTextEditor } from '@/components/shared/RichTextEditor'
+import { RichTextEditorDialog } from '@/components/shared/RichTextEditorDialog'
 import { type TariffFormData } from '@/app/actions/tariffs'
 
 interface TariffFormFieldsProps {
@@ -391,11 +391,12 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                 </Tooltip>
               </TooltipProvider>
             </div>
-            <RichTextEditor
+            <RichTextEditorDialog
               value={data.summary_note}
               onChange={(html) => handleInputChange('summary_note', html)}
-              placeholder="Texto que aparecerá en el resumen del PDF"
-              className={errors.summary_note ? 'border-destructive' : ''}
+              label="Texto resumen PDF"
+              description="Texto que aparecerá en la sección de resumen del PDF generado"
+              placeholder="Escribe el texto del resumen aquí..."
             />
             {errors.summary_note && (
               <p className="text-sm text-destructive mt-1">{errors.summary_note}</p>
@@ -418,11 +419,12 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                 </Tooltip>
               </TooltipProvider>
             </div>
-            <RichTextEditor
+            <RichTextEditorDialog
               value={data.conditions_note}
               onChange={(html) => handleInputChange('conditions_note', html)}
-              placeholder="Condiciones generales que aparecerán en el PDF"
-              className={errors.conditions_note ? 'border-destructive' : ''}
+              label="Texto condiciones PDF"
+              description="Condiciones generales que aparecerán en el PDF (forma de pago, plazos, garantías, etc.)"
+              placeholder="Escribe las condiciones del presupuesto aquí..."
             />
             {errors.conditions_note && (
               <p className="text-sm text-destructive mt-1">{errors.conditions_note}</p>
@@ -453,11 +455,12 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                 </Tooltip>
               </TooltipProvider>
             </div>
-            <RichTextEditor
+            <RichTextEditorDialog
               value={data.legal_note}
               onChange={(html) => handleInputChange('legal_note', html)}
-              placeholder="Notas legales que aparecerán en la página de presupuesto"
-              className={errors.legal_note ? 'border-destructive' : ''}
+              label="Notas legales página presupuesto"
+              description="Notas legales que aparecerán en la página web del presupuesto (RGPD, privacidad, avisos legales, etc.)"
+              placeholder="Escribe las notas legales aquí..."
             />
             {errors.legal_note && (
               <p className="text-sm text-destructive mt-1">{errors.legal_note}</p>
