@@ -181,6 +181,7 @@ export function TariffList({
                   variant="outline"
                   disabled={!isSomeSelected || exporting}
                   onClick={handleExportClick}
+                  className="border-cyan-600 text-cyan-600 hover:bg-cyan-50"
                 >
                   <Download className="mr-2 h-4 w-4" />
                   {isSomeSelected
@@ -199,9 +200,9 @@ export function TariffList({
 
           {/* Export Dialog */}
           <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
-            <DialogContent>
+            <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Exportar {isSingleSelection ? 'Tarifa' : 'Tarifas'}</DialogTitle>
+                <DialogTitle className="text-cyan-600">Exportar {isSingleSelection ? 'Tarifa' : 'Tarifas'}</DialogTitle>
                 <DialogDescription>
                   {isSingleSelection
                     ? 'Selecciona el formato de exportación para la tarifa'
@@ -209,40 +210,40 @@ export function TariffList({
                   }
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 py-4">
+              <div className="space-y-3 py-4">
                 <Button
-                  className="w-full justify-start h-auto py-4"
+                  className="w-full justify-start h-auto py-3 border-cyan-600 hover:bg-cyan-50"
                   variant="outline"
                   onClick={() => handleExport('json')}
                   disabled={exporting}
                 >
-                  <div className="flex flex-col items-start text-left">
-                    <div className="font-semibold">
+                  <div className="flex flex-col items-start text-left w-full">
+                    <div className="font-semibold text-cyan-600 text-sm">
                       {isSingleSelection
                         ? 'Exportar Tarifa completa a un archivo JSON'
                         : `Exportar ${selectedTariffs.length} Tarifas completas seleccionadas a un archivo JSON`
                       }
                     </div>
-                    <div className="text-sm text-muted-foreground mt-1">
+                    <div className="text-xs text-muted-foreground mt-1">
                       Incluye todos los datos de la tarifa (metadata, configuración, estructura completa)
                     </div>
                   </div>
                 </Button>
 
                 <Button
-                  className="w-full justify-start h-auto py-4"
+                  className="w-full justify-start h-auto py-3 border-cyan-600 hover:bg-cyan-50"
                   variant="outline"
                   onClick={() => handleExport('price-structure')}
                   disabled={exporting}
                 >
-                  <div className="flex flex-col items-start text-left">
-                    <div className="font-semibold">
+                  <div className="flex flex-col items-start text-left w-full">
+                    <div className="font-semibold text-cyan-600 text-sm">
                       {isSingleSelection
                         ? 'Exportar Estructura de precios a un archivo CSV'
                         : `Exportar Estructura de precios de cada tarifa a un archivo CSV`
                       }
                     </div>
-                    <div className="text-sm text-muted-foreground mt-1">
+                    <div className="text-xs text-muted-foreground mt-1">
                       Solo la estructura de precios (compatible con plantilla de importación)
                     </div>
                   </div>
@@ -252,7 +253,7 @@ export function TariffList({
           </Dialog>
 
           {canImport(currentUserRole) && (
-            <Button variant="outline" asChild>
+            <Button variant="outline" asChild className="border-cyan-600 text-cyan-600 hover:bg-cyan-50">
               <Link href="/tariffs/import">
                 <Upload className="mr-2 h-4 w-4" />
                 Importar

@@ -25,17 +25,17 @@ export function convertTariffToPriceStructureCSV(tariff: Tariff): string {
 
   const rows: string[] = [headers.join(',')]
 
-  // Parsear hierarchy_data
+  // Parsear json_tariff_data
   let items: any[] = []
-  if (typeof tariff.hierarchy_data === 'string') {
+  if (typeof tariff.json_tariff_data === 'string') {
     try {
-      items = JSON.parse(tariff.hierarchy_data)
+      items = JSON.parse(tariff.json_tariff_data)
     } catch (e) {
-      console.error('[convertTariffToPriceStructureCSV] Error parsing hierarchy_data:', e)
+      console.error('[convertTariffToPriceStructureCSV] Error parsing json_tariff_data:', e)
       return rows.join('\n')
     }
-  } else if (Array.isArray(tariff.hierarchy_data)) {
-    items = tariff.hierarchy_data
+  } else if (Array.isArray(tariff.json_tariff_data)) {
+    items = tariff.json_tariff_data
   }
 
   // Aplanar jerarquía con formato de plantilla
@@ -146,17 +146,17 @@ export function convertTariffsToCSV(tariffs: Tariff[]): string {
     const tariffName = escapeCsvValue(tariff.name)
     const tariffId = tariff.id
 
-    // Parsear hierarchy_data
+    // Parsear json_tariff_data
     let items: any[] = []
-    if (typeof tariff.hierarchy_data === 'string') {
+    if (typeof tariff.json_tariff_data === 'string') {
       try {
-        items = JSON.parse(tariff.hierarchy_data)
+        items = JSON.parse(tariff.json_tariff_data)
       } catch (e) {
-        console.error('[convertTariffsToCSV] Error parsing hierarchy_data:', e)
+        console.error('[convertTariffsToCSV] Error parsing json_tariff_data:', e)
         continue
       }
-    } else if (Array.isArray(tariff.hierarchy_data)) {
-      items = tariff.hierarchy_data
+    } else if (Array.isArray(tariff.json_tariff_data)) {
+      items = tariff.json_tariff_data
     }
 
     // Aplanar jerarquía recursivamente
