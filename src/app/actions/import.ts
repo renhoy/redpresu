@@ -11,6 +11,7 @@ import { cookies } from 'next/headers'
 import { getServerUser } from '@/lib/auth/server'
 import type { ActionResult } from '@/lib/types/database'
 import { revalidatePath } from 'next/cache'
+import { detectIVAsPresentes } from '@/lib/validators/csv-converter'
 
 /**
  * Importa tarifas desde JSON
@@ -39,11 +40,17 @@ export async function importTariffs(
       tariffs = JSON.parse(content)
     } catch (e) {
       console.error('[importTariffs] Error parsing JSON:', e)
-      return { success: false, error: 'JSON inválido' }
+      return {
+        success: false,
+        error: 'El archivo JSON de tarifa importado no es válido. Puedes exportar una tarifa existente para obtener un ejemplo del formato correcto.\n\nExporta tus tarifas para tener una copia de seguridad fuera de Redpresu. Si deseas generar nuevas tarifas hazlo desde Redpresu para evitar errores.'
+      }
     }
 
     if (!Array.isArray(tariffs)) {
-      return { success: false, error: 'El JSON debe contener un array de tarifas' }
+      return {
+        success: false,
+        error: 'El archivo JSON de tarifa importado no es válido. Puedes exportar una tarifa existente para obtener un ejemplo del formato correcto.\n\nExporta tus tarifas para tener una copia de seguridad fuera de Redpresu. Si deseas generar nuevas tarifas hazlo desde Redpresu para evitar errores.'
+      }
     }
 
     if (tariffs.length === 0) {
@@ -63,6 +70,21 @@ export async function importTariffs(
         continue
       }
 
+      // Calcular IVAs presentes desde json_tariff_data
+      let ivasPresentes: number[] = []
+      try {
+        const tariffData = typeof tariff.json_tariff_data === 'string'
+          ? JSON.parse(tariff.json_tariff_data)
+          : tariff.json_tariff_data
+
+        if (Array.isArray(tariffData) && tariffData.length > 0) {
+          ivasPresentes = detectIVAsPresentes(tariffData)
+        }
+      } catch (e) {
+        console.error(`[importTariffs] Error calculando IVAs presentes para tarifa ${i + 1}:`, e)
+        // Continuar sin IVAs presentes si hay error
+      }
+
       // Limpiar campos internos
       const cleanTariff = {
         ...tariff,
@@ -73,8 +95,10 @@ export async function importTariffs(
         // Asignar a usuario actual
         empresa_id: user.empresa_id,
         user_id: user.id,
-        // Resetear plantilla
+        // Forzar valores para importación
         is_template: false,
+        status: 'Inactiva',
+        ivas_presentes: ivasPresentes,
       }
 
       validatedTariffs.push(cleanTariff)

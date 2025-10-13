@@ -31,6 +31,7 @@ import { TariffRow } from './TariffRow'
 import { TariffCard } from './TariffCard'
 import { getTariffs } from '@/app/actions/tariffs'
 import { exportTariffs } from '@/app/actions/export'
+import { importTariffs } from '@/app/actions/import'
 import { downloadFile } from '@/lib/helpers/export-helpers'
 import { Database } from '@/lib/types/database.types'
 import { toast } from 'sonner'
@@ -69,6 +70,7 @@ export function TariffList({
   const [selectedTariffs, setSelectedTariffs] = useState<string[]>([])
   const [exporting, setExporting] = useState(false)
   const [showExportDialog, setShowExportDialog] = useState(false)
+  const [importing, setImporting] = useState(false)
   const [filters, setFilters] = useState<{
     status?: 'Activa' | 'Inactiva' | 'all'
     search?: string
@@ -174,6 +176,48 @@ export function TariffList({
 
   const isSingleSelection = selectedTariffs.length === 1
 
+  // Importación
+  const handleFileImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validar extensión
+    if (!file.name.endsWith('.json')) {
+      toast.error('Solo se permiten archivos JSON')
+      return
+    }
+
+    // Validar tamaño (máximo 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('El archivo es demasiado grande (máximo 5MB)')
+      return
+    }
+
+    setImporting(true)
+
+    try {
+      // Leer contenido del archivo
+      const content = await file.text()
+
+      // Importar tarifas
+      const result = await importTariffs(content)
+
+      if (result.success && result.data) {
+        toast.success(`${result.data.count} tarifa(s) importada(s) correctamente`)
+        // Recargar tarifas
+        loadTariffs()
+      } else {
+        toast.error(result.error || 'Error al importar tarifas')
+      }
+    } catch (error) {
+      toast.error('Error al leer el archivo')
+    } finally {
+      setImporting(false)
+      // Limpiar input
+      e.target.value = ''
+    }
+  }
+
   return (
     <>
       {/* Header */}
@@ -264,12 +308,25 @@ export function TariffList({
           </Dialog>
 
           {canImport(currentUserRole) && (
-            <Button variant="outline" asChild className="border-cyan-600 text-cyan-600 hover:bg-cyan-50">
-              <Link href="/tariffs/import">
+            <>
+              <input
+                id="import-file-input"
+                type="file"
+                accept=".json"
+                onChange={handleFileImport}
+                className="hidden"
+                disabled={importing}
+              />
+              <Button
+                variant="outline"
+                className="border-cyan-600 text-cyan-600 hover:bg-cyan-50"
+                onClick={() => document.getElementById('import-file-input')?.click()}
+                disabled={importing}
+              >
                 <Upload className="mr-2 h-4 w-4" />
-                Importar
-              </Link>
-            </Button>
+                {importing ? 'Importando...' : 'Importar'}
+              </Button>
+            </>
           )}
           <Button asChild className="bg-cyan-600 hover:bg-cyan-700">
             <Link href="/tariffs/create">
