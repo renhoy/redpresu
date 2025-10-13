@@ -7,6 +7,115 @@
 import type { Tariff } from '@/lib/types/database'
 
 /**
+ * Convierte una tarifa a formato CSV de estructura de precios
+ * Formato compatible con plantilla de importación (sin IDs ni metadata)
+ */
+export function convertTariffToPriceStructureCSV(tariff: Tariff): string {
+  // Headers CSV (mismo formato que plantilla)
+  const headers = [
+    'Capítulo',
+    'Subcapítulo',
+    'Sección',
+    'Código',
+    'Descripción',
+    'Precio Venta',
+    'IVA (%)',
+    'Precio Final'
+  ]
+
+  const rows: string[] = [headers.join(',')]
+
+  // Parsear hierarchy_data
+  let items: any[] = []
+  if (typeof tariff.hierarchy_data === 'string') {
+    try {
+      items = JSON.parse(tariff.hierarchy_data)
+    } catch (e) {
+      console.error('[convertTariffToPriceStructureCSV] Error parsing hierarchy_data:', e)
+      return rows.join('\n')
+    }
+  } else if (Array.isArray(tariff.hierarchy_data)) {
+    items = tariff.hierarchy_data
+  }
+
+  // Aplanar jerarquía con formato de plantilla
+  flattenHierarchyForPriceStructure(items, rows)
+
+  return rows.join('\n')
+}
+
+/**
+ * Aplana la jerarquía para formato de estructura de precios
+ */
+function flattenHierarchyForPriceStructure(
+  items: any[],
+  rows: string[],
+  parentPath: { chapter?: string; subchapter?: string; section?: string } = {}
+) {
+  for (const item of items) {
+    const level = item.level || 'item'
+    const currentPath = { ...parentPath }
+
+    // Actualizar path según nivel
+    if (level === 'chapter') {
+      currentPath.chapter = item.description
+      currentPath.subchapter = undefined
+      currentPath.section = undefined
+    } else if (level === 'subchapter') {
+      currentPath.subchapter = item.description
+      currentPath.section = undefined
+    } else if (level === 'section') {
+      currentPath.section = item.description
+    }
+
+    // Construir fila CSV
+    const row = [
+      escapeCsvValue(currentPath.chapter || ''),
+      escapeCsvValue(currentPath.subchapter || ''),
+      escapeCsvValue(currentPath.section || ''),
+      escapeCsvValue(item.code || ''),
+      escapeCsvValue(item.description || ''),
+      item.price_sell || '',
+      item.iva || '',
+      item.price_final || ''
+    ]
+
+    rows.push(row.join(','))
+
+    // Recursión para hijos
+    if (item.children && item.children.length > 0) {
+      flattenHierarchyForPriceStructure(item.children, rows, currentPath)
+    }
+  }
+}
+
+/**
+ * Convierte múltiples tarifas a CSV de estructura de precios
+ * Cada tarifa se separa con un encabezado
+ */
+export function convertMultipleTariffsToPriceStructureCSV(tariffs: Tariff[]): string {
+  if (tariffs.length === 0) {
+    return ''
+  }
+
+  const sections: string[] = []
+
+  for (const tariff of tariffs) {
+    // Encabezado de tarifa
+    sections.push(`\n# TARIFA: ${tariff.name}`)
+    sections.push(`# ID: ${tariff.id}`)
+    sections.push('')
+
+    // Estructura de precios
+    const csv = convertTariffToPriceStructureCSV(tariff)
+    sections.push(csv)
+    sections.push('')
+  }
+
+  return sections.join('\n')
+}
+
+/**
  * Convierte un array de tarifas a formato CSV
  * Solo exporta los items de cada tarifa (estructura jerárquica aplanada)
  */

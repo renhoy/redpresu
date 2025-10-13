@@ -83,27 +83,27 @@ export function CSVUploadPreview({
     return (
       <Card className="bg-cyan-50">
         <CardHeader>
-          <CardTitle>Estructura Tarifa</CardTitle>
+          <CardTitle>Estructura de Precios</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {/* Selector de archivo */}
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-white">
               <div className="flex flex-col items-center gap-4">
-                <FileText className="h-12 w-12 text-gray-400" />
+                <Upload className="h-12 w-12 text-gray-400" />
                 <div>
                   <h3 className="font-medium text-gray-900 mb-2">
-                    Subir archivo CSV
+                    Seleccionar archivo
                   </h3>
                   <p className="text-sm text-gray-500 mb-4">
-                    Suba un archivo CSV con la estructura de la tarifa
+                    CSV con formato de precios
                   </p>
                   <Label
                     htmlFor="csv-upload"
                     className="cursor-pointer inline-flex items-center gap-2 bg-cyan-600 text-white hover:bg-cyan-700 px-4 py-2 rounded-md text-sm font-medium"
                   >
                     <Upload className="h-4 w-4" />
-                    {isProcessing ? "Procesando..." : "Seleccionar archivo CSV"}
+                    {isProcessing ? "Procesando..." : "Seleccionar archivo"}
                   </Label>
                   <Input
                     id="csv-upload"

@@ -10,16 +10,23 @@ import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { getServerUser } from '@/lib/auth/server'
 import type { ActionResult } from '@/lib/types/database'
-import { convertTariffsToCSV, convertTariffsToJSON, convertBudgetsToCSV, convertBudgetsToJSON } from '@/lib/helpers/export-helpers'
+import {
+  convertTariffsToCSV,
+  convertTariffsToJSON,
+  convertTariffToPriceStructureCSV,
+  convertMultipleTariffsToPriceStructureCSV,
+  convertBudgetsToCSV,
+  convertBudgetsToJSON
+} from '@/lib/helpers/export-helpers'
 
 /**
  * Exporta tarifas en formato especificado
  * @param ids - Array de IDs de tarifas a exportar
- * @param format - Formato de exportación: 'json' | 'csv'
+ * @param format - Formato de exportación: 'json' | 'csv' | 'price-structure'
  */
 export async function exportTariffs(
   ids: string[],
-  format: 'json' | 'csv'
+  format: 'json' | 'csv' | 'price-structure'
 ): Promise<ActionResult<{ content: string; filename: string; mimeType: string }>> {
   try {
     console.log('[exportTariffs] Iniciando...', { ids, format })
@@ -29,7 +36,7 @@ export async function exportTariffs(
       return { success: false, error: 'Debe seleccionar al menos una tarifa' }
     }
 
-    if (!['json', 'csv'].includes(format)) {
+    if (!['json', 'csv', 'price-structure'].includes(format)) {
       return { success: false, error: 'Formato no válido' }
     }
 
@@ -67,6 +74,16 @@ export async function exportTariffs(
       content = convertTariffsToJSON(tariffs)
       filename = `tarifas_export_${new Date().toISOString().split('T')[0]}.json`
       mimeType = 'application/json'
+    } else if (format === 'price-structure') {
+      // Exportar estructura de precios (CSV compatible con plantilla)
+      if (tariffs.length === 1) {
+        content = convertTariffToPriceStructureCSV(tariffs[0])
+        filename = `estructura_precios_${tariffs[0].name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`
+      } else {
+        content = convertMultipleTariffsToPriceStructureCSV(tariffs)
+        filename = `estructuras_precios_${new Date().toISOString().split('T')[0]}.csv`
+      }
+      mimeType = 'text/csv;charset=utf-8;'
     } else {
       content = convertTariffsToCSV(tariffs)
       filename = `tarifas_export_${new Date().toISOString().split('T')[0]}.csv`

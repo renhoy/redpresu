@@ -7,6 +7,13 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -61,6 +68,7 @@ export function TariffList({
   const [loading, setLoading] = useState(false)
   const [selectedTariffs, setSelectedTariffs] = useState<string[]>([])
   const [exporting, setExporting] = useState(false)
+  const [showExportDialog, setShowExportDialog] = useState(false)
   const [filters, setFilters] = useState<{
     status?: 'Activa' | 'Inactiva' | 'all'
     search?: string
@@ -124,18 +132,27 @@ export function TariffList({
   const isSomeSelected = selectedTariffs.length > 0
 
   // Exportación
-  const handleExport = async () => {
+  const handleExportClick = () => {
     if (selectedTariffs.length === 0) {
       toast.error('Selecciona al menos una tarifa')
       return
     }
+    setShowExportDialog(true)
+  }
 
+  const handleExport = async (format: 'json' | 'price-structure') => {
     setExporting(true)
-    const result = await exportTariffs(selectedTariffs, 'json')
+    setShowExportDialog(false)
+
+    const result = await exportTariffs(selectedTariffs, format)
 
     if (result.success && result.data) {
       downloadFile(result.data.content, result.data.filename, result.data.mimeType)
-      toast.success(`${selectedTariffs.length} tarifa(s) exportada(s)`)
+      if (format === 'json') {
+        toast.success(`${selectedTariffs.length} tarifa(s) exportada(s) a JSON`)
+      } else {
+        toast.success(`Estructura de precios exportada a CSV`)
+      }
       setSelectedTariffs([])
     } else {
       toast.error(result.error || 'Error al exportar')
@@ -143,6 +160,8 @@ export function TariffList({
 
     setExporting(false)
   }
+
+  const isSingleSelection = selectedTariffs.length === 1
 
   return (
     <>
@@ -161,7 +180,7 @@ export function TariffList({
                 <Button
                   variant="outline"
                   disabled={!isSomeSelected || exporting}
-                  onClick={handleExport}
+                  onClick={handleExportClick}
                 >
                   <Download className="mr-2 h-4 w-4" />
                   {isSomeSelected
@@ -177,6 +196,60 @@ export function TariffList({
               )}
             </Tooltip>
           </TooltipProvider>
+
+          {/* Export Dialog */}
+          <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Exportar {isSingleSelection ? 'Tarifa' : 'Tarifas'}</DialogTitle>
+                <DialogDescription>
+                  {isSingleSelection
+                    ? 'Selecciona el formato de exportación para la tarifa'
+                    : `Selecciona el formato de exportación para las ${selectedTariffs.length} tarifas seleccionadas`
+                  }
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <Button
+                  className="w-full justify-start h-auto py-4"
+                  variant="outline"
+                  onClick={() => handleExport('json')}
+                  disabled={exporting}
+                >
+                  <div className="flex flex-col items-start text-left">
+                    <div className="font-semibold">
+                      {isSingleSelection
+                        ? 'Exportar Tarifa completa a un archivo JSON'
+                        : `Exportar ${selectedTariffs.length} Tarifas completas seleccionadas a un archivo JSON`
+                      }
+                    </div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      Incluye todos los datos de la tarifa (metadata, configuración, estructura completa)
+                    </div>
+                  </div>
+                </Button>
+
+                <Button
+                  className="w-full justify-start h-auto py-4"
+                  variant="outline"
+                  onClick={() => handleExport('price-structure')}
+                  disabled={exporting}
+                >
+                  <div className="flex flex-col items-start text-left">
+                    <div className="font-semibold">
+                      {isSingleSelection
+                        ? 'Exportar Estructura de precios a un archivo CSV'
+                        : `Exportar Estructura de precios de cada tarifa a un archivo CSV`
+                      }
+                    </div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      Solo la estructura de precios (compatible con plantilla de importación)
+                    </div>
+                  </div>
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {canImport(currentUserRole) && (
             <Button variant="outline" asChild>
