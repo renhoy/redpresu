@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
+import Link from "next/link";
 
 interface LoginFormData {
   email: string;
@@ -172,6 +173,17 @@ export default function LoginForm() {
               <p className="text-sm text-red-600">{errors.password}</p>
             )}
           </div>
+
+          {/* Enlace Recuperar contraseña */}
+          <div className="flex justify-end">
+            <Link
+              href="/forgot-password"
+              className="text-sm text-lime-600 hover:text-lime-700 hover:underline"
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </div>
+
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? (
               <>

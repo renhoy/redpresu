@@ -43,7 +43,7 @@ export async function signInAction(email: string, password: string): Promise<Sig
     // Obtener datos completos del usuario desde public.users
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('role, nombre, apellidos')
+      .select('*')
       .eq('id', data.user.id)
       .single()
 
@@ -145,6 +145,8 @@ export interface RegisterData {
   emailContacto?: string
   web?: string
   irpfPercentage?: number | null
+  issuer_id?: string  // ID del emisor existente (solo para superadmin)
+  role?: 'admin' | 'vendedor'  // Rol del nuevo usuario (solo para superadmin)
 }
 
 /**
@@ -155,7 +157,7 @@ export interface RegisterResult {
   error?: string
   data?: {
     userId: string
-    emisorId: string
+    emisorId: string | null
   }
 }
 
@@ -167,27 +169,16 @@ export interface RegisterResult {
  */
 export async function registerUser(data: RegisterData): Promise<RegisterResult> {
   try {
-    console.log('[registerUser] Iniciando registro...', { email: data.email, tipo: data.tipo })
+    console.log('[registerUser] Iniciando registro...', {
+      email: data.email,
+      tipo: data.tipo,
+      hasIssuerId: !!data.issuer_id
+    })
 
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
 
-    // 1. Validar que el NIF no esté ya registrado en TODA la base de datos
-    const { data: existingIssuer, error: checkError } = await supabase
-      .from('issuers')
-      .select('id, issuers_nif')
-      .eq('issuers_nif', data.nif.trim().toUpperCase())
-      .maybeSingle()
-
-    if (existingIssuer) {
-      console.error('[registerUser] NIF ya registrado:', data.nif)
-      return {
-        success: false,
-        error: 'El NIF/CIF ya está registrado en el sistema'
-      }
-    }
-
-    // 2. Crear cliente admin de Supabase con service role key
+    // Crear cliente admin de Supabase con service role key
     const { createClient } = await import('@supabase/supabase-js')
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -200,26 +191,98 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
       }
     )
 
-    // 3. Crear nueva empresa para este emisor
-    const { data: empresaData, error: empresaError } = await supabaseAdmin
-      .from('empresas')
-      .insert({
-        nombre: data.nombreComercial,
-        status: 'active'
-      })
-      .select('id')
-      .single()
+    // Variable para almacenar el ID de la empresa y el emisor
+    let empresaId: number
+    let emisorId: string | null = null
 
-    if (empresaError || !empresaData) {
-      console.error('[registerUser] Error al crear empresa:', empresaError)
-      return {
-        success: false,
-        error: 'Error al crear la empresa'
+    // ==========================================
+    // CASO 1: Superadmin asigna usuario a emisor existente
+    // ==========================================
+    if (data.issuer_id) {
+      console.log('[registerUser] Asignando a emisor existente:', data.issuer_id)
+
+      // Verificar que el usuario actual es superadmin
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+      if (authError || !user) {
+        return {
+          success: false,
+          error: 'No autenticado'
+        }
       }
-    }
 
-    const empresaId = empresaData.id
-    console.log('[registerUser] Empresa creada:', empresaId)
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+      if (userError || !userData || userData.role !== 'superadmin') {
+        return {
+          success: false,
+          error: 'Solo superadmin puede asignar usuarios a emisores existentes'
+        }
+      }
+
+      // Obtener el emisor existente
+      const { data: issuerData, error: issuerError } = await supabaseAdmin
+        .from('issuers')
+        .select('id, company_id')
+        .eq('id', data.issuer_id)
+        .single()
+
+      if (issuerError || !issuerData) {
+        console.error('[registerUser] Error al obtener emisor:', issuerError)
+        return {
+          success: false,
+          error: 'Emisor no encontrado'
+        }
+      }
+
+      empresaId = issuerData.company_id
+      emisorId = issuerData.id
+      console.log('[registerUser] Usando empresa existente:', empresaId)
+
+    // ==========================================
+    // CASO 2: Registro normal (crear nueva empresa y emisor)
+    // ==========================================
+    } else {
+      // 1. Validar que el NIF no esté ya registrado en TODA la base de datos
+      const { data: existingIssuer, error: checkError } = await supabase
+        .from('issuers')
+        .select('id, issuers_nif')
+        .eq('issuers_nif', data.nif.trim().toUpperCase())
+        .maybeSingle()
+
+      if (existingIssuer) {
+        console.error('[registerUser] NIF ya registrado:', data.nif)
+        return {
+          success: false,
+          error: 'El NIF/CIF ya está registrado en el sistema'
+        }
+      }
+
+      // 2. Crear nueva empresa para este emisor
+      const { data: empresaData, error: empresaError } = await supabaseAdmin
+        .from('empresas')
+        .insert({
+          nombre: data.nombreComercial,
+          status: 'active'
+        })
+        .select('id')
+        .single()
+
+      if (empresaError || !empresaData) {
+        console.error('[registerUser] Error al crear empresa:', empresaError)
+        return {
+          success: false,
+          error: 'Error al crear la empresa'
+        }
+      }
+
+      empresaId = empresaData.id
+      console.log('[registerUser] Empresa creada:', empresaId)
+    }
 
     // 4. Crear usuario en auth.users usando admin API para evitar confirmación de email
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -257,7 +320,13 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
 
     console.log('[registerUser] Usuario auth creado:', userId)
 
-    // 5. Crear registro en public.users (con rol admin por defecto para nuevos registros)
+    // Determinar el rol del usuario
+    // - Si se proporciona role explícitamente (superadmin), usar ese
+    // - Si no, y es el primer usuario de una nueva empresa: admin
+    // - Si no, y es usuario asignado a emisor existente: vendedor por defecto
+    const userRole = data.role || (data.issuer_id ? 'vendedor' : 'admin')
+
+    // 5. Crear registro en public.users
     // Usar supabaseAdmin para bypass RLS policies
     const { error: userError } = await supabaseAdmin
       .from('users')
@@ -266,8 +335,8 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
         nombre: data.nombre.trim(),
         apellidos: data.apellidos.trim(),
         email: data.email.trim().toLowerCase(),
-        role: 'admin', // Primer usuario de una nueva empresa = admin
-        empresa_id: empresaId, // ID de la empresa recién creada
+        role: userRole,
+        empresa_id: empresaId,
         status: 'active'
       })
 
@@ -276,7 +345,10 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
 
       // Intentar eliminar el usuario de auth y la empresa si falla la creación en public.users
       await supabaseAdmin.auth.admin.deleteUser(userId)
-      await supabaseAdmin.from('empresas').delete().eq('id', empresaId)
+      // Solo eliminar empresa si fue creada en este proceso (no existía issuer_id)
+      if (!data.issuer_id) {
+        await supabaseAdmin.from('empresas').delete().eq('id', empresaId)
+      }
 
       return {
         success: false,
@@ -284,75 +356,89 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
       }
     }
 
-    console.log('[registerUser] Registro en users creado')
+    console.log('[registerUser] Registro en users creado con rol:', userRole)
 
-    // 4. Crear registro en public.issuers
-    // Usar supabaseAdmin para bypass RLS policies
-    const { data: issuerData, error: issuerError } = await supabaseAdmin
-      .from('issuers')
-      .insert({
-        user_id: userId,
-        company_id: empresaId, // ID de la empresa recién creada
-        issuers_type: data.tipo,
-        issuers_name: data.nombreComercial.trim(),
-        issuers_nif: data.nif.trim().toUpperCase(),
-        issuers_address: data.direccionFiscal.trim(),
-        issuers_postal_code: data.codigoPostal?.trim() || null,
-        issuers_locality: data.ciudad?.trim() || null,
-        issuers_province: data.provincia?.trim() || null,
-        issuers_country: data.pais?.trim() || 'España',
-        issuers_phone: data.telefono?.trim() || null,
-        issuers_email: data.emailContacto?.trim() || data.email.trim().toLowerCase(),
-        issuers_web: data.web?.trim() || null,
-        issuers_irpf_percentage: data.tipo === 'autonomo' ? (data.irpfPercentage ?? 15) : null
-      })
-      .select('id')
-      .single()
+    // 6. Crear registro en public.issuers SOLO si no se proporcionó issuer_id
+    if (!data.issuer_id) {
+      const { data: issuerData, error: issuerError } = await supabaseAdmin
+        .from('issuers')
+        .insert({
+          user_id: userId,
+          company_id: empresaId,
+          issuers_type: data.tipo,
+          issuers_name: data.nombreComercial.trim(),
+          issuers_nif: data.nif.trim().toUpperCase(),
+          issuers_address: data.direccionFiscal.trim(),
+          issuers_postal_code: data.codigoPostal?.trim() || null,
+          issuers_locality: data.ciudad?.trim() || null,
+          issuers_province: data.provincia?.trim() || null,
+          issuers_country: data.pais?.trim() || 'España',
+          issuers_phone: data.telefono?.trim() || null,
+          issuers_email: data.emailContacto?.trim() || data.email.trim().toLowerCase(),
+          issuers_web: data.web?.trim() || null,
+          issuers_irpf_percentage: data.tipo === 'autonomo' ? (data.irpfPercentage ?? 15) : null
+        })
+        .select('id')
+        .single()
 
-    if (issuerError) {
-      console.error('[registerUser] Error al crear issuer:', issuerError)
+      if (issuerError) {
+        console.error('[registerUser] Error al crear issuer:', issuerError)
 
-      // Intentar rollback: eliminar usuario, auth y empresa
-      await supabaseAdmin.from('users').delete().eq('id', userId)
-      await supabaseAdmin.auth.admin.deleteUser(userId)
-      await supabaseAdmin.from('empresas').delete().eq('id', empresaId)
+        // Intentar rollback: eliminar usuario, auth y empresa
+        await supabaseAdmin.from('users').delete().eq('id', userId)
+        await supabaseAdmin.auth.admin.deleteUser(userId)
+        await supabaseAdmin.from('empresas').delete().eq('id', empresaId)
 
-      return {
-        success: false,
-        error: 'Error al crear los datos del emisor'
+        return {
+          success: false,
+          error: 'Error al crear los datos del emisor'
+        }
       }
+
+      if (!issuerData) {
+        console.error('[registerUser] No se obtuvo el issuer creado')
+
+        // Rollback: eliminar usuario, auth y empresa
+        await supabaseAdmin.from('users').delete().eq('id', userId)
+        await supabaseAdmin.auth.admin.deleteUser(userId)
+        await supabaseAdmin.from('empresas').delete().eq('id', empresaId)
+
+        return {
+          success: false,
+          error: 'Error al crear los datos del emisor'
+        }
+      }
+
+      emisorId = issuerData.id
+      console.log('[registerUser] Issuer creado:', issuerData.id)
     }
 
-    if (!issuerData) {
-      console.error('[registerUser] No se obtuvo el issuer creado')
-
-      // Rollback: eliminar usuario, auth y empresa
-      await supabaseAdmin.from('users').delete().eq('id', userId)
-      await supabaseAdmin.auth.admin.deleteUser(userId)
-      await supabaseAdmin.from('empresas').delete().eq('id', empresaId)
-
-      return {
-        success: false,
-        error: 'Error al crear los datos del emisor'
-      }
-    }
-
-    console.log('[registerUser] Issuer creado:', issuerData.id)
     console.log('[registerUser] Registro completado exitosamente')
 
-    // 5. Iniciar sesión automáticamente
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: data.email.trim().toLowerCase(),
-      password: data.password
-    })
+    // 7. Iniciar sesión automáticamente (solo si no es superadmin creando usuario)
+    if (!data.issuer_id) {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: data.email.trim().toLowerCase(),
+        password: data.password
+      })
 
-    if (signInError) {
-      console.error('[registerUser] Error al iniciar sesión automática:', signInError)
-      // No es crítico, el usuario puede hacer login manual
+      if (signInError) {
+        console.error('[registerUser] Error al iniciar sesión automática:', signInError)
+        // No es crítico, el usuario puede hacer login manual
+      }
+
+      // Redirect a dashboard
+      redirect('/dashboard')
     }
 
-    // 6. Redirect a dashboard
-    redirect('/dashboard')
+    // 8. Si es superadmin, retornar resultado sin redirect
+    return {
+      success: true,
+      data: {
+        userId,
+        emisorId
+      }
+    }
 
   } catch (error) {
     console.error('[registerUser] Error crítico:', error)
@@ -618,7 +704,7 @@ export async function getUserProfile(): Promise<ProfileResult> {
     // Obtener datos del usuario desde public.users
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('id, name, email, role, empresa_id')
+      .select('*')
       .eq('id', user.id)
       .single()
 
@@ -818,6 +904,93 @@ export async function updateUserProfile(data: UpdateProfileData): Promise<Profil
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Error inesperado al actualizar perfil'
+    }
+  }
+}
+
+/**
+ * Interfaz para datos de emisor
+ */
+export interface IssuerData {
+  id: string
+  company_id: number
+  issuers_type: 'empresa' | 'autonomo'
+  issuers_name: string
+  issuers_nif: string
+  issuers_address: string
+  issuers_postal_code: string | null
+  issuers_locality: string | null
+  issuers_province: string | null
+  issuers_phone: string | null
+  issuers_email: string | null
+  issuers_web: string | null
+}
+
+/**
+ * Server Action para obtener lista de emisores (solo para superadmin)
+ *
+ * @returns Lista de emisores con sus datos básicos
+ */
+export async function getIssuers(): Promise<{
+  success: boolean
+  data?: IssuerData[]
+  error?: string
+}> {
+  try {
+    console.log('[getIssuers] Obteniendo lista de emisores...')
+
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+    // Verificar que el usuario es superadmin
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return {
+        success: false,
+        error: 'No autenticado'
+      }
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (userError || !userData || userData.role !== 'superadmin') {
+      return {
+        success: false,
+        error: 'Solo superadmin puede acceder a esta función'
+      }
+    }
+
+    // Obtener lista de emisores
+    const { data: issuers, error: issuersError } = await supabase
+      .from('issuers')
+      .select('id, company_id, issuers_type, issuers_name, issuers_nif, issuers_address, issuers_postal_code, issuers_locality, issuers_province, issuers_phone, issuers_email, issuers_web')
+      .order('issuers_name')
+
+    if (issuersError) {
+      console.error('[getIssuers] Error obteniendo emisores:', issuersError)
+      return {
+        success: false,
+        error: 'Error al obtener lista de emisores'
+      }
+    }
+
+    console.log('[getIssuers] Emisores obtenidos:', issuers?.length || 0)
+
+    return {
+      success: true,
+      data: issuers as IssuerData[]
+    }
+
+  } catch (error) {
+    console.error('[getIssuers] Error crítico:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error inesperado al obtener emisores'
     }
   }
 }

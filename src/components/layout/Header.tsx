@@ -17,9 +17,10 @@ interface HeaderProps {
   userRole?: string
   userName?: string
   isAuthenticated?: boolean
+  hasBudgets?: boolean
 }
 
-export function Header({ userRole, userName, isAuthenticated = true }: HeaderProps) {
+export function Header({ userRole, userName, isAuthenticated = true, hasBudgets = true }: HeaderProps) {
   const pathname = usePathname()
 
   // Si no está autenticado, mostrar header público
@@ -86,12 +87,12 @@ export function Header({ userRole, userName, isAuthenticated = true }: HeaderPro
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex items-center gap-2">
+          <Link href="/dashboard" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <div className="w-8 h-8 bg-lime-500 rounded-lg flex items-center justify-center">
               <FileText className="h-5 w-5 text-white" />
             </div>
             <span className="text-xl font-bold text-gray-900">Redpresu</span>
-          </div>
+          </Link>
 
           {/* Navigation - Desktop */}
           <nav className="hidden lg:flex items-center space-x-4">
@@ -100,6 +101,22 @@ export function Header({ userRole, userName, isAuthenticated = true }: HeaderPro
                 (item.href !== '/dashboard' && pathname.startsWith(item.href))
               const Icon = item.icon
               const isTarifasButton = item.href === '/tariffs'
+              const isPresupuestosButton = item.href === '/budgets'
+              const isDisabled = isPresupuestosButton && !hasBudgets
+
+              // Si está deshabilitado, mostrar como span en vez de Link
+              if (isDisabled) {
+                return (
+                  <span
+                    key={item.name}
+                    className="px-3 py-2 text-sm font-medium rounded-md flex items-center gap-2 bg-gray-300 text-gray-500 cursor-not-allowed opacity-60"
+                    title="No tienes presupuestos creados"
+                  >
+                    <Icon className="w-4 h-4" />
+                    {item.name}
+                  </span>
+                )
+              }
 
               return (
                 <Link
@@ -127,6 +144,24 @@ export function Header({ userRole, userName, isAuthenticated = true }: HeaderPro
                 const isActive = pathname === item.href ||
                   (item.href !== '/dashboard' && pathname.startsWith(item.href))
                 const Icon = item.icon
+                const isPresupuestosButton = item.href === '/budgets'
+                const isDisabled = isPresupuestosButton && !hasBudgets
+
+                // Si está deshabilitado, mostrar como span
+                if (isDisabled) {
+                  return (
+                    <Tooltip key={item.name}>
+                      <TooltipTrigger asChild>
+                        <span className="p-2 rounded-md border bg-gray-200 text-gray-400 border-gray-300 cursor-not-allowed opacity-60">
+                          <Icon className="w-5 h-5" />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>No tienes presupuestos creados</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )
+                }
 
                 return (
                   <Tooltip key={item.name}>

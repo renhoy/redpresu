@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, Mail, ArrowLeft } from 'lucide-react'
+import { Loader2, Mail, ArrowLeft, FileText } from 'lucide-react'
 import { forgotPasswordSchema } from '@/lib/validators/auth-schemas'
 
 interface ForgotPasswordFormData {
@@ -94,22 +94,24 @@ export default function ForgotPasswordPage() {
   // Si el email ya fue enviado, mostrar mensaje de confirmación
   if (emailSent) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8" style={{ background: '#f7fee7' }}>
         <div className="w-full max-w-md space-y-8">
           {/* Header */}
           <div className="text-center">
-            <div className="mx-auto h-12 w-12 bg-orange-500 rounded-lg flex items-center justify-center mb-4">
-              <span className="text-white font-bold text-xl">J</span>
-            </div>
-            <h2 className="text-3xl font-bold text-gray-900">
-              JEYCA Presupuestos
-            </h2>
+            <Link href="/" className="inline-block hover:opacity-80 transition-opacity">
+              <div className="mx-auto h-12 w-12 bg-lime-500 rounded-lg flex items-center justify-center mb-4">
+                <FileText className="h-7 w-7 text-white" />
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900">
+                Redpresu
+              </h2>
+            </Link>
           </div>
 
           <Card className="w-full">
             <CardHeader className="space-y-1">
               <div className="flex justify-center mb-4">
-                <Mail className="h-16 w-16 text-orange-500" />
+                <Mail className="h-16 w-16 text-lime-500" />
               </div>
               <CardTitle className="text-2xl text-center">
                 Revisa tu Email
@@ -120,8 +122,8 @@ export default function ForgotPasswordPage() {
             </CardHeader>
 
             <CardContent className="space-y-4">
-              <Alert className="border-orange-500 bg-orange-50">
-                <AlertDescription className="text-orange-800">
+              <Alert className="border-lime-500 bg-lime-50">
+                <AlertDescription className="text-lime-800">
                   Si el email <strong>{formData.email}</strong> está registrado en el sistema,
                   recibirás un enlace para resetear tu contraseña.
                 </AlertDescription>
@@ -157,16 +159,18 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8" style={{ background: '#f7fee7' }}>
       <div className="w-full max-w-md space-y-8">
         {/* Header con logo/título */}
         <div className="text-center">
-          <div className="mx-auto h-12 w-12 bg-orange-500 rounded-lg flex items-center justify-center mb-4">
-            <span className="text-white font-bold text-xl">J</span>
-          </div>
-          <h2 className="text-3xl font-bold text-gray-900">
-            JEYCA Presupuestos
-          </h2>
+          <Link href="/" className="inline-block hover:opacity-80 transition-opacity">
+            <div className="mx-auto h-12 w-12 bg-lime-500 rounded-lg flex items-center justify-center mb-4">
+              <FileText className="h-7 w-7 text-white" />
+            </div>
+            <h2 className="text-3xl font-bold text-gray-900">
+              Redpresu
+            </h2>
+          </Link>
           <p className="mt-2 text-sm text-gray-600">
             Recupera el acceso a tu cuenta
           </p>
@@ -210,9 +214,8 @@ export default function ForgotPasswordPage() {
                   <p className="text-sm text-red-600">{errors.email}</p>
                 )}
               </div>
-            </CardContent>
 
-            <CardFooter className="flex flex-col gap-4">
+              {/* Botón de envío */}
               <Button
                 type="submit"
                 className="w-full"
@@ -230,7 +233,9 @@ export default function ForgotPasswordPage() {
                   </>
                 )}
               </Button>
+            </CardContent>
 
+            <CardFooter className="flex flex-col gap-4 pt-6">
               <Link href="/login" className="w-full">
                 <Button variant="outline" className="w-full">
                   <ArrowLeft className="mr-2 h-4 w-4" />
@@ -245,7 +250,7 @@ export default function ForgotPasswordPage() {
         <div className="text-center">
           <p className="text-xs text-gray-500">
             ¿No tienes una cuenta?{' '}
-            <Link href="/register" className="text-orange-600 hover:underline">
+            <Link href="/register" className="text-lime-600 hover:text-lime-700 hover:underline">
               Regístrate aquí
             </Link>
           </p>
