@@ -357,42 +357,6 @@ export function LogoUploader({ value, onChange, error, disabled }: LogoUploaderP
         </TabsContent>
       </Tabs>
 
-      {/* Vista previa - Solo mostrar si corresponde al tab activo */}
-      {shouldShowPreview() && (
-        <div className="mt-4 border rounded-lg p-4 relative">
-          <div className="flex flex-col items-center">
-            {imageError ? (
-              <div className="flex flex-col items-center justify-center h-[150px] text-gray-400">
-                <ImageOff className="h-20 w-20 mb-2" />
-                <p className="text-sm">Error al cargar imagen</p>
-              </div>
-            ) : (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={previewUrl}
-                alt="Vista previa del logo"
-                className="max-h-[150px] max-w-full object-contain"
-                onError={() => setImageError(true)}
-              />
-            )}
-            <p className="text-center text-sm text-muted-foreground mt-2">
-              Vista previa del logo
-            </p>
-          </div>
-
-          <Button
-            type="button"
-            variant="destructive"
-            size="sm"
-            className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
-            onClick={handleRemoveLogo}
-            disabled={disabled}
-          >
-            <X className="h-3 w-3" />
-          </Button>
-        </div>
-      )}
-
       {error && (
         <p className="text-sm text-destructive">{error}</p>
       )}

@@ -1,38 +1,45 @@
-'use client'
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from "@/components/ui/select";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip'
-import { Info } from 'lucide-react'
-import { LogoUploader } from './LogoUploader'
-import { TemplateSelector } from './TemplateSelector'
-import { RichTextEditorDialog } from '@/components/shared/RichTextEditorDialog'
-import { type TariffFormData } from '@/app/actions/tariffs'
+} from "@/components/ui/tooltip";
+import { Info } from "lucide-react";
+import { LogoUploader } from "./LogoUploader";
+import { TemplateSelector } from "./TemplateSelector";
+import { RichTextEditorDialog } from "@/components/shared/RichTextEditorDialog";
+import { type TariffFormData } from "@/app/actions/tariffs";
 
 interface TariffFormFieldsProps {
-  data: TariffFormData
-  errors: Record<string, string>
-  onChange: (data: Partial<TariffFormData>) => void
+  data: TariffFormData;
+  errors: Record<string, string>;
+  onChange: (data: Partial<TariffFormData>) => void;
 }
 
-export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsProps) {
-  const handleInputChange = (field: keyof TariffFormData, value: string | number) => {
-    onChange({ [field]: value })
-  }
+export function TariffFormFields({
+  data,
+  errors,
+  onChange,
+}: TariffFormFieldsProps) {
+  const handleInputChange = (
+    field: keyof TariffFormData,
+    value: string | number
+  ) => {
+    onChange({ [field]: value });
+  };
 
   return (
     <div className="space-y-6">
@@ -52,7 +59,8 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                   </TooltipTrigger>
                   <TooltipContent>
                     <p className="max-w-xs">
-                      Nombre identificativo de esta tarifa. Se utiliza para identificarla en el listado y al crear presupuestos.
+                      Nombre identificativo de esta tarifa. Se utiliza para
+                      identificarla en el listado y al crear presupuestos.
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -61,9 +69,9 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
             <Input
               id="title"
               value={data.title}
-              onChange={(e) => handleInputChange('title', e.target.value)}
+              onChange={(e) => handleInputChange("title", e.target.value)}
               placeholder="Nombre de la tarifa"
-              className={`bg-white ${errors.title ? 'border-destructive' : ''}`}
+              className={`bg-white ${errors.title ? "border-destructive" : ""}`}
             />
             {errors.title && (
               <p className="text-sm text-destructive mt-1">{errors.title}</p>
@@ -80,7 +88,8 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                   </TooltipTrigger>
                   <TooltipContent>
                     <p className="max-w-xs">
-                      Descripción opcional de la tarifa. Solo para uso interno, no se muestra en presupuestos ni PDFs.
+                      Descripción opcional de la tarifa. Solo para uso interno,
+                      no se muestra en presupuestos ni PDFs.
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -89,7 +98,7 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
             <Textarea
               id="description"
               value={data.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
+              onChange={(e) => handleInputChange("description", e.target.value)}
               placeholder="Descripción de la tarifa (opcional)"
               rows={3}
               className="bg-white"
@@ -107,7 +116,9 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                     </TooltipTrigger>
                     <TooltipContent>
                       <p className="max-w-xs">
-                        Número de días que tendrá validez el presupuesto desde su fecha de emisión. Este valor se mostrará en el PDF generado.
+                        Número de días que tendrá validez el presupuesto desde
+                        su fecha de emisión. Este valor se mostrará en el PDF
+                        generado.
                       </p>
                     </TooltipContent>
                   </Tooltip>
@@ -117,10 +128,14 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                 id="validity"
                 type="number"
                 value={data.validity}
-                onChange={(e) => handleInputChange('validity', parseInt(e.target.value) || 30)}
+                onChange={(e) =>
+                  handleInputChange("validity", parseInt(e.target.value) || 30)
+                }
                 min="1"
                 max="365"
-                className={`bg-white ${errors.validity ? 'border-destructive' : ''}`}
+                className={`bg-white ${
+                  errors.validity ? "border-destructive" : ""
+                }`}
               />
             </div>
 
@@ -134,7 +149,9 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                     </TooltipTrigger>
                     <TooltipContent>
                       <p className="max-w-xs">
-                        Si la tarifa está activa, podrá usarse para crear presupuestos. Las tarifas inactivas no aparecen en el selector.
+                        Si la tarifa está activa, podrá usarse para crear
+                        presupuestos. Las tarifas inactivas no aparecen en el
+                        selector.
                       </p>
                     </TooltipContent>
                   </Tooltip>
@@ -142,9 +159,15 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
               </div>
               <Select
                 value={data.status}
-                onValueChange={(value: 'Activa' | 'Inactiva') => handleInputChange('status', value)}
+                onValueChange={(value: "Activa" | "Inactiva") =>
+                  handleInputChange("status", value)
+                }
               >
-                <SelectTrigger className={`bg-white ${errors.status ? 'border-destructive' : ''}`}>
+                <SelectTrigger
+                  className={`bg-white ${
+                    errors.status ? "border-destructive" : ""
+                  }`}
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -165,14 +188,14 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
         <CardContent className="space-y-4">
           <LogoUploader
             value={data.logo_url}
-            onChange={(url) => handleInputChange('logo_url', url)}
+            onChange={(url) => handleInputChange("logo_url", url)}
             error={errors.logo_url}
           />
 
           {/* Vista Previa Inline */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
             <div className="text-sm font-medium text-gray-600 mb-3">
-              Vista Previa - Así se verá en presupuestos
+              Vista previa (así se verá en el PDF y en la página de presupuesto)
             </div>
             <div className="grid grid-cols-[auto_1fr] gap-6">
               {/* Columna 1: Logo */}
@@ -198,16 +221,16 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                   className="text-xl font-bold"
                   style={{ color: data.primary_color }}
                 >
-                  {data.name || 'Nombre de la empresa'}
+                  {data.name || "Nombre*"}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  {data.nif || 'NIF no especificado'}
+                  {data.nif || "NIF/CIF*"}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {data.address || 'Dirección no especificada'}
+                  {data.address || "Dirección fiscal completa*"}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {data.contact || 'Contacto no especificado'}
+                  {data.contact || "Teléfono, email, web*"}
                 </p>
               </div>
             </div>
@@ -224,7 +247,8 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                     </TooltipTrigger>
                     <TooltipContent>
                       <p className="max-w-xs">
-                        Nombre completo de tu empresa o nombre como autónomo. Se mostrará en los presupuestos y en los PDFs generados.
+                        Nombre completo de tu empresa o nombre como autónomo. Se
+                        mostrará en los presupuestos y en los PDFs generados.
                       </p>
                     </TooltipContent>
                   </Tooltip>
@@ -233,9 +257,11 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
               <Input
                 id="name"
                 value={data.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
+                onChange={(e) => handleInputChange("name", e.target.value)}
                 placeholder="Nombre completo de la empresa"
-                className={`bg-white ${errors.name ? 'border-destructive' : ''}`}
+                className={`bg-white ${
+                  errors.name ? "border-destructive" : ""
+                }`}
               />
               {errors.name && (
                 <p className="text-sm text-destructive mt-1">{errors.name}</p>
@@ -252,7 +278,9 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                     </TooltipTrigger>
                     <TooltipContent>
                       <p className="max-w-xs">
-                        CIF de tu empresa (ej: A12345678) o DNI/NIE como autónomo (ej: 12345678Z). Se mostrará en los presupuestos y en los PDFs generados.
+                        CIF de tu empresa (ej: A12345678) o DNI/NIE como
+                        autónomo (ej: 12345678Z). Se mostrará en los
+                        presupuestos y en los PDFs generados.
                       </p>
                     </TooltipContent>
                   </Tooltip>
@@ -261,9 +289,11 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
               <Input
                 id="nif"
                 value={data.nif}
-                onChange={(e) => handleInputChange('nif', e.target.value.toUpperCase())}
+                onChange={(e) =>
+                  handleInputChange("nif", e.target.value.toUpperCase())
+                }
                 placeholder="A12345678 o 12345678Z"
-                className={`bg-white ${errors.nif ? 'border-destructive' : ''}`}
+                className={`bg-white ${errors.nif ? "border-destructive" : ""}`}
               />
               {errors.nif && (
                 <p className="text-sm text-destructive mt-1">{errors.nif}</p>
@@ -281,7 +311,9 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                   </TooltipTrigger>
                   <TooltipContent>
                     <p className="max-w-xs">
-                      Dirección completa de tu empresa o domicilio fiscal (calle, código postal, ciudad, provincia). Se mostrará en los presupuestos y PDFs.
+                      Dirección completa de tu empresa o domicilio fiscal
+                      (calle, código postal, ciudad, provincia). Se mostrará en
+                      los presupuestos y PDFs.
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -290,9 +322,11 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
             <Input
               id="address"
               value={data.address}
-              onChange={(e) => handleInputChange('address', e.target.value)}
+              onChange={(e) => handleInputChange("address", e.target.value)}
               placeholder="Dirección, código postal, ciudad, provincia"
-              className={`bg-white ${errors.address ? 'border-destructive' : ''}`}
+              className={`bg-white ${
+                errors.address ? "border-destructive" : ""
+              }`}
             />
             {errors.address && (
               <p className="text-sm text-destructive mt-1">{errors.address}</p>
@@ -309,7 +343,9 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                   </TooltipTrigger>
                   <TooltipContent>
                     <p className="max-w-xs">
-                      Información de contacto (teléfono, email, web). Se mostrará en los presupuestos y PDFs para que tus clientes puedan contactarte.
+                      Información de contacto (teléfono, email, web). Se
+                      mostrará en los presupuestos y PDFs para que tus clientes
+                      puedan contactarte.
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -318,9 +354,11 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
             <Input
               id="contact"
               value={data.contact}
-              onChange={(e) => handleInputChange('contact', e.target.value)}
+              onChange={(e) => handleInputChange("contact", e.target.value)}
               placeholder="Información de contacto"
-              className={`bg-white ${errors.contact ? 'border-destructive' : ''}`}
+              className={`bg-white ${
+                errors.contact ? "border-destructive" : ""
+              }`}
             />
             {errors.contact && (
               <p className="text-sm text-destructive mt-1">{errors.contact}</p>
@@ -339,7 +377,7 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
             <div>
               <TemplateSelector
                 value={data.template}
-                onChange={(value) => handleInputChange('template', value)}
+                onChange={(value) => handleInputChange("template", value)}
                 error={errors.template}
               />
             </div>
@@ -354,7 +392,8 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                     </TooltipTrigger>
                     <TooltipContent>
                       <p className="max-w-xs">
-                        Color principal que se utilizará en la página de presupuestos y en las plantillas PDF que usan colores.
+                        Color principal que se utilizará en la página de
+                        presupuestos y en las plantillas PDF que usan colores.
                       </p>
                     </TooltipContent>
                   </Tooltip>
@@ -365,12 +404,16 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                   id="primary_color"
                   type="color"
                   value={data.primary_color}
-                  onChange={(e) => handleInputChange('primary_color', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("primary_color", e.target.value)
+                  }
                   className="w-10 h-10 p-1 border rounded cursor-pointer bg-white"
                 />
                 <Input
                   value={data.primary_color}
-                  onChange={(e) => handleInputChange('primary_color', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("primary_color", e.target.value)
+                  }
                   placeholder="#e8951c"
                   className="flex-1 text-xs bg-white"
                 />
@@ -387,7 +430,8 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                     </TooltipTrigger>
                     <TooltipContent>
                       <p className="max-w-xs">
-                        Color secundario que se utilizará en la página de presupuestos y en las plantillas PDF que usan colores.
+                        Color secundario que se utilizará en la página de
+                        presupuestos y en las plantillas PDF que usan colores.
                       </p>
                     </TooltipContent>
                   </Tooltip>
@@ -398,12 +442,16 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                   id="secondary_color"
                   type="color"
                   value={data.secondary_color}
-                  onChange={(e) => handleInputChange('secondary_color', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("secondary_color", e.target.value)
+                  }
                   className="w-10 h-10 p-1 border rounded cursor-pointer bg-white"
                 />
                 <Input
                   value={data.secondary_color}
-                  onChange={(e) => handleInputChange('secondary_color', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("secondary_color", e.target.value)
+                  }
                   placeholder="#109c61"
                   className="flex-1 text-xs bg-white"
                 />
@@ -430,7 +478,9 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                     </TooltipTrigger>
                     <TooltipContent>
                       <p className="max-w-xs">
-                        Texto que aparecerá en la sección de resumen del PDF generado. Puedes incluir información adicional sobre el presupuesto.
+                        Texto que aparecerá en la sección de resumen del PDF
+                        generado. Puedes incluir información adicional sobre el
+                        presupuesto.
                       </p>
                     </TooltipContent>
                   </Tooltip>
@@ -438,7 +488,7 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
               </div>
               <RichTextEditorDialog
                 value={data.summary_note}
-                onChange={(html) => handleInputChange('summary_note', html)}
+                onChange={(html) => handleInputChange("summary_note", html)}
                 label="Texto resumen PDF"
                 description="Texto que aparecerá en la sección de resumen del PDF generado"
                 placeholder="Escribe el texto del resumen aquí..."
@@ -448,11 +498,17 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
             <div className="bg-gray-50 border border-gray-300 rounded-md p-3 min-h-[80px] text-sm text-gray-700">
               <div
                 className="prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: data.summary_note || '<p class="text-gray-400">Sin contenido</p>' }}
+                dangerouslySetInnerHTML={{
+                  __html:
+                    data.summary_note ||
+                    '<p class="text-gray-400">Sin contenido</p>',
+                }}
               />
             </div>
             {errors.summary_note && (
-              <p className="text-sm text-destructive mt-1">{errors.summary_note}</p>
+              <p className="text-sm text-destructive mt-1">
+                {errors.summary_note}
+              </p>
             )}
           </div>
 
@@ -467,7 +523,9 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                     </TooltipTrigger>
                     <TooltipContent>
                       <p className="max-w-xs">
-                        Condiciones generales que aparecerán en el PDF. Por ejemplo: forma de pago, plazos de entrega, garantías, etc.
+                        Condiciones generales que aparecerán en el PDF. Por
+                        ejemplo: forma de pago, plazos de entrega, garantías,
+                        etc.
                       </p>
                     </TooltipContent>
                   </Tooltip>
@@ -475,7 +533,7 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
               </div>
               <RichTextEditorDialog
                 value={data.conditions_note}
-                onChange={(html) => handleInputChange('conditions_note', html)}
+                onChange={(html) => handleInputChange("conditions_note", html)}
                 label="Texto condiciones PDF"
                 description="Condiciones generales que aparecerán en el PDF (forma de pago, plazos, garantías, etc.)"
                 placeholder="Escribe las condiciones del presupuesto aquí..."
@@ -485,11 +543,17 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
             <div className="bg-gray-50 border border-gray-300 rounded-md p-3 min-h-[80px] text-sm text-gray-700">
               <div
                 className="prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: data.conditions_note || '<p class="text-gray-400">Sin contenido</p>' }}
+                dangerouslySetInnerHTML={{
+                  __html:
+                    data.conditions_note ||
+                    '<p class="text-gray-400">Sin contenido</p>',
+                }}
               />
             </div>
             {errors.conditions_note && (
-              <p className="text-sm text-destructive mt-1">{errors.conditions_note}</p>
+              <p className="text-sm text-destructive mt-1">
+                {errors.conditions_note}
+              </p>
             )}
           </div>
         </CardContent>
@@ -504,7 +568,9 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
           <div>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Label htmlFor="legal_note">Notas legales página presupuesto *</Label>
+                <Label htmlFor="legal_note">
+                  Notas legales página presupuesto *
+                </Label>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -512,7 +578,9 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                     </TooltipTrigger>
                     <TooltipContent>
                       <p className="max-w-xs">
-                        Notas legales que aparecerán en la página web del presupuesto. Por ejemplo: política de privacidad, RGPD, avisos legales, etc.
+                        Notas legales que aparecerán en la página web del
+                        presupuesto. Por ejemplo: política de privacidad, RGPD,
+                        avisos legales, etc.
                       </p>
                     </TooltipContent>
                   </Tooltip>
@@ -520,7 +588,7 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
               </div>
               <RichTextEditorDialog
                 value={data.legal_note}
-                onChange={(html) => handleInputChange('legal_note', html)}
+                onChange={(html) => handleInputChange("legal_note", html)}
                 label="Notas legales página presupuesto"
                 description="Notas legales que aparecerán en la página web del presupuesto (RGPD, privacidad, avisos legales, etc.)"
                 placeholder="Escribe las notas legales aquí..."
@@ -530,15 +598,21 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
             <div className="bg-gray-50 border border-gray-300 rounded-md p-3 min-h-[80px] text-sm text-gray-700">
               <div
                 className="prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: data.legal_note || '<p class="text-gray-400">Sin contenido</p>' }}
+                dangerouslySetInnerHTML={{
+                  __html:
+                    data.legal_note ||
+                    '<p class="text-gray-400">Sin contenido</p>',
+                }}
               />
             </div>
             {errors.legal_note && (
-              <p className="text-sm text-destructive mt-1">{errors.legal_note}</p>
+              <p className="text-sm text-destructive mt-1">
+                {errors.legal_note}
+              </p>
             )}
           </div>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
