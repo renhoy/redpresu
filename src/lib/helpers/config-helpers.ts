@@ -90,6 +90,17 @@ export async function getIVAtoREEquivalences(): Promise<IVAtoREEquivalences> {
 }
 
 /**
+ * Tipo para sección de plantilla PDF
+ */
+export interface PDFTemplateSection {
+  [key: string]: {
+    title: string
+    description: string
+    preview_url: string
+  }
+}
+
+/**
  * Tipo para plantilla PDF
  */
 export interface PDFTemplate {
@@ -97,6 +108,7 @@ export interface PDFTemplate {
   name: string
   description: string
   default?: boolean
+  sections?: PDFTemplateSection[]
 }
 
 /**

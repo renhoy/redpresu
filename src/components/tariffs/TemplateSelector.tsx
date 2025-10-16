@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
 import {
   Select,
   SelectContent,
@@ -15,9 +16,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { Info } from 'lucide-react'
-import Image from 'next/image'
+import { Info, Eye } from 'lucide-react'
 import { getPDFTemplatesAction, type PDFTemplate } from '@/app/actions/config'
+import { TemplatePreviewModal } from './TemplatePreviewModal'
 
 interface TemplateSelectorProps {
   value: string
@@ -28,6 +29,7 @@ interface TemplateSelectorProps {
 export function TemplateSelector({ value, onChange, error }: TemplateSelectorProps) {
   const [templates, setTemplates] = useState<PDFTemplate[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [previewOpen, setPreviewOpen] = useState(false)
 
   useEffect(() => {
     // Cargar plantillas desde la configuración
@@ -102,35 +104,28 @@ export function TemplateSelector({ value, onChange, error }: TemplateSelectorPro
         <p className="text-sm text-destructive mt-1">{error}</p>
       )}
 
-      {/* Preview hover tooltip */}
-      {selectedTemplate && (
-        <div className="mt-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="inline-flex items-center gap-1 text-xs text-muted-foreground cursor-help">
-                  <Info className="h-3 w-3" />
-                  Ver preview de {selectedTemplate.name}
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="p-0">
-                <div className="relative w-64 h-80">
-                  <Image
-                    src={`/templates/${selectedTemplate.id}-preview.png`}
-                    alt={`Preview ${selectedTemplate.name}`}
-                    fill
-                    className="object-contain rounded"
-                    onError={(e) => {
-                      // Fallback si no existe la imagen
-                      e.currentTarget.src = '/templates/placeholder.png'
-                    }}
-                  />
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+      {/* Botón de preview */}
+      {selectedTemplate && selectedTemplate.sections && selectedTemplate.sections.length > 0 && (
+        <div className="mt-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setPreviewOpen(true)}
+            className="flex items-center gap-2 text-cyan-600 border-cyan-600 hover:bg-cyan-50"
+          >
+            <Eye className="h-4 w-4" />
+            Vista Previa de {selectedTemplate.name}
+          </Button>
         </div>
       )}
+
+      {/* Modal de preview */}
+      <TemplatePreviewModal
+        template={selectedTemplate}
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+      />
     </div>
   )
 }
