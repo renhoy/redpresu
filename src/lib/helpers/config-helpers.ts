@@ -96,6 +96,7 @@ export interface PDFTemplate {
   id: string
   name: string
   description: string
+  default?: boolean
 }
 
 /**

@@ -149,6 +149,12 @@ export async function updateConfigValue(
       revalidatePath('/tariffs/create')
     }
 
+    // Si se modifican plantillas PDF, revalidar páginas de tarifas
+    if (key === 'pdf_templates' || key === 'default_pdf_template') {
+      revalidatePath('/tariffs')
+      revalidatePath('/tariffs/create')
+    }
+
     // Si se modifica el nombre de la app, revalidar todas las páginas
     if (key === 'app_name') {
       revalidatePath('/', 'layout')
@@ -278,6 +284,7 @@ export interface PDFTemplate {
   id: string
   name: string
   description: string
+  default?: boolean
 }
 
 /**
@@ -334,12 +341,12 @@ export async function getTariffDefaultsAction(): Promise<{
   error?: string
 }> {
   try {
-    // Obtener colores y plantilla por defecto de configuración
+    // Obtener colores, plantilla y lista de plantillas
     // Soportar tanto default_colors (objeto) como default_primary_color/default_secondary_color (separados)
     const { data, error } = await supabaseAdmin
       .from('config')
       .select('key, value')
-      .in('key', ['default_colors', 'default_primary_color', 'default_secondary_color', 'default_pdf_template'])
+      .in('key', ['default_colors', 'default_primary_color', 'default_secondary_color', 'default_pdf_template', 'pdf_templates'])
 
     if (error) {
       console.error('[getTariffDefaultsAction] Error:', error)
@@ -355,13 +362,16 @@ export async function getTariffDefaultsAction(): Promise<{
     // Aplicar valores de configuración si existen
     if (data && Array.isArray(data)) {
       let defaultColorsObj: { primary?: string; secondary?: string } | null = null
+      let pdfTemplates: PDFTemplate[] | null = null
 
-      // Primera pasada: buscar default_colors (objeto)
+      // Primera pasada: buscar default_colors (objeto) y pdf_templates
       data.forEach((config) => {
         if (config.key === 'default_colors' && config.value) {
           defaultColorsObj = config.value as { primary?: string; secondary?: string }
         } else if (config.key === 'default_pdf_template' && config.value) {
           defaults.template = config.value as string
+        } else if (config.key === 'pdf_templates' && config.value) {
+          pdfTemplates = config.value as PDFTemplate[]
         }
       })
 
@@ -382,6 +392,15 @@ export async function getTariffDefaultsAction(): Promise<{
             defaults.secondary_color = config.value as string
           }
         })
+      }
+
+      // Buscar plantilla con default: true en el array pdf_templates
+      if (pdfTemplates && Array.isArray(pdfTemplates)) {
+        const defaultTemplate = pdfTemplates.find(t => t.default === true)
+        if (defaultTemplate) {
+          defaults.template = defaultTemplate.id
+          console.log('[getTariffDefaultsAction] Plantilla por defecto encontrada en array:', defaultTemplate.id)
+        }
       }
     }
 
