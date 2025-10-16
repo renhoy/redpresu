@@ -51,19 +51,6 @@ export function TemplatePreviewModal({ template, open, onClose }: TemplatePrevie
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-[80vw] h-[90vh] p-6 flex flex-col overflow-hidden">
-        {/* Línea 1: Botón Cerrar a la derecha */}
-        <div className="flex justify-end mb-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleOpenChange(false)}
-            className="flex items-center gap-1"
-          >
-            <X className="h-4 w-4" />
-            Cerrar
-          </Button>
-        </div>
-
         {/* Línea 2: Navegación */}
         <div className="flex items-center justify-between mb-4">
           <Button
@@ -93,26 +80,18 @@ export function TemplatePreviewModal({ template, open, onClose }: TemplatePrevie
           </Button>
         </div>
 
-        {/* Línea 3: Vista Previa */}
-        <h2 className="text-xl font-bold text-gray-900 mb-2">Vista Previa</h2>
-
-        {/* Línea 4: Plantilla: {nombre} */}
+        {/* Línea 3: Vista Previa Plantilla: {nombre} */}
         <div className="mb-1">
-          <span className="text-base font-semibold text-gray-900">Plantilla: </span>
-          <span className="text-base text-gray-900">{template.name}</span>
+          <span className="text-xl font-bold text-gray-900">Vista Previa Plantilla: </span>
+          <span className="text-xl font-bold text-gray-900">{template.name}</span>
         </div>
 
-        {/* Línea 5: Descripción de la plantilla */}
+        {/* Línea 4: Descripción de la plantilla */}
         <p className="text-sm text-gray-600 mb-3">
           {template.description}
         </p>
 
-        {/* Línea 6: Título de la sección */}
-        <h3 className="text-lg font-semibold text-cyan-700 mb-3">
-          {sectionData.title}
-        </h3>
-
-        {/* Línea 7: Imagen (tamaño reducido, sin scroll) */}
+        {/* Línea 5: Imagen (ocupa espacio restante) */}
         <div className="flex-1 relative bg-gray-100 rounded-lg overflow-hidden mb-3 min-h-0">
           <Image
             src={sectionData.preview_url}
@@ -124,7 +103,12 @@ export function TemplatePreviewModal({ template, open, onClose }: TemplatePrevie
           />
         </div>
 
-        {/* Línea 8: Descripción de la sección */}
+        {/* Línea 6: Título de la sección */}
+        <h3 className="text-base font-semibold text-gray-900 mb-2">
+          {sectionData.title}
+        </h3>
+
+        {/* Línea 7: Descripción de la sección */}
         <div className="bg-lime-50 border border-lime-200 rounded-lg p-3">
           <p className="text-sm text-gray-700">
             {sectionData.description}
