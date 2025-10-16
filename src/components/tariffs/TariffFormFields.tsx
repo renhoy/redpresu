@@ -468,43 +468,30 @@ export function TariffFormFields({
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="summary_note">Texto resumen PDF *</Label>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="max-w-xs">
-                        Texto que aparecerá en la sección de resumen del PDF
-                        generado. Puedes incluir información adicional sobre el
-                        presupuesto.
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <RichTextEditorDialog
-                value={data.summary_note}
-                onChange={(html) => handleInputChange("summary_note", html)}
-                label="Texto resumen PDF"
-                description="Texto que aparecerá en la sección de resumen del PDF generado"
-                placeholder="Escribe el texto del resumen aquí..."
-                buttonOnly
-              />
+            <div className="flex items-center gap-2 mb-2">
+              <Label htmlFor="summary_note">Texto resumen PDF *</Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs">
+                      Texto que aparecerá en la sección de resumen del PDF
+                      generado. Puedes incluir información adicional sobre el
+                      presupuesto.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
-            <div className="bg-gray-50 border border-gray-300 rounded-md p-3 min-h-[80px] text-sm text-gray-700">
-              <div
-                className="prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{
-                  __html:
-                    data.summary_note ||
-                    '<p class="text-gray-400">Sin contenido</p>',
-                }}
-              />
-            </div>
+            <RichTextEditorDialog
+              value={data.summary_note}
+              onChange={(html) => handleInputChange("summary_note", html)}
+              label="Texto resumen PDF"
+              description="Texto que aparecerá en la sección de resumen del PDF generado"
+              placeholder="Escribe el texto del resumen aquí..."
+            />
             {errors.summary_note && (
               <p className="text-sm text-destructive mt-1">
                 {errors.summary_note}
@@ -513,43 +500,30 @@ export function TariffFormFields({
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="conditions_note">Texto condiciones PDF *</Label>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="max-w-xs">
-                        Condiciones generales que aparecerán en el PDF. Por
-                        ejemplo: forma de pago, plazos de entrega, garantías,
-                        etc.
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <RichTextEditorDialog
-                value={data.conditions_note}
-                onChange={(html) => handleInputChange("conditions_note", html)}
-                label="Texto condiciones PDF"
-                description="Condiciones generales que aparecerán en el PDF (forma de pago, plazos, garantías, etc.)"
-                placeholder="Escribe las condiciones del presupuesto aquí..."
-                buttonOnly
-              />
+            <div className="flex items-center gap-2 mb-2">
+              <Label htmlFor="conditions_note">Texto condiciones PDF *</Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs">
+                      Condiciones generales que aparecerán en el PDF. Por
+                      ejemplo: forma de pago, plazos de entrega, garantías,
+                      etc.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
-            <div className="bg-gray-50 border border-gray-300 rounded-md p-3 min-h-[80px] text-sm text-gray-700">
-              <div
-                className="prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{
-                  __html:
-                    data.conditions_note ||
-                    '<p class="text-gray-400">Sin contenido</p>',
-                }}
-              />
-            </div>
+            <RichTextEditorDialog
+              value={data.conditions_note}
+              onChange={(html) => handleInputChange("conditions_note", html)}
+              label="Texto condiciones PDF"
+              description="Condiciones generales que aparecerán en el PDF (forma de pago, plazos, garantías, etc.)"
+              placeholder="Escribe las condiciones del presupuesto aquí..."
+            />
             {errors.conditions_note && (
               <p className="text-sm text-destructive mt-1">
                 {errors.conditions_note}
@@ -566,45 +540,32 @@ export function TariffFormFields({
         </CardHeader>
         <CardContent>
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="legal_note">
-                  Notas legales página presupuesto *
-                </Label>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="max-w-xs">
-                        Notas legales que aparecerán en la página web del
-                        presupuesto. Por ejemplo: política de privacidad, RGPD,
-                        avisos legales, etc.
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <RichTextEditorDialog
-                value={data.legal_note}
-                onChange={(html) => handleInputChange("legal_note", html)}
-                label="Notas legales página presupuesto"
-                description="Notas legales que aparecerán en la página web del presupuesto (RGPD, privacidad, avisos legales, etc.)"
-                placeholder="Escribe las notas legales aquí..."
-                buttonOnly
-              />
+            <div className="flex items-center gap-2 mb-2">
+              <Label htmlFor="legal_note">
+                Notas legales página presupuesto *
+              </Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs">
+                      Notas legales que aparecerán en la página web del
+                      presupuesto. Por ejemplo: política de privacidad, RGPD,
+                      avisos legales, etc.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
-            <div className="bg-gray-50 border border-gray-300 rounded-md p-3 min-h-[80px] text-sm text-gray-700">
-              <div
-                className="prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{
-                  __html:
-                    data.legal_note ||
-                    '<p class="text-gray-400">Sin contenido</p>',
-                }}
-              />
-            </div>
+            <RichTextEditorDialog
+              value={data.legal_note}
+              onChange={(html) => handleInputChange("legal_note", html)}
+              label="Notas legales página presupuesto"
+              description="Notas legales que aparecerán en la página web del presupuesto (RGPD, privacidad, avisos legales, etc.)"
+              placeholder="Escribe las notas legales aquí..."
+            />
             {errors.legal_note && (
               <p className="text-sm text-destructive mt-1">
                 {errors.legal_note}

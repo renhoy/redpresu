@@ -121,8 +121,19 @@ export function RichTextEditorDialog({
   // Modo completo con preview
   return (
     <>
-      {/* Campo de solo lectura con preview */}
-      <div className="bg-gray-50 border border-gray-300 rounded-md p-3 min-h-[80px] text-sm text-gray-700">
+      {/* Campo de solo lectura con preview - Clicable */}
+      <div
+        className="bg-gray-50 border border-gray-300 rounded-md p-3 min-h-[80px] text-sm text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+        onClick={handleOpen}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            handleOpen()
+          }
+        }}
+      >
         <div
           className="prose prose-sm max-w-none"
           dangerouslySetInnerHTML={{ __html: value || '<p class="text-gray-400">Sin contenido</p>' }}
