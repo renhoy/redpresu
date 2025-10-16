@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { requestPasswordReset } from '@/app/actions/auth'
 import { Button } from '@/components/ui/button'

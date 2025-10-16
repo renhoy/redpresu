@@ -140,7 +140,20 @@ export async function updateConfigValue(
       return { success: false, error: 'Error al actualizar configuración' }
     }
 
+    // Revalidar rutas relevantes según la key modificada
     revalidatePath('/settings')
+
+    // Si se modifican colores por defecto, revalidar páginas de tarifas
+    if (key === 'default_colors' || key === 'default_primary_color' || key === 'default_secondary_color') {
+      revalidatePath('/tariffs')
+      revalidatePath('/tariffs/create')
+    }
+
+    // Si se modifica el nombre de la app, revalidar todas las páginas
+    if (key === 'app_name') {
+      revalidatePath('/', 'layout')
+    }
+
     return { success: true }
   } catch (error) {
     console.error('[updateConfigValue] Unexpected error:', error)
@@ -322,10 +335,11 @@ export async function getTariffDefaultsAction(): Promise<{
 }> {
   try {
     // Obtener colores y plantilla por defecto de configuración
+    // Soportar tanto default_colors (objeto) como default_primary_color/default_secondary_color (separados)
     const { data, error } = await supabaseAdmin
       .from('config')
       .select('key, value')
-      .in('key', ['default_primary_color', 'default_secondary_color', 'default_pdf_template'])
+      .in('key', ['default_colors', 'default_primary_color', 'default_secondary_color', 'default_pdf_template'])
 
     if (error) {
       console.error('[getTariffDefaultsAction] Error:', error)
@@ -335,20 +349,40 @@ export async function getTariffDefaultsAction(): Promise<{
     const defaults: TariffDefaults = {
       primary_color: '#e8951c', // Valores por defecto fallback
       secondary_color: '#109c61',
-      template: '41200-00001' // Color por defecto
+      template: '41200-00001'
     }
 
     // Aplicar valores de configuración si existen
     if (data && Array.isArray(data)) {
+      let defaultColorsObj: { primary?: string; secondary?: string } | null = null
+
+      // Primera pasada: buscar default_colors (objeto)
       data.forEach((config) => {
-        if (config.key === 'default_primary_color' && config.value) {
-          defaults.primary_color = config.value as string
-        } else if (config.key === 'default_secondary_color' && config.value) {
-          defaults.secondary_color = config.value as string
+        if (config.key === 'default_colors' && config.value) {
+          defaultColorsObj = config.value as { primary?: string; secondary?: string }
         } else if (config.key === 'default_pdf_template' && config.value) {
           defaults.template = config.value as string
         }
       })
+
+      // Si existe default_colors como objeto, usarlo
+      if (defaultColorsObj) {
+        if (defaultColorsObj.primary) {
+          defaults.primary_color = defaultColorsObj.primary
+        }
+        if (defaultColorsObj.secondary) {
+          defaults.secondary_color = defaultColorsObj.secondary
+        }
+      } else {
+        // Si no, buscar valores separados (backward compatibility)
+        data.forEach((config) => {
+          if (config.key === 'default_primary_color' && config.value) {
+            defaults.primary_color = config.value as string
+          } else if (config.key === 'default_secondary_color' && config.value) {
+            defaults.secondary_color = config.value as string
+          }
+        })
+      }
     }
 
     console.log('[getTariffDefaultsAction] Defaults:', defaults)

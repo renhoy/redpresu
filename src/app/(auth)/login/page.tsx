@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getServerUser } from '@/lib/auth/server'
-import { isDevelopmentMode } from '@/lib/helpers/config-helpers'
+import { isDevelopmentMode, getAppName } from '@/lib/helpers/config-helpers'
 import LoginForm from '@/components/auth/LoginForm'
 import { FileText } from 'lucide-react'
 
@@ -22,8 +22,9 @@ export default async function LoginPage() {
     }
   }
 
-  // Obtener el modo de la aplicación
+  // Obtener configuración
   const isDev = await isDevelopmentMode()
+  const appName = await getAppName()
 
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8" style={{ background: '#f7fee7' }}>
@@ -35,7 +36,7 @@ export default async function LoginPage() {
               <FileText className="h-7 w-7 text-white" />
             </div>
             <h2 className="text-3xl font-bold text-gray-900">
-              Redpresu
+              {appName}
             </h2>
           </Link>
           <p className="mt-2 text-sm text-gray-600">

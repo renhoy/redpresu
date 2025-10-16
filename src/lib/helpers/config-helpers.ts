@@ -196,3 +196,12 @@ export async function isPublicRegistrationEnabled(): Promise<boolean> {
   const enabled = await getConfigValue<boolean>('public_registration_enabled')
   return enabled ?? true // Por defecto está habilitado
 }
+
+/**
+ * Obtiene el nombre de la aplicación
+ * @returns Nombre de la aplicación (por defecto 'Redpresu')
+ */
+export async function getAppName(): Promise<string> {
+  const name = await getConfigValue<string>('app_name')
+  return name || 'Redpresu'
+}

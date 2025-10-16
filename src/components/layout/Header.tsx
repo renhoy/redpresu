@@ -18,9 +18,10 @@ interface HeaderProps {
   userName?: string
   isAuthenticated?: boolean
   hasBudgets?: boolean
+  appName?: string
 }
 
-export function Header({ userRole, userName, isAuthenticated = true, hasBudgets = true }: HeaderProps) {
+export function Header({ userRole, userName, isAuthenticated = true, hasBudgets = true, appName = 'Redpresu' }: HeaderProps) {
   const pathname = usePathname()
 
   // Si no está autenticado, mostrar header público
@@ -34,7 +35,7 @@ export function Header({ userRole, userName, isAuthenticated = true, hasBudgets 
               <div className="w-8 h-8 bg-lime-500 rounded-lg flex items-center justify-center">
                 <FileText className="h-5 w-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-gray-900">Redpresu</span>
+              <span className="text-xl font-bold text-gray-900">{appName}</span>
             </Link>
 
             {/* Botones de autenticación */}
@@ -91,7 +92,7 @@ export function Header({ userRole, userName, isAuthenticated = true, hasBudgets 
             <div className="w-8 h-8 bg-lime-500 rounded-lg flex items-center justify-center">
               <FileText className="h-5 w-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-gray-900">Redpresu</span>
+            <span className="text-xl font-bold text-gray-900">{appName}</span>
           </Link>
 
           {/* Navigation - Desktop */}
