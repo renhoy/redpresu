@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { PDFTemplate } from '@/app/actions/config'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import Image from 'next/image'
@@ -50,92 +50,85 @@ export function TemplatePreviewModal({ template, open, onClose }: TemplatePrevie
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-[80vw] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">
-            Vista Previa de Plantilla
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-[80vw] h-[90vh] p-6 flex flex-col overflow-hidden">
+        {/* Línea 1: Botón Cerrar a la derecha */}
+        <div className="flex justify-end mb-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleOpenChange(false)}
+            className="flex items-center gap-1"
+          >
+            <X className="h-4 w-4" />
+            Cerrar
+          </Button>
+        </div>
 
-        <div className="space-y-6">
-          {/* Información de la plantilla */}
-          <div className="border-b pb-4">
-            <h3 className="text-xl font-semibold text-gray-900">
-              {template.name}
-            </h3>
-            <p className="text-sm text-gray-600 mt-1">
-              {template.description}
-            </p>
+        {/* Línea 2: Navegación */}
+        <div className="flex items-center justify-between mb-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePrevious}
+            disabled={isFirstSection || !hasMultipleSections}
+            className="flex items-center gap-1"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Anterior
+          </Button>
+
+          <div className="text-sm font-medium text-gray-700">
+            Sección {currentSectionIndex + 1} de {template.sections.length}
           </div>
 
-          {/* Información de la sección actual */}
-          <div className="space-y-4">
-            <div>
-              <h4 className="text-lg font-semibold text-cyan-700">
-                {sectionData.title}
-              </h4>
-            </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleNext}
+            disabled={isLastSection || !hasMultipleSections}
+            className="flex items-center gap-1"
+          >
+            Siguiente
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
 
-            {/* Preview de la imagen en proporción A4 */}
-            <div className="relative w-full bg-gray-100 rounded-lg overflow-hidden" style={{ aspectRatio: '210/297' }}>
-              <Image
-                src={sectionData.preview_url}
-                alt={sectionData.title}
-                fill
-                className="object-contain"
-                sizes="(max-width: 768px) 100vw, 80vw"
-                priority
-              />
-            </div>
+        {/* Línea 3: Vista Previa */}
+        <h2 className="text-xl font-bold text-gray-900 mb-2">Vista Previa</h2>
 
-            {/* Descripción de la sección */}
-            <div className="bg-lime-50 border border-lime-200 rounded-lg p-4">
-              <p className="text-sm text-gray-700">
-                {sectionData.description}
-              </p>
-            </div>
-          </div>
+        {/* Línea 4: Plantilla: {nombre} */}
+        <div className="mb-1">
+          <span className="text-base font-semibold text-gray-900">Plantilla: </span>
+          <span className="text-base text-gray-900">{template.name}</span>
+        </div>
 
-          {/* Navegación entre secciones */}
-          {hasMultipleSections && (
-            <div className="flex items-center justify-between pt-4 border-t">
-              <Button
-                variant="outline"
-                onClick={handlePrevious}
-                disabled={isFirstSection}
-                className="flex items-center gap-2"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Anterior
-              </Button>
+        {/* Línea 5: Descripción de la plantilla */}
+        <p className="text-sm text-gray-600 mb-3">
+          {template.description}
+        </p>
 
-              <div className="text-sm text-gray-600">
-                Sección {currentSectionIndex + 1} de {template.sections.length}
-              </div>
+        {/* Línea 6: Título de la sección */}
+        <h3 className="text-lg font-semibold text-cyan-700 mb-3">
+          {sectionData.title}
+        </h3>
 
-              <Button
-                variant="outline"
-                onClick={handleNext}
-                disabled={isLastSection}
-                className="flex items-center gap-2"
-              >
-                Siguiente
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
+        {/* Línea 7: Imagen (tamaño reducido, sin scroll) */}
+        <div className="flex-1 relative bg-gray-100 rounded-lg overflow-hidden mb-3 min-h-0">
+          <Image
+            src={sectionData.preview_url}
+            alt={sectionData.title}
+            fill
+            className="object-contain"
+            sizes="80vw"
+            unoptimized
+          />
+        </div>
 
-          {/* Botón cerrar */}
-          <div className="flex justify-end pt-2">
-            <Button
-              variant="outline"
-              onClick={() => handleOpenChange(false)}
-              className="flex items-center gap-2"
-            >
-              <X className="h-4 w-4" />
-              Cerrar
-            </Button>
-          </div>
+        {/* Línea 8: Descripción de la sección */}
+        <div className="bg-lime-50 border border-lime-200 rounded-lg p-3">
+          <p className="text-sm text-gray-700">
+            {sectionData.description}
+          </p>
         </div>
       </DialogContent>
     </Dialog>
