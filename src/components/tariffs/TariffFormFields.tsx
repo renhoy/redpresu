@@ -1,11 +1,9 @@
 'use client'
 
-import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
 import {
   Select,
   SelectContent,
@@ -19,11 +17,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { Info, Eye } from 'lucide-react'
+import { Info } from 'lucide-react'
 import { LogoUploader } from './LogoUploader'
 import { TemplateSelector } from './TemplateSelector'
 import { RichTextEditorDialog } from '@/components/shared/RichTextEditorDialog'
-import { CompanyDataPreviewModal } from './CompanyDataPreviewModal'
 import { type TariffFormData } from '@/app/actions/tariffs'
 
 interface TariffFormFieldsProps {
@@ -33,8 +30,6 @@ interface TariffFormFieldsProps {
 }
 
 export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsProps) {
-  const [companyPreviewOpen, setCompanyPreviewOpen] = useState(false)
-
   const handleInputChange = (field: keyof TariffFormData, value: string | number) => {
     onChange({ [field]: value })
   }
@@ -165,19 +160,7 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
       {/* Card 2: Datos Empresa */}
       <Card className="bg-cyan-50">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Datos Empresa</CardTitle>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setCompanyPreviewOpen(true)}
-              className="flex items-center gap-2 text-cyan-600 border-cyan-600 hover:bg-cyan-50"
-            >
-              <Eye className="h-4 w-4" />
-              Vista Previa
-            </Button>
-          </div>
+          <CardTitle>Datos Empresa</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <LogoUploader
@@ -185,6 +168,50 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
             onChange={(url) => handleInputChange('logo_url', url)}
             error={errors.logo_url}
           />
+
+          {/* Vista Previa Inline */}
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="text-sm font-medium text-gray-600 mb-3">
+              Vista Previa - Así se verá en presupuestos
+            </div>
+            <div className="grid grid-cols-[auto_1fr] gap-6">
+              {/* Columna 1: Logo */}
+              <div className="flex items-start">
+                {data.logo_url ? (
+                  <img
+                    src={data.logo_url}
+                    alt={data.name}
+                    className="w-24 h-24 object-contain"
+                  />
+                ) : (
+                  <div className="w-24 h-24 bg-muted rounded-lg flex items-center justify-center">
+                    <span className="text-xs text-muted-foreground">
+                      Sin logo
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Columna 2: Datos empresa */}
+              <div className="space-y-0.5">
+                <h2
+                  className="text-xl font-bold"
+                  style={{ color: data.primary_color }}
+                >
+                  {data.name || 'Nombre de la empresa'}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {data.nif || 'NIF no especificado'}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {data.address || 'Dirección no especificada'}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {data.contact || 'Contacto no especificado'}
+                </p>
+              </div>
+            </div>
+          </div>
 
           <div className="grid grid-cols-4 gap-4">
             <div className="col-span-3">
@@ -512,13 +539,6 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
           </div>
         </CardContent>
       </Card>
-
-      {/* Modal de preview Datos Empresa */}
-      <CompanyDataPreviewModal
-        open={companyPreviewOpen}
-        onClose={() => setCompanyPreviewOpen(false)}
-        data={data}
-      />
     </div>
   )
 }
