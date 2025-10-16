@@ -1,21 +1,25 @@
-"use client"
+"use client";
 
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
-import Image from 'next/image'
-import { type TariffFormData } from '@/app/actions/tariffs'
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Card, CardContent } from "@/components/ui/card";
+import { type TariffFormData } from "@/app/actions/tariffs";
 
 interface CompanyDataPreviewModalProps {
-  open: boolean
-  onClose: () => void
-  data: TariffFormData
+  open: boolean;
+  onClose: () => void;
+  data: TariffFormData;
 }
 
-export function CompanyDataPreviewModal({ open, onClose, data }: CompanyDataPreviewModalProps) {
+export function CompanyDataPreviewModal({
+  open,
+  onClose,
+  data,
+}: CompanyDataPreviewModalProps) {
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
-      onClose()
+      onClose();
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -24,54 +28,53 @@ export function CompanyDataPreviewModal({ open, onClose, data }: CompanyDataPrev
           Vista Previa - Datos Empresa
         </DialogTitle>
 
-        <div className="grid grid-cols-[200px_1fr] gap-6 mt-4">
-          {/* Columna 1: Logo */}
-          <div className="flex items-start justify-center">
-            {data.logo_url ? (
-              <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-gray-100">
-                <Image
-                  src={data.logo_url}
-                  alt="Logo empresa"
-                  fill
-                  className="object-contain p-4"
-                  unoptimized
-                />
+        <p className="text-sm text-gray-600 mb-4">
+          Así se verá esta sección en la página de presupuestos
+        </p>
+
+        {/* Company Header - Replica del diseño de presupuestos */}
+        <Card>
+          <CardContent className="py-3 px-6">
+            <div className="grid grid-cols-[auto_1fr] gap-6">
+              {/* Columna 1: Logo */}
+              <div className="flex items-start">
+                {data.logo_url ? (
+                  <img
+                    src={data.logo_url}
+                    alt={data.name}
+                    className="w-24 h-24 object-contain"
+                  />
+                ) : (
+                  <div className="w-24 h-24 bg-muted rounded-lg flex items-center justify-center">
+                    <span className="text-xs text-muted-foreground">
+                      Sin logo
+                    </span>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="w-full aspect-square rounded-lg bg-gray-100 flex items-center justify-center">
-                <span className="text-gray-400 text-sm">Sin logo</span>
+
+              {/* Columna 2: Datos empresa */}
+              <div className="space-y-0.5">
+                <h2
+                  className="text-xl font-bold"
+                  style={{ color: data.primary_color }}
+                >
+                  {data.name}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {data.nif || "NIF no especificado"}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {data.address || "Dirección no especificada"}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {data.contact || "Contacto no especificado"}
+                </p>
               </div>
-            )}
-          </div>
-
-          {/* Columna 2: Datos */}
-          <div className="space-y-3">
-            {/* Nombre */}
-            <div>
-              <div className="text-sm font-medium text-gray-600 mb-1">Nombre</div>
-              <div className="text-base text-gray-900">{data.name || '—'}</div>
             </div>
-
-            {/* NIF */}
-            <div>
-              <div className="text-sm font-medium text-gray-600 mb-1">NIF/CIF</div>
-              <div className="text-base text-gray-900">{data.nif || '—'}</div>
-            </div>
-
-            {/* Dirección */}
-            <div>
-              <div className="text-sm font-medium text-gray-600 mb-1">Dirección</div>
-              <div className="text-base text-gray-900">{data.address || '—'}</div>
-            </div>
-
-            {/* Contacto */}
-            <div>
-              <div className="text-sm font-medium text-gray-600 mb-1">Contacto</div>
-              <div className="text-base text-gray-900">{data.contact || '—'}</div>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
