@@ -34,6 +34,7 @@ interface DashboardClientProps {
     totalValue: string
   }
   userRole: string
+  hasBudgets?: boolean
 }
 
 const statusColors = {
@@ -56,7 +57,7 @@ const statusIcons = {
 
 type Periodo = 'hoy' | 'semana' | 'mes' | 'año'
 
-export function DashboardClient({ initialStats, userRole }: DashboardClientProps) {
+export function DashboardClient({ initialStats, userRole, hasBudgets = true }: DashboardClientProps) {
   const [stats, setStats] = useState(initialStats)
   const [periodo, setPeriodo] = useState<Periodo>('mes')
   const [loading, setLoading] = useState(false)
@@ -195,12 +196,24 @@ export function DashboardClient({ initialStats, userRole }: DashboardClientProps
               </Button>
             </Link>
 
-            <Link href="/budgets">
-              <Button className="w-full h-16 flex items-center gap-2 justify-center" variant="outline">
+            {hasBudgets ? (
+              <Link href="/budgets">
+                <Button className="w-full h-16 flex items-center gap-2 justify-center" variant="outline">
+                  <Receipt className="w-5 h-5" />
+                  <span>Ver Presupuestos</span>
+                </Button>
+              </Link>
+            ) : (
+              <Button
+                className="w-full h-16 flex items-center gap-2 justify-center opacity-60 cursor-not-allowed"
+                variant="outline"
+                disabled
+                title="No tienes presupuestos creados"
+              >
                 <Receipt className="w-5 h-5" />
                 <span>Ver Presupuestos</span>
               </Button>
-            </Link>
+            )}
           </div>
         </CardContent>
       </Card>

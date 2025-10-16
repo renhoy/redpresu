@@ -11,6 +11,7 @@ import {
   type TariffFormData,
 } from "@/app/actions/tariffs";
 import { Tariff } from "@/lib/types/database";
+import { isValidNIF, getNIFErrorMessage } from "@/lib/helpers/nif-validator";
 
 interface TariffFormProps {
   mode: "create" | "edit";
@@ -68,7 +69,14 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
       newErrors.name = 'El nombre de empresa es obligatorio'
     }
     if (!formData.nif || formData.nif.trim() === '') {
-      newErrors.nif = 'El NIF es obligatorio'
+      newErrors.nif = 'El NIF/CIF es obligatorio'
+    } else {
+      // Validar formato y letra de control del NIF/CIF
+      const nifCleaned = formData.nif.trim().toUpperCase()
+      if (!isValidNIF(nifCleaned)) {
+        // Para tarifas asumimos que es empresa (CIF) por defecto
+        newErrors.nif = getNIFErrorMessage(nifCleaned, 'empresa')
+      }
     }
     if (!formData.address || formData.address.trim() === '') {
       newErrors.address = 'La dirección es obligatoria'

@@ -22,7 +22,13 @@ export async function getServerUser() {
     .single()
 
   if (dbError) {
-    console.error('[getServerUser] Error fetching user data:', dbError)
+    console.error('[getServerUser] Error fetching user data:', {
+      message: dbError.message,
+      details: dbError.details,
+      hint: dbError.hint,
+      code: dbError.code,
+      full: dbError
+    })
     return null
   }
 

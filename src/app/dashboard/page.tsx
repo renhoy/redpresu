@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getServerUser } from '@/lib/auth/server'
 import { getDashboardStats } from '@/app/actions/dashboard'
+import { userHasBudgets } from '@/app/actions/budgets'
 import { DashboardClient } from '@/components/dashboard/DashboardClient'
 
 export default async function DashboardPage() {
@@ -23,5 +24,8 @@ export default async function DashboardPage() {
     )
   }
 
-  return <DashboardClient initialStats={stats} userRole={user.role} />
+  // Verificar si el usuario tiene presupuestos
+  const hasBudgets = await userHasBudgets()
+
+  return <DashboardClient initialStats={stats} userRole={user.role} hasBudgets={hasBudgets} />
 }

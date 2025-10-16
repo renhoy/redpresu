@@ -14,6 +14,7 @@ import { BudgetHierarchyForm } from './BudgetHierarchyForm'
 import { createDraftBudget, updateBudgetDraft, saveBudget, generateBudgetPDF, duplicateBudget } from '@/app/actions/budgets'
 import { getIVAtoREEquivalencesAction } from '@/app/actions/config'
 import { calculateRecargo, getTotalRecargo, shouldApplyIRPF, calculateIRPF, getDefaultIRPFPercentage } from '@/lib/helpers/fiscal-calculations'
+import { isValidNIF, getNIFErrorMessage } from '@/lib/helpers/nif-validator'
 import { toast } from 'sonner'
 import {
   AlertDialog,
@@ -233,20 +234,12 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
       newErrors.client_name = 'Nombre del cliente es obligatorio'
     }
     if (!clientData.client_nif_nie.trim()) {
-      newErrors.client_nif_nie = 'NIF/NIE es obligatorio'
+      newErrors.client_nif_nie = 'NIF/NIE/CIF es obligatorio'
     } else {
-      // Validación básica según tipo de cliente
+      // Validar usando el helper que verifica formato y letra de control
       const nifNie = clientData.client_nif_nie.trim().toUpperCase()
-      if (clientData.client_type === 'empresa') {
-        // NIF empresa: letra + 8 números + letra
-        if (!/^[A-Z]\d{8}[A-Z]$/.test(nifNie)) {
-          newErrors.client_nif_nie = 'NIF de empresa inválido (formato: A12345678B)'
-        }
-      } else if (clientData.client_type === 'particular' || clientData.client_type === 'autonomo') {
-        // DNI: 8 números + letra O NIE: letra + 7 números + letra
-        if (!/^(\d{8}[A-Z]|[XYZ]\d{7}[A-Z])$/.test(nifNie)) {
-          newErrors.client_nif_nie = 'DNI/NIE inválido'
-        }
+      if (!isValidNIF(nifNie)) {
+        newErrors.client_nif_nie = getNIFErrorMessage(nifNie, clientData.client_type)
       }
     }
     if (!clientData.client_phone.trim()) {
@@ -1072,7 +1065,11 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                   value={clientData.client_nif_nie}
                   onChange={(e) => handleClientDataChange('client_nif_nie', e.target.value.toUpperCase())}
                   className={errors.client_nif_nie ? 'border-destructive' : ''}
-                  placeholder="NIF/NIE"
+                  placeholder={
+                    clientData.client_type === 'empresa'
+                      ? 'CIF (A12345678)'
+                      : 'DNI/NIE (12345678Z)'
+                  }
                 />
                 {errors.client_nif_nie && (
                   <p className="text-sm text-destructive">{errors.client_nif_nie}</p>

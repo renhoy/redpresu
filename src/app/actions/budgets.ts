@@ -1366,3 +1366,37 @@ export async function deleteBudget(budgetId: string): Promise<{
     return { success: false, error: 'Error interno del servidor' }
   }
 }
+
+/**
+ * Verificar si el usuario tiene al menos un presupuesto
+ */
+export async function userHasBudgets(): Promise<boolean> {
+  try {
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+    // Obtener usuario actual
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return false
+    }
+
+    // Contar presupuestos del usuario (limitado a 1 para eficiencia)
+    const { count, error } = await supabase
+      .from('budgets')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .limit(1)
+
+    if (error) {
+      console.error('[userHasBudgets] Error:', error)
+      return false
+    }
+
+    return (count || 0) > 0
+
+  } catch (error) {
+    console.error('[userHasBudgets] Error crítico:', error)
+    return false
+  }
+}

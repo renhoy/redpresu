@@ -1,9 +1,6 @@
 "use client"
 
-import { Dialog, DialogContent } from '@/components/ui/dialog'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import Image from 'next/image'
 import { type TariffFormData } from '@/app/actions/tariffs'
 
@@ -22,80 +19,57 @@ export function CompanyDataPreviewModal({ open, onClose, data }: CompanyDataPrev
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-[80vw] h-[90vh] p-6 flex flex-col overflow-hidden">
-        <div className="mb-4">
-          <h2 className="text-2xl font-bold text-gray-900">Vista Previa - Datos Empresa</h2>
-          <p className="text-sm text-gray-600">Así se verá esta sección en la página de presupuestos</p>
-        </div>
+      <DialogContent className="max-w-2xl p-6">
+        <DialogTitle className="text-xl font-semibold text-gray-900">
+          Vista Previa - Datos Empresa
+        </DialogTitle>
 
-        <div className="flex-1 overflow-y-auto">
-          <Card className="bg-cyan-50">
-            <CardHeader>
-              <CardTitle>Datos Empresa</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Logo */}
-              {data.logo_url && (
-                <div>
-                  <Label className="mb-2 block">Logo *</Label>
-                  <div className="relative w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg overflow-hidden bg-white">
-                    <Image
-                      src={data.logo_url}
-                      alt="Logo empresa"
-                      fill
-                      className="object-contain p-2"
-                      unoptimized
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Nombre y NIF */}
-              <div className="grid grid-cols-4 gap-4">
-                <div className="col-span-3">
-                  <Label htmlFor="preview-name">Nombre *</Label>
-                  <Input
-                    id="preview-name"
-                    value={data.name}
-                    readOnly
-                    className="bg-white"
-                  />
-                </div>
-
-                <div className="col-span-1">
-                  <Label htmlFor="preview-nif">NIF/CIF *</Label>
-                  <Input
-                    id="preview-nif"
-                    value={data.nif}
-                    readOnly
-                    className="bg-white"
-                  />
-                </div>
-              </div>
-
-              {/* Dirección */}
-              <div>
-                <Label htmlFor="preview-address">Dirección fiscal completa *</Label>
-                <Input
-                  id="preview-address"
-                  value={data.address}
-                  readOnly
-                  className="bg-white"
+        <div className="grid grid-cols-[200px_1fr] gap-6 mt-4">
+          {/* Columna 1: Logo */}
+          <div className="flex items-start justify-center">
+            {data.logo_url ? (
+              <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-gray-100">
+                <Image
+                  src={data.logo_url}
+                  alt="Logo empresa"
+                  fill
+                  className="object-contain p-4"
+                  unoptimized
                 />
               </div>
-
-              {/* Contacto */}
-              <div>
-                <Label htmlFor="preview-contact">Teléfono, email, web *</Label>
-                <Input
-                  id="preview-contact"
-                  value={data.contact}
-                  readOnly
-                  className="bg-white"
-                />
+            ) : (
+              <div className="w-full aspect-square rounded-lg bg-gray-100 flex items-center justify-center">
+                <span className="text-gray-400 text-sm">Sin logo</span>
               </div>
-            </CardContent>
-          </Card>
+            )}
+          </div>
+
+          {/* Columna 2: Datos */}
+          <div className="space-y-3">
+            {/* Nombre */}
+            <div>
+              <div className="text-sm font-medium text-gray-600 mb-1">Nombre</div>
+              <div className="text-base text-gray-900">{data.name || '—'}</div>
+            </div>
+
+            {/* NIF */}
+            <div>
+              <div className="text-sm font-medium text-gray-600 mb-1">NIF/CIF</div>
+              <div className="text-base text-gray-900">{data.nif || '—'}</div>
+            </div>
+
+            {/* Dirección */}
+            <div>
+              <div className="text-sm font-medium text-gray-600 mb-1">Dirección</div>
+              <div className="text-base text-gray-900">{data.address || '—'}</div>
+            </div>
+
+            {/* Contacto */}
+            <div>
+              <div className="text-sm font-medium text-gray-600 mb-1">Contacto</div>
+              <div className="text-base text-gray-900">{data.contact || '—'}</div>
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
