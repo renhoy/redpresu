@@ -1,9 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
 import {
   Select,
   SelectContent,
@@ -17,10 +19,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { Info } from 'lucide-react'
+import { Info, Eye } from 'lucide-react'
 import { LogoUploader } from './LogoUploader'
 import { TemplateSelector } from './TemplateSelector'
 import { RichTextEditorDialog } from '@/components/shared/RichTextEditorDialog'
+import { CompanyDataPreviewModal } from './CompanyDataPreviewModal'
 import { type TariffFormData } from '@/app/actions/tariffs'
 
 interface TariffFormFieldsProps {
@@ -30,6 +33,8 @@ interface TariffFormFieldsProps {
 }
 
 export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsProps) {
+  const [companyPreviewOpen, setCompanyPreviewOpen] = useState(false)
+
   const handleInputChange = (field: keyof TariffFormData, value: string | number) => {
     onChange({ [field]: value })
   }
@@ -160,7 +165,19 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
       {/* Card 2: Datos Empresa */}
       <Card className="bg-cyan-50">
         <CardHeader>
-          <CardTitle>Datos Empresa</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Datos Empresa</CardTitle>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setCompanyPreviewOpen(true)}
+              className="flex items-center gap-2 text-cyan-600 border-cyan-600 hover:bg-cyan-50"
+            >
+              <Eye className="h-4 w-4" />
+              Vista Previa
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <LogoUploader
@@ -200,7 +217,7 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
 
             <div className="col-span-1">
               <div className="flex items-center gap-2 mb-2">
-                <Label htmlFor="nif">NIF *</Label>
+                <Label htmlFor="nif">NIF/CIF *</Label>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -208,7 +225,7 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                     </TooltipTrigger>
                     <TooltipContent>
                       <p className="max-w-xs">
-                        NIF/CIF de tu empresa o DNI/NIE como autónomo. Se mostrará en los presupuestos y en los PDFs generados.
+                        CIF de tu empresa (ej: A12345678) o DNI/NIE como autónomo (ej: 12345678Z). Se mostrará en los presupuestos y en los PDFs generados.
                       </p>
                     </TooltipContent>
                   </Tooltip>
@@ -218,7 +235,7 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
                 id="nif"
                 value={data.nif}
                 onChange={(e) => handleInputChange('nif', e.target.value.toUpperCase())}
-                placeholder="12345678A"
+                placeholder="A12345678 o 12345678Z"
                 className={`bg-white ${errors.nif ? 'border-destructive' : ''}`}
               />
               {errors.nif && (
@@ -495,6 +512,13 @@ export function TariffFormFields({ data, errors, onChange }: TariffFormFieldsPro
           </div>
         </CardContent>
       </Card>
+
+      {/* Modal de preview Datos Empresa */}
+      <CompanyDataPreviewModal
+        open={companyPreviewOpen}
+        onClose={() => setCompanyPreviewOpen(false)}
+        data={data}
+      />
     </div>
   )
 }
