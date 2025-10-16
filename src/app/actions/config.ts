@@ -143,8 +143,8 @@ export async function updateConfigValue(
     // Revalidar rutas relevantes según la key modificada
     revalidatePath('/settings')
 
-    // Si se modifican colores por defecto, revalidar páginas de tarifas
-    if (key === 'default_colors' || key === 'default_primary_color' || key === 'default_secondary_color') {
+    // Si se modifica default_tariff, revalidar páginas de tarifas
+    if (key === 'default_tariff') {
       revalidatePath('/tariffs')
       revalidatePath('/tariffs/create')
     }
@@ -338,14 +338,34 @@ export async function getPDFTemplatesAction(): Promise<{
  * Interfaz para valores por defecto de tarifa
  */
 export interface TariffDefaults {
+  // Datos Tarifa
+  validity: number
+  status: 'Activa' | 'Inactiva'
+  // Datos Empresa
+  logo_url: string
+  name: string
+  nif: string
+  address: string
+  contact: string
+  // Configuración Visual
   primary_color: string
   secondary_color: string
   template: string
+  // Notas PDF
+  summary_note: string
+  conditions_note: string
+  // Notas Formulario
+  legal_note: string
 }
 
 /**
  * Obtiene los valores por defecto para crear una tarifa
  * Acción pública (no requiere superadmin)
+ *
+ * Prioridad:
+ * 1. Si existe tarifa con is_template=true, usar sus valores
+ * 2. Si no, usar valores de default_tariff en config
+ * 3. Si no existe default_tariff, usar fallbacks hardcodeados
  */
 export async function getTariffDefaultsAction(): Promise<{
   success: boolean
@@ -353,80 +373,120 @@ export async function getTariffDefaultsAction(): Promise<{
   error?: string
 }> {
   try {
-    // Obtener colores, plantilla y lista de plantillas
-    // Soportar tanto default_colors (objeto) como default_primary_color/default_secondary_color (separados)
-    const { data, error } = await supabaseAdmin
+    // Paso 1: Buscar tarifa plantilla (is_template = true)
+    const { data: templateTariff } = await supabaseAdmin
+      .from('tariffs')
+      .select('*')
+      .eq('is_template', true)
+      .single()
+
+    if (templateTariff) {
+      console.log('[getTariffDefaultsAction] Usando tarifa plantilla:', templateTariff.id)
+      return {
+        success: true,
+        data: {
+          validity: templateTariff.validity || 30,
+          status: templateTariff.status as 'Activa' | 'Inactiva' || 'Inactiva',
+          logo_url: templateTariff.logo_url || '',
+          name: templateTariff.name || '',
+          nif: templateTariff.nif || '',
+          address: templateTariff.address || '',
+          contact: templateTariff.contact || '',
+          primary_color: templateTariff.primary_color || '#84cc16',
+          secondary_color: templateTariff.secondary_color || '#0891b2',
+          template: templateTariff.template || '',
+          summary_note: templateTariff.summary_note || '',
+          conditions_note: templateTariff.conditions_note || '',
+          legal_note: templateTariff.legal_note || ''
+        }
+      }
+    }
+
+    // Paso 2: Si no hay plantilla, buscar default_tariff en config
+    const { data: configData, error: configError } = await supabaseAdmin
       .from('config')
-      .select('key, value')
-      .in('key', ['default_colors', 'default_primary_color', 'default_secondary_color', 'default_pdf_template', 'pdf_templates'])
+      .select('value')
+      .eq('key', 'default_tariff')
+      .single()
 
-    if (error) {
-      console.error('[getTariffDefaultsAction] Error:', error)
-    }
+    if (!configError && configData) {
+      const defaultTariff = configData.value as any
+      console.log('[getTariffDefaultsAction] Usando default_tariff de config')
 
-    // Construir objeto de valores por defecto
-    const defaults: TariffDefaults = {
-      primary_color: '#e8951c', // Valores por defecto fallback
-      secondary_color: '#109c61',
-      template: '41200-00001'
-    }
+      // Buscar plantilla con default: true en pdf_templates
+      const { data: templatesData } = await supabaseAdmin
+        .from('config')
+        .select('value')
+        .eq('key', 'pdf_templates')
+        .single()
 
-    // Aplicar valores de configuración si existen
-    if (data && Array.isArray(data)) {
-      let defaultColorsObj: { primary?: string; secondary?: string } | null = null
-      let pdfTemplates: PDFTemplate[] | null = null
-
-      // Primera pasada: buscar default_colors (objeto) y pdf_templates
-      data.forEach((config) => {
-        if (config.key === 'default_colors' && config.value) {
-          defaultColorsObj = config.value as { primary?: string; secondary?: string }
-        } else if (config.key === 'default_pdf_template' && config.value) {
-          defaults.template = config.value as string
-        } else if (config.key === 'pdf_templates' && config.value) {
-          pdfTemplates = config.value as PDFTemplate[]
-        }
-      })
-
-      // Si existe default_colors como objeto, usarlo
-      if (defaultColorsObj) {
-        if (defaultColorsObj.primary) {
-          defaults.primary_color = defaultColorsObj.primary
-        }
-        if (defaultColorsObj.secondary) {
-          defaults.secondary_color = defaultColorsObj.secondary
-        }
-      } else {
-        // Si no, buscar valores separados (backward compatibility)
-        data.forEach((config) => {
-          if (config.key === 'default_primary_color' && config.value) {
-            defaults.primary_color = config.value as string
-          } else if (config.key === 'default_secondary_color' && config.value) {
-            defaults.secondary_color = config.value as string
-          }
-        })
-      }
-
-      // Buscar plantilla con default: true en el array pdf_templates
-      if (pdfTemplates && Array.isArray(pdfTemplates)) {
-        const defaultTemplate = pdfTemplates.find(t => t.default === true)
+      let templateId = defaultTariff.visual_config?.template || ''
+      if (templatesData) {
+        const templates = templatesData.value as PDFTemplate[]
+        const defaultTemplate = templates.find((t: PDFTemplate) => t.default === true)
         if (defaultTemplate) {
-          defaults.template = defaultTemplate.id
-          console.log('[getTariffDefaultsAction] Plantilla por defecto encontrada en array:', defaultTemplate.id)
+          templateId = defaultTemplate.id
+        }
+      }
+
+      return {
+        success: true,
+        data: {
+          validity: parseInt(defaultTariff.tariff_data?.validity || '30'),
+          status: defaultTariff.tariff_data?.status || 'Inactiva',
+          logo_url: defaultTariff.data_company?.logo_url || '',
+          name: defaultTariff.data_company?.name || '',
+          nif: defaultTariff.data_company?.nif || '',
+          address: defaultTariff.data_company?.address || '',
+          contact: defaultTariff.data_company?.contact || '',
+          primary_color: defaultTariff.visual_config?.primary_color || '#84cc16',
+          secondary_color: defaultTariff.visual_config?.secondary_color || '#0891b2',
+          template: templateId,
+          summary_note: defaultTariff.pdf_notes?.summary_note || '',
+          conditions_note: defaultTariff.pdf_notes?.conditions_note || '',
+          legal_note: defaultTariff.legal_note || ''
         }
       }
     }
 
-    console.log('[getTariffDefaultsAction] Defaults:', defaults)
-    return { success: true, data: defaults }
-  } catch (error) {
-    console.error('[getTariffDefaultsAction] Error inesperado:', error)
-    // Devolver valores por defecto aunque haya error
+    // Paso 3: Fallback hardcodeado
+    console.log('[getTariffDefaultsAction] Usando valores fallback hardcodeados')
     return {
       success: true,
       data: {
-        primary_color: '#e8951c',
-        secondary_color: '#109c61',
-        template: '41200-00001'
+        validity: 30,
+        status: 'Inactiva',
+        logo_url: '',
+        name: '',
+        nif: '',
+        address: '',
+        contact: '',
+        primary_color: '#84cc16',
+        secondary_color: '#0891b2',
+        template: '',
+        summary_note: '',
+        conditions_note: '',
+        legal_note: ''
+      }
+    }
+  } catch (error) {
+    console.error('[getTariffDefaultsAction] Error inesperado:', error)
+    return {
+      success: true,
+      data: {
+        validity: 30,
+        status: 'Inactiva',
+        logo_url: '',
+        name: '',
+        nif: '',
+        address: '',
+        contact: '',
+        primary_color: '#84cc16',
+        secondary_color: '#0891b2',
+        template: '',
+        summary_note: '',
+        conditions_note: '',
+        legal_note: ''
       }
     }
   }
