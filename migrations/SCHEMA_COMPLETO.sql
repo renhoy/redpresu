@@ -1813,7 +1813,7 @@ ALTER TABLE public.issuers ENABLE ROW LEVEL SECURITY;
 -- Name: issuers issuers_delete_policy; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY issuers_delete_policy ON public.issuers FOR DELETE USING ((EXISTS ( SELECT 1
+CREATE POLICY issuers_delete_policy ON public.issuers FOR DELETE TO authenticated USING ((EXISTS ( SELECT 1
    FROM public.users
   WHERE ((users.id = auth.uid()) AND (users.role = 'superadmin'::text)))));
 
@@ -1828,26 +1828,12 @@ CREATE POLICY issuers_insert_superadmin ON public.issuers FOR INSERT TO authenti
 
 
 --
--- Name: POLICY issuers_insert_superadmin ON issuers; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON POLICY issuers_insert_superadmin ON public.issuers IS 'Solo superadmin puede crear issuers (registro normal crea via admin API)';
-
-
---
 -- Name: issuers issuers_select_own_company; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY issuers_select_own_company ON public.issuers FOR SELECT TO authenticated USING ((company_id IN ( SELECT users.empresa_id
    FROM public.users
   WHERE (users.id = auth.uid()))));
-
-
---
--- Name: POLICY issuers_select_own_company ON issuers; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON POLICY issuers_select_own_company ON public.issuers IS 'Usuarios pueden ver issuers de su propia empresa';
 
 
 --
@@ -1860,24 +1846,10 @@ CREATE POLICY issuers_select_superadmin ON public.issuers FOR SELECT TO authenti
 
 
 --
--- Name: POLICY issuers_select_superadmin ON issuers; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON POLICY issuers_select_superadmin ON public.issuers IS 'Superadmin puede ver todos los issuers del sistema';
-
-
---
 -- Name: issuers issuers_update_own; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY issuers_update_own ON public.issuers FOR UPDATE TO authenticated USING ((user_id = auth.uid())) WITH CHECK ((user_id = auth.uid()));
-
-
---
--- Name: POLICY issuers_update_own ON issuers; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON POLICY issuers_update_own ON public.issuers IS 'Usuarios pueden actualizar su propio issuer (perfil)';
 
 
 --
@@ -1889,13 +1861,6 @@ CREATE POLICY issuers_update_superadmin ON public.issuers FOR UPDATE TO authenti
   WHERE ((users.id = auth.uid()) AND (users.role = 'superadmin'::text))))) WITH CHECK ((EXISTS ( SELECT 1
    FROM public.users
   WHERE ((users.id = auth.uid()) AND (users.role = 'superadmin'::text)))));
-
-
---
--- Name: POLICY issuers_update_superadmin ON issuers; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON POLICY issuers_update_superadmin ON public.issuers IS 'Superadmin puede actualizar cualquier issuer';
 
 
 --

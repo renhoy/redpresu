@@ -39,54 +39,129 @@ export default async function CreateTariffPage() {
       }
       console.log('[CreateTariffPage] Plantilla cargada:', result.data.title)
     } else {
-      // Si no hay plantilla, cargar valores por defecto de configuración y datos del issuer
+      // Si no hay plantilla, cargar valores por defecto de configuración (default_tariff)
       console.log('[CreateTariffPage] No hay plantilla, cargando valores por defecto...')
       const defaultsResult = await getTariffDefaultsAction()
       const issuerResult = await getUserIssuerData(user.id)
 
-      templateData = {
-        // Valores de configuración
-        primary_color: defaultsResult.success && defaultsResult.data ? defaultsResult.data.primary_color : '#e8951c',
-        secondary_color: defaultsResult.success && defaultsResult.data ? defaultsResult.data.secondary_color : '#109c61',
-        template: defaultsResult.success && defaultsResult.data ? defaultsResult.data.template : '41200-00001',
-        // Valores básicos
-        validity: 30,
-        status: 'Activa' as const,
-        // Datos del issuer si están disponibles
-        ...(issuerResult.success && issuerResult.data ? {
-          name: issuerResult.data.name,
-          nif: issuerResult.data.nif,
-          address: issuerResult.data.address,
-          contact: issuerResult.data.contact,
-        } : {})
+      if (defaultsResult.success && defaultsResult.data) {
+        // Usar TODOS los valores de default_tariff
+        templateData = {
+          validity: defaultsResult.data.validity,
+          status: defaultsResult.data.status,
+          logo_url: defaultsResult.data.logo_url,
+          name: defaultsResult.data.name,
+          nif: defaultsResult.data.nif,
+          address: defaultsResult.data.address,
+          contact: defaultsResult.data.contact,
+          primary_color: defaultsResult.data.primary_color,
+          secondary_color: defaultsResult.data.secondary_color,
+          template: defaultsResult.data.template,
+          summary_note: defaultsResult.data.summary_note,
+          conditions_note: defaultsResult.data.conditions_note,
+          legal_note: defaultsResult.data.legal_note,
+          // Si hay datos de issuer, sobrescribir los datos de empresa
+          ...(issuerResult.success && issuerResult.data ? {
+            name: issuerResult.data.name,
+            nif: issuerResult.data.nif,
+            address: issuerResult.data.address,
+            contact: issuerResult.data.contact,
+          } : {})
+        }
+        console.log('[CreateTariffPage] Valores default_tariff cargados:', defaultsResult.data)
+      } else {
+        // Fallback si no existe default_tariff en BD (no debería ocurrir después de migración 028)
+        templateData = {
+          primary_color: '#84cc16',
+          secondary_color: '#0891b2',
+          template: '',
+          validity: 30,
+          status: 'Activa' as const,
+          logo_url: '',
+          name: '',
+          nif: '',
+          address: '',
+          contact: '',
+          summary_note: '',
+          conditions_note: '',
+          legal_note: '',
+          // Si hay datos de issuer, usarlos
+          ...(issuerResult.success && issuerResult.data ? {
+            name: issuerResult.data.name,
+            nif: issuerResult.data.nif,
+            address: issuerResult.data.address,
+            contact: issuerResult.data.contact,
+          } : {})
+        }
+        console.warn('[CreateTariffPage] default_tariff no encontrado, usando fallback hardcodeado')
       }
-      console.log('[CreateTariffPage] Valores por defecto cargados:', { defaults: defaultsResult.data, issuer: issuerResult.data })
     }
   } catch (error) {
     console.warn('[CreateTariffPage] Error al cargar datos iniciales:', error)
-    // Intentar cargar al menos los valores por defecto de configuración e issuer
+    // Intentar cargar al menos los valores por defecto de configuración
     try {
       const defaultsResult = await getTariffDefaultsAction()
       const issuerResult = await getUserIssuerData(user.id)
 
-      templateData = {
-        // Valores de configuración
-        primary_color: defaultsResult.success && defaultsResult.data ? defaultsResult.data.primary_color : '#e8951c',
-        secondary_color: defaultsResult.success && defaultsResult.data ? defaultsResult.data.secondary_color : '#109c61',
-        template: defaultsResult.success && defaultsResult.data ? defaultsResult.data.template : '41200-00001',
-        // Valores básicos
-        validity: 30,
-        status: 'Activa' as const,
-        // Datos del issuer si están disponibles
-        ...(issuerResult.success && issuerResult.data ? {
-          name: issuerResult.data.name,
-          nif: issuerResult.data.nif,
-          address: issuerResult.data.address,
-          contact: issuerResult.data.contact,
-        } : {})
+      if (defaultsResult.success && defaultsResult.data) {
+        templateData = {
+          validity: defaultsResult.data.validity,
+          status: defaultsResult.data.status,
+          logo_url: defaultsResult.data.logo_url,
+          name: defaultsResult.data.name,
+          nif: defaultsResult.data.nif,
+          address: defaultsResult.data.address,
+          contact: defaultsResult.data.contact,
+          primary_color: defaultsResult.data.primary_color,
+          secondary_color: defaultsResult.data.secondary_color,
+          template: defaultsResult.data.template,
+          summary_note: defaultsResult.data.summary_note,
+          conditions_note: defaultsResult.data.conditions_note,
+          legal_note: defaultsResult.data.legal_note,
+          // Si hay datos de issuer, sobrescribir los datos de empresa
+          ...(issuerResult.success && issuerResult.data ? {
+            name: issuerResult.data.name,
+            nif: issuerResult.data.nif,
+            address: issuerResult.data.address,
+            contact: issuerResult.data.contact,
+          } : {})
+        }
+      } else {
+        // Fallback mínimo
+        templateData = {
+          primary_color: '#84cc16',
+          secondary_color: '#0891b2',
+          template: '',
+          validity: 30,
+          status: 'Activa' as const,
+          logo_url: '',
+          name: '',
+          nif: '',
+          address: '',
+          contact: '',
+          summary_note: '',
+          conditions_note: '',
+          legal_note: ''
+        }
       }
     } catch (defaultError) {
       console.error('[CreateTariffPage] Error al cargar valores por defecto:', defaultError)
+      // Usar fallback mínimo si todo falla
+      templateData = {
+        primary_color: '#84cc16',
+        secondary_color: '#0891b2',
+        template: '',
+        validity: 30,
+        status: 'Activa' as const,
+        logo_url: '',
+        name: '',
+        nif: '',
+        address: '',
+        contact: '',
+        summary_note: '',
+        conditions_note: '',
+        legal_note: ''
+      }
     }
   }
 

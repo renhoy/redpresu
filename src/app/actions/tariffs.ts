@@ -830,11 +830,17 @@ export async function getUserIssuerData(userId: string): Promise<{
       .from('issuers')
       .select('issuers_name, issuers_nif, issuers_address, issuers_postal_code, issuers_locality, issuers_province, issuers_phone, issuers_email, issuers_web')
       .eq('user_id', userId)
-      .single()
+      .maybeSingle()
 
-    if (error || !data) {
+    // Si no existe issuer para el usuario, retornar éxito sin datos
+    if (error && error.code !== 'PGRST116') {
       console.error('[getUserIssuerData] Error obteniendo issuer:', error)
       return { success: false, error: 'No se pudo obtener los datos del emisor' }
+    }
+
+    if (!data) {
+      console.log('[getUserIssuerData] No existe issuer para el usuario:', userId)
+      return { success: true, data: undefined }
     }
 
     // Construir dirección completa
@@ -855,6 +861,8 @@ export async function getUserIssuerData(userId: string): Promise<{
     ].filter(Boolean)
 
     const contact = contactParts.join(' - ')
+
+    console.log('[getUserIssuerData] Issuer encontrado:', data.issuers_name)
 
     return {
       success: true,
