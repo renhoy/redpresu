@@ -12,11 +12,12 @@ import { REQUIRED_FIELDS, SEVERITY } from '../constants/csv';
 
 /**
  * Schema Zod para validar campos de items
+ * NOTA: Usamos nombres en español internamente (nombre, descripcion, ud)
  */
 const ItemSchema = z.object({
   nivel: z.string().min(1, 'Nivel no puede estar vacío'),
   id: z.string().min(1, 'ID no puede estar vacío').regex(/^[0-9]+(\.[0-9]+)*$/, 'ID debe tener formato válido'),
-  name: z.string().min(1, 'Nombre no puede estar vacío'),
+  nombre: z.string().min(1, 'Nombre no puede estar vacío'),
   descripcion: z.string().optional(),
   ud: z.string().min(1, 'Unidad no puede estar vacía'),
   '%iva': z.string().min(1, '%IVA no puede estar vacío'),
@@ -25,11 +26,12 @@ const ItemSchema = z.object({
 
 /**
  * Schema Zod para validar campos de contenedores
+ * NOTA: Usamos nombres en español internamente (nombre, descripcion, ud)
  */
 const ContainerSchema = z.object({
   nivel: z.string().min(1, 'Nivel no puede estar vacío'),
   id: z.string().min(1, 'ID no puede estar vacío').regex(/^[0-9]+(\.[0-9]+)*$/, 'ID debe tener formato válido'),
-  name: z.string().min(1, 'Nombre no puede estar vacío'),
+  nombre: z.string().min(1, 'Nombre no puede estar vacío'),
   descripcion: z.string().optional(),
   ud: z.string().optional(),
   '%iva': z.string().optional(),
