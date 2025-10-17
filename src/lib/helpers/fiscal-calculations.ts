@@ -15,7 +15,7 @@ export type ClientType = 'particular' | 'autonomo' | 'empresa'
  * Matriz de aplicación IRPF
  *
  * IRPF se aplica cuando:
- * - Emisor es autónomo (issuers_type = 'autonomo')
+ * - Emisor es autónomo (type = 'autonomo')
  * - Cliente es empresa O autónomo
  *
  * NO se aplica cuando:

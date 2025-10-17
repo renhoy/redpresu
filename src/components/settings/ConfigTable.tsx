@@ -225,22 +225,22 @@ export function ConfigTable({ config }: ConfigTableProps) {
             <div className="space-y-3">
               <div className="text-sm">
                 <p className="font-semibold text-base">
-                  {viewingIssuer.issuers_name} ({viewingIssuer.issuers_nif_nie})
+                  {viewingIssuer.name} ({viewingIssuer.nif_nie})
                 </p>
                 <p className="text-muted-foreground capitalize">
-                  ({viewingIssuer.issuers_type})
+                  ({viewingIssuer.type})
                 </p>
               </div>
 
               <div className="text-sm space-y-1">
                 <p>
-                  {viewingIssuer.issuers_address}, {viewingIssuer.issuers_postal_code}, {viewingIssuer.issuers_locality} ({viewingIssuer.issuers_province})
+                  {viewingIssuer.address}, {viewingIssuer.postal_code}, {viewingIssuer.locality} ({viewingIssuer.province})
                 </p>
               </div>
 
               <div className="text-sm text-muted-foreground">
                 <p>
-                  {viewingIssuer.issuers_phone} • {viewingIssuer.issuers_email} • {viewingIssuer.issuers_web || '-'}
+                  {viewingIssuer.phone} • {viewingIssuer.email} • {viewingIssuer.web || '-'}
                 </p>
               </div>
             </div>

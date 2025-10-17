@@ -73,7 +73,7 @@ export function UserCard({
             <div className="flex-1 min-w-0 space-y-1">
               {/* Nombre */}
               <div className="font-semibold text-sm truncate">
-                {user.nombre} {user.apellidos}
+                {user.name} {user.apellidos}
               </div>
               {/* Email + Badges */}
               <div className="flex items-center gap-2 flex-wrap">

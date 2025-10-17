@@ -50,8 +50,8 @@ import { toast } from "sonner";
 
 type Tariff = Database["public"]["Tables"]["tariffs"]["Row"] & {
   creator?: {
-    nombre: string | null;
-    apellidos: string | null;
+    name: string | null;
+    last_name: string | null;
     email: string | null;
   } | null;
   budget_count?: number;
@@ -284,7 +284,7 @@ export function TariffRow({
             <Tooltip>
               <TooltipTrigger asChild>
                 <span className="text-muted-foreground cursor-help">
-                  {tariff.creator.nombre}
+                  {tariff.creator.name}
                 </span>
               </TooltipTrigger>
               <TooltipContent>

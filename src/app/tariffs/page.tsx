@@ -35,7 +35,7 @@ export default async function TariffsPage({ searchParams }: PageProps) {
       .select('id, nombre, apellidos')
       .eq('company_id', user.company_id)
       .eq('status', 'active')
-      .order('nombre')
+      .order('name')
 
     users = data || []
   }

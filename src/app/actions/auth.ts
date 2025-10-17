@@ -129,8 +129,8 @@ export async function signOutAction(): Promise<SignInResult> {
  * Interfaz para datos de registro
  */
 export interface RegisterData {
-  nombre: string
-  apellidos: string
+  name: string
+  last_name: string
   email: string
   password: string
   tipo: 'empresa' | 'autonomo'
@@ -250,8 +250,8 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
       // 1. Validar que el NIF no esté ya registrado en TODA la base de datos
       const { data: existingIssuer, error: checkError } = await supabase
         .from('redpresu_issuers')
-        .select('id, issuers_nif')
-        .eq('issuers_nif', data.nif.trim().toUpperCase())
+        .select('id, nif')
+        .eq('nif', data.nif.trim().toUpperCase())
         .maybeSingle()
 
       if (existingIssuer) {
@@ -266,7 +266,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
       const { data: empresaData, error: empresaError } = await supabaseAdmin
         .from('redpresu_companies')
         .insert({
-          nombre: data.nombreComercial,
+          name: data.nombreComercial,
           status: 'active'
         })
         .select('id')
@@ -332,8 +332,8 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
       .from('redpresu_users')
       .insert({
         id: userId,
-        nombre: data.nombre.trim(),
-        apellidos: data.apellidos.trim(),
+        name: data.name.trim(),
+        last_name: data.last_name.trim(),
         email: data.email.trim().toLowerCase(),
         role: userRole,
         company_id: empresaId,
@@ -365,18 +365,18 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
         .insert({
           user_id: userId,
           company_id: empresaId,
-          issuers_type: data.tipo,
-          issuers_name: data.nombreComercial.trim(),
-          issuers_nif: data.nif.trim().toUpperCase(),
-          issuers_address: data.direccionFiscal.trim(),
-          issuers_postal_code: data.codigoPostal?.trim() || null,
-          issuers_locality: data.ciudad?.trim() || null,
-          issuers_province: data.provincia?.trim() || null,
-          issuers_country: data.pais?.trim() || 'España',
-          issuers_phone: data.telefono?.trim() || null,
-          issuers_email: data.emailContacto?.trim() || data.email.trim().toLowerCase(),
-          issuers_web: data.web?.trim() || null,
-          issuers_irpf_percentage: data.tipo === 'autonomo' ? (data.irpfPercentage ?? 15) : null
+          type: data.tipo,
+          name: data.nombreComercial.trim(),
+          nif: data.nif.trim().toUpperCase(),
+          address: data.direccionFiscal.trim(),
+          postal_code: data.codigoPostal?.trim() || null,
+          locality: data.ciudad?.trim() || null,
+          province: data.provincia?.trim() || null,
+          country: data.pais?.trim() || 'España',
+          phone: data.telefono?.trim() || null,
+          email: data.emailContacto?.trim() || data.email.trim().toLowerCase(),
+          web: data.web?.trim() || null,
+          irpf_percentage: data.tipo === 'autonomo' ? (data.irpfPercentage ?? 15) : null
         })
         .select('id')
         .single()
@@ -732,19 +732,19 @@ export async function getUserProfile(): Promise<ProfileResult> {
       ...userData,
       emisor: issuerData ? {
         id: issuerData.id,
-        tipo: issuerData.issuers_type,
-        nombre_comercial: issuerData.issuers_name,
-        nif: issuerData.issuers_nif,
-        direccion_fiscal: issuerData.issuers_address,
-        codigo_postal: issuerData.issuers_postal_code,
-        ciudad: issuerData.issuers_locality,
-        provincia: issuerData.issuers_province,
-        pais: issuerData.issuers_country,
-        telefono: issuerData.issuers_phone,
-        email: issuerData.issuers_email,
-        web: issuerData.issuers_web,
-        irpf_percentage: issuerData.issuers_irpf_percentage,
-        logo_url: issuerData.issuers_logo_url
+        tipo: issuerData.type,
+        nombre_comercial: issuerData.name,
+        nif: issuerData.nif,
+        direccion_fiscal: issuerData.address,
+        codigo_postal: issuerData.postal_code,
+        ciudad: issuerData.locality,
+        provincia: issuerData.province,
+        pais: issuerData.country,
+        telefono: issuerData.phone,
+        email: issuerData.email,
+        web: issuerData.web,
+        irpf_percentage: issuerData.irpf_percentage,
+        logo_url: issuerData.logo_url
       } : undefined
     }
 
@@ -850,17 +850,17 @@ export async function updateUserProfile(data: UpdateProfileData): Promise<Profil
       // Construir objeto de actualización solo con campos proporcionados
       const updateData: any = {}
 
-      if (data.nombre_comercial) updateData.issuers_name = data.nombre_comercial.trim()
-      if (data.nif) updateData.issuers_nif = data.nif.trim().toUpperCase()
-      if (data.direccion_fiscal) updateData.issuers_address = data.direccion_fiscal.trim()
-      if (data.codigo_postal !== undefined) updateData.issuers_postal_code = data.codigo_postal?.trim() || null
-      if (data.ciudad !== undefined) updateData.issuers_locality = data.ciudad?.trim() || null
-      if (data.provincia !== undefined) updateData.issuers_province = data.provincia?.trim() || null
-      if (data.pais !== undefined) updateData.issuers_country = data.pais?.trim() || null
-      if (data.telefono !== undefined) updateData.issuers_phone = data.telefono?.trim() || null
-      if (data.emailContacto !== undefined) updateData.issuers_email = data.emailContacto?.trim() || null
-      if (data.web !== undefined) updateData.issuers_web = data.web?.trim() || null
-      if (data.irpf_percentage !== undefined) updateData.issuers_irpf_percentage = data.irpf_percentage
+      if (data.nombre_comercial) updateData.name = data.nombre_comercial.trim()
+      if (data.nif) updateData.nif = data.nif.trim().toUpperCase()
+      if (data.direccion_fiscal) updateData.address = data.direccion_fiscal.trim()
+      if (data.codigo_postal !== undefined) updateData.postal_code = data.codigo_postal?.trim() || null
+      if (data.ciudad !== undefined) updateData.locality = data.ciudad?.trim() || null
+      if (data.provincia !== undefined) updateData.province = data.provincia?.trim() || null
+      if (data.pais !== undefined) updateData.country = data.pais?.trim() || null
+      if (data.telefono !== undefined) updateData.phone = data.telefono?.trim() || null
+      if (data.emailContacto !== undefined) updateData.email = data.emailContacto?.trim() || null
+      if (data.web !== undefined) updateData.web = data.web?.trim() || null
+      if (data.irpf_percentage !== undefined) updateData.irpf_percentage = data.irpf_percentage
 
       // Añadir updated_at
       updateData.updated_at = new Date().toISOString()
@@ -914,16 +914,16 @@ export async function updateUserProfile(data: UpdateProfileData): Promise<Profil
 export interface IssuerData {
   id: string
   company_id: number
-  issuers_type: 'empresa' | 'autonomo'
-  issuers_name: string
-  issuers_nif: string
-  issuers_address: string
-  issuers_postal_code: string | null
-  issuers_locality: string | null
-  issuers_province: string | null
-  issuers_phone: string | null
-  issuers_email: string | null
-  issuers_web: string | null
+  type: 'empresa' | 'autonomo'
+  name: string
+  nif: string
+  address: string
+  postal_code: string | null
+  locality: string | null
+  province: string | null
+  phone: string | null
+  email: string | null
+  web: string | null
 }
 
 /**
@@ -968,8 +968,8 @@ export async function getIssuers(): Promise<{
     // Obtener lista de emisores
     const { data: issuers, error: issuersError } = await supabase
       .from('redpresu_issuers')
-      .select('id, company_id, issuers_type, issuers_name, issuers_nif, issuers_address, issuers_postal_code, issuers_locality, issuers_province, issuers_phone, issuers_email, issuers_web')
-      .order('issuers_name')
+      .select('id, company_id, type, name, nif, address, postal_code, locality, province, phone, email, web')
+      .order('name')
 
     if (issuersError) {
       console.error('[getIssuers] Error obteniendo emisores:', issuersError)

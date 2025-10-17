@@ -119,21 +119,29 @@ COMMENT ON TABLE public.redpresu_budget_notes IS
 -- PostgreSQL añade el prefijo de la nueva tabla
 
 -- ============================================
--- PASO 5: Actualizar POLÍTICAS RLS
+-- PASO 5: ELIMINAR POLÍTICAS RLS que dependen de funciones
 -- ============================================
 
--- Las políticas RLS también se renombran automáticamente
--- pero verificaremos que están activas
+-- IMPORTANTE: Debemos eliminar las políticas ANTES de modificar las funciones
+-- porque las políticas dependen de las funciones
 
--- Verificar RLS activo en todas las tablas
-ALTER TABLE public.redpresu_config ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.redpresu_companies ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.redpresu_users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.redpresu_issuers ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.redpresu_tariffs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.redpresu_budgets ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.redpresu_budget_versions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.redpresu_budget_notes ENABLE ROW LEVEL SECURITY;
+-- Eliminar políticas de redpresu_users (antes: users)
+DROP POLICY IF EXISTS users_select_policy ON public.redpresu_users;
+DROP POLICY IF EXISTS users_insert_policy ON public.redpresu_users;
+DROP POLICY IF EXISTS users_update_policy ON public.redpresu_users;
+DROP POLICY IF EXISTS users_delete_policy ON public.redpresu_users;
+
+-- Eliminar políticas de redpresu_tariffs (antes: tariffs)
+DROP POLICY IF EXISTS tariffs_select_policy ON public.redpresu_tariffs;
+DROP POLICY IF EXISTS tariffs_insert_policy ON public.redpresu_tariffs;
+DROP POLICY IF EXISTS tariffs_update_policy ON public.redpresu_tariffs;
+DROP POLICY IF EXISTS tariffs_delete_policy ON public.redpresu_tariffs;
+
+-- Eliminar políticas de redpresu_budgets (antes: budgets)
+DROP POLICY IF EXISTS budgets_select_policy ON public.redpresu_budgets;
+DROP POLICY IF EXISTS budgets_insert_policy ON public.redpresu_budgets;
+DROP POLICY IF EXISTS budgets_update_policy ON public.redpresu_budgets;
+DROP POLICY IF EXISTS budgets_delete_policy ON public.redpresu_budgets;
 
 -- ============================================
 -- PASO 6: Actualizar FUNCIONES que referencian tablas
@@ -164,9 +172,8 @@ COMMENT ON FUNCTION public.get_next_budget_version_number(uuid) IS
   'Obtiene el siguiente número de versión para un presupuesto hijo';
 
 -- Función: get_user_empresa_id (mantener nombre, actualizar implementación)
--- NOTA: Mantenemos el nombre get_user_empresa_id para compatibilidad con políticas RLS existentes
--- DROP y recrear para evitar error de parámetros
-DROP FUNCTION IF EXISTS public.get_user_empresa_id(uuid);
+-- NOTA: Mantenemos el nombre get_user_empresa_id para compatibilidad con políticas RLS
+DROP FUNCTION IF EXISTS public.get_user_empresa_id(uuid) CASCADE;
 
 CREATE FUNCTION public.get_user_empresa_id(p_user_id uuid)
 RETURNS integer
@@ -189,8 +196,7 @@ COMMENT ON FUNCTION public.get_user_empresa_id(uuid) IS
   'Obtiene el company_id de un usuario dado su user_id (nombre mantenido para compatibilidad)';
 
 -- Función: get_user_role_by_id
--- DROP y recrear para evitar error de parámetros
-DROP FUNCTION IF EXISTS public.get_user_role_by_id(uuid);
+DROP FUNCTION IF EXISTS public.get_user_role_by_id(uuid) CASCADE;
 
 CREATE FUNCTION public.get_user_role_by_id(p_user_id uuid)
 RETURNS text
@@ -213,17 +219,61 @@ COMMENT ON FUNCTION public.get_user_role_by_id(uuid) IS
   'Obtiene el rol de un usuario dado su user_id';
 
 -- ============================================
--- PASO 7: Recrear POLÍTICAS RLS con nuevos nombres de columnas
+-- PASO 7: Verificar RLS activo en todas las tablas
 -- ============================================
 
--- IMPORTANTE: Las políticas existentes ya usan las funciones correctas
--- Solo necesitamos actualizar las que referencian empresa_id → company_id
+ALTER TABLE public.redpresu_config ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.redpresu_companies ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.redpresu_users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.redpresu_issuers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.redpresu_tariffs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.redpresu_budgets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.redpresu_budget_versions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.redpresu_budget_notes ENABLE ROW LEVEL SECURITY;
 
--- redpresu_tariffs: Actualizar políticas
-DROP POLICY IF EXISTS tariffs_select_policy ON public.redpresu_tariffs;
-DROP POLICY IF EXISTS tariffs_insert_policy ON public.redpresu_tariffs;
-DROP POLICY IF EXISTS tariffs_update_policy ON public.redpresu_tariffs;
-DROP POLICY IF EXISTS tariffs_delete_policy ON public.redpresu_tariffs;
+-- ============================================
+-- PASO 8: Recrear POLÍTICAS RLS con nuevos nombres de tablas y columnas
+-- ============================================
+
+-- redpresu_users: Recrear políticas
+CREATE POLICY users_select_policy
+ON public.redpresu_users
+FOR SELECT
+USING (
+  id = auth.uid()
+  OR
+  public.get_user_role_by_id(auth.uid()) IN ('admin', 'superadmin')
+);
+
+CREATE POLICY users_insert_policy
+ON public.redpresu_users
+FOR INSERT
+WITH CHECK (
+  public.get_user_role_by_id(auth.uid()) = 'superadmin'
+);
+
+CREATE POLICY users_update_policy
+ON public.redpresu_users
+FOR UPDATE
+USING (
+  id = auth.uid()
+  OR
+  public.get_user_role_by_id(auth.uid()) IN ('admin', 'superadmin')
+)
+WITH CHECK (
+  id = auth.uid()
+  OR
+  public.get_user_role_by_id(auth.uid()) IN ('admin', 'superadmin')
+);
+
+CREATE POLICY users_delete_policy
+ON public.redpresu_users
+FOR DELETE
+USING (
+  public.get_user_role_by_id(auth.uid()) = 'superadmin'
+);
+
+-- redpresu_tariffs: Recrear políticas
 
 CREATE POLICY tariffs_select_policy
 ON public.redpresu_tariffs
@@ -269,12 +319,7 @@ USING (
   AND company_id = public.get_user_empresa_id(auth.uid())
 );
 
--- redpresu_budgets: Actualizar políticas
-DROP POLICY IF EXISTS budgets_select_policy ON public.redpresu_budgets;
-DROP POLICY IF EXISTS budgets_insert_policy ON public.redpresu_budgets;
-DROP POLICY IF EXISTS budgets_update_policy ON public.redpresu_budgets;
-DROP POLICY IF EXISTS budgets_delete_policy ON public.redpresu_budgets;
-
+-- redpresu_budgets: Recrear políticas
 CREATE POLICY budgets_select_policy
 ON public.redpresu_budgets
 FOR SELECT

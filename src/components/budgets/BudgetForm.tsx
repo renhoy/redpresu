@@ -234,8 +234,8 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
         if (response.ok) {
           const data = await response.json();
           if (data.issuer) {
-            setIssuerType(data.issuer.issuers_type || "empresa");
-            setIssuerIRPFPercentage(data.issuer.issuers_irpf_percentage || 15);
+            setIssuerType(data.issuer.type || "empresa");
+            setIssuerIRPFPercentage(data.issuer.irpf_percentage || 15);
           }
         }
       } catch (error) {

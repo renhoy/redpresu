@@ -12,7 +12,7 @@ export interface BudgetNote {
   created_at: string
   updated_at: string
   users?: {
-    nombre: string
+    name: string
     email: string
   }
 }
@@ -70,7 +70,7 @@ export async function getBudgetNotes(budgetId: string): Promise<ActionResult> {
     // Combinar datos
     const notesWithUsers = notesData.map(note => ({
       ...note,
-      users: usersData?.find(u => u.id === note.user_id) || { nombre: 'Usuario', email: '' }
+      users: usersData?.find(u => u.id === note.user_id) || { name: 'Usuario', email: '' }
     }))
 
     console.log('[getBudgetNotes] Notas obtenidas:', notesWithUsers.length)
@@ -127,7 +127,7 @@ export async function addBudgetNote(budgetId: string, content: string): Promise<
     // Combinar datos
     const noteWithUser = {
       ...noteData,
-      users: userData || { nombre: 'Usuario', email: user.email || '' }
+      users: userData || { name: 'Usuario', email: user.email || '' }
     }
 
     console.log('[addBudgetNote] Nota creada:', noteWithUser.id)
@@ -184,7 +184,7 @@ export async function updateBudgetNote(noteId: string, content: string): Promise
     // Combinar datos
     const noteWithUser = {
       ...noteData,
-      users: userData || { nombre: 'Usuario', email: user.email || '' }
+      users: userData || { name: 'Usuario', email: user.email || '' }
     }
 
     console.log('[updateBudgetNote] Nota actualizada:', noteWithUser.id)

@@ -237,7 +237,7 @@ export class DataTransformer {
     const rawData: Record<string, unknown> = {
       nivel: item.nivel,
       id: item.id,
-      nombre: item.nombre,
+      name: item.nombre,
       descripcion: item.descripcion,
       ud: item.ud,
       '%iva': item['%iva'],

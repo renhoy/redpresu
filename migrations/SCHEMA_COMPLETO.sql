@@ -112,25 +112,26 @@ $$;
 --
 
 CREATE FUNCTION public.get_next_budget_version_number(p_parent_budget_id uuid) RETURNS integer
-    LANGUAGE plpgsql
+    LANGUAGE plpgsql SECURITY DEFINER
     AS $$
 DECLARE
-  v_max_version INTEGER;
+  v_max_version integer;
 BEGIN
-  -- Si no hay padre, es la versión 1
-  IF p_parent_budget_id IS NULL THEN
-    RETURN 1;
-  END IF;
-
-  -- Obtener el máximo version_number de los hijos del padre
   SELECT COALESCE(MAX(version_number), 0) + 1
   INTO v_max_version
-  FROM public.budgets
+  FROM public.redpresu_budgets
   WHERE parent_budget_id = p_parent_budget_id;
 
   RETURN v_max_version;
 END;
 $$;
+
+
+--
+-- Name: FUNCTION get_next_budget_version_number(p_parent_budget_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.get_next_budget_version_number(p_parent_budget_id uuid) IS 'Obtiene el siguiente número de versión para un presupuesto hijo';
 
 
 --
@@ -157,26 +158,27 @@ $$;
 -- Name: get_user_empresa_id(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.get_user_empresa_id(user_id uuid) RETURNS integer
-    LANGUAGE plpgsql STABLE SECURITY DEFINER
+CREATE FUNCTION public.get_user_empresa_id(p_user_id uuid) RETURNS integer
+    LANGUAGE plpgsql SECURITY DEFINER
     AS $$
 DECLARE
-  user_empresa_id integer;
+  v_company_id integer;
 BEGIN
-  SELECT empresa_id INTO user_empresa_id
-  FROM public.users
-  WHERE id = user_id;
+  SELECT company_id
+  INTO v_company_id
+  FROM public.redpresu_users
+  WHERE id = p_user_id;
 
-  RETURN user_empresa_id;
+  RETURN v_company_id;
 END;
 $$;
 
 
 --
--- Name: FUNCTION get_user_empresa_id(user_id uuid); Type: COMMENT; Schema: public; Owner: -
+-- Name: FUNCTION get_user_empresa_id(p_user_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_user_empresa_id(user_id uuid) IS 'Returns empresa_id for a user (SECURITY DEFINER to avoid RLS recursion)';
+COMMENT ON FUNCTION public.get_user_empresa_id(p_user_id uuid) IS 'Obtiene el company_id de un usuario dado su user_id (nombre mantenido para compatibilidad)';
 
 
 --
@@ -209,26 +211,27 @@ COMMENT ON FUNCTION public.get_user_role(user_id uuid) IS 'Returns role for a us
 -- Name: get_user_role_by_id(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.get_user_role_by_id(user_id uuid) RETURNS text
-    LANGUAGE plpgsql STABLE SECURITY DEFINER
+CREATE FUNCTION public.get_user_role_by_id(p_user_id uuid) RETURNS text
+    LANGUAGE plpgsql SECURITY DEFINER
     AS $$
 DECLARE
-  user_role text;
+  v_role text;
 BEGIN
-  SELECT role INTO user_role
-  FROM public.users
-  WHERE id = user_id;
+  SELECT role
+  INTO v_role
+  FROM public.redpresu_users
+  WHERE id = p_user_id;
 
-  RETURN user_role;
+  RETURN v_role;
 END;
 $$;
 
 
 --
--- Name: FUNCTION get_user_role_by_id(user_id uuid); Type: COMMENT; Schema: public; Owner: -
+-- Name: FUNCTION get_user_role_by_id(p_user_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_user_role_by_id(user_id uuid) IS 'Returns role for a specific user (SECURITY DEFINER to avoid RLS recursion)';
+COMMENT ON FUNCTION public.get_user_role_by_id(p_user_id uuid) IS 'Obtiene el rol de un usuario dado su user_id';
 
 
 --
@@ -300,10 +303,72 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: budget_notes; Type: TABLE; Schema: public; Owner: -
+-- Name: redpresu_companies; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.budget_notes (
+CREATE TABLE public.redpresu_companies (
+    id integer NOT NULL,
+    name text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    status text DEFAULT 'active'::text NOT NULL,
+    CONSTRAINT empresas_status_check CHECK ((status = ANY (ARRAY['active'::text, 'inactive'::text])))
+);
+
+
+--
+-- Name: TABLE redpresu_companies; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.redpresu_companies IS 'Empresas del sistema multi-tenant';
+
+
+--
+-- Name: COLUMN redpresu_companies.id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_companies.id IS 'ID único de la empresa';
+
+
+--
+-- Name: COLUMN redpresu_companies.name; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_companies.name IS 'Nombre de la empresa';
+
+
+--
+-- Name: COLUMN redpresu_companies.status; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_companies.status IS 'Estado de la empresa: active o inactive';
+
+
+--
+-- Name: empresas_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.empresas_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: empresas_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.empresas_id_seq OWNED BY public.redpresu_companies.id;
+
+
+--
+-- Name: redpresu_budget_notes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.redpresu_budget_notes (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     budget_id uuid NOT NULL,
     user_id uuid NOT NULL,
@@ -314,10 +379,17 @@ CREATE TABLE public.budget_notes (
 
 
 --
--- Name: budget_versions; Type: TABLE; Schema: public; Owner: -
+-- Name: TABLE redpresu_budget_notes; Type: COMMENT; Schema: public; Owner: -
 --
 
-CREATE TABLE public.budget_versions (
+COMMENT ON TABLE public.redpresu_budget_notes IS 'Notas y comentarios asociados a presupuestos';
+
+
+--
+-- Name: redpresu_budget_versions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.redpresu_budget_versions (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     budget_id uuid NOT NULL,
     version_number integer NOT NULL,
@@ -328,7 +400,7 @@ CREATE TABLE public.budget_versions (
     base_amount numeric(10,2) DEFAULT 0 NOT NULL,
     irpf numeric(10,2) DEFAULT 0,
     irpf_percentage numeric(5,2) DEFAULT 0,
-    total_pagar numeric(10,2) DEFAULT 0,
+    total_pay numeric(10,2) DEFAULT 0,
     created_by uuid,
     created_at timestamp with time zone DEFAULT now(),
     notes text
@@ -336,40 +408,47 @@ CREATE TABLE public.budget_versions (
 
 
 --
--- Name: TABLE budget_versions; Type: COMMENT; Schema: public; Owner: -
+-- Name: TABLE redpresu_budget_versions; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.budget_versions IS 'Almacena versiones históricas de presupuestos';
-
-
---
--- Name: COLUMN budget_versions.version_number; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.budget_versions.version_number IS 'Número secuencial de versión por presupuesto';
+COMMENT ON TABLE public.redpresu_budget_versions IS 'Historial de versiones de presupuestos';
 
 
 --
--- Name: COLUMN budget_versions.json_budget_data; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budget_versions.version_number; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budget_versions.json_budget_data IS 'Snapshot completo de json_budget_data en el momento de la versión';
-
-
---
--- Name: COLUMN budget_versions.json_client_data; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.budget_versions.json_client_data IS 'Snapshot completo de json_client_data en el momento de la versión';
+COMMENT ON COLUMN public.redpresu_budget_versions.version_number IS 'Número secuencial de versión por presupuesto';
 
 
 --
--- Name: budgets; Type: TABLE; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budget_versions.json_budget_data; Type: COMMENT; Schema: public; Owner: -
 --
 
-CREATE TABLE public.budgets (
+COMMENT ON COLUMN public.redpresu_budget_versions.json_budget_data IS 'Snapshot completo de json_budget_data en el momento de la versión';
+
+
+--
+-- Name: COLUMN redpresu_budget_versions.json_client_data; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_budget_versions.json_client_data IS 'Snapshot completo de json_client_data en el momento de la versión';
+
+
+--
+-- Name: COLUMN redpresu_budget_versions.total_pay; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_budget_versions.total_pay IS 'Total a pagar (con IVA, IRPF y RE aplicados)';
+
+
+--
+-- Name: redpresu_budgets; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.redpresu_budgets (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    empresa_id integer DEFAULT 1 NOT NULL,
+    company_id integer DEFAULT 1 NOT NULL,
     tariff_id uuid NOT NULL,
     json_tariff_data jsonb NOT NULL,
     client_type text NOT NULL,
@@ -397,265 +476,265 @@ CREATE TABLE public.budgets (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     irpf numeric(10,2) DEFAULT 0.00,
     irpf_percentage numeric(5,2) DEFAULT 0.00,
-    total_pagar numeric(10,2) NOT NULL,
+    total_pay numeric(10,2) NOT NULL,
     json_client_data jsonb,
     parent_budget_id uuid,
     version_number integer DEFAULT 1,
-    re_aplica boolean DEFAULT false NOT NULL,
+    re_apply boolean DEFAULT false NOT NULL,
     re_total numeric(10,2) DEFAULT 0.00 NOT NULL,
     CONSTRAINT budgets_client_type_check CHECK ((client_type = ANY (ARRAY['particular'::text, 'autonomo'::text, 'empresa'::text]))),
     CONSTRAINT budgets_status_check CHECK ((status = ANY (ARRAY['borrador'::text, 'pendiente'::text, 'enviado'::text, 'aprobado'::text, 'rechazado'::text, 'caducado'::text]))),
     CONSTRAINT chk_budgets_irpf CHECK ((irpf >= (0)::numeric)),
     CONSTRAINT chk_budgets_irpf_percentage CHECK (((irpf_percentage >= (0)::numeric) AND (irpf_percentage <= (100)::numeric))),
     CONSTRAINT chk_budgets_re_total CHECK ((re_total >= (0)::numeric)),
-    CONSTRAINT chk_budgets_totals CHECK (((total >= (0)::numeric) AND (iva >= (0)::numeric) AND (base >= (0)::numeric) AND (irpf >= (0)::numeric) AND (total_pagar >= (0)::numeric))),
+    CONSTRAINT chk_budgets_totals CHECK (((total >= (0)::numeric) AND (iva >= (0)::numeric) AND (base >= (0)::numeric) AND (irpf >= (0)::numeric) AND (total_pay >= (0)::numeric))),
     CONSTRAINT chk_budgets_validity CHECK (((validity_days > 0) AND (validity_days <= 365)))
 );
 
 
 --
--- Name: TABLE budgets; Type: COMMENT; Schema: public; Owner: -
+-- Name: TABLE redpresu_budgets; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.budgets IS 'Presupuestos generados con datos de cliente y configuración';
+COMMENT ON TABLE public.redpresu_budgets IS 'Presupuestos generados a partir de tarifas con datos de cliente';
 
 
 --
--- Name: COLUMN budgets.id; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.id; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.id IS 'Identificador único del presupuesto';
+COMMENT ON COLUMN public.redpresu_budgets.id IS 'Identificador único del presupuesto';
 
 
 --
--- Name: COLUMN budgets.empresa_id; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.company_id; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.empresa_id IS 'ID de la empresa (siempre 1 en MVP)';
+COMMENT ON COLUMN public.redpresu_budgets.company_id IS 'ID de la empresa (company)';
 
 
 --
--- Name: COLUMN budgets.tariff_id; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.tariff_id; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.tariff_id IS 'Referencia a la tarifa utilizada';
+COMMENT ON COLUMN public.redpresu_budgets.tariff_id IS 'Referencia a la tarifa utilizada';
 
 
 --
--- Name: COLUMN budgets.json_tariff_data; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.json_tariff_data; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.json_tariff_data IS 'Copia de la configuración de tarifa al momento de crear el presupuesto';
+COMMENT ON COLUMN public.redpresu_budgets.json_tariff_data IS 'Copia de la configuración de tarifa al momento de crear el presupuesto';
 
 
 --
--- Name: COLUMN budgets.client_type; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.client_type; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.client_type IS 'Tipo de cliente: particular, autónomo o empresa';
+COMMENT ON COLUMN public.redpresu_budgets.client_type IS 'Tipo de cliente: particular, autónomo o empresa';
 
 
 --
--- Name: COLUMN budgets.client_name; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.client_name; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.client_name IS 'Nombre del cliente';
+COMMENT ON COLUMN public.redpresu_budgets.client_name IS 'Nombre del cliente';
 
 
 --
--- Name: COLUMN budgets.client_nif_nie; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.client_nif_nie; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.client_nif_nie IS 'NIF/NIE del cliente';
+COMMENT ON COLUMN public.redpresu_budgets.client_nif_nie IS 'NIF/NIE del cliente';
 
 
 --
--- Name: COLUMN budgets.client_phone; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.client_phone; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.client_phone IS 'Teléfono del cliente';
+COMMENT ON COLUMN public.redpresu_budgets.client_phone IS 'Teléfono del cliente';
 
 
 --
--- Name: COLUMN budgets.client_email; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.client_email; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.client_email IS 'Email del cliente';
+COMMENT ON COLUMN public.redpresu_budgets.client_email IS 'Email del cliente';
 
 
 --
--- Name: COLUMN budgets.client_web; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.client_web; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.client_web IS 'Web del cliente';
+COMMENT ON COLUMN public.redpresu_budgets.client_web IS 'Web del cliente';
 
 
 --
--- Name: COLUMN budgets.client_address; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.client_address; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.client_address IS 'Dirección del cliente';
+COMMENT ON COLUMN public.redpresu_budgets.client_address IS 'Dirección del cliente';
 
 
 --
--- Name: COLUMN budgets.client_postal_code; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.client_postal_code; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.client_postal_code IS 'Código postal del cliente';
+COMMENT ON COLUMN public.redpresu_budgets.client_postal_code IS 'Código postal del cliente';
 
 
 --
--- Name: COLUMN budgets.client_locality; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.client_locality; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.client_locality IS 'Localidad del cliente';
+COMMENT ON COLUMN public.redpresu_budgets.client_locality IS 'Localidad del cliente';
 
 
 --
--- Name: COLUMN budgets.client_province; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.client_province; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.client_province IS 'Provincia del cliente';
+COMMENT ON COLUMN public.redpresu_budgets.client_province IS 'Provincia del cliente';
 
 
 --
--- Name: COLUMN budgets.client_acceptance; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.client_acceptance; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.client_acceptance IS 'Aceptación del cliente (firmado)';
+COMMENT ON COLUMN public.redpresu_budgets.client_acceptance IS 'Aceptación del cliente (firmado)';
 
 
 --
--- Name: COLUMN budgets.json_budget_data; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.json_budget_data; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.json_budget_data IS 'Estructura JSON con items y configuración del presupuesto';
+COMMENT ON COLUMN public.redpresu_budgets.json_budget_data IS 'Estructura JSON con items y configuración del presupuesto';
 
 
 --
--- Name: COLUMN budgets.status; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.status; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.status IS 'Estado: borrador → pendiente → enviado → {aprobado|rechazado|caducado}';
+COMMENT ON COLUMN public.redpresu_budgets.status IS 'Estado: borrador → pendiente → enviado → {aprobado|rechazado|caducado}';
 
 
 --
--- Name: COLUMN budgets.total; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.total; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.total IS 'Total del presupuesto (base + IVA)';
+COMMENT ON COLUMN public.redpresu_budgets.total IS 'Total del presupuesto (base + IVA)';
 
 
 --
--- Name: COLUMN budgets.iva; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.iva; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.iva IS 'Importe del IVA';
+COMMENT ON COLUMN public.redpresu_budgets.iva IS 'Importe del IVA';
 
 
 --
--- Name: COLUMN budgets.base; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.base; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.base IS 'Base imponible (sin IVA)';
+COMMENT ON COLUMN public.redpresu_budgets.base IS 'Base imponible (sin IVA)';
 
 
 --
--- Name: COLUMN budgets.pdf_url; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.pdf_url; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.pdf_url IS 'URL del PDF generado';
+COMMENT ON COLUMN public.redpresu_budgets.pdf_url IS 'URL del PDF generado';
 
 
 --
--- Name: COLUMN budgets.start_date; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.start_date; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.start_date IS 'Fecha de inicio del proyecto';
+COMMENT ON COLUMN public.redpresu_budgets.start_date IS 'Fecha de inicio del proyecto';
 
 
 --
--- Name: COLUMN budgets.end_date; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.end_date; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.end_date IS 'Fecha de fin del proyecto';
+COMMENT ON COLUMN public.redpresu_budgets.end_date IS 'Fecha de fin del proyecto';
 
 
 --
--- Name: COLUMN budgets.validity_days; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.validity_days; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.validity_days IS 'Días de validez del presupuesto';
+COMMENT ON COLUMN public.redpresu_budgets.validity_days IS 'Días de validez del presupuesto';
 
 
 --
--- Name: COLUMN budgets.user_id; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.user_id; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.user_id IS 'Usuario que creó el presupuesto';
+COMMENT ON COLUMN public.redpresu_budgets.user_id IS 'Usuario que creó el presupuesto';
 
 
 --
--- Name: COLUMN budgets.irpf; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.irpf; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.irpf IS 'Importe de IRPF a retener (solo si emisor es autónomo y cliente es empresa/autónomo)';
+COMMENT ON COLUMN public.redpresu_budgets.irpf IS 'Importe de IRPF a retener (solo si emisor es autónomo y cliente es empresa/autónomo)';
 
 
 --
--- Name: COLUMN budgets.irpf_percentage; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.irpf_percentage; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.irpf_percentage IS 'Porcentaje de IRPF aplicado (típicamente 15%)';
+COMMENT ON COLUMN public.redpresu_budgets.irpf_percentage IS 'Porcentaje de IRPF aplicado (típicamente 15%)';
 
 
 --
--- Name: COLUMN budgets.total_pagar; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.total_pay; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.total_pagar IS 'Total a pagar final (total con IVA - IRPF + RE)';
+COMMENT ON COLUMN public.redpresu_budgets.total_pay IS 'Total a pagar (con IVA, IRPF y RE aplicados)';
 
 
 --
--- Name: COLUMN budgets.json_client_data; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.json_client_data; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.json_client_data IS 'Snapshot de datos del cliente para versionado';
+COMMENT ON COLUMN public.redpresu_budgets.json_client_data IS 'Snapshot de datos del cliente para versionado';
 
 
 --
--- Name: COLUMN budgets.parent_budget_id; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.parent_budget_id; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.parent_budget_id IS 'ID del presupuesto padre (para jerarquía de versiones)';
+COMMENT ON COLUMN public.redpresu_budgets.parent_budget_id IS 'ID del presupuesto padre (para jerarquía de versiones)';
 
 
 --
--- Name: COLUMN budgets.version_number; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.version_number; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.version_number IS 'Número de versión dentro de la jerarquía (1, 2, 3...)';
+COMMENT ON COLUMN public.redpresu_budgets.version_number IS 'Número de versión dentro de la jerarquía (1, 2, 3...)';
 
 
 --
--- Name: COLUMN budgets.re_aplica; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.re_apply; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.re_aplica IS 'Indica si se aplica Recargo de Equivalencia (solo si cliente es autónomo)';
+COMMENT ON COLUMN public.redpresu_budgets.re_apply IS 'Indica si se aplica Recargo de Equivalencia';
 
 
 --
--- Name: COLUMN budgets.re_total; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_budgets.re_total; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.budgets.re_total IS 'Importe total del Recargo de Equivalencia aplicado';
+COMMENT ON COLUMN public.redpresu_budgets.re_total IS 'Importe total del Recargo de Equivalencia aplicado';
 
 
 --
--- Name: config; Type: TABLE; Schema: public; Owner: -
+-- Name: redpresu_config; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.config (
+CREATE TABLE public.redpresu_config (
     key text NOT NULL,
     value jsonb NOT NULL,
     description text,
@@ -667,265 +746,203 @@ CREATE TABLE public.config (
 
 
 --
--- Name: TABLE config; Type: COMMENT; Schema: public; Owner: -
+-- Name: TABLE redpresu_config; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.config IS 'Tabla de configuración global del sistema (IVA-RE, plantillas PDF, defaults, etc.)';
-
-
---
--- Name: COLUMN config.key; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.config.key IS 'Clave única de configuración (ej: iva_re_equivalences, pdf_templates)';
+COMMENT ON TABLE public.redpresu_config IS 'Configuración global del sistema';
 
 
 --
--- Name: COLUMN config.value; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_config.key; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.config.value IS 'Valor en formato JSON para flexibilidad';
-
-
---
--- Name: COLUMN config.description; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.config.description IS 'Descripción del parámetro de configuración';
+COMMENT ON COLUMN public.redpresu_config.key IS 'Clave única de configuración (ej: iva_re_equivalences, pdf_templates)';
 
 
 --
--- Name: COLUMN config.category; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_config.value; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.config.category IS 'Categoría: general, fiscal, pdf, defaults';
-
-
---
--- Name: COLUMN config.is_system; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.config.is_system IS 'Si es true, solo superadmin puede modificar';
+COMMENT ON COLUMN public.redpresu_config.value IS 'Valor en formato JSON para flexibilidad';
 
 
 --
--- Name: empresas; Type: TABLE; Schema: public; Owner: -
+-- Name: COLUMN redpresu_config.description; Type: COMMENT; Schema: public; Owner: -
 --
 
-CREATE TABLE public.empresas (
-    id integer NOT NULL,
-    nombre text NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    status text DEFAULT 'active'::text NOT NULL,
-    CONSTRAINT empresas_status_check CHECK ((status = ANY (ARRAY['active'::text, 'inactive'::text])))
-);
+COMMENT ON COLUMN public.redpresu_config.description IS 'Descripción del parámetro de configuración';
 
 
 --
--- Name: TABLE empresas; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_config.category; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.empresas IS 'Empresas/Emisores del sistema - cada registro es un tenant independiente';
-
-
---
--- Name: COLUMN empresas.id; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.empresas.id IS 'ID único de la empresa';
+COMMENT ON COLUMN public.redpresu_config.category IS 'Categoría: general, fiscal, pdf, defaults';
 
 
 --
--- Name: COLUMN empresas.nombre; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_config.is_system; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.empresas.nombre IS 'Nombre de la empresa/emisor';
-
-
---
--- Name: COLUMN empresas.status; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.empresas.status IS 'Estado de la empresa: active o inactive';
+COMMENT ON COLUMN public.redpresu_config.is_system IS 'Si es true, solo superadmin puede modificar';
 
 
 --
--- Name: empresas_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+-- Name: redpresu_issuers; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE public.empresas_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: empresas_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.empresas_id_seq OWNED BY public.empresas.id;
-
-
---
--- Name: issuers; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.issuers (
+CREATE TABLE public.redpresu_issuers (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     user_id uuid NOT NULL,
     company_id integer DEFAULT 1 NOT NULL,
-    issuers_type text NOT NULL,
-    issuers_name text NOT NULL,
-    issuers_nif text NOT NULL,
-    issuers_address text NOT NULL,
-    issuers_postal_code text,
-    issuers_locality text,
-    issuers_province text,
-    issuers_country text DEFAULT 'España'::text,
-    issuers_phone text,
-    issuers_email text,
-    issuers_web text,
-    issuers_irpf_percentage numeric(5,2),
-    issuers_logo_url text,
-    issuers_note text,
+    type text NOT NULL,
+    name text NOT NULL,
+    nif text NOT NULL,
+    address text NOT NULL,
+    postal_code text,
+    locality text,
+    province text,
+    country text DEFAULT 'España'::text,
+    phone text,
+    email text,
+    web text,
+    irpf_percentage numeric(5,2),
+    logo_url text,
+    note text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT issuers_email_check CHECK (((issuers_email IS NULL) OR (issuers_email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'::text))),
-    CONSTRAINT issuers_irpf_percentage_check CHECK (((issuers_irpf_percentage >= (0)::numeric) AND (issuers_irpf_percentage <= (100)::numeric))),
-    CONSTRAINT issuers_type_check CHECK ((issuers_type = ANY (ARRAY['empresa'::text, 'autonomo'::text])))
+    CONSTRAINT issuers_email_check CHECK (((email IS NULL) OR (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'::text))),
+    CONSTRAINT issuers_irpf_percentage_check CHECK (((irpf_percentage >= (0)::numeric) AND (irpf_percentage <= (100)::numeric))),
+    CONSTRAINT issuers_type_check CHECK ((type = ANY (ARRAY['empresa'::text, 'autonomo'::text])))
 );
 
 
 --
--- Name: TABLE issuers; Type: COMMENT; Schema: public; Owner: -
+-- Name: TABLE redpresu_issuers; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.issuers IS 'Fiscal data for issuers (company or freelancer) for invoicing and budgets';
-
-
---
--- Name: COLUMN issuers.user_id; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.issuers.user_id IS 'Owner/responsible user for this issuer';
+COMMENT ON TABLE public.redpresu_issuers IS 'Datos fiscales de emisores (empresa o autónomo) para facturación';
 
 
 --
--- Name: COLUMN issuers.company_id; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_issuers.user_id; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.issuers.company_id IS 'Company ID for multi-tenant (default 1 = first company)';
-
-
---
--- Name: COLUMN issuers.issuers_type; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.issuers.issuers_type IS 'Issuer type: empresa (company) or autonomo (freelancer)';
+COMMENT ON COLUMN public.redpresu_issuers.user_id IS 'Owner/responsible user for this issuer';
 
 
 --
--- Name: COLUMN issuers.issuers_name; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_issuers.company_id; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.issuers.issuers_name IS 'Business/commercial name';
-
-
---
--- Name: COLUMN issuers.issuers_nif; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.issuers.issuers_nif IS 'Tax identification number (NIF/CIF)';
+COMMENT ON COLUMN public.redpresu_issuers.company_id IS 'Company ID for multi-tenant (default 1 = first company)';
 
 
 --
--- Name: COLUMN issuers.issuers_address; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_issuers.type; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.issuers.issuers_address IS 'Fiscal/legal address';
-
-
---
--- Name: COLUMN issuers.issuers_postal_code; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.issuers.issuers_postal_code IS 'Postal/ZIP code';
+COMMENT ON COLUMN public.redpresu_issuers.type IS 'Tipo de emisor: empresa o autonomo';
 
 
 --
--- Name: COLUMN issuers.issuers_locality; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_issuers.name; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.issuers.issuers_locality IS 'City/Locality';
-
-
---
--- Name: COLUMN issuers.issuers_province; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.issuers.issuers_province IS 'State/Province';
+COMMENT ON COLUMN public.redpresu_issuers.name IS 'Nombre o razón social del emisor';
 
 
 --
--- Name: COLUMN issuers.issuers_country; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_issuers.nif; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.issuers.issuers_country IS 'Country';
-
-
---
--- Name: COLUMN issuers.issuers_phone; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.issuers.issuers_phone IS 'Contact phone number';
+COMMENT ON COLUMN public.redpresu_issuers.nif IS 'NIF/CIF del emisor';
 
 
 --
--- Name: COLUMN issuers.issuers_email; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_issuers.address; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.issuers.issuers_email IS 'Contact email';
-
-
---
--- Name: COLUMN issuers.issuers_web; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.issuers.issuers_web IS 'Website URL';
+COMMENT ON COLUMN public.redpresu_issuers.address IS 'Dirección del emisor';
 
 
 --
--- Name: COLUMN issuers.issuers_irpf_percentage; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_issuers.postal_code; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.issuers.issuers_irpf_percentage IS 'IRPF withholding percentage (only for freelancers, typically 15%)';
-
-
---
--- Name: COLUMN issuers.issuers_logo_url; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.issuers.issuers_logo_url IS 'Logo image URL';
+COMMENT ON COLUMN public.redpresu_issuers.postal_code IS 'Código postal';
 
 
 --
--- Name: COLUMN issuers.issuers_note; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_issuers.locality; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.issuers.issuers_note IS 'Additional notes';
+COMMENT ON COLUMN public.redpresu_issuers.locality IS 'Localidad';
 
 
 --
--- Name: tariffs; Type: TABLE; Schema: public; Owner: -
+-- Name: COLUMN redpresu_issuers.province; Type: COMMENT; Schema: public; Owner: -
 --
 
-CREATE TABLE public.tariffs (
+COMMENT ON COLUMN public.redpresu_issuers.province IS 'Provincia';
+
+
+--
+-- Name: COLUMN redpresu_issuers.country; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_issuers.country IS 'País';
+
+
+--
+-- Name: COLUMN redpresu_issuers.phone; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_issuers.phone IS 'Teléfono de contacto';
+
+
+--
+-- Name: COLUMN redpresu_issuers.email; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_issuers.email IS 'Email de contacto';
+
+
+--
+-- Name: COLUMN redpresu_issuers.web; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_issuers.web IS 'Sitio web';
+
+
+--
+-- Name: COLUMN redpresu_issuers.irpf_percentage; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_issuers.irpf_percentage IS 'Porcentaje de IRPF (solo autónomos)';
+
+
+--
+-- Name: COLUMN redpresu_issuers.logo_url; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_issuers.logo_url IS 'URL del logo del emisor';
+
+
+--
+-- Name: COLUMN redpresu_issuers.note; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_issuers.note IS 'Nota o descripción adicional';
+
+
+--
+-- Name: redpresu_tariffs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.redpresu_tariffs (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    empresa_id integer DEFAULT 1 NOT NULL,
+    company_id integer DEFAULT 1 NOT NULL,
     title text NOT NULL,
     description text,
     logo_url text,
@@ -953,326 +970,326 @@ CREATE TABLE public.tariffs (
 
 
 --
--- Name: TABLE tariffs; Type: COMMENT; Schema: public; Owner: -
+-- Name: TABLE redpresu_tariffs; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.tariffs IS 'Tarifas y configuración de empresa con estructura de precios';
-
-
---
--- Name: COLUMN tariffs.id; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.tariffs.id IS 'Identificador único de la tarifa';
+COMMENT ON TABLE public.redpresu_tariffs IS 'Tarifas con estructura jerárquica (capítulos, subcapítulos, partidas)';
 
 
 --
--- Name: COLUMN tariffs.empresa_id; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_tariffs.id; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.tariffs.empresa_id IS 'ID de la empresa (siempre 1 en MVP)';
-
-
---
--- Name: COLUMN tariffs.title; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.tariffs.title IS 'Título de la tarifa';
+COMMENT ON COLUMN public.redpresu_tariffs.id IS 'Identificador único de la tarifa';
 
 
 --
--- Name: COLUMN tariffs.description; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_tariffs.company_id; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.tariffs.description IS 'Descripción de la tarifa';
-
-
---
--- Name: COLUMN tariffs.logo_url; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.tariffs.logo_url IS 'URL del logo de la empresa';
+COMMENT ON COLUMN public.redpresu_tariffs.company_id IS 'ID de la empresa (company)';
 
 
 --
--- Name: COLUMN tariffs.name; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_tariffs.title; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.tariffs.name IS 'Nombre de la empresa';
-
-
---
--- Name: COLUMN tariffs.nif; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.tariffs.nif IS 'NIF/CIF de la empresa';
+COMMENT ON COLUMN public.redpresu_tariffs.title IS 'Título de la tarifa';
 
 
 --
--- Name: COLUMN tariffs.address; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_tariffs.description; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.tariffs.address IS 'Dirección de la empresa';
-
-
---
--- Name: COLUMN tariffs.contact; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.tariffs.contact IS 'Información de contacto';
+COMMENT ON COLUMN public.redpresu_tariffs.description IS 'Descripción de la tarifa';
 
 
 --
--- Name: COLUMN tariffs.summary_note; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_tariffs.logo_url; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.tariffs.summary_note IS 'Nota resumen para presupuestos';
-
-
---
--- Name: COLUMN tariffs.conditions_note; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.tariffs.conditions_note IS 'Condiciones generales';
+COMMENT ON COLUMN public.redpresu_tariffs.logo_url IS 'URL del logo de la empresa';
 
 
 --
--- Name: COLUMN tariffs.legal_note; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_tariffs.name; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.tariffs.legal_note IS 'Nota legal';
-
-
---
--- Name: COLUMN tariffs.template; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.tariffs.template IS 'Plantilla de diseño';
+COMMENT ON COLUMN public.redpresu_tariffs.name IS 'Nombre de la empresa';
 
 
 --
--- Name: COLUMN tariffs.primary_color; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_tariffs.nif; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.tariffs.primary_color IS 'Color primario de la empresa';
-
-
---
--- Name: COLUMN tariffs.secondary_color; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.tariffs.secondary_color IS 'Color secundario de la empresa';
+COMMENT ON COLUMN public.redpresu_tariffs.nif IS 'NIF/CIF de la empresa';
 
 
 --
--- Name: COLUMN tariffs.status; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_tariffs.address; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.tariffs.status IS 'Estado de la tarifa: Activa o Inactiva';
-
-
---
--- Name: COLUMN tariffs.validity; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.tariffs.validity IS 'Validez en días de los presupuestos';
+COMMENT ON COLUMN public.redpresu_tariffs.address IS 'Dirección de la empresa';
 
 
 --
--- Name: COLUMN tariffs.json_tariff_data; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_tariffs.contact; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.tariffs.json_tariff_data IS 'Estructura JSON con categorías e items de la tarifa';
-
-
---
--- Name: COLUMN tariffs.user_id; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.tariffs.user_id IS 'User who created this tariff (for audit trail)';
+COMMENT ON COLUMN public.redpresu_tariffs.contact IS 'Información de contacto';
 
 
 --
--- Name: COLUMN tariffs.ivas_presentes; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_tariffs.summary_note; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.tariffs.ivas_presentes IS 'Array de porcentajes de IVA presentes en la tarifa (ej: {21.00, 10.00, 4.00}). Detectado automáticamente al importar CSV.';
-
-
---
--- Name: COLUMN tariffs.is_template; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.tariffs.is_template IS 'Indica si esta tarifa es la plantilla por defecto de la empresa. Solo puede haber una plantilla activa por empresa.';
+COMMENT ON COLUMN public.redpresu_tariffs.summary_note IS 'Nota resumen para presupuestos';
 
 
 --
--- Name: users; Type: TABLE; Schema: public; Owner: -
+-- Name: COLUMN redpresu_tariffs.conditions_note; Type: COMMENT; Schema: public; Owner: -
 --
 
-CREATE TABLE public.users (
+COMMENT ON COLUMN public.redpresu_tariffs.conditions_note IS 'Condiciones generales';
+
+
+--
+-- Name: COLUMN redpresu_tariffs.legal_note; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_tariffs.legal_note IS 'Nota legal';
+
+
+--
+-- Name: COLUMN redpresu_tariffs.template; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_tariffs.template IS 'Plantilla de diseño';
+
+
+--
+-- Name: COLUMN redpresu_tariffs.primary_color; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_tariffs.primary_color IS 'Color primario de la empresa';
+
+
+--
+-- Name: COLUMN redpresu_tariffs.secondary_color; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_tariffs.secondary_color IS 'Color secundario de la empresa';
+
+
+--
+-- Name: COLUMN redpresu_tariffs.status; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_tariffs.status IS 'Estado de la tarifa: Activa o Inactiva';
+
+
+--
+-- Name: COLUMN redpresu_tariffs.validity; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_tariffs.validity IS 'Validez en días de los presupuestos';
+
+
+--
+-- Name: COLUMN redpresu_tariffs.json_tariff_data; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_tariffs.json_tariff_data IS 'Estructura JSON con categorías e items de la tarifa';
+
+
+--
+-- Name: COLUMN redpresu_tariffs.user_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_tariffs.user_id IS 'User who created this tariff (for audit trail)';
+
+
+--
+-- Name: COLUMN redpresu_tariffs.ivas_presentes; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_tariffs.ivas_presentes IS 'Array de porcentajes de IVA presentes en la tarifa (ej: {21.00, 10.00, 4.00}). Detectado automáticamente al importar CSV.';
+
+
+--
+-- Name: COLUMN redpresu_tariffs.is_template; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_tariffs.is_template IS 'Indica si esta tarifa es la plantilla por defecto de la empresa. Solo puede haber una plantilla activa por empresa.';
+
+
+--
+-- Name: redpresu_users; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.redpresu_users (
     id uuid NOT NULL,
     role text NOT NULL,
-    empresa_id integer DEFAULT 1 NOT NULL,
-    nombre text NOT NULL,
+    company_id integer DEFAULT 1 NOT NULL,
+    name text NOT NULL,
     email text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     status text DEFAULT 'active'::text NOT NULL,
     invited_by uuid,
     last_login timestamp with time zone,
-    apellidos text,
+    last_name text,
     CONSTRAINT users_role_check CHECK ((role = ANY (ARRAY['superadmin'::text, 'admin'::text, 'vendedor'::text]))),
     CONSTRAINT users_status_check CHECK ((status = ANY (ARRAY['active'::text, 'inactive'::text, 'pending'::text])))
 );
 
 
 --
--- Name: TABLE users; Type: COMMENT; Schema: public; Owner: -
+-- Name: TABLE redpresu_users; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.users IS 'Extensión de auth.users con campos personalizados para roles y empresa';
-
-
---
--- Name: COLUMN users.id; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.users.id IS 'Referencia directa al usuario en auth.users';
+COMMENT ON TABLE public.redpresu_users IS 'Usuarios del sistema con roles y empresa asignada';
 
 
 --
--- Name: COLUMN users.role; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_users.id; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.users.role IS 'Rol del usuario: superadmin (acceso total), admin (su empresa), vendedor (sus presupuestos)';
-
-
---
--- Name: COLUMN users.empresa_id; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.users.empresa_id IS 'ID de la empresa (siempre 1 en MVP)';
+COMMENT ON COLUMN public.redpresu_users.id IS 'Referencia directa al usuario en auth.users';
 
 
 --
--- Name: COLUMN users.nombre; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_users.role; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.users.nombre IS 'Nombre del usuario';
-
-
---
--- Name: COLUMN users.email; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.users.email IS 'Email del usuario (sincronizado con auth.users)';
+COMMENT ON COLUMN public.redpresu_users.role IS 'Rol del usuario: superadmin (acceso total), admin (su empresa), vendedor (sus presupuestos)';
 
 
 --
--- Name: COLUMN users.status; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_users.company_id; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.users.status IS 'User status: active, inactive, pending';
-
-
---
--- Name: COLUMN users.invited_by; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.users.invited_by IS 'User ID who invited this user (for audit trail)';
+COMMENT ON COLUMN public.redpresu_users.company_id IS 'ID de la empresa (company)';
 
 
 --
--- Name: COLUMN users.last_login; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_users.name; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.users.last_login IS 'Timestamp of last successful login';
-
-
---
--- Name: COLUMN users.apellidos; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.users.apellidos IS 'Apellidos del usuario';
+COMMENT ON COLUMN public.redpresu_users.name IS 'Nombre del usuario';
 
 
 --
--- Name: empresas id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_users.email; Type: COMMENT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.empresas ALTER COLUMN id SET DEFAULT nextval('public.empresas_id_seq'::regclass);
+COMMENT ON COLUMN public.redpresu_users.email IS 'Email del usuario (sincronizado con auth.users)';
 
 
 --
--- Name: budget_notes budget_notes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: COLUMN redpresu_users.status; Type: COMMENT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.budget_notes
+COMMENT ON COLUMN public.redpresu_users.status IS 'User status: active, inactive, pending';
+
+
+--
+-- Name: COLUMN redpresu_users.invited_by; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_users.invited_by IS 'User ID who invited this user (for audit trail)';
+
+
+--
+-- Name: COLUMN redpresu_users.last_login; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_users.last_login IS 'Timestamp of last successful login';
+
+
+--
+-- Name: COLUMN redpresu_users.last_name; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_users.last_name IS 'Apellidos del usuario';
+
+
+--
+-- Name: redpresu_companies id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.redpresu_companies ALTER COLUMN id SET DEFAULT nextval('public.empresas_id_seq'::regclass);
+
+
+--
+-- Name: redpresu_budget_notes budget_notes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.redpresu_budget_notes
     ADD CONSTRAINT budget_notes_pkey PRIMARY KEY (id);
 
 
 --
--- Name: budget_versions budget_versions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: redpresu_budget_versions budget_versions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.budget_versions
+ALTER TABLE ONLY public.redpresu_budget_versions
     ADD CONSTRAINT budget_versions_pkey PRIMARY KEY (id);
 
 
 --
--- Name: budgets budgets_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: redpresu_budgets budgets_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.budgets
+ALTER TABLE ONLY public.redpresu_budgets
     ADD CONSTRAINT budgets_pkey PRIMARY KEY (id);
 
 
 --
--- Name: config config_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: redpresu_config config_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.config
+ALTER TABLE ONLY public.redpresu_config
     ADD CONSTRAINT config_pkey PRIMARY KEY (key);
 
 
 --
--- Name: empresas empresas_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: redpresu_companies empresas_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.empresas
+ALTER TABLE ONLY public.redpresu_companies
     ADD CONSTRAINT empresas_pkey PRIMARY KEY (id);
 
 
 --
--- Name: issuers issuers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: redpresu_issuers issuers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.issuers
+ALTER TABLE ONLY public.redpresu_issuers
     ADD CONSTRAINT issuers_pkey PRIMARY KEY (id);
 
 
 --
--- Name: tariffs tariffs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: redpresu_tariffs tariffs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.tariffs
+ALTER TABLE ONLY public.redpresu_tariffs
     ADD CONSTRAINT tariffs_pkey PRIMARY KEY (id);
 
 
 --
--- Name: budget_versions unique_budget_version; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: redpresu_budget_versions unique_budget_version; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.budget_versions
+ALTER TABLE ONLY public.redpresu_budget_versions
     ADD CONSTRAINT unique_budget_version UNIQUE (budget_id, version_number);
 
 
 --
--- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: redpresu_users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.users
+ALTER TABLE ONLY public.redpresu_users
     ADD CONSTRAINT users_pkey PRIMARY KEY (id);
 
 
@@ -1280,711 +1297,662 @@ ALTER TABLE ONLY public.users
 -- Name: idx_budget_notes_budget_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_budget_notes_budget_id ON public.budget_notes USING btree (budget_id);
+CREATE INDEX idx_budget_notes_budget_id ON public.redpresu_budget_notes USING btree (budget_id);
 
 
 --
 -- Name: idx_budget_notes_created_at; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_budget_notes_created_at ON public.budget_notes USING btree (created_at DESC);
+CREATE INDEX idx_budget_notes_created_at ON public.redpresu_budget_notes USING btree (created_at DESC);
 
 
 --
 -- Name: idx_budget_notes_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_budget_notes_user_id ON public.budget_notes USING btree (user_id);
+CREATE INDEX idx_budget_notes_user_id ON public.redpresu_budget_notes USING btree (user_id);
 
 
 --
 -- Name: idx_budget_versions_budget_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_budget_versions_budget_id ON public.budget_versions USING btree (budget_id);
+CREATE INDEX idx_budget_versions_budget_id ON public.redpresu_budget_versions USING btree (budget_id);
 
 
 --
 -- Name: idx_budget_versions_created_at; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_budget_versions_created_at ON public.budget_versions USING btree (created_at DESC);
+CREATE INDEX idx_budget_versions_created_at ON public.redpresu_budget_versions USING btree (created_at DESC);
 
 
 --
 -- Name: idx_budget_versions_created_by; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_budget_versions_created_by ON public.budget_versions USING btree (created_by);
+CREATE INDEX idx_budget_versions_created_by ON public.redpresu_budget_versions USING btree (created_by);
 
 
 --
 -- Name: idx_budgets_client_name; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_budgets_client_name ON public.budgets USING btree (client_name);
+CREATE INDEX idx_budgets_client_name ON public.redpresu_budgets USING btree (client_name);
 
 
 --
 -- Name: idx_budgets_created_at; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_budgets_created_at ON public.budgets USING btree (created_at DESC);
+CREATE INDEX idx_budgets_created_at ON public.redpresu_budgets USING btree (created_at DESC);
 
 
 --
 -- Name: idx_budgets_empresa_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_budgets_empresa_id ON public.budgets USING btree (empresa_id);
+CREATE INDEX idx_budgets_empresa_id ON public.redpresu_budgets USING btree (company_id);
 
 
 --
 -- Name: idx_budgets_parent_budget_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_budgets_parent_budget_id ON public.budgets USING btree (parent_budget_id);
+CREATE INDEX idx_budgets_parent_budget_id ON public.redpresu_budgets USING btree (parent_budget_id);
 
 
 --
 -- Name: idx_budgets_parent_version; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_budgets_parent_version ON public.budgets USING btree (parent_budget_id, version_number DESC);
+CREATE INDEX idx_budgets_parent_version ON public.redpresu_budgets USING btree (parent_budget_id, version_number DESC);
 
 
 --
 -- Name: idx_budgets_status; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_budgets_status ON public.budgets USING btree (status);
+CREATE INDEX idx_budgets_status ON public.redpresu_budgets USING btree (status);
 
 
 --
 -- Name: idx_budgets_tariff_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_budgets_tariff_id ON public.budgets USING btree (tariff_id);
+CREATE INDEX idx_budgets_tariff_id ON public.redpresu_budgets USING btree (tariff_id);
 
 
 --
 -- Name: idx_budgets_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_budgets_user_id ON public.budgets USING btree (user_id);
+CREATE INDEX idx_budgets_user_id ON public.redpresu_budgets USING btree (user_id);
 
 
 --
 -- Name: idx_config_category; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_config_category ON public.config USING btree (category);
+CREATE INDEX idx_config_category ON public.redpresu_config USING btree (category);
 
 
 --
 -- Name: idx_config_is_system; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_config_is_system ON public.config USING btree (is_system);
+CREATE INDEX idx_config_is_system ON public.redpresu_config USING btree (is_system);
 
 
 --
 -- Name: idx_empresas_status; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_empresas_status ON public.empresas USING btree (status);
+CREATE INDEX idx_empresas_status ON public.redpresu_companies USING btree (status);
 
 
 --
 -- Name: idx_issuers_company_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_issuers_company_id ON public.issuers USING btree (company_id);
+CREATE INDEX idx_issuers_company_id ON public.redpresu_issuers USING btree (company_id);
 
 
 --
 -- Name: idx_issuers_nif_company; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX idx_issuers_nif_company ON public.issuers USING btree (issuers_nif, company_id);
+CREATE UNIQUE INDEX idx_issuers_nif_company ON public.redpresu_issuers USING btree (nif, company_id);
 
 
 --
 -- Name: idx_issuers_nif_original; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_issuers_nif_original ON public.issuers USING btree (issuers_nif);
+CREATE INDEX idx_issuers_nif_original ON public.redpresu_issuers USING btree (nif);
 
 
 --
 -- Name: idx_issuers_type; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_issuers_type ON public.issuers USING btree (issuers_type);
+CREATE INDEX idx_issuers_type ON public.redpresu_issuers USING btree (type);
 
 
 --
 -- Name: idx_issuers_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_issuers_user_id ON public.issuers USING btree (user_id);
+CREATE INDEX idx_issuers_user_id ON public.redpresu_issuers USING btree (user_id);
 
 
 --
 -- Name: idx_tariffs_empresa_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_tariffs_empresa_id ON public.tariffs USING btree (empresa_id);
+CREATE INDEX idx_tariffs_empresa_id ON public.redpresu_tariffs USING btree (company_id);
 
 
 --
 -- Name: idx_tariffs_empresa_user; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_tariffs_empresa_user ON public.tariffs USING btree (empresa_id, user_id);
+CREATE INDEX idx_tariffs_empresa_user ON public.redpresu_tariffs USING btree (company_id, user_id);
 
 
 --
 -- Name: idx_tariffs_is_template; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_tariffs_is_template ON public.tariffs USING btree (empresa_id, is_template) WHERE (is_template = true);
+CREATE INDEX idx_tariffs_is_template ON public.redpresu_tariffs USING btree (company_id, is_template) WHERE (is_template = true);
 
 
 --
 -- Name: idx_tariffs_ivas_presentes; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_tariffs_ivas_presentes ON public.tariffs USING gin (ivas_presentes);
+CREATE INDEX idx_tariffs_ivas_presentes ON public.redpresu_tariffs USING gin (ivas_presentes);
 
 
 --
 -- Name: idx_tariffs_status; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_tariffs_status ON public.tariffs USING btree (status);
+CREATE INDEX idx_tariffs_status ON public.redpresu_tariffs USING btree (status);
 
 
 --
 -- Name: idx_tariffs_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_tariffs_user_id ON public.tariffs USING btree (user_id);
+CREATE INDEX idx_tariffs_user_id ON public.redpresu_tariffs USING btree (user_id);
 
 
 --
 -- Name: idx_users_empresa_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_users_empresa_id ON public.users USING btree (empresa_id);
+CREATE INDEX idx_users_empresa_id ON public.redpresu_users USING btree (company_id);
 
 
 --
 -- Name: idx_users_empresa_status; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_users_empresa_status ON public.users USING btree (empresa_id, status);
+CREATE INDEX idx_users_empresa_status ON public.redpresu_users USING btree (company_id, status);
 
 
 --
 -- Name: idx_users_invited_by; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_users_invited_by ON public.users USING btree (invited_by);
+CREATE INDEX idx_users_invited_by ON public.redpresu_users USING btree (invited_by);
 
 
 --
 -- Name: idx_users_last_login; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_users_last_login ON public.users USING btree (last_login);
+CREATE INDEX idx_users_last_login ON public.redpresu_users USING btree (last_login);
 
 
 --
 -- Name: idx_users_role; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_users_role ON public.users USING btree (role);
+CREATE INDEX idx_users_role ON public.redpresu_users USING btree (role);
 
 
 --
 -- Name: idx_users_status; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_users_status ON public.users USING btree (status);
+CREATE INDEX idx_users_status ON public.redpresu_users USING btree (status);
 
 
 --
--- Name: budget_notes budget_notes_updated_at; Type: TRIGGER; Schema: public; Owner: -
+-- Name: redpresu_budget_notes budget_notes_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER budget_notes_updated_at BEFORE UPDATE ON public.budget_notes FOR EACH ROW EXECUTE FUNCTION public.update_budget_notes_updated_at();
-
-
---
--- Name: budgets trigger_budgets_updated_at; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER trigger_budgets_updated_at BEFORE UPDATE ON public.budgets FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER budget_notes_updated_at BEFORE UPDATE ON public.redpresu_budget_notes FOR EACH ROW EXECUTE FUNCTION public.update_budget_notes_updated_at();
 
 
 --
--- Name: tariffs trigger_ensure_single_template; Type: TRIGGER; Schema: public; Owner: -
+-- Name: redpresu_budgets trigger_budgets_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER trigger_ensure_single_template BEFORE INSERT OR UPDATE OF is_template ON public.tariffs FOR EACH ROW EXECUTE FUNCTION public.ensure_single_template();
-
-
---
--- Name: TRIGGER trigger_ensure_single_template ON tariffs; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TRIGGER trigger_ensure_single_template ON public.tariffs IS 'Ejecuta ensure_single_template() antes de INSERT/UPDATE para mantener una sola plantilla por empresa';
+CREATE TRIGGER trigger_budgets_updated_at BEFORE UPDATE ON public.redpresu_budgets FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 
 --
--- Name: issuers trigger_issuers_updated_at; Type: TRIGGER; Schema: public; Owner: -
+-- Name: redpresu_tariffs trigger_ensure_single_template; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER trigger_issuers_updated_at BEFORE UPDATE ON public.issuers FOR EACH ROW EXECUTE FUNCTION public.update_issuers_updated_at();
-
-
---
--- Name: tariffs trigger_tariffs_updated_at; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER trigger_tariffs_updated_at BEFORE UPDATE ON public.tariffs FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER trigger_ensure_single_template BEFORE INSERT OR UPDATE OF is_template ON public.redpresu_tariffs FOR EACH ROW EXECUTE FUNCTION public.ensure_single_template();
 
 
 --
--- Name: users trigger_users_updated_at; Type: TRIGGER; Schema: public; Owner: -
+-- Name: TRIGGER trigger_ensure_single_template ON redpresu_tariffs; Type: COMMENT; Schema: public; Owner: -
 --
 
-CREATE TRIGGER trigger_users_updated_at BEFORE UPDATE ON public.users FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-
-
---
--- Name: budget_notes budget_notes_budget_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.budget_notes
-    ADD CONSTRAINT budget_notes_budget_id_fkey FOREIGN KEY (budget_id) REFERENCES public.budgets(id) ON DELETE CASCADE;
+COMMENT ON TRIGGER trigger_ensure_single_template ON public.redpresu_tariffs IS 'Ejecuta ensure_single_template() antes de INSERT/UPDATE para mantener una sola plantilla por empresa';
 
 
 --
--- Name: budget_notes budget_notes_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: redpresu_issuers trigger_issuers_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.budget_notes
+CREATE TRIGGER trigger_issuers_updated_at BEFORE UPDATE ON public.redpresu_issuers FOR EACH ROW EXECUTE FUNCTION public.update_issuers_updated_at();
+
+
+--
+-- Name: redpresu_tariffs trigger_tariffs_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trigger_tariffs_updated_at BEFORE UPDATE ON public.redpresu_tariffs FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+
+--
+-- Name: redpresu_users trigger_users_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trigger_users_updated_at BEFORE UPDATE ON public.redpresu_users FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+
+--
+-- Name: redpresu_budget_notes budget_notes_budget_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.redpresu_budget_notes
+    ADD CONSTRAINT budget_notes_budget_id_fkey FOREIGN KEY (budget_id) REFERENCES public.redpresu_budgets(id) ON DELETE CASCADE;
+
+
+--
+-- Name: redpresu_budget_notes budget_notes_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.redpresu_budget_notes
     ADD CONSTRAINT budget_notes_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 
 
 --
--- Name: budget_versions budget_versions_budget_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: redpresu_budget_versions budget_versions_budget_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.budget_versions
-    ADD CONSTRAINT budget_versions_budget_id_fkey FOREIGN KEY (budget_id) REFERENCES public.budgets(id) ON DELETE CASCADE;
-
-
---
--- Name: budget_versions budget_versions_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.budget_versions
-    ADD CONSTRAINT budget_versions_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id) ON DELETE SET NULL;
+ALTER TABLE ONLY public.redpresu_budget_versions
+    ADD CONSTRAINT budget_versions_budget_id_fkey FOREIGN KEY (budget_id) REFERENCES public.redpresu_budgets(id) ON DELETE CASCADE;
 
 
 --
--- Name: budgets budgets_parent_budget_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: redpresu_budget_versions budget_versions_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.budgets
-    ADD CONSTRAINT budgets_parent_budget_id_fkey FOREIGN KEY (parent_budget_id) REFERENCES public.budgets(id) ON DELETE SET NULL;
-
-
---
--- Name: budgets budgets_tariff_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.budgets
-    ADD CONSTRAINT budgets_tariff_id_fkey FOREIGN KEY (tariff_id) REFERENCES public.tariffs(id) ON DELETE RESTRICT;
+ALTER TABLE ONLY public.redpresu_budget_versions
+    ADD CONSTRAINT budget_versions_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.redpresu_users(id) ON DELETE SET NULL;
 
 
 --
--- Name: budgets budgets_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: redpresu_budgets budgets_parent_budget_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.budgets
+ALTER TABLE ONLY public.redpresu_budgets
+    ADD CONSTRAINT budgets_parent_budget_id_fkey FOREIGN KEY (parent_budget_id) REFERENCES public.redpresu_budgets(id) ON DELETE SET NULL;
+
+
+--
+-- Name: redpresu_budgets budgets_tariff_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.redpresu_budgets
+    ADD CONSTRAINT budgets_tariff_id_fkey FOREIGN KEY (tariff_id) REFERENCES public.redpresu_tariffs(id) ON DELETE RESTRICT;
+
+
+--
+-- Name: redpresu_budgets budgets_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.redpresu_budgets
     ADD CONSTRAINT budgets_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE RESTRICT;
 
 
 --
--- Name: issuers emisores_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: redpresu_issuers emisores_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.issuers
+ALTER TABLE ONLY public.redpresu_issuers
     ADD CONSTRAINT emisores_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 
 
 --
--- Name: tariffs tariffs_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: redpresu_tariffs tariffs_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.tariffs
+ALTER TABLE ONLY public.redpresu_tariffs
     ADD CONSTRAINT tariffs_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE SET NULL;
 
 
 --
--- Name: users users_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: redpresu_users users_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.users
+ALTER TABLE ONLY public.redpresu_users
     ADD CONSTRAINT users_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE;
 
 
 --
--- Name: users users_invited_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: redpresu_users users_invited_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.users
-    ADD CONSTRAINT users_invited_by_fkey FOREIGN KEY (invited_by) REFERENCES public.users(id) ON DELETE SET NULL;
+ALTER TABLE ONLY public.redpresu_users
+    ADD CONSTRAINT users_invited_by_fkey FOREIGN KEY (invited_by) REFERENCES public.redpresu_users(id) ON DELETE SET NULL;
 
 
 --
--- Name: budget_notes; Type: ROW SECURITY; Schema: public; Owner: -
+-- Name: redpresu_budget_notes budget_notes_delete_policy; Type: POLICY; Schema: public; Owner: -
 --
 
-ALTER TABLE public.budget_notes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY budget_notes_delete_policy ON public.redpresu_budget_notes FOR DELETE USING (((user_id = auth.uid()) OR (EXISTS ( SELECT 1
+   FROM public.redpresu_users
+  WHERE ((redpresu_users.id = auth.uid()) AND (redpresu_users.role = 'superadmin'::text))))));
 
---
--- Name: budget_notes budget_notes_delete_policy; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY budget_notes_delete_policy ON public.budget_notes FOR DELETE USING (((user_id = auth.uid()) OR (EXISTS ( SELECT 1
-   FROM public.users
-  WHERE ((users.id = auth.uid()) AND (users.role = 'superadmin'::text))))));
-
-
---
--- Name: budget_notes budget_notes_insert_policy; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY budget_notes_insert_policy ON public.budget_notes FOR INSERT WITH CHECK (((auth.uid() IS NOT NULL) AND (user_id = auth.uid()) AND (EXISTS ( SELECT 1
-   FROM (public.budgets b
-     JOIN public.users u ON ((b.user_id = u.id)))
-  WHERE ((b.id = budget_notes.budget_id) AND (u.empresa_id = ( SELECT users.empresa_id
-           FROM public.users
-          WHERE (users.id = auth.uid()))))))));
 
-
 --
--- Name: budget_notes budget_notes_select_policy; Type: POLICY; Schema: public; Owner: -
+-- Name: redpresu_budget_notes budget_notes_insert_policy; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY budget_notes_select_policy ON public.budget_notes FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM (public.budgets b
-     JOIN public.users u ON ((b.user_id = u.id)))
-  WHERE ((b.id = budget_notes.budget_id) AND (u.empresa_id = ( SELECT users.empresa_id
-           FROM public.users
-          WHERE (users.id = auth.uid())))))));
+CREATE POLICY budget_notes_insert_policy ON public.redpresu_budget_notes FOR INSERT WITH CHECK (((auth.uid() IS NOT NULL) AND (user_id = auth.uid()) AND (EXISTS ( SELECT 1
+   FROM (public.redpresu_budgets b
+     JOIN public.redpresu_users u ON ((b.user_id = u.id)))
+  WHERE ((b.id = redpresu_budget_notes.budget_id) AND (u.company_id = ( SELECT redpresu_users.company_id AS empresa_id
+           FROM public.redpresu_users
+          WHERE (redpresu_users.id = auth.uid()))))))));
 
 
 --
--- Name: budget_notes budget_notes_update_policy; Type: POLICY; Schema: public; Owner: -
+-- Name: redpresu_budget_notes budget_notes_select_policy; Type: POLICY; Schema: public; Owner: -
 --
-
-CREATE POLICY budget_notes_update_policy ON public.budget_notes FOR UPDATE USING ((user_id = auth.uid())) WITH CHECK ((user_id = auth.uid()));
 
-
---
--- Name: budget_versions; Type: ROW SECURITY; Schema: public; Owner: -
---
+CREATE POLICY budget_notes_select_policy ON public.redpresu_budget_notes FOR SELECT USING ((EXISTS ( SELECT 1
+   FROM (public.redpresu_budgets b
+     JOIN public.redpresu_users u ON ((b.user_id = u.id)))
+  WHERE ((b.id = redpresu_budget_notes.budget_id) AND (u.company_id = ( SELECT redpresu_users.company_id AS empresa_id
+           FROM public.redpresu_users
+          WHERE (redpresu_users.id = auth.uid())))))));
 
-ALTER TABLE public.budget_versions ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: budget_versions budget_versions_delete_policy; Type: POLICY; Schema: public; Owner: -
+-- Name: redpresu_budget_notes budget_notes_update_policy; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY budget_versions_delete_policy ON public.budget_versions FOR DELETE USING ((EXISTS ( SELECT 1
-   FROM (public.budgets b
-     JOIN public.users u ON ((b.user_id = u.id)))
-  WHERE ((b.id = budget_versions.budget_id) AND (EXISTS ( SELECT 1
-           FROM public.users
-          WHERE ((users.id = auth.uid()) AND (users.role = ANY (ARRAY['admin'::text, 'superadmin'::text])) AND (users.empresa_id = u.empresa_id))))))));
+CREATE POLICY budget_notes_update_policy ON public.redpresu_budget_notes FOR UPDATE USING ((user_id = auth.uid())) WITH CHECK ((user_id = auth.uid()));
 
 
 --
--- Name: budget_versions budget_versions_insert_policy; Type: POLICY; Schema: public; Owner: -
+-- Name: redpresu_budget_versions budget_versions_delete_policy; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY budget_versions_insert_policy ON public.budget_versions FOR INSERT WITH CHECK ((EXISTS ( SELECT 1
-   FROM (public.budgets b
-     JOIN public.users u ON ((b.user_id = u.id)))
-  WHERE ((b.id = budget_versions.budget_id) AND ((b.user_id = auth.uid()) OR (EXISTS ( SELECT 1
-           FROM public.users
-          WHERE ((users.id = auth.uid()) AND (users.role = ANY (ARRAY['admin'::text, 'superadmin'::text])) AND (users.empresa_id = u.empresa_id)))))))));
+CREATE POLICY budget_versions_delete_policy ON public.redpresu_budget_versions FOR DELETE USING ((EXISTS ( SELECT 1
+   FROM (public.redpresu_budgets b
+     JOIN public.redpresu_users u ON ((b.user_id = u.id)))
+  WHERE ((b.id = redpresu_budget_versions.budget_id) AND (EXISTS ( SELECT 1
+           FROM public.redpresu_users
+          WHERE ((redpresu_users.id = auth.uid()) AND (redpresu_users.role = ANY (ARRAY['admin'::text, 'superadmin'::text])) AND (redpresu_users.company_id = u.company_id))))))));
 
 
 --
--- Name: budget_versions budget_versions_select_policy; Type: POLICY; Schema: public; Owner: -
+-- Name: redpresu_budget_versions budget_versions_insert_policy; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY budget_versions_select_policy ON public.budget_versions FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM (public.budgets b
-     JOIN public.users u ON ((b.user_id = u.id)))
-  WHERE ((b.id = budget_versions.budget_id) AND (u.empresa_id = ( SELECT users.empresa_id
-           FROM public.users
-          WHERE (users.id = auth.uid())))))));
+CREATE POLICY budget_versions_insert_policy ON public.redpresu_budget_versions FOR INSERT WITH CHECK ((EXISTS ( SELECT 1
+   FROM (public.redpresu_budgets b
+     JOIN public.redpresu_users u ON ((b.user_id = u.id)))
+  WHERE ((b.id = redpresu_budget_versions.budget_id) AND ((b.user_id = auth.uid()) OR (EXISTS ( SELECT 1
+           FROM public.redpresu_users
+          WHERE ((redpresu_users.id = auth.uid()) AND (redpresu_users.role = ANY (ARRAY['admin'::text, 'superadmin'::text])) AND (redpresu_users.company_id = u.company_id)))))))));
 
 
 --
--- Name: budgets; Type: ROW SECURITY; Schema: public; Owner: -
+-- Name: redpresu_budget_versions budget_versions_select_policy; Type: POLICY; Schema: public; Owner: -
 --
-
-ALTER TABLE public.budgets ENABLE ROW LEVEL SECURITY;
 
---
--- Name: config; Type: ROW SECURITY; Schema: public; Owner: -
---
+CREATE POLICY budget_versions_select_policy ON public.redpresu_budget_versions FOR SELECT USING ((EXISTS ( SELECT 1
+   FROM (public.redpresu_budgets b
+     JOIN public.redpresu_users u ON ((b.user_id = u.id)))
+  WHERE ((b.id = redpresu_budget_versions.budget_id) AND (u.company_id = ( SELECT redpresu_users.company_id AS empresa_id
+           FROM public.redpresu_users
+          WHERE (redpresu_users.id = auth.uid())))))));
 
-ALTER TABLE public.config ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: config config_delete_policy; Type: POLICY; Schema: public; Owner: -
+-- Name: redpresu_budgets budgets_delete_policy; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY config_delete_policy ON public.config FOR DELETE USING (((public.get_user_role_by_id(auth.uid()) = 'superadmin'::text) AND (is_system = false)));
+CREATE POLICY budgets_delete_policy ON public.redpresu_budgets FOR DELETE USING (((public.get_user_role_by_id(auth.uid()) = ANY (ARRAY['admin'::text, 'superadmin'::text])) AND (company_id = public.get_user_empresa_id(auth.uid()))));
 
 
 --
--- Name: config config_insert_policy; Type: POLICY; Schema: public; Owner: -
+-- Name: redpresu_budgets budgets_insert_policy; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY config_insert_policy ON public.config FOR INSERT WITH CHECK ((public.get_user_role_by_id(auth.uid()) = 'superadmin'::text));
+CREATE POLICY budgets_insert_policy ON public.redpresu_budgets FOR INSERT WITH CHECK (((auth.uid() IS NOT NULL) AND (user_id = auth.uid())));
 
 
 --
--- Name: config config_select_policy; Type: POLICY; Schema: public; Owner: -
+-- Name: redpresu_budgets budgets_select_policy; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY config_select_policy ON public.config FOR SELECT USING ((auth.uid() IS NOT NULL));
+CREATE POLICY budgets_select_policy ON public.redpresu_budgets FOR SELECT USING (((company_id = public.get_user_empresa_id(auth.uid())) OR (public.get_user_role_by_id(auth.uid()) = 'superadmin'::text)));
 
 
 --
--- Name: config config_update_policy; Type: POLICY; Schema: public; Owner: -
+-- Name: redpresu_budgets budgets_update_policy; Type: POLICY; Schema: public; Owner: -
 --
-
-CREATE POLICY config_update_policy ON public.config FOR UPDATE USING ((public.get_user_role_by_id(auth.uid()) = 'superadmin'::text)) WITH CHECK ((public.get_user_role_by_id(auth.uid()) = 'superadmin'::text));
 
+CREATE POLICY budgets_update_policy ON public.redpresu_budgets FOR UPDATE USING (((user_id = auth.uid()) OR ((public.get_user_role_by_id(auth.uid()) = ANY (ARRAY['admin'::text, 'superadmin'::text])) AND (company_id = public.get_user_empresa_id(auth.uid()))))) WITH CHECK (((user_id = auth.uid()) OR ((public.get_user_role_by_id(auth.uid()) = ANY (ARRAY['admin'::text, 'superadmin'::text])) AND (company_id = public.get_user_empresa_id(auth.uid())))));
 
---
--- Name: empresas; Type: ROW SECURITY; Schema: public; Owner: -
---
 
-ALTER TABLE public.empresas ENABLE ROW LEVEL SECURITY;
-
 --
--- Name: empresas empresas_select_own; Type: POLICY; Schema: public; Owner: -
+-- Name: redpresu_config config_select_policy; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY empresas_select_own ON public.empresas FOR SELECT TO authenticated USING ((id IN ( SELECT users.empresa_id
-   FROM public.users
-  WHERE (users.id = auth.uid()))));
+CREATE POLICY config_select_policy ON public.redpresu_config FOR SELECT USING ((auth.uid() IS NOT NULL));
 
 
 --
--- Name: empresas empresas_select_superadmin; Type: POLICY; Schema: public; Owner: -
+-- Name: redpresu_companies empresas_select_own; Type: POLICY; Schema: public; Owner: -
 --
-
-CREATE POLICY empresas_select_superadmin ON public.empresas FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
-   FROM public.users
-  WHERE ((users.id = auth.uid()) AND (users.role = 'superadmin'::text)))));
 
+CREATE POLICY empresas_select_own ON public.redpresu_companies FOR SELECT TO authenticated USING ((id IN ( SELECT redpresu_users.company_id AS empresa_id
+   FROM public.redpresu_users
+  WHERE (redpresu_users.id = auth.uid()))));
 
---
--- Name: issuers; Type: ROW SECURITY; Schema: public; Owner: -
---
 
-ALTER TABLE public.issuers ENABLE ROW LEVEL SECURITY;
-
 --
--- Name: issuers issuers_delete_policy; Type: POLICY; Schema: public; Owner: -
+-- Name: redpresu_companies empresas_select_superadmin; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY issuers_delete_policy ON public.issuers FOR DELETE TO authenticated USING ((EXISTS ( SELECT 1
-   FROM public.users
-  WHERE ((users.id = auth.uid()) AND (users.role = 'superadmin'::text)))));
+CREATE POLICY empresas_select_superadmin ON public.redpresu_companies FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
+   FROM public.redpresu_users
+  WHERE ((redpresu_users.id = auth.uid()) AND (redpresu_users.role = 'superadmin'::text)))));
 
 
 --
--- Name: issuers issuers_insert_superadmin; Type: POLICY; Schema: public; Owner: -
+-- Name: redpresu_issuers issuers_delete_policy; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY issuers_insert_superadmin ON public.issuers FOR INSERT TO authenticated WITH CHECK ((EXISTS ( SELECT 1
-   FROM public.users
-  WHERE ((users.id = auth.uid()) AND (users.role = 'superadmin'::text)))));
+CREATE POLICY issuers_delete_policy ON public.redpresu_issuers FOR DELETE TO authenticated USING ((EXISTS ( SELECT 1
+   FROM public.redpresu_users
+  WHERE ((redpresu_users.id = auth.uid()) AND (redpresu_users.role = 'superadmin'::text)))));
 
 
 --
--- Name: issuers issuers_select_own_company; Type: POLICY; Schema: public; Owner: -
+-- Name: redpresu_issuers issuers_insert_superadmin; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY issuers_select_own_company ON public.issuers FOR SELECT TO authenticated USING ((company_id IN ( SELECT users.empresa_id
-   FROM public.users
-  WHERE (users.id = auth.uid()))));
+CREATE POLICY issuers_insert_superadmin ON public.redpresu_issuers FOR INSERT TO authenticated WITH CHECK ((EXISTS ( SELECT 1
+   FROM public.redpresu_users
+  WHERE ((redpresu_users.id = auth.uid()) AND (redpresu_users.role = 'superadmin'::text)))));
 
 
 --
--- Name: issuers issuers_select_superadmin; Type: POLICY; Schema: public; Owner: -
+-- Name: redpresu_issuers issuers_select_own_company; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY issuers_select_superadmin ON public.issuers FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
-   FROM public.users
-  WHERE ((users.id = auth.uid()) AND (users.role = 'superadmin'::text)))));
+CREATE POLICY issuers_select_own_company ON public.redpresu_issuers FOR SELECT TO authenticated USING ((company_id IN ( SELECT redpresu_users.company_id AS empresa_id
+   FROM public.redpresu_users
+  WHERE (redpresu_users.id = auth.uid()))));
 
 
 --
--- Name: issuers issuers_update_own; Type: POLICY; Schema: public; Owner: -
+-- Name: redpresu_issuers issuers_select_superadmin; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY issuers_update_own ON public.issuers FOR UPDATE TO authenticated USING ((user_id = auth.uid())) WITH CHECK ((user_id = auth.uid()));
+CREATE POLICY issuers_select_superadmin ON public.redpresu_issuers FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
+   FROM public.redpresu_users
+  WHERE ((redpresu_users.id = auth.uid()) AND (redpresu_users.role = 'superadmin'::text)))));
 
 
 --
--- Name: issuers issuers_update_superadmin; Type: POLICY; Schema: public; Owner: -
+-- Name: redpresu_issuers issuers_update_own; Type: POLICY; Schema: public; Owner: -
 --
-
-CREATE POLICY issuers_update_superadmin ON public.issuers FOR UPDATE TO authenticated USING ((EXISTS ( SELECT 1
-   FROM public.users
-  WHERE ((users.id = auth.uid()) AND (users.role = 'superadmin'::text))))) WITH CHECK ((EXISTS ( SELECT 1
-   FROM public.users
-  WHERE ((users.id = auth.uid()) AND (users.role = 'superadmin'::text)))));
-
 
---
--- Name: tariffs; Type: ROW SECURITY; Schema: public; Owner: -
---
+CREATE POLICY issuers_update_own ON public.redpresu_issuers FOR UPDATE TO authenticated USING ((user_id = auth.uid())) WITH CHECK ((user_id = auth.uid()));
 
-ALTER TABLE public.tariffs ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: tariffs tariffs_delete_policy; Type: POLICY; Schema: public; Owner: -
+-- Name: redpresu_issuers issuers_update_superadmin; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY tariffs_delete_policy ON public.tariffs FOR DELETE USING (((public.get_user_role_by_id(auth.uid()) = ANY (ARRAY['admin'::text, 'superadmin'::text])) AND (empresa_id = public.get_user_empresa_id(auth.uid()))));
+CREATE POLICY issuers_update_superadmin ON public.redpresu_issuers FOR UPDATE TO authenticated USING ((EXISTS ( SELECT 1
+   FROM public.redpresu_users
+  WHERE ((redpresu_users.id = auth.uid()) AND (redpresu_users.role = 'superadmin'::text))))) WITH CHECK ((EXISTS ( SELECT 1
+   FROM public.redpresu_users
+  WHERE ((redpresu_users.id = auth.uid()) AND (redpresu_users.role = 'superadmin'::text)))));
 
 
 --
--- Name: POLICY tariffs_delete_policy ON tariffs; Type: COMMENT; Schema: public; Owner: -
+-- Name: redpresu_budget_notes; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
-COMMENT ON POLICY tariffs_delete_policy ON public.tariffs IS 'Solo admin/superadmin pueden eliminar tarifas de su empresa';
+ALTER TABLE public.redpresu_budget_notes ENABLE ROW LEVEL SECURITY;
 
-
 --
--- Name: tariffs tariffs_insert_policy; Type: POLICY; Schema: public; Owner: -
+-- Name: redpresu_budget_versions; Type: ROW SECURITY; Schema: public; Owner: -
 --
-
-CREATE POLICY tariffs_insert_policy ON public.tariffs FOR INSERT WITH CHECK (((auth.uid() IS NOT NULL) AND (empresa_id = public.get_user_empresa_id(auth.uid())) AND (user_id = auth.uid())));
 
+ALTER TABLE public.redpresu_budget_versions ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: POLICY tariffs_insert_policy ON tariffs; Type: COMMENT; Schema: public; Owner: -
+-- Name: redpresu_budgets; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
-COMMENT ON POLICY tariffs_insert_policy ON public.tariffs IS 'Usuarios autenticados pueden crear tarifas en su empresa';
+ALTER TABLE public.redpresu_budgets ENABLE ROW LEVEL SECURITY;
 
-
 --
--- Name: tariffs tariffs_select_policy; Type: POLICY; Schema: public; Owner: -
+-- Name: redpresu_companies; Type: ROW SECURITY; Schema: public; Owner: -
 --
-
-CREATE POLICY tariffs_select_policy ON public.tariffs FOR SELECT USING ((empresa_id = public.get_user_empresa_id(auth.uid())));
 
+ALTER TABLE public.redpresu_companies ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: POLICY tariffs_select_policy ON tariffs; Type: COMMENT; Schema: public; Owner: -
+-- Name: redpresu_config; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
-COMMENT ON POLICY tariffs_select_policy ON public.tariffs IS 'Usuarios pueden ver tarifas de su empresa';
+ALTER TABLE public.redpresu_config ENABLE ROW LEVEL SECURITY;
 
-
 --
--- Name: tariffs tariffs_update_policy; Type: POLICY; Schema: public; Owner: -
+-- Name: redpresu_issuers; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
-CREATE POLICY tariffs_update_policy ON public.tariffs FOR UPDATE USING (((user_id = auth.uid()) OR ((public.get_user_role_by_id(auth.uid()) = ANY (ARRAY['admin'::text, 'superadmin'::text])) AND (empresa_id = public.get_user_empresa_id(auth.uid()))))) WITH CHECK (((user_id = auth.uid()) OR ((public.get_user_role_by_id(auth.uid()) = ANY (ARRAY['admin'::text, 'superadmin'::text])) AND (empresa_id = public.get_user_empresa_id(auth.uid())))));
+ALTER TABLE public.redpresu_issuers ENABLE ROW LEVEL SECURITY;
 
-
 --
--- Name: POLICY tariffs_update_policy ON tariffs; Type: COMMENT; Schema: public; Owner: -
+-- Name: redpresu_tariffs; Type: ROW SECURITY; Schema: public; Owner: -
 --
-
-COMMENT ON POLICY tariffs_update_policy ON public.tariffs IS 'Creador o admin/superadmin de la empresa pueden actualizar tarifas';
 
+ALTER TABLE public.redpresu_tariffs ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: users; Type: ROW SECURITY; Schema: public; Owner: -
+-- Name: redpresu_users; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
-ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.redpresu_users ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: users users_delete_policy; Type: POLICY; Schema: public; Owner: -
+-- Name: redpresu_tariffs tariffs_delete_policy; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY users_delete_policy ON public.users FOR DELETE USING ((public.get_user_role_by_id(auth.uid()) = 'superadmin'::text));
+CREATE POLICY tariffs_delete_policy ON public.redpresu_tariffs FOR DELETE USING (((public.get_user_role_by_id(auth.uid()) = ANY (ARRAY['admin'::text, 'superadmin'::text])) AND (company_id = public.get_user_empresa_id(auth.uid()))));
 
 
 --
--- Name: POLICY users_delete_policy ON users; Type: COMMENT; Schema: public; Owner: -
+-- Name: redpresu_tariffs tariffs_insert_policy; Type: POLICY; Schema: public; Owner: -
 --
 
-COMMENT ON POLICY users_delete_policy ON public.users IS 'Solo superadmin puede eliminar usuarios (preferir soft delete)';
+CREATE POLICY tariffs_insert_policy ON public.redpresu_tariffs FOR INSERT WITH CHECK (((auth.uid() IS NOT NULL) AND (company_id = public.get_user_empresa_id(auth.uid())) AND (user_id = auth.uid())));
 
 
 --
--- Name: users users_insert_policy; Type: POLICY; Schema: public; Owner: -
+-- Name: redpresu_tariffs tariffs_select_policy; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY users_insert_policy ON public.users FOR INSERT WITH CHECK (((public.get_user_role_by_id(auth.uid()) = ANY (ARRAY['admin'::text, 'superadmin'::text])) AND (empresa_id = public.get_user_empresa_id(auth.uid()))));
+CREATE POLICY tariffs_select_policy ON public.redpresu_tariffs FOR SELECT USING ((company_id = public.get_user_empresa_id(auth.uid())));
 
 
 --
--- Name: POLICY users_insert_policy ON users; Type: COMMENT; Schema: public; Owner: -
+-- Name: redpresu_tariffs tariffs_update_policy; Type: POLICY; Schema: public; Owner: -
 --
 
-COMMENT ON POLICY users_insert_policy ON public.users IS 'Solo admin/superadmin pueden crear usuarios en su empresa';
+CREATE POLICY tariffs_update_policy ON public.redpresu_tariffs FOR UPDATE USING (((user_id = auth.uid()) OR ((public.get_user_role_by_id(auth.uid()) = ANY (ARRAY['admin'::text, 'superadmin'::text])) AND (company_id = public.get_user_empresa_id(auth.uid()))))) WITH CHECK (((user_id = auth.uid()) OR ((public.get_user_role_by_id(auth.uid()) = ANY (ARRAY['admin'::text, 'superadmin'::text])) AND (company_id = public.get_user_empresa_id(auth.uid())))));
 
 
 --
--- Name: users users_select_policy; Type: POLICY; Schema: public; Owner: -
+-- Name: redpresu_users users_delete_policy; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY users_select_policy ON public.users FOR SELECT USING (((id = auth.uid()) OR (empresa_id = public.get_user_empresa_id(auth.uid()))));
+CREATE POLICY users_delete_policy ON public.redpresu_users FOR DELETE USING ((public.get_user_role_by_id(auth.uid()) = 'superadmin'::text));
 
 
 --
--- Name: POLICY users_select_policy ON users; Type: COMMENT; Schema: public; Owner: -
+-- Name: redpresu_users users_insert_policy; Type: POLICY; Schema: public; Owner: -
 --
 
-COMMENT ON POLICY users_select_policy ON public.users IS 'Usuarios pueden ver su propio registro y otros usuarios de su empresa';
+CREATE POLICY users_insert_policy ON public.redpresu_users FOR INSERT WITH CHECK ((public.get_user_role_by_id(auth.uid()) = 'superadmin'::text));
 
 
 --
--- Name: users users_update_policy; Type: POLICY; Schema: public; Owner: -
+-- Name: redpresu_users users_select_policy; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY users_update_policy ON public.users FOR UPDATE USING (((id = auth.uid()) OR ((public.get_user_role_by_id(auth.uid()) = ANY (ARRAY['admin'::text, 'superadmin'::text])) AND (empresa_id = public.get_user_empresa_id(auth.uid()))))) WITH CHECK (((id = auth.uid()) OR ((public.get_user_role_by_id(auth.uid()) = ANY (ARRAY['admin'::text, 'superadmin'::text])) AND (empresa_id = public.get_user_empresa_id(auth.uid())))));
+CREATE POLICY users_select_policy ON public.redpresu_users FOR SELECT USING (((id = auth.uid()) OR (public.get_user_role_by_id(auth.uid()) = ANY (ARRAY['admin'::text, 'superadmin'::text]))));
 
 
 --
--- Name: POLICY users_update_policy ON users; Type: COMMENT; Schema: public; Owner: -
+-- Name: redpresu_users users_update_policy; Type: POLICY; Schema: public; Owner: -
 --
 
-COMMENT ON POLICY users_update_policy ON public.users IS 'Usuarios actualizan su perfil, admin actualiza usuarios de su empresa';
+CREATE POLICY users_update_policy ON public.redpresu_users FOR UPDATE USING (((id = auth.uid()) OR (public.get_user_role_by_id(auth.uid()) = ANY (ARRAY['admin'::text, 'superadmin'::text])))) WITH CHECK (((id = auth.uid()) OR (public.get_user_role_by_id(auth.uid()) = ANY (ARRAY['admin'::text, 'superadmin'::text]))));
 
 
 --

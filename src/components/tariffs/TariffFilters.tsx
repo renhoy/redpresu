@@ -12,8 +12,8 @@ import {
 
 interface User {
   id: string
-  nombre: string | null
-  apellidos: string | null
+  name: string | null
+  last_name: string | null
 }
 
 interface TariffFiltersProps {
@@ -88,7 +88,7 @@ export function TariffFilters({
             <SelectItem value="all">Todos los usuarios</SelectItem>
             {users.map(user => (
               <SelectItem key={user.id} value={user.id}>
-                {user.nombre} {user.apellidos}
+                {user.name} {user.last_name}
               </SelectItem>
             ))}
           </SelectContent>

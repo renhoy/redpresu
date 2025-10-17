@@ -24,8 +24,8 @@ import { toast } from 'sonner'
 
 type Tariff = Database['public']['Tables']['tariffs']['Row'] & {
   creator?: {
-    nombre: string | null
-    apellidos: string | null
+    name: string | null
+    last_name: string | null
     email: string | null
   } | null
   budget_count?: number
@@ -157,7 +157,7 @@ export function TariffCard({ tariff, onStatusChange, onDelete, currentUserRole }
               <div className="min-w-0">
                 <div className="text-xs text-muted-foreground mb-1">Usuario</div>
                 <div className="text-sm truncate">
-                  {tariff.creator ? `${tariff.creator.nombre} ${tariff.creator.apellidos}` : '-'}
+                  {tariff.creator ? `${tariff.creator.name} ${tariff.creator.last_name}` : '-'}
                 </div>
               </div>
 

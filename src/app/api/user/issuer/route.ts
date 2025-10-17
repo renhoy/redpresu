@@ -19,7 +19,7 @@ export async function GET() {
 
     const { data: issuer, error } = await supabaseAdmin
       .from('issuers')
-      .select('issuers_type, issuers_irpf_percentage')
+      .select('type, irpf_percentage')
       .eq('user_id', user.id)
       .single()
 
@@ -27,8 +27,8 @@ export async function GET() {
       // Si no tiene emisor, retornar valores por defecto
       return NextResponse.json({
         issuer: {
-          issuers_type: 'empresa',
-          issuers_irpf_percentage: 15
+          type: 'empresa',
+          irpf_percentage: 15
         }
       })
     }

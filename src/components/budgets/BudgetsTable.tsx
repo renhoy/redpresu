@@ -129,9 +129,9 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
     if (
       budget.users &&
       typeof budget.users === "object" &&
-      "nombre" in budget.users
+      "name" in budget.users
     ) {
-      return (budget.users as { nombre: string }).nombre;
+      return (budget.users as { name: string }).nombre;
     }
     return "N/A";
   };

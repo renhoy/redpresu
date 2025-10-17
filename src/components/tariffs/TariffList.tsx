@@ -40,8 +40,8 @@ type Tariff = Database["public"]["Tables"]["tariffs"]["Row"];
 
 interface User {
   id: string;
-  nombre: string | null;
-  apellidos: string | null;
+  name: string | null;
+  last_name: string | null;
 }
 
 interface TariffListProps {

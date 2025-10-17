@@ -23,8 +23,8 @@ interface UserFormProps {
 
 interface FormData {
   email: string
-  nombre: string
-  apellidos: string
+  name: string
+  last_name: string
   role: 'vendedor' | 'admin' | 'superadmin'
   status?: 'active' | 'inactive' | 'pending'
   issuer_id?: string  // ID del emisor al que se asignará el usuario (solo superadmin)
@@ -33,8 +33,8 @@ interface FormData {
 export default function UserForm({ mode, user, empresaId, currentUserRole }: UserFormProps) {
   const [formData, setFormData] = useState<FormData>({
     email: user?.email || '',
-    nombre: user?.nombre || '',
-    apellidos: user?.apellidos || '',
+    name: user?.nombre || '',
+    last_name: user?.apellidos || '',
     role: user?.role || 'vendedor',
     status: user?.status || 'active',
     issuer_id: undefined
@@ -160,8 +160,8 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
 
           const registerData: RegisterData = {
             email: formData.email,
-            nombre: formData.nombre,
-            apellidos: formData.apellidos,
+            name: formData.nombre,
+            last_name: formData.apellidos,
             password: temporaryPassword,
             tipo: 'empresa', // No importa, no se usará
             nombreComercial: '', // No importa, no se usará
@@ -186,8 +186,8 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
           // Flujo normal para admin (crear usuario de su misma empresa)
           const createData: CreateUserData = {
             email: formData.email,
-            nombre: formData.nombre,
-            apellidos: formData.apellidos,
+            name: formData.nombre,
+            last_name: formData.apellidos,
             role: formData.role,
             company_id: empresaId
           }
@@ -212,8 +212,8 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
       } else {
         // Actualizar usuario
         const updateData: UpdateUserData = {
-          nombre: formData.nombre !== user?.nombre ? formData.nombre : undefined,
-          apellidos: formData.apellidos !== user?.apellidos ? formData.apellidos : undefined,
+          name: formData.nombre !== user?.nombre ? formData.nombre : undefined,
+          last_name: formData.apellidos !== user?.apellidos ? formData.apellidos : undefined,
           role: formData.role !== user?.role ? formData.role : undefined,
           status: formData.status !== user?.status ? formData.status : undefined
         }
@@ -292,7 +292,7 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
   // Filtrar issuers según búsqueda y tipo
   const filteredIssuers = issuers.filter(issuer => {
     // Filtro por tipo
-    if (filterType !== 'all' && issuer.issuers_type !== filterType) {
+    if (filterType !== 'all' && issuer.type !== filterType) {
       return false
     }
 
@@ -300,10 +300,10 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
     if (searchTerm) {
       const search = searchTerm.toLowerCase()
       return (
-        issuer.issuers_name.toLowerCase().includes(search) ||
-        issuer.issuers_nif.toLowerCase().includes(search) ||
-        issuer.issuers_address?.toLowerCase().includes(search) ||
-        issuer.issuers_locality?.toLowerCase().includes(search)
+        issuer.name.toLowerCase().includes(search) ||
+        issuer.nif.toLowerCase().includes(search) ||
+        issuer.address?.toLowerCase().includes(search) ||
+        issuer.locality?.toLowerCase().includes(search)
       )
     }
 
@@ -488,13 +488,13 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
               {/* Línea 2: Nombre (50%) + Apellidos (50%) */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="nombre">Nombre *</Label>
+                  <Label htmlFor="name">Nombre *</Label>
                   <Input
-                    id="nombre"
+                    id="name"
                     type="text"
                     placeholder="Juan"
                     value={formData.nombre}
-                    onChange={handleInputChange('nombre')}
+                    onChange={handleInputChange('name')}
                     className={errors.nombre ? 'border-red-500' : ''}
                     disabled={isLoading}
                     required
@@ -505,13 +505,13 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="apellidos">Apellidos *</Label>
+                  <Label htmlFor="last_name">Apellidos *</Label>
                   <Input
-                    id="apellidos"
+                    id="last_name"
                     type="text"
                     placeholder="García López"
                     value={formData.apellidos}
-                    onChange={handleInputChange('apellidos')}
+                    onChange={handleInputChange('last_name')}
                     className={errors.apellidos ? 'border-red-500' : ''}
                     disabled={isLoading}
                     required
@@ -641,23 +641,23 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
                               <div className="space-y-1">
                                 {/* Nombre (NIF) (Tipo) */}
                                 <p className="font-semibold text-base">
-                                  {issuer.issuers_name} ({issuer.issuers_nif})
+                                  {issuer.name} ({issuer.nif})
                                   <span className="ml-1 text-xs font-normal text-gray-500">
-                                    ({issuer.issuers_type === 'empresa' ? 'Empresa' : 'Autónomo'})
+                                    ({issuer.type === 'empresa' ? 'Empresa' : 'Autónomo'})
                                   </span>
                                 </p>
 
                                 {/* Datos de Dirección */}
                                 <p className="text-sm text-gray-600">
-                                  {issuer.issuers_address}
-                                  {issuer.issuers_postal_code && `, ${issuer.issuers_postal_code}`}
-                                  {issuer.issuers_locality && `, ${issuer.issuers_locality}`}
-                                  {issuer.issuers_province && ` (${issuer.issuers_province})`}
+                                  {issuer.address}
+                                  {issuer.postal_code && `, ${issuer.postal_code}`}
+                                  {issuer.locality && `, ${issuer.locality}`}
+                                  {issuer.province && ` (${issuer.province})`}
                                 </p>
 
                                 {/* Datos de Contacto */}
                                 <p className="text-sm text-gray-500">
-                                  {issuer.issuers_phone || '-'} • {issuer.issuers_email || '-'} • {issuer.issuers_web || '-'}
+                                  {issuer.phone || '-'} • {issuer.email || '-'} • {issuer.web || '-'}
                                 </p>
                               </div>
                             </Label>

@@ -10,13 +10,13 @@ import { isValidNIF, getNIFErrorMessage } from '@/lib/helpers/nif-validator';
  */
 export const registerSchema = z.object({
   // Datos del administrador (usuario que gestiona la cuenta)
-  nombre: z
+  name: z
     .string()
     .min(1, 'El nombre es requerido')
     .max(50, 'El nombre no puede exceder 50 caracteres')
     .trim(),
 
-  apellidos: z
+  last_name: z
     .string()
     .min(1, 'Los apellidos son requeridos')
     .max(100, 'Los apellidos no pueden exceder 100 caracteres')

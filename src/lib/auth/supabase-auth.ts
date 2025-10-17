@@ -4,8 +4,8 @@ import type { UserRole } from '@/lib/types/database'
 export interface AuthUser {
   id: string
   email: string
-  nombre: string
-  apellidos: string | null
+  name: string
+  last_name: string | null
   role: UserRole
   company_id: number
 }
@@ -72,8 +72,8 @@ export async function getUser(): Promise<AuthResponse<AuthUser>> {
       data: {
         id: userData.id,
         email: userData.email,
-        nombre: userData.nombre,
-        apellidos: userData.apellidos,
+        name: userData.nombre,
+        last_name: userData.apellidos,
         role: userData.role as UserRole,
         company_id: userData.company_id
       },

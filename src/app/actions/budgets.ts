@@ -34,13 +34,13 @@ interface ClientData {
  * Obtiene los datos del issuer (emisor) del usuario actual
  */
 async function getUserIssuer(userId: string): Promise<{
-  issuers_type: 'empresa' | 'autonomo'
-  issuers_irpf_percentage: number
+  type: 'empresa' | 'autonomo'
+  irpf_percentage: number
 } | null> {
   try {
     const { data, error } = await supabaseAdmin
       .from('redpresu_issuers')
-      .select('issuers_type, issuers_irpf_percentage')
+      .select('type, irpf_percentage')
       .eq('user_id', userId)
       .single()
 
@@ -471,13 +471,13 @@ export async function saveBudget(
     let irpfPercentage = 0
 
     if (issuer) {
-      const aplicaIRPF = shouldApplyIRPF(issuer.issuers_type, clientType)
+      const aplicaIRPF = shouldApplyIRPF(issuer.type, clientType)
 
-      if (aplicaIRPF && issuer.issuers_irpf_percentage) {
-        irpfPercentage = issuer.issuers_irpf_percentage
+      if (aplicaIRPF && issuer.irpf_percentage) {
+        irpfPercentage = issuer.irpf_percentage
         irpfAmount = calculateIRPF(totals.base, irpfPercentage)
         console.log('[saveBudget] IRPF aplicable:', {
-          emisorTipo: issuer.issuers_type,
+          emisorTipo: issuer.type,
           clienteTipo: clientType,
           porcentaje: irpfPercentage,
           baseImponible: totals.base,
@@ -485,7 +485,7 @@ export async function saveBudget(
         })
       } else {
         console.log('[saveBudget] IRPF NO aplica:', {
-          emisorTipo: issuer.issuers_type,
+          emisorTipo: issuer.type,
           clienteTipo: clientType
         })
       }
@@ -702,8 +702,8 @@ export async function duplicateBudget(
       console.warn('[duplicateBudget] Usuario sin issuer:', user.id, '- usando valores por defecto')
     }
 
-    const issuerType = issuer?.issuers_type || 'empresa'
-    const issuerIRPFPercentage = issuer?.issuers_irpf_percentage || 15
+    const issuerType = issuer?.type || 'empresa'
+    const issuerIRPFPercentage = issuer?.irpf_percentage || 15
 
     let irpf = 0
     let irpfPercentage = 0

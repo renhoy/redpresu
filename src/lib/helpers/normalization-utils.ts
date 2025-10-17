@@ -9,7 +9,7 @@ export const FIELD_TRANSLATION_MAP = {
   // Campos normalizados (slug) → campos JSON ingleses
   'nivel': 'level',
   'id': 'id',
-  'nombre': 'name',
+  'name': 'name',
   'descripcion': 'description',
   'ud': 'unit',
   'iva': 'iva_percentage',
@@ -31,7 +31,7 @@ export const FIELD_TRANSLATION_MAP = {
 export const REVERSE_FIELD_TRANSLATION_MAP = {
   'level': 'nivel',
   'id': 'id',
-  'name': 'nombre',
+  'name': 'name',
   'description': 'descripcion',
   'unit': 'ud',
   'iva_percentage': '%iva',

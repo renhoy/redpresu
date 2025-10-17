@@ -16,8 +16,8 @@ import { getServerUser } from '@/lib/auth/server'
 export interface User {
   id: string
   email: string
-  nombre: string | null
-  apellidos: string | null
+  name: string | null
+  last_name: string | null
   role: 'vendedor' | 'admin' | 'superadmin'
   company_id: number
   status: 'active' | 'inactive' | 'pending'
@@ -38,8 +38,8 @@ export interface UserWithInviter extends User {
 
 const createUserSchema = z.object({
   email: z.string().email('Email inválido').toLowerCase().trim(),
-  nombre: z.string().min(1, 'El nombre es requerido').max(100).trim(),
-  apellidos: z.string().min(1, 'Los apellidos son requeridos').max(100).trim(),
+  name: z.string().min(1, 'El nombre es requerido').max(100).trim(),
+  last_name: z.string().min(1, 'Los apellidos son requeridos').max(100).trim(),
   role: z.enum(['vendedor', 'admin', 'superadmin'], {
     required_error: 'El rol es requerido'
   }),
@@ -47,8 +47,8 @@ const createUserSchema = z.object({
 })
 
 const updateUserSchema = z.object({
-  nombre: z.string().min(1, 'El nombre es requerido').max(100).trim().optional(),
-  apellidos: z.string().min(1, 'Los apellidos son requeridos').max(100).trim().optional(),
+  name: z.string().min(1, 'El nombre es requerido').max(100).trim().optional(),
+  last_name: z.string().min(1, 'Los apellidos son requeridos').max(100).trim().optional(),
   role: z.enum(['vendedor', 'admin', 'superadmin']).optional(),
   status: z.enum(['active', 'inactive', 'pending']).optional()
 })
@@ -136,8 +136,8 @@ export async function getUsers() {
     .select(`
       *,
       inviter:invited_by (
-        nombre,
-        apellidos,
+        name,
+        last_name,
         email
       )
     `)
@@ -161,7 +161,7 @@ export async function getUsers() {
   // Formatear datos
   const formattedUsers: UserWithInviter[] = users.map(user => ({
     ...user,
-    inviter_name: user.inviter ? `${user.inviter.nombre} ${user.inviter.apellidos}` : undefined,
+    inviter_name: user.inviter ? `${user.inviter.name} ${user.inviter.last_name}` : undefined,
     inviter_email: user.inviter?.email
   }))
 
@@ -198,8 +198,8 @@ export async function getUserById(userId: string) {
     .select(`
       *,
       inviter:invited_by (
-        nombre,
-        apellidos,
+        name,
+        last_name,
         email
       )
     `)
@@ -217,7 +217,7 @@ export async function getUserById(userId: string) {
 
   const formattedUser: UserWithInviter = {
     ...user,
-    inviter_name: user.inviter ? `${user.inviter.nombre} ${user.inviter.apellidos}` : undefined,
+    inviter_name: user.inviter ? `${user.inviter.name} ${user.inviter.last_name}` : undefined,
     inviter_email: user.inviter?.email
   }
 
@@ -294,8 +294,8 @@ export async function createUser(data: CreateUserData) {
       .insert({
         id: authData.user.id,
         email: data.email,
-        nombre: data.nombre,
-        apellidos: data.apellidos,
+        name: data.name,
+        last_name: data.last_name,
         role: data.role,
         company_id: data.company_id,
         status: 'pending', // Usuario debe cambiar password en primer login

@@ -40,7 +40,7 @@ export const LEVEL_MAP = {
  * Campos requeridos en CSV
  */
 export const REQUIRED_FIELDS = {
-  spanish: ['nivel', 'id', 'nombre', 'descripcion', 'ud', '%iva', 'pvp'],
+  spanish: ['nivel', 'id', 'name', 'descripcion', 'ud', '%iva', 'pvp'],
   english: ['level', 'id', 'name', 'description', 'unit', 'iva_percentage', 'pvp']
 } as const;
 

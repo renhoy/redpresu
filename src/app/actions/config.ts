@@ -533,16 +533,16 @@ export async function getDefaultEmpresaId(): Promise<number> {
  * Interfaz para datos del issuer
  */
 export interface IssuerData {
-  issuers_name: string
-  issuers_nif_nie: string
-  issuers_type: 'empresa' | 'autonomo'
-  issuers_address: string
-  issuers_postal_code: string
-  issuers_locality: string
-  issuers_province: string
-  issuers_phone: string
-  issuers_email: string
-  issuers_web: string | null
+  name: string
+  nif_nie: string
+  type: 'empresa' | 'autonomo'
+  address: string
+  postal_code: string
+  locality: string
+  province: string
+  phone: string
+  email: string
+  web: string | null
 }
 
 /**
@@ -564,7 +564,7 @@ export async function getIssuerByEmpresaId(empresaId: number): Promise<{
     // Nota: La tabla issuers usa "company_id" no "company_id"
     const { data, error } = await supabaseAdmin
       .from('redpresu_issuers')
-      .select('issuers_name, issuers_nif_nie: issuers_nif, issuers_type, issuers_address, issuers_postal_code, issuers_locality, issuers_province, issuers_phone, issuers_email, issuers_web')
+      .select('name, nif_nie: nif, type, address, postal_code, locality, province, phone, email, web')
       .eq('company_id', empresaId)
       .single()
 

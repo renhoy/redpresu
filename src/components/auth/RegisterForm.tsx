@@ -46,8 +46,8 @@ interface RegisterFormErrors {
 
 export default function RegisterForm() {
   const [formData, setFormData] = useState<Partial<RegisterFormData>>({
-    nombre: "",
-    apellidos: "",
+    name: "",
+    last_name: "",
     email: "",
     confirmEmail: "",
     password: "",
@@ -135,8 +135,8 @@ export default function RegisterForm() {
 
     try {
       const registerData: RegisterData = {
-        nombre: formData.nombre!,
-        apellidos: formData.apellidos!,
+        name: formData.name!,
+        last_name: formData.last_name!,
         email: formData.email!,
         password: formData.password!,
         tipo: formData.tipo!,
@@ -261,11 +261,11 @@ export default function RegisterForm() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Input
-                      id="nombre"
+                      id="name"
                       type="text"
                       placeholder="Nombre *"
                       value={formData.nombre}
-                      onChange={handleInputChange("nombre")}
+                      onChange={handleInputChange("name")}
                       className={errors.nombre ? "border-red-500" : ""}
                       disabled={isLoading}
                       autoComplete="given-name"
@@ -285,11 +285,11 @@ export default function RegisterForm() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Input
-                      id="apellidos"
+                      id="last_name"
                       type="text"
                       placeholder="Apellidos *"
                       value={formData.apellidos}
-                      onChange={handleInputChange("apellidos")}
+                      onChange={handleInputChange("last_name")}
                       className={errors.apellidos ? "border-red-500" : ""}
                       disabled={isLoading}
                       autoComplete="family-name"

@@ -164,7 +164,7 @@ export default function UserTable({ users: initialUsers, currentUserId, currentU
                 <TableRow key={user.id} className="bg-white hover:bg-lime-50/50">
                   <TableCell className="font-medium">
                     <div className="flex flex-col">
-                      <span>{user.nombre} {user.apellidos}</span>
+                      <span>{user.name} {user.apellidos}</span>
                       <span className="text-xs text-muted-foreground">{getRoleBadge(user.role)}</span>
                     </div>
                   </TableCell>

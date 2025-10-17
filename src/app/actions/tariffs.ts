@@ -828,7 +828,7 @@ export async function getUserIssuerData(userId: string): Promise<{
   try {
     const { data, error } = await supabaseAdmin
       .from('redpresu_issuers')
-      .select('issuers_name, issuers_nif, issuers_address, issuers_postal_code, issuers_locality, issuers_province, issuers_phone, issuers_email, issuers_web')
+      .select('name, nif, address, postal_code, locality, province, phone, email, web')
       .eq('user_id', userId)
       .maybeSingle()
 
@@ -845,30 +845,30 @@ export async function getUserIssuerData(userId: string): Promise<{
 
     // Construir dirección completa
     const addressParts = [
-      data.issuers_address,
-      data.issuers_postal_code,
-      data.issuers_locality,
-      data.issuers_province ? `(${data.issuers_province})` : null
+      data.address,
+      data.postal_code,
+      data.locality,
+      data.province ? `(${data.province})` : null
     ].filter(Boolean)
 
     const address = addressParts.join(', ')
 
     // Construir contacto (Teléfono - Email - Web)
     const contactParts = [
-      data.issuers_phone,
-      data.issuers_email,
-      data.issuers_web
+      data.phone,
+      data.email,
+      data.web
     ].filter(Boolean)
 
     const contact = contactParts.join(' - ')
 
-    console.log('[getUserIssuerData] Issuer encontrado:', data.issuers_name)
+    console.log('[getUserIssuerData] Issuer encontrado:', data.name)
 
     return {
       success: true,
       data: {
-        name: data.issuers_name,
-        nif: data.issuers_nif,
+        name: data.name,
+        nif: data.nif,
         address: address,
         contact: contact
       }

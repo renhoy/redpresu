@@ -16,7 +16,7 @@ import { REQUIRED_FIELDS, SEVERITY } from '../constants/csv';
 const ItemSchema = z.object({
   nivel: z.string().min(1, 'Nivel no puede estar vacío'),
   id: z.string().min(1, 'ID no puede estar vacío').regex(/^[0-9]+(\.[0-9]+)*$/, 'ID debe tener formato válido'),
-  nombre: z.string().min(1, 'Nombre no puede estar vacío'),
+  name: z.string().min(1, 'Nombre no puede estar vacío'),
   descripcion: z.string().optional(),
   ud: z.string().min(1, 'Unidad no puede estar vacía'),
   '%iva': z.string().min(1, '%IVA no puede estar vacío'),
@@ -29,7 +29,7 @@ const ItemSchema = z.object({
 const ContainerSchema = z.object({
   nivel: z.string().min(1, 'Nivel no puede estar vacío'),
   id: z.string().min(1, 'ID no puede estar vacío').regex(/^[0-9]+(\.[0-9]+)*$/, 'ID debe tener formato válido'),
-  nombre: z.string().min(1, 'Nombre no puede estar vacío'),
+  name: z.string().min(1, 'Nombre no puede estar vacío'),
   descripcion: z.string().optional(),
   ud: z.string().optional(),
   '%iva': z.string().optional(),
@@ -87,8 +87,9 @@ export class BudgetValidator {
     const slugHeaders = headers.map(h => CSVUtils.createSlug(h));
 
     // Campos obligatorios en slug
-    const requiredSlugs = ['nivel', 'id', 'nombre', 'descripcion', 'ud', 'pvp'];
-    const ivaVariants = ['iva', '%iva', 'piva', 'ivapercentage', 'iva_percentage'];
+    const requiredSlugs = ['nivel', 'id', 'name', 'descripcion', 'ud', 'pvp'];
+    // Variantes de IVA (todos normalizados sin % porque createSlug los elimina)
+    const ivaVariants = ['iva', 'piva', 'ivapercentage', 'ivapercentage'];
 
     // Paso 2: Verificar que existan todos los campos obligatorios
     const missingFields: string[] = [];
@@ -98,47 +99,49 @@ export class BudgetValidator {
     const fieldsToMap = {
       'nivel': 'nivel',
       'id': 'id',
-      'nombre': 'nombre',
+      'name': 'name',
       'descripcion': 'descripcion',
       'ud': 'ud',
       'pvp': 'pvp'
     };
 
-    Object.entries(fieldsToMap).forEach(([spanishField, _]) => {
-      const index = slugHeaders.indexOf(spanishField);
+    Object.entries(fieldsToMap).forEach(([internalField, _]) => {
+      // Primero buscar el campo directamente
+      const index = slugHeaders.indexOf(internalField);
       if (index !== -1) {
-        fieldMap[spanishField] = index;
+        fieldMap[internalField] = index;
       } else {
-        // Buscar versión en inglés
-        const englishVariants: Record<string, string[]> = {
+        // Buscar variantes alternativas (español/inglés)
+        const fieldVariants: Record<string, string[]> = {
           'nivel': ['level'],
-          'nombre': ['name'],
-          'descripcion': ['description'],
-          'ud': ['unit']
+          'name': ['nombre'],
+          'descripcion': ['description', 'desc'],
+          'ud': ['unit', 'unidad']
         };
 
-        const variants = englishVariants[spanishField] || [];
+        const variants = fieldVariants[internalField] || [];
         let found = false;
 
         for (const variant of variants) {
           const variantIndex = slugHeaders.indexOf(variant);
           if (variantIndex !== -1) {
-            fieldMap[spanishField] = variantIndex;
+            fieldMap[internalField] = variantIndex;
             found = true;
             break;
           }
         }
 
         if (!found) {
-          missingFields.push(spanishField === 'nivel' ? 'Nivel (o Level)' :
-                           spanishField === 'nombre' ? 'Nombre (o Name)' :
-                           spanishField === 'descripcion' ? 'Descripción (o Description)' :
-                           spanishField === 'ud' ? 'Ud (o Unit)' : spanishField.toUpperCase());
+          missingFields.push(internalField === 'nivel' ? 'Nivel (o Level)' :
+                           internalField === 'name' ? 'Nombre (o Name)' :
+                           internalField === 'descripcion' ? 'Descripción (o Description)' :
+                           internalField === 'ud' ? 'Ud (o Unit)' : internalField.toUpperCase());
         }
       }
     });
 
     // Buscar IVA en cualquier variante
+    // NOTA: createSlug elimina el %, así que "%IVA" se convierte en "iva"
     let ivaFound = false;
     for (const variant of ivaVariants) {
       const index = slugHeaders.indexOf(variant);
