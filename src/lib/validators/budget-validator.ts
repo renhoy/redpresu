@@ -95,11 +95,11 @@ export class BudgetValidator {
     const missingFields: string[] = [];
     const fieldMap: FieldMap = {};
 
-    // Mapear cada campo requerido
+    // Mapear cada campo requerido (internamente usamos nombres en español)
     const fieldsToMap = {
       'nivel': 'nivel',
       'id': 'id',
-      'name': 'name',
+      'nombre': 'nombre',
       'descripcion': 'descripcion',
       'ud': 'ud',
       'pvp': 'pvp'
@@ -114,7 +114,7 @@ export class BudgetValidator {
         // Buscar variantes alternativas (español/inglés)
         const fieldVariants: Record<string, string[]> = {
           'nivel': ['level'],
-          'name': ['nombre'],
+          'nombre': ['name'],
           'descripcion': ['description', 'desc'],
           'ud': ['unit', 'unidad']
         };
@@ -133,7 +133,7 @@ export class BudgetValidator {
 
         if (!found) {
           missingFields.push(internalField === 'nivel' ? 'Nivel (o Level)' :
-                           internalField === 'name' ? 'Nombre (o Name)' :
+                           internalField === 'nombre' ? 'Nombre (o Name)' :
                            internalField === 'descripcion' ? 'Descripción (o Description)' :
                            internalField === 'ud' ? 'Ud (o Unit)' : internalField.toUpperCase());
         }
