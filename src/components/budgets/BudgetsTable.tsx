@@ -1,289 +1,347 @@
-"use client"
+"use client";
 
-import React, { useState } from 'react'
-import { Budget } from '@/lib/types/database'
-import { formatCurrency } from '@/lib/helpers/format'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Pencil, Trash2, FileStack, ChevronDown, ChevronRight, FileText, Download, Upload, Plus } from 'lucide-react'
-import { deleteBudget, updateBudgetStatus } from '@/app/actions/budgets'
-import { exportBudgets } from '@/app/actions/export'
-import { importBudgets } from '@/app/actions/import'
-import { downloadFile } from '@/lib/helpers/export-helpers'
-import { toast } from 'sonner'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { BudgetNotesIcon } from './BudgetNotesIcon'
-import { BudgetCard } from './BudgetCard'
+import React, { useState } from "react";
+import { Budget } from "@/lib/types/database";
+import { formatCurrency } from "@/lib/helpers/format";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Pencil,
+  Trash2,
+  FileStack,
+  ChevronDown,
+  ChevronRight,
+  FileText,
+  Download,
+  Upload,
+  Plus,
+} from "lucide-react";
+import { deleteBudget, updateBudgetStatus } from "@/app/actions/budgets";
+import { exportBudgets } from "@/app/actions/export";
+import { importBudgets } from "@/app/actions/import";
+import { downloadFile } from "@/lib/helpers/export-helpers";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { BudgetNotesIcon } from "./BudgetNotesIcon";
+import { BudgetCard } from "./BudgetCard";
 
 interface BudgetsTableProps {
-  budgets: Budget[]
-  budgetId?: string
+  budgets: Budget[];
+  budgetId?: string;
 }
 
 const statusColors = {
-  borrador: 'bg-black text-neutral-200',
-  pendiente: 'bg-orange-100 text-yellow-800',
-  enviado: 'bg-slate-100 text-cyan-600',
-  aprobado: 'bg-emerald-50 text-green-600',
-  rechazado: 'bg-pink-100 text-rose-600',
-  caducado: 'bg-neutral-200 text-black'
-}
+  borrador: "bg-black text-neutral-200",
+  pendiente: "bg-orange-100 text-yellow-800",
+  enviado: "bg-slate-100 text-cyan-600",
+  aprobado: "bg-blue-50 text-green-600",
+  rechazado: "bg-pink-100 text-rose-600",
+  caducado: "bg-neutral-200 text-black",
+};
 
 export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
-  const router = useRouter()
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [expandedBudgets, setExpandedBudgets] = useState<Set<string>>(new Set(budgetId ? [budgetId] : []))
-  const [selectedBudgets, setSelectedBudgets] = useState<string[]>([])
-  const [exporting, setExporting] = useState(false)
-  const [importing, setImporting] = useState(false)
+  const router = useRouter();
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [expandedBudgets, setExpandedBudgets] = useState<Set<string>>(
+    new Set(budgetId ? [budgetId] : [])
+  );
+  const [selectedBudgets, setSelectedBudgets] = useState<string[]>([]);
+  const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   // Filtrado local
-  const filteredBudgets = budgets.filter(budget => {
-    const matchesSearch = !search ||
+  const filteredBudgets = budgets.filter((budget) => {
+    const matchesSearch =
+      !search ||
       budget.client_name.toLowerCase().includes(search.toLowerCase()) ||
-      (budget.client_nif_nie && budget.client_nif_nie.toLowerCase().includes(search.toLowerCase()))
+      (budget.client_nif_nie &&
+        budget.client_nif_nie.toLowerCase().includes(search.toLowerCase()));
 
-    const matchesStatus = statusFilter === 'all' || budget.status === statusFilter
+    const matchesStatus =
+      statusFilter === "all" || budget.status === statusFilter;
 
-    return matchesSearch && matchesStatus
-  })
+    return matchesSearch && matchesStatus;
+  });
 
   const handleDelete = async (budgetId: string, clientName: string) => {
-    if (!confirm(`¿Eliminar presupuesto de ${clientName}?`)) return
+    if (!confirm(`¿Eliminar presupuesto de ${clientName}?`)) return;
 
-    const result = await deleteBudget(budgetId)
+    const result = await deleteBudget(budgetId);
 
     if (result.success) {
-      toast.success('Presupuesto eliminado')
-      router.refresh()
+      toast.success("Presupuesto eliminado");
+      router.refresh();
     } else {
-      toast.error(result.error || 'Error al eliminar')
+      toast.error(result.error || "Error al eliminar");
     }
-  }
+  };
 
-  const getDaysRemaining = (startDate: string | null, validityDays: number | null) => {
-    if (!startDate || !validityDays) return null
+  const getDaysRemaining = (
+    startDate: string | null,
+    validityDays: number | null
+  ) => {
+    if (!startDate || !validityDays) return null;
 
-    const start = new Date(startDate)
-    const end = new Date(start)
-    end.setDate(end.getDate() + validityDays)
+    const start = new Date(startDate);
+    const end = new Date(start);
+    end.setDate(end.getDate() + validityDays);
 
-    const today = new Date()
-    const daysLeft = Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+    const today = new Date();
+    const daysLeft = Math.ceil(
+      (end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+    );
 
     return {
       current: Math.max(0, validityDays - daysLeft),
       total: validityDays,
       remaining: Math.max(0, daysLeft),
-      isExpiring: daysLeft < 7 && daysLeft > 0
-    }
-  }
+      isExpiring: daysLeft < 7 && daysLeft > 0,
+    };
+  };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    })
-  }
+    const date = new Date(dateString);
+    return date.toLocaleDateString("es-ES", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
 
   const getUserName = (budget: Budget) => {
-    if (budget.users && typeof budget.users === 'object' && 'nombre' in budget.users) {
-      return (budget.users as { nombre: string }).nombre
+    if (
+      budget.users &&
+      typeof budget.users === "object" &&
+      "nombre" in budget.users
+    ) {
+      return (budget.users as { nombre: string }).nombre;
     }
-    return 'N/A'
-  }
+    return "N/A";
+  };
 
   // Selección múltiple
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       // Aplanar todos los presupuestos (padres e hijos)
-      const allBudgetIds: string[] = []
+      const allBudgetIds: string[] = [];
       const collectIds = (budgets: Budget[]) => {
-        budgets.forEach(b => {
-          allBudgetIds.push(b.id)
+        budgets.forEach((b) => {
+          allBudgetIds.push(b.id);
           if (b.children && b.children.length > 0) {
-            collectIds(b.children)
+            collectIds(b.children);
           }
-        })
-      }
-      collectIds(filteredBudgets)
-      setSelectedBudgets(allBudgetIds)
+        });
+      };
+      collectIds(filteredBudgets);
+      setSelectedBudgets(allBudgetIds);
     } else {
-      setSelectedBudgets([])
+      setSelectedBudgets([]);
     }
-  }
+  };
 
   const handleSelectBudget = (budgetId: string, checked: boolean) => {
     if (checked) {
-      setSelectedBudgets(prev => [...prev, budgetId])
+      setSelectedBudgets((prev) => [...prev, budgetId]);
     } else {
-      setSelectedBudgets(prev => prev.filter(id => id !== budgetId))
+      setSelectedBudgets((prev) => prev.filter((id) => id !== budgetId));
     }
-  }
+  };
 
   // Aplanar estructura para calcular total de presupuestos
   const getAllBudgetIds = (budgets: Budget[]): string[] => {
-    const ids: string[] = []
+    const ids: string[] = [];
     const collectIds = (budgets: Budget[]) => {
-      budgets.forEach(b => {
-        ids.push(b.id)
+      budgets.forEach((b) => {
+        ids.push(b.id);
         if (b.children && b.children.length > 0) {
-          collectIds(b.children)
+          collectIds(b.children);
         }
-      })
-    }
-    collectIds(budgets)
-    return ids
-  }
+      });
+    };
+    collectIds(budgets);
+    return ids;
+  };
 
-  const allBudgetIds = getAllBudgetIds(filteredBudgets)
-  const isAllSelected = allBudgetIds.length > 0 && selectedBudgets.length === allBudgetIds.length
-  const isSomeSelected = selectedBudgets.length > 0
+  const allBudgetIds = getAllBudgetIds(filteredBudgets);
+  const isAllSelected =
+    allBudgetIds.length > 0 && selectedBudgets.length === allBudgetIds.length;
+  const isSomeSelected = selectedBudgets.length > 0;
 
   // Exportación
   const handleExport = async () => {
     if (selectedBudgets.length === 0) {
-      toast.error('Selecciona al menos un presupuesto')
-      return
+      toast.error("Selecciona al menos un presupuesto");
+      return;
     }
 
-    setExporting(true)
-    const result = await exportBudgets(selectedBudgets, 'json')
+    setExporting(true);
+    const result = await exportBudgets(selectedBudgets, "json");
 
     if (result.success && result.data) {
       // Detectar si es un array de archivos o un único archivo
-      if ('files' in result.data) {
+      if ("files" in result.data) {
         // Múltiples archivos: descargar con delay
         for (const file of result.data.files) {
-          downloadFile(file.content, file.filename, file.mimeType)
-          await new Promise(resolve => setTimeout(resolve, 300)) // delay 300ms
+          downloadFile(file.content, file.filename, file.mimeType);
+          await new Promise((resolve) => setTimeout(resolve, 300)); // delay 300ms
         }
-        toast.success(`${result.data.files.length} archivo(s) exportado(s)`)
+        toast.success(`${result.data.files.length} archivo(s) exportado(s)`);
       } else {
         // Un único archivo
-        downloadFile(result.data.content, result.data.filename, result.data.mimeType)
-        toast.success(`Presupuesto exportado`)
+        downloadFile(
+          result.data.content,
+          result.data.filename,
+          result.data.mimeType
+        );
+        toast.success(`Presupuesto exportado`);
       }
-      setSelectedBudgets([])
+      setSelectedBudgets([]);
     } else {
-      toast.error(result.error || 'Error al exportar')
+      toast.error(result.error || "Error al exportar");
     }
 
-    setExporting(false)
-  }
+    setExporting(false);
+  };
 
   // Importación
   const handleFileImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const file = e.target.files?.[0];
+    if (!file) return;
 
     // Validar extensión
-    if (!file.name.endsWith('.json')) {
-      toast.error('Solo se permiten archivos JSON')
-      return
+    if (!file.name.endsWith(".json")) {
+      toast.error("Solo se permiten archivos JSON");
+      return;
     }
 
     // Validar tamaño (máximo 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('El archivo es demasiado grande (máximo 5MB)')
-      return
+      toast.error("El archivo es demasiado grande (máximo 5MB)");
+      return;
     }
 
-    setImporting(true)
+    setImporting(true);
 
     try {
       // Leer contenido del archivo
-      const content = await file.text()
+      const content = await file.text();
 
       // Importar presupuestos
-      const result = await importBudgets(content)
+      const result = await importBudgets(content);
 
       if (result.success && result.data) {
-        toast.success(`${result.data.count} presupuesto(s) importado(s) correctamente`)
+        toast.success(
+          `${result.data.count} presupuesto(s) importado(s) correctamente`
+        );
         // Recargar página
-        router.refresh()
+        router.refresh();
       } else {
-        toast.error(result.error || 'Error al importar presupuestos')
+        toast.error(result.error || "Error al importar presupuestos");
       }
     } catch (error) {
-      toast.error('Error al leer el archivo')
+      toast.error("Error al leer el archivo");
     } finally {
-      setImporting(false)
+      setImporting(false);
       // Limpiar input
-      e.target.value = ''
+      e.target.value = "";
     }
-  }
+  };
 
   // Transiciones válidas de estado
   const getValidTransitions = (currentStatus: string): string[] => {
     const transitions: Record<string, string[]> = {
-      'borrador': ['pendiente', 'enviado'],
-      'pendiente': ['borrador', 'enviado'],
-      'enviado': ['pendiente', 'aprobado', 'rechazado'],
-      'aprobado': ['borrador'],
-      'rechazado': ['borrador'],
-      'caducado': ['borrador']
-    }
-    return transitions[currentStatus] || []
-  }
+      borrador: ["pendiente", "enviado"],
+      pendiente: ["borrador", "enviado"],
+      enviado: ["pendiente", "aprobado", "rechazado"],
+      aprobado: ["borrador"],
+      rechazado: ["borrador"],
+      caducado: ["borrador"],
+    };
+    return transitions[currentStatus] || [];
+  };
 
-  const handleStatusChange = async (budgetId: string, currentStatus: string, newStatus: string, clientName: string) => {
+  const handleStatusChange = async (
+    budgetId: string,
+    currentStatus: string,
+    newStatus: string,
+    clientName: string
+  ) => {
     // Confirmar cambios críticos
-    const criticalTransitions = ['aprobado', 'rechazado']
+    const criticalTransitions = ["aprobado", "rechazado"];
     if (criticalTransitions.includes(newStatus)) {
-      const action = newStatus === 'aprobado' ? 'aprobar' : 'rechazar'
-      if (!confirm(`¿Estás seguro de ${action} el presupuesto de ${clientName}?`)) {
-        return
+      const action = newStatus === "aprobado" ? "aprobar" : "rechazar";
+      if (
+        !confirm(`¿Estás seguro de ${action} el presupuesto de ${clientName}?`)
+      ) {
+        return;
       }
     }
 
-    const result = await updateBudgetStatus(budgetId, newStatus)
+    const result = await updateBudgetStatus(budgetId, newStatus);
 
     if (result.success) {
-      toast.success(`Estado actualizado a ${newStatus}`)
-      router.refresh()
+      toast.success(`Estado actualizado a ${newStatus}`);
+      router.refresh();
     } else {
-      toast.error(result.error || 'Error al actualizar estado')
+      toast.error(result.error || "Error al actualizar estado");
     }
-  }
+  };
 
   const toggleExpanded = (budgetId: string) => {
-    setExpandedBudgets(prev => {
-      const next = new Set(prev)
+    setExpandedBudgets((prev) => {
+      const next = new Set(prev);
       if (next.has(budgetId)) {
-        next.delete(budgetId)
+        next.delete(budgetId);
       } else {
-        next.add(budgetId)
+        next.add(budgetId);
       }
-      return next
-    })
-  }
+      return next;
+    });
+  };
 
   const renderBudgetRow = (budget: Budget, depth: number = 0) => {
-    const days = getDaysRemaining(budget.start_date, budget.validity_days)
-    const tariffTitle = budget.tariffs && typeof budget.tariffs === 'object' && 'title' in budget.tariffs
-      ? (budget.tariffs as { title: string }).title
-      : 'N/A'
-    const hasChildren = budget.children && budget.children.length > 0
-    const isExpanded = expandedBudgets.has(budget.id)
-    const isChild = depth > 0
+    const days = getDaysRemaining(budget.start_date, budget.validity_days);
+    const tariffTitle =
+      budget.tariffs &&
+      typeof budget.tariffs === "object" &&
+      "title" in budget.tariffs
+        ? (budget.tariffs as { title: string }).title
+        : "N/A";
+    const hasChildren = budget.children && budget.children.length > 0;
+    const isExpanded = expandedBudgets.has(budget.id);
+    const isChild = depth > 0;
 
     return (
       <React.Fragment key={budget.id}>
-        <tr className={`bg-white border-t hover:bg-lime-50/50 ${isChild ? 'bg-lime-50/30' : ''}`}>
+        <tr
+          className={`bg-white border-t hover:bg-lime-50/50 ${
+            isChild ? "bg-lime-50/30" : ""
+          }`}
+        >
           {/* Checkbox */}
           <td className="p-4 w-12">
             <Checkbox
               checked={selectedBudgets.includes(budget.id)}
-              onCheckedChange={(checked) => handleSelectBudget(budget.id, !!checked)}
+              onCheckedChange={(checked) =>
+                handleSelectBudget(budget.id, !!checked)
+              }
             />
           </td>
 
@@ -291,7 +349,10 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
           <td className="p-4">
             <div className="flex items-center gap-2">
               {/* Indentación visual + icono expandir/colapsar */}
-              <div style={{ marginLeft: `${depth * 24}px` }} className="flex items-center gap-1">
+              <div
+                style={{ marginLeft: `${depth * 24}px` }}
+                className="flex items-center gap-1"
+              >
                 {hasChildren ? (
                   <Button
                     variant="ghost"
@@ -314,7 +375,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
               <div className="space-y-1 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-medium">
-                    {budget.client_name} ({budget.client_nif_nie || 'N/A'})
+                    {budget.client_name} ({budget.client_nif_nie || "N/A"})
                   </span>
                   <Badge variant="secondary" className="text-xs">
                     {budget.client_type}
@@ -326,8 +387,16 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
                   )}
                 </div>
                 {days && budget.start_date && budget.end_date && (
-                  <div className={`text-xs ${days.isExpiring ? 'text-orange-600 font-medium' : 'text-muted-foreground'}`}>
-                    {formatDate(budget.start_date)} - {formatDate(budget.end_date)} ({days.remaining} de {days.total} días restantes)
+                  <div
+                    className={`text-xs ${
+                      days.isExpiring
+                        ? "text-orange-600 font-medium"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    {formatDate(budget.start_date)} -{" "}
+                    {formatDate(budget.end_date)} ({days.remaining} de{" "}
+                    {days.total} días restantes)
                   </div>
                 )}
               </div>
@@ -341,11 +410,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    asChild
-                  >
+                  <Button variant="outline" size="icon" asChild>
                     <Link href={`/tariffs?tariff_id=${budget.tariff_id}`}>
                       <FileText className="h-4 w-4" />
                     </Link>
@@ -362,23 +427,31 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="cursor-help" style={{ fontSize: '14px' }}>
+                  <span className="cursor-help" style={{ fontSize: "14px" }}>
                     {formatCurrency(budget.total || 0)}
                   </span>
                 </TooltipTrigger>
                 <TooltipContent className="text-sm">
                   <div className="space-y-1">
                     <div className="flex justify-between gap-4">
-                      <span className="text-muted-foreground">Base Imponible:</span>
-                      <span className="font-medium">{formatCurrency(budget.base || 0)}</span>
+                      <span className="text-muted-foreground">
+                        Base Imponible:
+                      </span>
+                      <span className="font-medium">
+                        {formatCurrency(budget.base || 0)}
+                      </span>
                     </div>
                     <div className="flex justify-between gap-4">
                       <span className="text-muted-foreground">IVA:</span>
-                      <span className="font-medium">{formatCurrency(budget.iva || 0)}</span>
+                      <span className="font-medium">
+                        {formatCurrency(budget.iva || 0)}
+                      </span>
                     </div>
                     <div className="flex justify-between gap-4 border-t pt-1">
                       <span className="font-semibold">Total:</span>
-                      <span className="font-semibold">{formatCurrency(budget.total || 0)}</span>
+                      <span className="font-semibold">
+                        {formatCurrency(budget.total || 0)}
+                      </span>
                     </div>
                   </div>
                 </TooltipContent>
@@ -389,51 +462,53 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
           <td className="p-4">
             <Select
               value={budget.status}
-              onValueChange={(newStatus) => handleStatusChange(budget.id, budget.status, newStatus, budget.client_name)}
+              onValueChange={(newStatus) =>
+                handleStatusChange(
+                  budget.id,
+                  budget.status,
+                  newStatus,
+                  budget.client_name
+                )
+              }
             >
               <SelectTrigger className="w-[140px] bg-white">
                 <SelectValue>
-                  <Badge className={statusColors[budget.status as keyof typeof statusColors]}>
+                  <Badge
+                    className={
+                      statusColors[budget.status as keyof typeof statusColors]
+                    }
+                  >
                     {budget.status}
                   </Badge>
                 </SelectValue>
               </SelectTrigger>
               <SelectContent className="bg-white">
                 <SelectItem value="borrador">
-                  <Badge className={statusColors['borrador']}>
-                    borrador
-                  </Badge>
+                  <Badge className={statusColors["borrador"]}>borrador</Badge>
                 </SelectItem>
                 <SelectItem value="pendiente">
-                  <Badge className={statusColors['pendiente']}>
-                    pendiente
-                  </Badge>
+                  <Badge className={statusColors["pendiente"]}>pendiente</Badge>
                 </SelectItem>
                 <SelectItem value="enviado">
-                  <Badge className={statusColors['enviado']}>
-                    enviado
-                  </Badge>
+                  <Badge className={statusColors["enviado"]}>enviado</Badge>
                 </SelectItem>
                 <SelectItem value="aprobado">
-                  <Badge className={statusColors['aprobado']}>
-                    aprobado
-                  </Badge>
+                  <Badge className={statusColors["aprobado"]}>aprobado</Badge>
                 </SelectItem>
                 <SelectItem value="rechazado">
-                  <Badge className={statusColors['rechazado']}>
-                    rechazado
-                  </Badge>
+                  <Badge className={statusColors["rechazado"]}>rechazado</Badge>
                 </SelectItem>
                 <SelectItem value="caducado">
-                  <Badge className={statusColors['caducado']}>
-                    caducado
-                  </Badge>
+                  <Badge className={statusColors["caducado"]}>caducado</Badge>
                 </SelectItem>
               </SelectContent>
             </Select>
           </td>
 
-          <td className="p-4 text-muted-foreground" style={{ fontSize: '12px' }}>
+          <td
+            className="p-4 text-muted-foreground"
+            style={{ fontSize: "12px" }}
+          >
             {getUserName(budget)}
           </td>
 
@@ -442,7 +517,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => window.open(budget.pdf_url!, '_blank')}
+                onClick={() => window.open(budget.pdf_url!, "_blank")}
                 title="Descargar PDF"
               >
                 <FileStack className="h-4 w-4" />
@@ -455,7 +530,12 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => window.open(`/budgets/create?tariff_id=${budget.tariff_id}&budget_id=${budget.id}`, '_blank')}
+                onClick={() =>
+                  window.open(
+                    `/budgets/create?tariff_id=${budget.tariff_id}&budget_id=${budget.id}`,
+                    "_blank"
+                  )
+                }
                 title="Editar"
               >
                 <Pencil className="h-4 w-4" />
@@ -474,10 +554,12 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
         </tr>
 
         {/* Renderizar hijos si está expandido */}
-        {hasChildren && isExpanded && budget.children!.map(child => renderBudgetRow(child, depth + 1))}
+        {hasChildren &&
+          isExpanded &&
+          budget.children!.map((child) => renderBudgetRow(child, depth + 1))}
       </React.Fragment>
-    )
-  }
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -502,13 +584,14 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
                   <Download className="mr-2 h-4 w-4" />
                   {isSomeSelected
                     ? `Exportar (${selectedBudgets.length})`
-                    : 'Exportar'
-                  }
+                    : "Exportar"}
                 </Button>
               </TooltipTrigger>
               {!isSomeSelected && (
                 <TooltipContent>
-                  <p>Selecciona uno o varios elementos de la lista para exportar</p>
+                  <p>
+                    Selecciona uno o varios elementos de la lista para exportar
+                  </p>
                 </TooltipContent>
               )}
             </Tooltip>
@@ -526,11 +609,13 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
             <Button
               variant="outline"
               className="border-lime-600 text-lime-600 hover:bg-lime-50"
-              onClick={() => document.getElementById('import-budget-file-input')?.click()}
+              onClick={() =>
+                document.getElementById("import-budget-file-input")?.click()
+              }
               disabled={importing}
             >
               <Upload className="mr-2 h-4 w-4" />
-              {importing ? 'Importando...' : 'Importar'}
+              {importing ? "Importando..." : "Importar"}
             </Button>
           </>
 
@@ -552,7 +637,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => router.push('/budgets')}
+            onClick={() => router.push("/budgets")}
           >
             Ver todos los presupuestos
           </Button>
@@ -601,11 +686,13 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
                 <th className="text-left p-4 font-medium w-[120px]">Estado</th>
                 <th className="text-left p-4 font-medium w-[120px]">Usuario</th>
                 <th className="text-center p-4 font-medium w-[60px]">PDF</th>
-                <th className="text-right p-4 font-medium w-[120px]">Acciones</th>
+                <th className="text-right p-4 font-medium w-[120px]">
+                  Acciones
+                </th>
               </tr>
             </thead>
             <tbody>
-              {filteredBudgets.map(budget => renderBudgetRow(budget))}
+              {filteredBudgets.map((budget) => renderBudgetRow(budget))}
             </tbody>
           </table>
         </div>
@@ -624,7 +711,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
             No se encontraron presupuestos
           </div>
         ) : (
-          filteredBudgets.map(budget => (
+          filteredBudgets.map((budget) => (
             <BudgetCard
               key={budget.id}
               budget={budget}
@@ -640,5 +727,5 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
         )}
       </div>
     </div>
-  )
+  );
 }

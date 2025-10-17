@@ -2,7 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Pencil, Trash2, FileText, Plus, Receipt, Star, Eye } from "lucide-react";
+import {
+  Pencil,
+  Trash2,
+  FileText,
+  Plus,
+  Receipt,
+  Star,
+  Eye,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -148,10 +156,7 @@ export function TariffRow({
       <TableRow className="bg-white border-t hover:bg-lime-50/50">
         {/* Checkbox */}
         <TableCell className="p-4 w-12">
-          <Checkbox
-            checked={selected}
-            onCheckedChange={onSelectChange}
-          />
+          <Checkbox checked={selected} onCheckedChange={onSelectChange} />
         </TableCell>
 
         {/* Columna Tarifa (Nombre + Descripción) */}
@@ -182,7 +187,7 @@ export function TariffRow({
                     variant="outline"
                     size="sm"
                     asChild
-                    className="h-9 px-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
+                    className="h-9 px-2 border-cyan-600 text-cyan-600 hover:bg-blue-50"
                   >
                     <Link
                       href={`/budgets/create?tariff_id=${tariff.id}`}
@@ -222,7 +227,7 @@ export function TariffRow({
                     variant="outline"
                     size="sm"
                     asChild
-                    className="h-9 px-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
+                    className="h-9 px-2 border-cyan-600 text-cyan-600 hover:bg-blue-50"
                   >
                     <Link href={`/budgets?tariff_id=${tariff.id}`}>
                       <span className="font-medium">{tariff.budget_count}</span>
@@ -231,7 +236,10 @@ export function TariffRow({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Ver {tariff.budget_count} presupuesto{tariff.budget_count !== 1 ? 's' : ''}</p>
+                  <p>
+                    Ver {tariff.budget_count} presupuesto
+                    {tariff.budget_count !== 1 ? "s" : ""}
+                  </p>
                 </TooltipContent>
               </Tooltip>
             )}
@@ -321,7 +329,7 @@ export function TariffRow({
                       className={
                         tariff.is_template
                           ? "bg-cyan-600 hover:bg-cyan-700"
-                          : "border-cyan-600 text-cyan-600 hover:bg-cyan-50"
+                          : "border-cyan-600 text-cyan-600 hover:bg-blue-50"
                       }
                     >
                       <Star
@@ -347,7 +355,7 @@ export function TariffRow({
                     variant="outline"
                     size="icon"
                     asChild
-                    className="border-cyan-600 text-cyan-600 hover:bg-cyan-50"
+                    className="border-cyan-600 text-cyan-600 hover:bg-blue-50"
                   >
                     <Link href={`/tariffs/edit/${tariff.id}`}>
                       <Pencil className="h-4 w-4" />

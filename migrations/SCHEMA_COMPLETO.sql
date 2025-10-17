@@ -1870,6 +1870,62 @@ CREATE POLICY issuers_update_superadmin ON public.issuers FOR UPDATE TO authenti
 ALTER TABLE public.tariffs ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: tariffs tariffs_delete_policy; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tariffs_delete_policy ON public.tariffs FOR DELETE USING (((public.get_user_role_by_id(auth.uid()) = ANY (ARRAY['admin'::text, 'superadmin'::text])) AND (empresa_id = public.get_user_empresa_id(auth.uid()))));
+
+
+--
+-- Name: POLICY tariffs_delete_policy ON tariffs; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON POLICY tariffs_delete_policy ON public.tariffs IS 'Solo admin/superadmin pueden eliminar tarifas de su empresa';
+
+
+--
+-- Name: tariffs tariffs_insert_policy; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tariffs_insert_policy ON public.tariffs FOR INSERT WITH CHECK (((auth.uid() IS NOT NULL) AND (empresa_id = public.get_user_empresa_id(auth.uid())) AND (user_id = auth.uid())));
+
+
+--
+-- Name: POLICY tariffs_insert_policy ON tariffs; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON POLICY tariffs_insert_policy ON public.tariffs IS 'Usuarios autenticados pueden crear tarifas en su empresa';
+
+
+--
+-- Name: tariffs tariffs_select_policy; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tariffs_select_policy ON public.tariffs FOR SELECT USING ((empresa_id = public.get_user_empresa_id(auth.uid())));
+
+
+--
+-- Name: POLICY tariffs_select_policy ON tariffs; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON POLICY tariffs_select_policy ON public.tariffs IS 'Usuarios pueden ver tarifas de su empresa';
+
+
+--
+-- Name: tariffs tariffs_update_policy; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tariffs_update_policy ON public.tariffs FOR UPDATE USING (((user_id = auth.uid()) OR ((public.get_user_role_by_id(auth.uid()) = ANY (ARRAY['admin'::text, 'superadmin'::text])) AND (empresa_id = public.get_user_empresa_id(auth.uid()))))) WITH CHECK (((user_id = auth.uid()) OR ((public.get_user_role_by_id(auth.uid()) = ANY (ARRAY['admin'::text, 'superadmin'::text])) AND (empresa_id = public.get_user_empresa_id(auth.uid())))));
+
+
+--
+-- Name: POLICY tariffs_update_policy ON tariffs; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON POLICY tariffs_update_policy ON public.tariffs IS 'Creador o admin/superadmin de la empresa pueden actualizar tarifas';
+
+
+--
 -- Name: users; Type: ROW SECURITY; Schema: public; Owner: -
 --
 

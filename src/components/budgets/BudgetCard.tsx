@@ -1,34 +1,48 @@
-"use client"
+"use client";
 
-import { Budget } from '@/lib/types/database'
-import { formatCurrency } from '@/lib/helpers/format'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Pencil, Trash2, FileStack, FileText } from 'lucide-react'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { BudgetNotesIcon } from './BudgetNotesIcon'
-import Link from 'next/link'
+import { Budget } from "@/lib/types/database";
+import { formatCurrency } from "@/lib/helpers/format";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Pencil, Trash2, FileStack, FileText } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { BudgetNotesIcon } from "./BudgetNotesIcon";
+import Link from "next/link";
 
 interface BudgetCardProps {
-  budget: Budget
-  onStatusChange: (budgetId: string, currentStatus: string, newStatus: string, clientName: string) => void
-  onDelete: (budgetId: string, clientName: string) => void
-  statusColors: Record<string, string>
-  getValidTransitions: (status: string) => string[]
-  getUserName: (budget: Budget) => string
-  formatDate: (date: string) => string
-  getDaysRemaining: (startDate: string | null, validityDays: number | null) => any
+  budget: Budget;
+  onStatusChange: (
+    budgetId: string,
+    currentStatus: string,
+    newStatus: string,
+    clientName: string
+  ) => void;
+  onDelete: (budgetId: string, clientName: string) => void;
+  statusColors: Record<string, string>;
+  getValidTransitions: (status: string) => string[];
+  getUserName: (budget: Budget) => string;
+  formatDate: (date: string) => string;
+  getDaysRemaining: (
+    startDate: string | null,
+    validityDays: number | null
+  ) => any;
 }
 
 const statusColors = {
-  borrador: 'bg-black text-neutral-200',
-  pendiente: 'bg-orange-100 text-yellow-800',
-  enviado: 'bg-slate-100 text-cyan-600',
-  aprobado: 'bg-emerald-50 text-green-600',
-  rechazado: 'bg-pink-100 text-rose-600',
-  caducado: 'bg-neutral-200 text-black'
-}
+  borrador: "bg-black text-neutral-200",
+  pendiente: "bg-orange-100 text-yellow-800",
+  enviado: "bg-slate-100 text-cyan-600",
+  aprobado: "bg-blue-50 text-green-600",
+  rechazado: "bg-pink-100 text-rose-600",
+  caducado: "bg-neutral-200 text-black",
+};
 
 export function BudgetCard({
   budget,
@@ -37,12 +51,15 @@ export function BudgetCard({
   getValidTransitions,
   getUserName,
   formatDate,
-  getDaysRemaining
+  getDaysRemaining,
 }: BudgetCardProps) {
-  const days = getDaysRemaining(budget.start_date, budget.validity_days)
-  const tariffTitle = budget.tariffs && typeof budget.tariffs === 'object' && 'title' in budget.tariffs
-    ? (budget.tariffs as { title: string }).title
-    : 'N/A'
+  const days = getDaysRemaining(budget.start_date, budget.validity_days);
+  const tariffTitle =
+    budget.tariffs &&
+    typeof budget.tariffs === "object" &&
+    "title" in budget.tariffs
+      ? (budget.tariffs as { title: string }).title
+      : "N/A";
 
   return (
     <Card className="w-full mb-3">
@@ -59,7 +76,7 @@ export function BudgetCard({
               {/* Fila 2: (NIF) [tipo] [versión] Icono Nota */}
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="text-xs text-muted-foreground">
-                  ({budget.client_nif_nie || 'N/A'})
+                  ({budget.client_nif_nie || "N/A"})
                 </span>
                 <Badge variant="secondary" className="text-xs flex-shrink-0">
                   {budget.client_type}
@@ -89,8 +106,16 @@ export function BudgetCard({
             {/* Fila 2 Columna 1: Fechas */}
             <div className="flex-1 min-w-0">
               {days && budget.start_date && budget.end_date && (
-                <div className={`text-xs ${days.isExpiring ? 'text-orange-600 font-medium' : 'text-muted-foreground'}`}>
-                  {formatDate(budget.start_date)} - {formatDate(budget.end_date)} ({days.remaining}/{days.total} días)
+                <div
+                  className={`text-xs ${
+                    days.isExpiring
+                      ? "text-orange-600 font-medium"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  {formatDate(budget.start_date)} -{" "}
+                  {formatDate(budget.end_date)} ({days.remaining}/{days.total}{" "}
+                  días)
                 </div>
               )}
             </div>
@@ -98,37 +123,54 @@ export function BudgetCard({
             {/* Fila 2 Columna 2: Estado */}
             <div className="flex-shrink-0 space-y-1">
               {/* Fila 1: Estado: */}
-              <div className="text-xs text-muted-foreground text-right">Estado:</div>
+              <div className="text-xs text-muted-foreground text-right">
+                Estado:
+              </div>
               {/* Fila 2: Estado selector */}
               <Select
                 value={budget.status}
-                onValueChange={(newStatus) => onStatusChange(budget.id, budget.status, newStatus, budget.client_name)}
+                onValueChange={(newStatus) =>
+                  onStatusChange(
+                    budget.id,
+                    budget.status,
+                    newStatus,
+                    budget.client_name
+                  )
+                }
               >
                 <SelectTrigger className="w-[110px] h-7 text-xs">
                   <SelectValue>
-                    <Badge className={statusColors[budget.status as keyof typeof statusColors]}>
+                    <Badge
+                      className={
+                        statusColors[budget.status as keyof typeof statusColors]
+                      }
+                    >
                       {budget.status}
                     </Badge>
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="borrador">
-                    <Badge className={statusColors['borrador']}>borrador</Badge>
+                    <Badge className={statusColors["borrador"]}>borrador</Badge>
                   </SelectItem>
                   <SelectItem value="pendiente">
-                    <Badge className={statusColors['pendiente']}>pendiente</Badge>
+                    <Badge className={statusColors["pendiente"]}>
+                      pendiente
+                    </Badge>
                   </SelectItem>
                   <SelectItem value="enviado">
-                    <Badge className={statusColors['enviado']}>enviado</Badge>
+                    <Badge className={statusColors["enviado"]}>enviado</Badge>
                   </SelectItem>
                   <SelectItem value="aprobado">
-                    <Badge className={statusColors['aprobado']}>aprobado</Badge>
+                    <Badge className={statusColors["aprobado"]}>aprobado</Badge>
                   </SelectItem>
                   <SelectItem value="rechazado">
-                    <Badge className={statusColors['rechazado']}>rechazado</Badge>
+                    <Badge className={statusColors["rechazado"]}>
+                      rechazado
+                    </Badge>
                   </SelectItem>
                   <SelectItem value="caducado">
-                    <Badge className={statusColors['caducado']}>caducado</Badge>
+                    <Badge className={statusColors["caducado"]}>caducado</Badge>
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -140,7 +182,9 @@ export function BudgetCard({
             {/* Usuario */}
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>Usuario:</span>
-              <span className="font-medium text-foreground truncate">{getUserName(budget)}</span>
+              <span className="font-medium text-foreground truncate">
+                {getUserName(budget)}
+              </span>
             </div>
 
             {/* Acciones */}
@@ -149,7 +193,7 @@ export function BudgetCard({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => window.open(budget.pdf_url!, '_blank')}
+                  onClick={() => window.open(budget.pdf_url!, "_blank")}
                   className="h-7 px-2"
                 >
                   <FileStack className="h-3 w-3" />
@@ -158,7 +202,12 @@ export function BudgetCard({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => window.open(`/budgets/create?tariff_id=${budget.tariff_id}&budget_id=${budget.id}`, '_blank')}
+                onClick={() =>
+                  window.open(
+                    `/budgets/create?tariff_id=${budget.tariff_id}&budget_id=${budget.id}`,
+                    "_blank"
+                  )
+                }
                 className="h-7 px-2"
               >
                 <Pencil className="h-3 w-3" />
@@ -176,5 +225,5 @@ export function BudgetCard({
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

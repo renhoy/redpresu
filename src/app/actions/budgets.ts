@@ -14,6 +14,7 @@ import {
   type BudgetItem as FiscalBudgetItem
 } from '@/lib/helpers/fiscal-calculations'
 import type { ClientType } from '@/lib/helpers/fiscal-calculations'
+import { getDefaultEmpresaId } from '@/app/actions/config'
 
 interface ClientData {
   client_type: 'particular' | 'autonomo' | 'empresa'
@@ -79,18 +80,26 @@ export async function getActiveTariffs(): Promise<Tariff[]> {
       .eq('id', user.id)
       .single()
 
-    if (userError || !userData?.empresa_id) {
-      console.error('[getActiveTariffs] Error obteniendo empresa:', userError)
+    if (userError) {
+      console.error('[getActiveTariffs] Error obteniendo usuario:', userError)
       return []
     }
 
-    console.log('[getActiveTariffs] Empresa ID:', userData.empresa_id)
+    // Si el usuario no tiene empresa_id (superadmin), usar empresa por defecto
+    let empresaId = userData?.empresa_id
+    if (!empresaId) {
+      console.log('[getActiveTariffs] Usuario sin empresa_id, obteniendo empresa por defecto...')
+      empresaId = await getDefaultEmpresaId()
+      console.log('[getActiveTariffs] Empresa por defecto obtenida:', empresaId)
+    }
+
+    console.log('[getActiveTariffs] Empresa ID:', empresaId)
 
     // Obtener tarifas activas de la empresa
     const { data: tariffs, error: tariffsError } = await supabaseAdmin
       .from('tariffs')
       .select('*')
-      .eq('empresa_id', userData.empresa_id)
+      .eq('empresa_id', empresaId)
       .eq('status', 'Activa')
       .order('title')
 
@@ -179,9 +188,17 @@ export async function createDraftBudget(data: {
       .eq('id', user.id)
       .single()
 
-    if (userError || !userData?.empresa_id) {
-      console.error('[createDraftBudget] Error obteniendo empresa:', userError)
-      return { success: false, error: 'Usuario sin empresa asignada' }
+    if (userError) {
+      console.error('[createDraftBudget] Error obteniendo usuario:', userError)
+      return { success: false, error: 'Error obteniendo datos del usuario' }
+    }
+
+    // Si el usuario no tiene empresa_id (superadmin), usar empresa por defecto
+    let empresaId = userData?.empresa_id
+    if (!empresaId) {
+      console.log('[createDraftBudget] Usuario sin empresa_id, obteniendo empresa por defecto...')
+      empresaId = await getDefaultEmpresaId()
+      console.log('[createDraftBudget] Empresa por defecto obtenida:', empresaId)
     }
 
     // Calcular IVA
@@ -225,7 +242,7 @@ export async function createDraftBudget(data: {
     const { data: budget, error: insertError } = await supabaseAdmin
       .from('budgets')
       .insert({
-        empresa_id: userData.empresa_id,
+        empresa_id: empresaId,
         tariff_id: data.tariffId,
         user_id: user.id,
         json_tariff_data: data.tariffData,

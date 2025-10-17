@@ -44,7 +44,7 @@ export function TariffFormFields({
   return (
     <div className="space-y-6">
       {/* Card 1: Datos Tarifa */}
-      <Card className="bg-cyan-50">
+      <Card className="bg-blue-50">
         <CardHeader>
           <CardTitle>Datos Tarifa</CardTitle>
         </CardHeader>
@@ -181,7 +181,7 @@ export function TariffFormFields({
       </Card>
 
       {/* Card 2: Datos Empresa */}
-      <Card className="bg-cyan-50">
+      <Card className="bg-blue-50">
         <CardHeader>
           <CardTitle>Datos Empresa</CardTitle>
         </CardHeader>
@@ -368,7 +368,7 @@ export function TariffFormFields({
       </Card>
 
       {/* Card 3: Configuración Visual */}
-      <Card className="bg-cyan-50">
+      <Card className="bg-blue-50">
         <CardHeader>
           <CardTitle>Configuración Visual</CardTitle>
         </CardHeader>
@@ -462,7 +462,7 @@ export function TariffFormFields({
       </Card>
 
       {/* Card 4: Notas PDF */}
-      <Card className="bg-cyan-50">
+      <Card className="bg-blue-50">
         <CardHeader>
           <CardTitle>Notas PDF</CardTitle>
         </CardHeader>
@@ -510,8 +510,7 @@ export function TariffFormFields({
                   <TooltipContent>
                     <p className="max-w-xs">
                       Condiciones generales que aparecerán en el PDF. Por
-                      ejemplo: forma de pago, plazos de entrega, garantías,
-                      etc.
+                      ejemplo: forma de pago, plazos de entrega, garantías, etc.
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -534,7 +533,7 @@ export function TariffFormFields({
       </Card>
 
       {/* Card 5: Notas Formulario */}
-      <Card className="bg-cyan-50">
+      <Card className="bg-blue-50">
         <CardHeader>
           <CardTitle>Notas Formulario</CardTitle>
         </CardHeader>

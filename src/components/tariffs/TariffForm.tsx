@@ -47,100 +47,105 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const validateForm = (): { isValid: boolean, errors: Record<string, string> } => {
-    const newErrors: Record<string, string> = {}
+  const validateForm = (): {
+    isValid: boolean;
+    errors: Record<string, string>;
+  } => {
+    const newErrors: Record<string, string> = {};
 
     // Datos Tarifa
-    if (!formData.title || formData.title.trim() === '') {
-      newErrors.title = 'El título es obligatorio'
+    if (!formData.title || formData.title.trim() === "") {
+      newErrors.title = "El título es obligatorio";
     }
     if (!formData.validity || formData.validity < 1) {
-      newErrors.validity = 'La validez debe ser al menos 1 día'
+      newErrors.validity = "La validez debe ser al menos 1 día";
     }
     if (!formData.status) {
-      newErrors.status = 'El estado es obligatorio'
+      newErrors.status = "El estado es obligatorio";
     }
 
     // Datos Empresa
-    if (!formData.logo_url || formData.logo_url.trim() === '') {
-      newErrors.logo_url = 'El logo es obligatorio'
+    if (!formData.logo_url || formData.logo_url.trim() === "") {
+      newErrors.logo_url = "El logo es obligatorio";
     }
-    if (!formData.name || formData.name.trim() === '') {
-      newErrors.name = 'El nombre de empresa es obligatorio'
+    if (!formData.name || formData.name.trim() === "") {
+      newErrors.name = "El nombre de empresa es obligatorio";
     }
-    if (!formData.nif || formData.nif.trim() === '') {
-      newErrors.nif = 'El NIF/CIF es obligatorio'
+    if (!formData.nif || formData.nif.trim() === "") {
+      newErrors.nif = "El NIF/CIF es obligatorio";
     } else {
       // Validar formato y letra de control del NIF/CIF
-      const nifCleaned = formData.nif.trim().toUpperCase()
+      const nifCleaned = formData.nif.trim().toUpperCase();
       if (!isValidNIF(nifCleaned)) {
         // Para tarifas asumimos que es empresa (CIF) por defecto
-        newErrors.nif = getNIFErrorMessage(nifCleaned, 'empresa')
+        newErrors.nif = getNIFErrorMessage(nifCleaned, "empresa");
       }
     }
-    if (!formData.address || formData.address.trim() === '') {
-      newErrors.address = 'La dirección es obligatoria'
+    if (!formData.address || formData.address.trim() === "") {
+      newErrors.address = "La dirección es obligatoria";
     }
-    if (!formData.contact || formData.contact.trim() === '') {
-      newErrors.contact = 'El contacto es obligatorio'
+    if (!formData.contact || formData.contact.trim() === "") {
+      newErrors.contact = "El contacto es obligatorio";
     }
 
     // Configuración Visual
-    if (!formData.template || formData.template.trim() === '') {
-      newErrors.template = 'La plantilla es obligatoria'
+    if (!formData.template || formData.template.trim() === "") {
+      newErrors.template = "La plantilla es obligatoria";
     }
-    if (!formData.primary_color || formData.primary_color.trim() === '') {
-      newErrors.primary_color = 'El color primario es obligatorio'
+    if (!formData.primary_color || formData.primary_color.trim() === "") {
+      newErrors.primary_color = "El color primario es obligatorio";
     }
-    if (!formData.secondary_color || formData.secondary_color.trim() === '') {
-      newErrors.secondary_color = 'El color secundario es obligatorio'
+    if (!formData.secondary_color || formData.secondary_color.trim() === "") {
+      newErrors.secondary_color = "El color secundario es obligatorio";
     }
 
     // Notas PDF
-    if (!formData.summary_note || formData.summary_note.trim() === '') {
-      newErrors.summary_note = 'La nota resumen es obligatoria'
+    if (!formData.summary_note || formData.summary_note.trim() === "") {
+      newErrors.summary_note = "La nota resumen es obligatoria";
     }
-    if (!formData.conditions_note || formData.conditions_note.trim() === '') {
-      newErrors.conditions_note = 'Las condiciones son obligatorias'
+    if (!formData.conditions_note || formData.conditions_note.trim() === "") {
+      newErrors.conditions_note = "Las condiciones son obligatorias";
     }
 
     // Notas Formulario
-    if (!formData.legal_note || formData.legal_note.trim() === '') {
-      newErrors.legal_note = 'Las notas legales son obligatorias'
+    if (!formData.legal_note || formData.legal_note.trim() === "") {
+      newErrors.legal_note = "Las notas legales son obligatorias";
     }
 
     // CSV Data
     if (!csvData) {
-      newErrors.csv = 'Debe cargar un archivo CSV válido'
+      newErrors.csv = "Debe cargar un archivo CSV válido";
     }
 
     return {
       isValid: Object.keys(newErrors).length === 0,
-      errors: newErrors
-    }
+      errors: newErrors,
+    };
   };
 
   const handleSave = async () => {
     // Validar formulario
-    const validation = validateForm()
+    const validation = validateForm();
 
     if (!validation.isValid) {
-      setErrors(validation.errors)
+      setErrors(validation.errors);
 
       // Mostrar mensaje general
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        general: `Por favor, complete todos los campos obligatorios (${Object.keys(validation.errors).length} errores encontrados)`
-      }))
+        general: `Por favor, complete todos los campos obligatorios (${
+          Object.keys(validation.errors).length
+        } errores encontrados)`,
+      }));
 
       // Scroll al primer error
-      const firstErrorField = Object.keys(validation.errors)[0]
-      const element = document.querySelector(`[name="${firstErrorField}"]`)
+      const firstErrorField = Object.keys(validation.errors)[0];
+      const element = document.querySelector(`[name="${firstErrorField}"]`);
       if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
       }
 
-      return
+      return;
     }
 
     setIsLoading(true);
@@ -219,7 +224,7 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
                 variant="outline"
                 onClick={handleCancel}
                 disabled={isLoading}
-                className="border-cyan-600 text-cyan-600 hover:bg-cyan-50"
+                className="border-cyan-600 text-cyan-600 hover:bg-blue-50"
               >
                 Cancelar
               </Button>

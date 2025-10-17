@@ -1,21 +1,54 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
-import { Tariff, Budget } from '@/lib/types/database'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Checkbox } from '@/components/ui/checkbox'
-import { ArrowLeft, ArrowRight, Trash2, Save, FileStack, Loader2, Check, X } from 'lucide-react'
-import { BudgetHierarchyForm } from './BudgetHierarchyForm'
-import { createDraftBudget, updateBudgetDraft, saveBudget, generateBudgetPDF, duplicateBudget } from '@/app/actions/budgets'
-import { getIVAtoREEquivalencesAction } from '@/app/actions/config'
-import { calculateRecargo, getTotalRecargo, shouldApplyIRPF, calculateIRPF, getDefaultIRPFPercentage } from '@/lib/helpers/fiscal-calculations'
-import { isValidNIF, getNIFErrorMessage } from '@/lib/helpers/nif-validator'
-import { toast } from 'sonner'
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { Tariff, Budget } from "@/lib/types/database";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Trash2,
+  Save,
+  FileStack,
+  Loader2,
+  Check,
+  X,
+} from "lucide-react";
+import { BudgetHierarchyForm } from "./BudgetHierarchyForm";
+import {
+  createDraftBudget,
+  updateBudgetDraft,
+  saveBudget,
+  generateBudgetPDF,
+  duplicateBudget,
+} from "@/app/actions/budgets";
+import { getIVAtoREEquivalencesAction } from "@/app/actions/config";
+import {
+  calculateRecargo,
+  getTotalRecargo,
+  shouldApplyIRPF,
+  calculateIRPF,
+  getDefaultIRPFPercentage,
+} from "@/lib/helpers/fiscal-calculations";
+import { isValidNIF, getNIFErrorMessage } from "@/lib/helpers/nif-validator";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,248 +58,290 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+} from "@/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface BudgetFormProps {
-  tariff: Tariff
-  existingBudget?: Budget | null
+  tariff: Tariff;
+  existingBudget?: Budget | null;
 }
 
 interface ClientData {
-  client_type: 'particular' | 'autonomo' | 'empresa' | ''
-  client_name: string
-  client_nif_nie: string
-  client_phone: string
-  client_email: string
-  client_web?: string
-  client_address: string
-  client_postal_code: string
-  client_locality: string
-  client_province: string
-  client_acceptance: boolean
+  client_type: "particular" | "autonomo" | "empresa" | "";
+  client_name: string;
+  client_nif_nie: string;
+  client_phone: string;
+  client_email: string;
+  client_web?: string;
+  client_address: string;
+  client_postal_code: string;
+  client_locality: string;
+  client_province: string;
+  client_acceptance: boolean;
 }
 
 export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
-  const router = useRouter()
-  const [currentStep, setCurrentStep] = useState(1)
-  const [budgetData, setBudgetData] = useState<unknown[]>([])
-  const [budgetId, setBudgetId] = useState<string | null>(existingBudget?.id || null)
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
-  const [pdfStatus, setPdfStatus] = useState<'idle' | 'generating' | 'generated'>('idle')
-  const [totals, setTotals] = useState<{ base: number; total: number }>({ base: 0, total: 0 })
+  const router = useRouter();
+  const [currentStep, setCurrentStep] = useState(1);
+  const [budgetData, setBudgetData] = useState<unknown[]>([]);
+  const [budgetId, setBudgetId] = useState<string | null>(
+    existingBudget?.id || null
+  );
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
+    "idle"
+  );
+  const [pdfStatus, setPdfStatus] = useState<
+    "idle" | "generating" | "generated"
+  >("idle");
+  const [totals, setTotals] = useState<{ base: number; total: number }>({
+    base: 0,
+    total: 0,
+  });
 
   // Nuevos diálogos según especificaciones
-  const [showSaveAsOrSaveDialog, setShowSaveAsOrSaveDialog] = useState(false) // "Guardar" vs "Guardar como"
-  const [showOverwriteOrVersionDialog, setShowOverwriteOrVersionDialog] = useState(false) // "Sobreescribir" vs "Nueva versión"
-  const [showOverwriteConfirm, setShowOverwriteConfirm] = useState(false) // Confirmación final sobreescribir
+  const [showSaveAsOrSaveDialog, setShowSaveAsOrSaveDialog] = useState(false); // "Guardar" vs "Guardar como"
+  const [showOverwriteOrVersionDialog, setShowOverwriteOrVersionDialog] =
+    useState(false); // "Sobreescribir" vs "Nueva versión"
+  const [showOverwriteConfirm, setShowOverwriteConfirm] = useState(false); // Confirmación final sobreescribir
 
-  const [showPdfConfirm, setShowPdfConfirm] = useState(false)
-  const [showCloseConfirm, setShowCloseConfirm] = useState(false)
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
-  const isEditMode = !!existingBudget?.id
+  const [showPdfConfirm, setShowPdfConfirm] = useState(false);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const isEditMode = !!existingBudget?.id;
   const [clientData, setClientData] = useState<ClientData>({
-    client_type: (existingBudget?.client_type as ClientData['client_type']) || 'empresa',
-    client_name: existingBudget?.client_name || '',
-    client_nif_nie: existingBudget?.client_nif_nie || '',
-    client_phone: existingBudget?.client_phone || '',
-    client_email: existingBudget?.client_email || '',
-    client_web: existingBudget?.client_web || '',
-    client_address: existingBudget?.client_address || '',
-    client_postal_code: existingBudget?.client_postal_code || '',
-    client_locality: existingBudget?.client_locality || '',
-    client_province: existingBudget?.client_province || '',
-    client_acceptance: existingBudget?.client_acceptance || false
-  })
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const isInitialMount = useRef(true)
+    client_type:
+      (existingBudget?.client_type as ClientData["client_type"]) || "empresa",
+    client_name: existingBudget?.client_name || "",
+    client_nif_nie: existingBudget?.client_nif_nie || "",
+    client_phone: existingBudget?.client_phone || "",
+    client_email: existingBudget?.client_email || "",
+    client_web: existingBudget?.client_web || "",
+    client_address: existingBudget?.client_address || "",
+    client_postal_code: existingBudget?.client_postal_code || "",
+    client_locality: existingBudget?.client_locality || "",
+    client_province: existingBudget?.client_province || "",
+    client_acceptance: existingBudget?.client_acceptance || false,
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const isInitialMount = useRef(true);
 
   // Estados para Recargo de Equivalencia
-  const [aplicaRecargo, setAplicaRecargo] = useState(false)
-  const [recargos, setRecargos] = useState<Record<number, number>>({})
-  const [ivasReconocidos, setIvasReconocidos] = useState<Set<number>>(new Set())
+  const [aplicaRecargo, setAplicaRecargo] = useState(false);
+  const [recargos, setRecargos] = useState<Record<number, number>>({});
+  const [ivasReconocidos, setIvasReconocidos] = useState<Set<number>>(
+    new Set()
+  );
 
   // Estados para cálculos fiscales en tiempo real
-  const [calculatedIRPF, setCalculatedIRPF] = useState(0)
-  const [calculatedIRPFPercentage, setCalculatedIRPFPercentage] = useState(0)
-  const [calculatedREByIVA, setCalculatedREByIVA] = useState<Record<number, number>>({})
-  const [calculatedTotalRE, setCalculatedTotalRE] = useState(0)
-  const [issuerType, setIssuerType] = useState<'empresa' | 'autonomo'>('empresa')
-  const [issuerIRPFPercentage, setIssuerIRPFPercentage] = useState(15)
+  const [calculatedIRPF, setCalculatedIRPF] = useState(0);
+  const [calculatedIRPFPercentage, setCalculatedIRPFPercentage] = useState(0);
+  const [calculatedREByIVA, setCalculatedREByIVA] = useState<
+    Record<number, number>
+  >({});
+  const [calculatedTotalRE, setCalculatedTotalRE] = useState(0);
+  const [issuerType, setIssuerType] = useState<"empresa" | "autonomo">(
+    "empresa"
+  );
+  const [issuerIRPFPercentage, setIssuerIRPFPercentage] = useState(15);
 
   // Cargar budgetData del borrador existente
   useEffect(() => {
     if (existingBudget?.json_budget_data) {
-      const jsonData = existingBudget.json_budget_data as any
+      const jsonData = existingBudget.json_budget_data as any;
 
       // Si json_budget_data tiene la estructura extendida con recargo
       if (jsonData.items && jsonData.recargo) {
-        setBudgetData(jsonData.items)
+        setBudgetData(jsonData.items);
 
         // Recuperar configuración de RE
         if (jsonData.recargo.aplica) {
-          setAplicaRecargo(true)
-          setRecargos(jsonData.recargo.recargos || {})
+          setAplicaRecargo(true);
+          setRecargos(jsonData.recargo.recargos || {});
         }
       } else {
         // Formato antiguo: json_budget_data es directamente el array
-        setBudgetData(jsonData)
+        setBudgetData(jsonData);
       }
 
       // Siempre comenzar en paso 1 (datos del cliente), incluso al editar
     }
-  }, [existingBudget])
+  }, [existingBudget]);
 
   // Detectar cambios en clientData o budgetData
   useEffect(() => {
     if (isInitialMount.current) {
-      isInitialMount.current = false
-      return
+      isInitialMount.current = false;
+      return;
     }
     // Marcar que hay cambios sin guardar
-    setHasUnsavedChanges(true)
-  }, [clientData, budgetData, totals])
+    setHasUnsavedChanges(true);
+  }, [clientData, budgetData, totals]);
 
   // Resetear flag cuando se guarda
   useEffect(() => {
-    if (saveStatus === 'saved') {
-      setHasUnsavedChanges(false)
+    if (saveStatus === "saved") {
+      setHasUnsavedChanges(false);
     }
-  }, [saveStatus])
+  }, [saveStatus]);
 
   // Cargar valores por defecto de RE cuando el cliente es autónomo y se activa el checkbox
   useEffect(() => {
     async function loadREDefaults() {
-      if (clientData.client_type === 'autonomo' && aplicaRecargo && Object.keys(recargos).length === 0) {
-        const result = await getIVAtoREEquivalencesAction()
+      if (
+        clientData.client_type === "autonomo" &&
+        aplicaRecargo &&
+        Object.keys(recargos).length === 0
+      ) {
+        const result = await getIVAtoREEquivalencesAction();
 
         if (result.success && result.data && tariff.ivas_presentes) {
           // Solo cargar recargos para los IVAs presentes en la tarifa
-          const recargosInicial: Record<number, number> = {}
-          const ivasReconocidosSet = new Set<number>()
+          const recargosInicial: Record<number, number> = {};
+          const ivasReconocidosSet = new Set<number>();
 
           tariff.ivas_presentes.forEach((iva: number) => {
             // Normalizar el IVA a 2 decimales para matchear las claves del objeto de equivalencias
-            const ivaKey = Number(iva).toFixed(2)
-            const reValue = result.data![ivaKey] || 0
-            recargosInicial[iva] = reValue
+            const ivaKey = Number(iva).toFixed(2);
+            const reValue = result.data![ivaKey] || 0;
+            recargosInicial[iva] = reValue;
 
             // Marcar como reconocido si tiene un valor > 0 en la config
             if (reValue > 0) {
-              ivasReconocidosSet.add(iva)
+              ivasReconocidosSet.add(iva);
             }
-          })
+          });
 
-          setRecargos(recargosInicial)
-          setIvasReconocidos(ivasReconocidosSet)
+          setRecargos(recargosInicial);
+          setIvasReconocidos(ivasReconocidosSet);
         }
       }
     }
 
-    loadREDefaults()
-  }, [clientData.client_type, aplicaRecargo, tariff.ivas_presentes])
+    loadREDefaults();
+  }, [clientData.client_type, aplicaRecargo, tariff.ivas_presentes]);
 
   // Cargar datos del emisor al inicio
   useEffect(() => {
     async function loadIssuerData() {
       try {
         // Crear una acción temporal para obtener datos del emisor
-        const response = await fetch('/api/user/issuer')
+        const response = await fetch("/api/user/issuer");
         if (response.ok) {
-          const data = await response.json()
+          const data = await response.json();
           if (data.issuer) {
-            setIssuerType(data.issuer.issuers_type || 'empresa')
-            setIssuerIRPFPercentage(data.issuer.issuers_irpf_percentage || 15)
+            setIssuerType(data.issuer.issuers_type || "empresa");
+            setIssuerIRPFPercentage(data.issuer.issuers_irpf_percentage || 15);
           }
         }
       } catch (error) {
-        console.error('[loadIssuerData] Error:', error)
+        console.error("[loadIssuerData] Error:", error);
       }
     }
 
-    loadIssuerData()
-  }, [])
+    loadIssuerData();
+  }, []);
 
   // Calcular IRPF y RE en tiempo real cuando cambian budgetData o totals
   useEffect(() => {
     // Calcular IRPF si aplica
     if (totals.base > 0 && clientData.client_type) {
-      const aplica = shouldApplyIRPF(issuerType, clientData.client_type)
+      const aplica = shouldApplyIRPF(issuerType, clientData.client_type);
       if (aplica) {
-        const irpfAmount = calculateIRPF(totals.base, issuerIRPFPercentage)
-        setCalculatedIRPF(irpfAmount)
-        setCalculatedIRPFPercentage(issuerIRPFPercentage)
+        const irpfAmount = calculateIRPF(totals.base, issuerIRPFPercentage);
+        setCalculatedIRPF(irpfAmount);
+        setCalculatedIRPFPercentage(issuerIRPFPercentage);
       } else {
-        setCalculatedIRPF(0)
-        setCalculatedIRPFPercentage(0)
+        setCalculatedIRPF(0);
+        setCalculatedIRPFPercentage(0);
       }
     } else {
-      setCalculatedIRPF(0)
-      setCalculatedIRPFPercentage(0)
+      setCalculatedIRPF(0);
+      setCalculatedIRPFPercentage(0);
     }
 
     // Calcular RE si aplica (solo para clientes autónomos)
-    if (aplicaRecargo && clientData.client_type === 'autonomo' && budgetData.length > 0 && Object.keys(recargos).length > 0) {
+    if (
+      aplicaRecargo &&
+      clientData.client_type === "autonomo" &&
+      budgetData.length > 0 &&
+      Object.keys(recargos).length > 0
+    ) {
       try {
-        const reByIVA = calculateRecargo(budgetData as any[], recargos)
-        const totalRE = getTotalRecargo(reByIVA)
+        const reByIVA = calculateRecargo(budgetData as any[], recargos);
+        const totalRE = getTotalRecargo(reByIVA);
 
-        setCalculatedREByIVA(reByIVA)
-        setCalculatedTotalRE(totalRE)
+        setCalculatedREByIVA(reByIVA);
+        setCalculatedTotalRE(totalRE);
       } catch (error) {
-        console.error('[calculateFiscalValues] Error calculating RE:', error)
-        setCalculatedREByIVA({})
-        setCalculatedTotalRE(0)
+        console.error("[calculateFiscalValues] Error calculating RE:", error);
+        setCalculatedREByIVA({});
+        setCalculatedTotalRE(0);
       }
     } else {
-      setCalculatedREByIVA({})
-      setCalculatedTotalRE(0)
+      setCalculatedREByIVA({});
+      setCalculatedTotalRE(0);
     }
-  }, [budgetData, totals, aplicaRecargo, recargos, clientData.client_type, issuerType, issuerIRPFPercentage])
+  }, [
+    budgetData,
+    totals,
+    aplicaRecargo,
+    recargos,
+    clientData.client_type,
+    issuerType,
+    issuerIRPFPercentage,
+  ]);
 
   const validateStep1 = () => {
-    const newErrors: Record<string, string> = {}
+    const newErrors: Record<string, string> = {};
 
     if (!clientData.client_type) {
-      newErrors.client_type = 'Tipo de cliente es obligatorio'
+      newErrors.client_type = "Tipo de cliente es obligatorio";
     }
     if (!clientData.client_name.trim()) {
-      newErrors.client_name = 'Nombre del cliente es obligatorio'
+      newErrors.client_name = "Nombre del cliente es obligatorio";
     }
     if (!clientData.client_nif_nie.trim()) {
-      newErrors.client_nif_nie = 'NIF/NIE/CIF es obligatorio'
+      newErrors.client_nif_nie = "NIF/NIE/CIF es obligatorio";
     } else {
       // Validar usando el helper que verifica formato y letra de control
-      const nifNie = clientData.client_nif_nie.trim().toUpperCase()
+      const nifNie = clientData.client_nif_nie.trim().toUpperCase();
       if (!isValidNIF(nifNie)) {
-        newErrors.client_nif_nie = getNIFErrorMessage(nifNie, clientData.client_type)
+        newErrors.client_nif_nie = getNIFErrorMessage(
+          nifNie,
+          clientData.client_type
+        );
       }
     }
     if (!clientData.client_phone.trim()) {
-      newErrors.client_phone = 'Teléfono es obligatorio'
+      newErrors.client_phone = "Teléfono es obligatorio";
     }
     if (!clientData.client_email.trim()) {
-      newErrors.client_email = 'Email es obligatorio'
+      newErrors.client_email = "Email es obligatorio";
     }
     if (!clientData.client_address.trim()) {
-      newErrors.client_address = 'Dirección es obligatoria'
+      newErrors.client_address = "Dirección es obligatoria";
     }
     if (!clientData.client_postal_code.trim()) {
-      newErrors.client_postal_code = 'Código Postal es obligatorio'
+      newErrors.client_postal_code = "Código Postal es obligatorio";
     }
     if (!clientData.client_locality.trim()) {
-      newErrors.client_locality = 'Localidad es obligatoria'
+      newErrors.client_locality = "Localidad es obligatoria";
     }
     if (!clientData.client_province.trim()) {
-      newErrors.client_province = 'Provincia es obligatoria'
+      newErrors.client_province = "Provincia es obligatoria";
     }
     if (!clientData.client_acceptance) {
-      newErrors.client_acceptance = 'Debe aceptar el presupuesto'
+      newErrors.client_acceptance = "Debe aceptar el presupuesto";
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   // Auto-guardado desactivado - solo guardado manual con el botón "Guardar"
   // useEffect(() => {
@@ -312,60 +387,69 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
   const handleStep1Continue = () => {
     // Solo validar y cambiar de paso, sin guardar en BD
     if (validateStep1()) {
-      setCurrentStep(2)
+      setCurrentStep(2);
     }
-  }
+  };
 
   const handleBudgetDataChange = (newBudgetData: unknown[]) => {
-    setBudgetData(newBudgetData)
-  }
+    setBudgetData(newBudgetData);
+  };
 
   const handleClearBudgetData = () => {
     // Resetear todas las cantidades a 0
-    if (window.confirm('¿Estás seguro de que quieres borrar todos los datos del presupuesto?')) {
-      setBudgetData([])
+    if (
+      window.confirm(
+        "¿Estás seguro de que quieres borrar todos los datos del presupuesto?"
+      )
+    ) {
+      setBudgetData([]);
       // Forzar recarga del formulario jerárquico
-      setCurrentStep(1)
-      setTimeout(() => setCurrentStep(2), 0)
+      setCurrentStep(1);
+      setTimeout(() => setCurrentStep(2), 0);
     }
-  }
+  };
 
   const handleSaveBudget = async () => {
     // Validar al menos una partida con cantidad > 0
     const itemsWithQuantity = budgetData
       .map((item: unknown) => {
-        const budgetItem = item as { level?: string; quantity?: string; id?: string; name?: string }
-        if (budgetItem.level !== 'item') return null
+        const budgetItem = item as {
+          level?: string;
+          quantity?: string;
+          id?: string;
+          name?: string;
+        };
+        if (budgetItem.level !== "item") return null;
 
-        const quantityStr = budgetItem.quantity || '0'
-        const quantity = parseFloat(quantityStr.replace(',', '.'))
+        const quantityStr = budgetItem.quantity || "0";
+        const quantity = parseFloat(quantityStr.replace(",", "."));
 
-        return quantity > 0 ? budgetItem : null
+        return quantity > 0 ? budgetItem : null;
       })
-      .filter(item => item !== null)
+      .filter((item) => item !== null);
 
-    const hasItems = itemsWithQuantity.length > 0
+    const hasItems = itemsWithQuantity.length > 0;
 
     if (!hasItems) {
-      toast.error('Debe incluir al menos un elemento en el presupuesto')
-      return
+      toast.error("Debe incluir al menos un elemento en el presupuesto");
+      return;
     }
 
     // NUEVA LÓGICA SEGÚN ESPECIFICACIONES:
 
     // 1. Primera vez guardando (modo creación, no existe budgetId)
     if (!isEditMode) {
-      await executeCreateNew()
-      return
+      await executeCreateNew();
+      return;
     }
 
     // 2. Editando presupuesto existente
     // Mostrar opciones: "Guardar" vs "Guardar como"
-    setShowSaveAsOrSaveDialog(true)
-  }
+    setShowSaveAsOrSaveDialog(true);
+  };
 
   const executeCreateNew = async () => {
-    setSaveStatus('saving')
+    setSaveStatus("saving");
 
     try {
       // Crear presupuesto nuevo
@@ -375,105 +459,129 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
           clientData: clientData,
           tariffData: budgetData,
           validity: tariff.validity,
-          totals: totals
-        })
+          totals: totals,
+        });
 
         if (!createResult.success || !createResult.budgetId) {
-          toast.error(createResult.error || 'Error al crear presupuesto')
-          setSaveStatus('idle')
-          return
+          toast.error(createResult.error || "Error al crear presupuesto");
+          setSaveStatus("idle");
+          return;
         }
 
-        const newBudgetId = createResult.budgetId
+        const newBudgetId = createResult.budgetId;
 
-        const recargoData = aplicaRecargo ? { aplica: true, recargos } : undefined
-        const result = await saveBudget(newBudgetId, totals, budgetData, clientData, recargoData)
+        const recargoData = aplicaRecargo
+          ? { aplica: true, recargos }
+          : undefined;
+        const result = await saveBudget(
+          newBudgetId,
+          totals,
+          budgetData,
+          clientData,
+          recargoData
+        );
 
         if (result.success) {
-          toast.success('Presupuesto creado correctamente')
-          setBudgetId(newBudgetId)
-          setSaveStatus('saved')
-          setHasUnsavedChanges(false)
+          toast.success("Presupuesto creado correctamente");
+          setBudgetId(newBudgetId);
+          setSaveStatus("saved");
+          setHasUnsavedChanges(false);
 
           // Redirigir a /budgets filtrando por este presupuesto (sin hijos, es nuevo)
           setTimeout(() => {
-            router.push(`/budgets?budget_id=${newBudgetId}`)
-          }, 1000)
+            router.push(`/budgets?budget_id=${newBudgetId}`);
+          }, 1000);
         } else {
-          toast.error(result.error || 'Error al guardar')
-          setSaveStatus('idle')
+          toast.error(result.error || "Error al guardar");
+          setSaveStatus("idle");
         }
       } else {
         // Ya existe budgetId (caso raro en create mode)
-        const recargoData = aplicaRecargo ? { aplica: true, recargos } : undefined
-        const result = await saveBudget(budgetId, totals, budgetData, clientData, recargoData)
+        const recargoData = aplicaRecargo
+          ? { aplica: true, recargos }
+          : undefined;
+        const result = await saveBudget(
+          budgetId,
+          totals,
+          budgetData,
+          clientData,
+          recargoData
+        );
 
         if (result.success) {
-          toast.success('Presupuesto guardado correctamente')
-          setSaveStatus('saved')
-          setHasUnsavedChanges(false)
+          toast.success("Presupuesto guardado correctamente");
+          setSaveStatus("saved");
+          setHasUnsavedChanges(false);
 
           // Redirigir a /budgets filtrando por este presupuesto
           setTimeout(() => {
-            router.push(`/budgets?budget_id=${budgetId}`)
-          }, 1000)
+            router.push(`/budgets?budget_id=${budgetId}`);
+          }, 1000);
         } else {
-          toast.error(result.error || 'Error al guardar')
-          setSaveStatus('idle')
+          toast.error(result.error || "Error al guardar");
+          setSaveStatus("idle");
         }
       }
     } catch (error) {
-      console.error('Error al guardar:', error)
-      toast.error('Error inesperado al guardar')
-      setSaveStatus('idle')
+      console.error("Error al guardar:", error);
+      toast.error("Error inesperado al guardar");
+      setSaveStatus("idle");
     }
-  }
+  };
 
   const executeOverwrite = async () => {
-    setShowOverwriteConfirm(false)
-    setShowSaveAsOrSaveDialog(false)
-    setShowOverwriteOrVersionDialog(false)
-    setSaveStatus('saving')
+    setShowOverwriteConfirm(false);
+    setShowSaveAsOrSaveDialog(false);
+    setShowOverwriteOrVersionDialog(false);
+    setSaveStatus("saving");
 
     try {
-      if (!budgetId) return
+      if (!budgetId) return;
 
-      const recargoData = aplicaRecargo ? { aplica: true, recargos } : undefined
-      const result = await saveBudget(budgetId, totals, budgetData, clientData, recargoData)
+      const recargoData = aplicaRecargo
+        ? { aplica: true, recargos }
+        : undefined;
+      const result = await saveBudget(
+        budgetId,
+        totals,
+        budgetData,
+        clientData,
+        recargoData
+      );
 
       if (result.success) {
-        toast.success('Presupuesto actualizado correctamente')
+        toast.success("Presupuesto actualizado correctamente");
         if (result.had_pdf) {
-          toast.info('PDF eliminado. Genera uno nuevo cuando estés listo.')
+          toast.info("PDF eliminado. Genera uno nuevo cuando estés listo.");
         }
-        setSaveStatus('saved')
-        setHasUnsavedChanges(false)
+        setSaveStatus("saved");
+        setHasUnsavedChanges(false);
 
         // Redirigir a /budgets filtrando por este presupuesto y todos sus hijos
         setTimeout(() => {
-          router.push(`/budgets?budget_id=${budgetId}`)
-        }, 1000)
+          router.push(`/budgets?budget_id=${budgetId}`);
+        }, 1000);
       } else {
-        toast.error(result.error || 'Error al actualizar')
-        setSaveStatus('idle')
+        toast.error(result.error || "Error al actualizar");
+        setSaveStatus("idle");
       }
     } catch (error) {
-      console.error('Error al sobrescribir:', error)
-      toast.error('Error inesperado')
-      setSaveStatus('idle')
+      console.error("Error al sobrescribir:", error);
+      toast.error("Error inesperado");
+      setSaveStatus("idle");
     }
-  }
+  };
 
   const executeCreateVersion = async () => {
-    setShowOverwriteOrVersionDialog(false)
-    setShowSaveAsOrSaveDialog(false)
-    setSaveStatus('saving')
+    setShowOverwriteOrVersionDialog(false);
+    setShowSaveAsOrSaveDialog(false);
+    setSaveStatus("saving");
 
     try {
-      if (!budgetId) return
+      if (!budgetId) return;
 
       // Determinar el parent_budget_id correcto
-      const parentId = existingBudget?.parent_budget_id || budgetId
+      const parentId = existingBudget?.parent_budget_id || budgetId;
 
       // Duplicar el presupuesto con parent_budget_id = padre original
       const result = await duplicateBudget(budgetId, {
@@ -481,35 +589,35 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
         budgetData: budgetData as any[],
         totals,
         recargo: aplicaRecargo ? { aplica: true, recargos } : undefined,
-        asVersion: true  // Crear como versión hijo
-      })
+        asVersion: true, // Crear como versión hijo
+      });
 
       if (result.success && result.newBudgetId) {
-        toast.success('Nueva versión creada correctamente')
-        setSaveStatus('saved')
-        setHasUnsavedChanges(false)
+        toast.success("Nueva versión creada correctamente");
+        setSaveStatus("saved");
+        setHasUnsavedChanges(false);
 
         // Redirigir a /budgets filtrando por el padre y todos sus hijos (incluyendo nueva versión)
         setTimeout(() => {
-          router.push(`/budgets?budget_id=${parentId}`)
-        }, 1000)
+          router.push(`/budgets?budget_id=${parentId}`);
+        }, 1000);
       } else {
-        toast.error(result.error || 'Error al crear versión')
-        setSaveStatus('idle')
+        toast.error(result.error || "Error al crear versión");
+        setSaveStatus("idle");
       }
     } catch (error) {
-      console.error('Error al crear versión:', error)
-      toast.error('Error inesperado')
-      setSaveStatus('idle')
+      console.error("Error al crear versión:", error);
+      toast.error("Error inesperado");
+      setSaveStatus("idle");
     }
-  }
+  };
 
   const executeSaveAs = async () => {
-    setShowSaveAsOrSaveDialog(false)
-    setSaveStatus('saving')
+    setShowSaveAsOrSaveDialog(false);
+    setSaveStatus("saving");
 
     try {
-      if (!budgetId) return
+      if (!budgetId) return;
 
       // Crear nuevo presupuesto independiente (sin parent_budget_id)
       const result = await duplicateBudget(budgetId, {
@@ -517,165 +625,178 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
         budgetData: budgetData as any[],
         totals,
         recargo: aplicaRecargo ? { aplica: true, recargos } : undefined,
-        asVersion: false  // NO es versión, es nuevo presupuesto independiente
-      })
+        asVersion: false, // NO es versión, es nuevo presupuesto independiente
+      });
 
       if (result.success && result.newBudgetId) {
-        toast.success('Nuevo presupuesto creado como independiente')
-        setSaveStatus('saved')
-        setHasUnsavedChanges(false)
+        toast.success("Nuevo presupuesto creado como independiente");
+        setSaveStatus("saved");
+        setHasUnsavedChanges(false);
 
         // Redirigir a /budgets filtrando por el nuevo y sus hijos (inicialmente ninguno)
         setTimeout(() => {
-          router.push(`/budgets?budget_id=${result.newBudgetId}`)
-        }, 1000)
+          router.push(`/budgets?budget_id=${result.newBudgetId}`);
+        }, 1000);
       } else {
-        toast.error(result.error || 'Error al crear nuevo presupuesto')
-        setSaveStatus('idle')
+        toast.error(result.error || "Error al crear nuevo presupuesto");
+        setSaveStatus("idle");
       }
     } catch (error) {
-      console.error('Error al duplicar:', error)
-      toast.error('Error inesperado')
-      setSaveStatus('idle')
+      console.error("Error al duplicar:", error);
+      toast.error("Error inesperado");
+      setSaveStatus("idle");
     }
-  }
+  };
 
   const handleGeneratePDF = async () => {
     if (!budgetId) {
-      toast.error('Debe guardar el presupuesto antes de generar PDF')
-      return
+      toast.error("Debe guardar el presupuesto antes de generar PDF");
+      return;
     }
 
     // Validar que hay items con cantidad > 0
     const itemsWithQuantity = budgetData
       .map((item: unknown) => {
-        const budgetItem = item as { level?: string; quantity?: string }
-        if (budgetItem.level !== 'item') return null
-        const quantityStr = budgetItem.quantity || '0'
-        const quantity = parseFloat(quantityStr.replace(',', '.'))
-        return quantity > 0 ? budgetItem : null
+        const budgetItem = item as { level?: string; quantity?: string };
+        if (budgetItem.level !== "item") return null;
+        const quantityStr = budgetItem.quantity || "0";
+        const quantity = parseFloat(quantityStr.replace(",", "."));
+        return quantity > 0 ? budgetItem : null;
       })
-      .filter(item => item !== null)
+      .filter((item) => item !== null);
 
     if (itemsWithQuantity.length === 0) {
-      toast.error('Debe incluir al menos un elemento en el presupuesto')
-      return
+      toast.error("Debe incluir al menos un elemento en el presupuesto");
+      return;
     }
 
     // Si ya existe PDF, mostrar confirmación
     if (existingBudget?.pdf_url) {
-      setShowPdfConfirm(true)
-      return
+      setShowPdfConfirm(true);
+      return;
     }
 
     // Si no hay PDF previo, generar directamente
-    await executeGeneratePDF()
-  }
+    await executeGeneratePDF();
+  };
 
   const executeGeneratePDF = async () => {
-    setShowPdfConfirm(false)
+    setShowPdfConfirm(false);
 
     try {
       // Primero guardar los datos actuales
-      setSaveStatus('saving')
+      setSaveStatus("saving");
 
-      if (!budgetId) return
+      if (!budgetId) return;
 
-      const recargoData = aplicaRecargo ? { aplica: true, recargos } : undefined
-      const saveResult = await saveBudget(budgetId, totals, budgetData, clientData, recargoData)
+      const recargoData = aplicaRecargo
+        ? { aplica: true, recargos }
+        : undefined;
+      const saveResult = await saveBudget(
+        budgetId,
+        totals,
+        budgetData,
+        clientData,
+        recargoData
+      );
 
       if (!saveResult.success) {
-        toast.error(saveResult.error || 'Error al guardar')
-        setSaveStatus('idle')
-        return
+        toast.error(saveResult.error || "Error al guardar");
+        setSaveStatus("idle");
+        return;
       }
 
-      toast.success('Datos guardados correctamente')
-      setSaveStatus('saved')
-      setTimeout(() => setSaveStatus('idle'), 2000)
+      toast.success("Datos guardados correctamente");
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 2000);
 
       // Luego generar el PDF
-      setPdfStatus('generating')
-      toast.info('Generando PDF... Esto puede tardar hasta 60 segundos')
+      setPdfStatus("generating");
+      toast.info("Generando PDF... Esto puede tardar hasta 60 segundos");
 
-      const result = await generateBudgetPDF(budgetId)
+      const result = await generateBudgetPDF(budgetId);
 
       // MODO DESARROLLO: Solo debug
       if (result.success && result.debug) {
-        setPdfStatus('idle')
-        console.log('📄 PAYLOAD PDF GENERADO (desarrollo):', result.payload)
-        toast.success('Payload generado (revisa consola del servidor)')
-        return
+        setPdfStatus("idle");
+        console.log("📄 PAYLOAD PDF GENERADO (desarrollo):", result.payload);
+        toast.success("Payload generado (revisa consola del servidor)");
+        return;
       }
 
       // MODO PRODUCCIÓN: Flujo completo
       if (result.success && result.pdf_url) {
-        setPdfStatus('generated')
-        toast.success('PDF generado exitosamente')
+        setPdfStatus("generated");
+        toast.success("PDF generado exitosamente");
 
         // Abrir PDF en nueva pestaña
-        window.open(result.pdf_url, '_blank')
+        window.open(result.pdf_url, "_blank");
 
         // Refrescar página para actualizar existingBudget.pdf_url
-        router.refresh()
+        router.refresh();
       } else {
-        setPdfStatus('idle')
-        toast.error(result.error || 'Error generando PDF')
+        setPdfStatus("idle");
+        toast.error(result.error || "Error generando PDF");
       }
     } catch (error) {
-      setPdfStatus('idle')
-      setSaveStatus('idle')
-      console.error('Error en executeGeneratePDF:', error)
-      toast.error('Error generando PDF')
+      setPdfStatus("idle");
+      setSaveStatus("idle");
+      console.error("Error en executeGeneratePDF:", error);
+      toast.error("Error generando PDF");
     }
-  }
+  };
 
-  const handleClientDataChange = (field: keyof ClientData, value: string | boolean) => {
-    setClientData(prev => ({ ...prev, [field]: value }))
+  const handleClientDataChange = (
+    field: keyof ClientData,
+    value: string | boolean
+  ) => {
+    setClientData((prev) => ({ ...prev, [field]: value }));
     // Limpiar error del campo modificado
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }))
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
 
     // Si se cambia el tipo de cliente y NO es autónomo, limpiar RE
-    if (field === 'client_type' && value !== 'autonomo') {
-      setAplicaRecargo(false)
-      setRecargos({})
-      setCalculatedREByIVA({})
-      setCalculatedTotalRE(0)
+    if (field === "client_type" && value !== "autonomo") {
+      setAplicaRecargo(false);
+      setRecargos({});
+      setCalculatedREByIVA({});
+      setCalculatedTotalRE(0);
     }
-  }
+  };
 
   const handleCancel = () => {
-    router.push('/budgets')
-  }
+    router.push("/budgets");
+  };
 
   const handleClose = () => {
     // Si hay cambios sin guardar, mostrar confirmación
     if (hasUnsavedChanges) {
-      setShowCloseConfirm(true)
-      return
+      setShowCloseConfirm(true);
+      return;
     }
 
     // Si no hay cambios, cerrar directamente
-    window.close()
-  }
+    window.close();
+  };
 
   const executeClose = () => {
-    setShowCloseConfirm(false)
-    window.close()
-  }
+    setShowCloseConfirm(false);
+    window.close();
+  };
 
   return (
     <div className="max-w-4xl mx-auto relative">
       {/* Indicador de guardado */}
-      {saveStatus !== 'idle' && (
+      {saveStatus !== "idle" && (
         <div className="fixed top-4 right-4 z-50">
           <div className="bg-white border rounded-lg px-4 py-2 shadow-lg flex items-center gap-2">
-            {saveStatus === 'saving' ? (
+            {saveStatus === "saving" ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm text-muted-foreground">Guardando...</span>
+                <span className="text-sm text-muted-foreground">
+                  Guardando...
+                </span>
               </>
             ) : (
               <>
@@ -701,7 +822,9 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                 />
               ) : (
                 <div className="w-24 h-24 bg-muted rounded-lg flex items-center justify-center">
-                  <span className="text-xs text-muted-foreground">Sin logo</span>
+                  <span className="text-xs text-muted-foreground">
+                    Sin logo
+                  </span>
                 </div>
               )}
             </div>
@@ -715,13 +838,13 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                 {tariff.name}
               </h2>
               <p className="text-sm text-muted-foreground">
-                {tariff.nif || 'NIF no especificado'}
+                {tariff.nif || "NIF no especificado"}
               </p>
               <p className="text-sm text-muted-foreground">
-                {tariff.address || 'Dirección no especificada'}
+                {tariff.address || "Dirección no especificada"}
               </p>
               <p className="text-sm text-muted-foreground">
-                {tariff.contact || 'Contacto no especificado'}
+                {tariff.contact || "Contacto no especificado"}
               </p>
             </div>
           </div>
@@ -759,19 +882,19 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                     className="bg-red-600 text-white hover:bg-red-700 border-red-600"
                     onClick={() => {
                       setClientData({
-                        client_type: 'empresa',
-                        client_name: '',
-                        client_nif_nie: '',
-                        client_phone: '',
-                        client_email: '',
-                        client_web: '',
-                        client_address: '',
-                        client_postal_code: '',
-                        client_locality: '',
-                        client_province: '',
-                        client_acceptance: false
-                      })
-                      setErrors({})
+                        client_type: "empresa",
+                        client_name: "",
+                        client_nif_nie: "",
+                        client_phone: "",
+                        client_email: "",
+                        client_web: "",
+                        client_address: "",
+                        client_postal_code: "",
+                        client_locality: "",
+                        client_province: "",
+                        client_acceptance: false,
+                      });
+                      setErrors({});
                     }}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -845,9 +968,9 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                     size="icon"
                     style={{ backgroundColor: tariff.primary_color }}
                     onClick={handleGeneratePDF}
-                    disabled={pdfStatus === 'generating'}
+                    disabled={pdfStatus === "generating"}
                   >
-                    {pdfStatus === 'generating' ? (
+                    {pdfStatus === "generating" ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       <FileStack className="w-4 h-4" />
@@ -919,12 +1042,18 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                   type="button"
                   variant="outline"
                   className="w-full bg-gray-100"
-                  style={clientData.client_type === 'empresa' ? {
-                    borderColor: tariff.primary_color,
-                    backgroundColor: `${tariff.primary_color}20`,
-                    color: '#000'
-                  } : {}}
-                  onClick={() => handleClientDataChange('client_type', 'empresa')}
+                  style={
+                    clientData.client_type === "empresa"
+                      ? {
+                          borderColor: tariff.primary_color,
+                          backgroundColor: `${tariff.primary_color}20`,
+                          color: "#000",
+                        }
+                      : {}
+                  }
+                  onClick={() =>
+                    handleClientDataChange("client_type", "empresa")
+                  }
                 >
                   Empresa
                 </Button>
@@ -932,12 +1061,18 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                   type="button"
                   variant="outline"
                   className="w-full bg-gray-100"
-                  style={clientData.client_type === 'autonomo' ? {
-                    borderColor: tariff.primary_color,
-                    backgroundColor: `${tariff.primary_color}20`,
-                    color: '#000'
-                  } : {}}
-                  onClick={() => handleClientDataChange('client_type', 'autonomo')}
+                  style={
+                    clientData.client_type === "autonomo"
+                      ? {
+                          borderColor: tariff.primary_color,
+                          backgroundColor: `${tariff.primary_color}20`,
+                          color: "#000",
+                        }
+                      : {}
+                  }
+                  onClick={() =>
+                    handleClientDataChange("client_type", "autonomo")
+                  }
                 >
                   Autónomo
                 </Button>
@@ -945,12 +1080,18 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                   type="button"
                   variant="outline"
                   className="w-full bg-gray-100"
-                  style={clientData.client_type === 'particular' ? {
-                    borderColor: tariff.primary_color,
-                    backgroundColor: `${tariff.primary_color}20`,
-                    color: '#000'
-                  } : {}}
-                  onClick={() => handleClientDataChange('client_type', 'particular')}
+                  style={
+                    clientData.client_type === "particular"
+                      ? {
+                          borderColor: tariff.primary_color,
+                          backgroundColor: `${tariff.primary_color}20`,
+                          color: "#000",
+                        }
+                      : {}
+                  }
+                  onClick={() =>
+                    handleClientDataChange("client_type", "particular")
+                  }
                 >
                   Particular
                 </Button>
@@ -961,20 +1102,23 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
             </div>
 
             {/* Recargo de Equivalencia - Checkbox (solo si cliente es autónomo) */}
-            {clientData.client_type === 'autonomo' && (
-              <div className="space-y-3 p-4 border rounded-lg bg-amber-50">
+            {clientData.client_type === "autonomo" && (
+              <div className="space-y-3 p-4 border rounded-lg bg-blue-50">
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="aplica_recargo"
                     checked={aplicaRecargo}
                     onCheckedChange={(checked) => {
-                      setAplicaRecargo(!!checked)
+                      setAplicaRecargo(!!checked);
                       if (!checked) {
-                        setRecargos({})
+                        setRecargos({});
                       }
                     }}
                   />
-                  <Label htmlFor="aplica_recargo" className="text-sm font-medium">
+                  <Label
+                    htmlFor="aplica_recargo"
+                    className="text-sm font-medium"
+                  >
                     Aplicar Recargo de Equivalencia
                   </Label>
                 </div>
@@ -985,31 +1129,53 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                     <p className="text-sm text-muted-foreground">
                       Porcentajes de RE por tipo de IVA:
                     </p>
-                    {tariff.ivas_presentes && tariff.ivas_presentes.length > 0 ? (
+                    {tariff.ivas_presentes &&
+                    tariff.ivas_presentes.length > 0 ? (
                       <div className="grid gap-3">
                         {tariff.ivas_presentes.map((iva: number) => {
-                          const ivaFormatted = Number(iva).toFixed(2).replace('.', ',')
-                          const reValue = recargos[iva] || 0
-                          const reFormatted = reValue.toFixed(2).replace('.', ',')
+                          const ivaFormatted = Number(iva)
+                            .toFixed(2)
+                            .replace(".", ",");
+                          const reValue = recargos[iva] || 0;
+                          const reFormatted = reValue
+                            .toFixed(2)
+                            .replace(".", ",");
                           // Usar el Set de IVAs reconocidos, no el valor actual
-                          const isIVARecognized = ivasReconocidos.has(iva)
+                          const isIVARecognized = ivasReconocidos.has(iva);
 
                           return (
-                            <div key={iva} className={`flex items-center gap-4 p-3 rounded border ${!isIVARecognized ? 'bg-yellow-50 border-yellow-300' : 'bg-white'}`}>
-                              <Label className="min-w-[80px] font-medium">{ivaFormatted}% IVA</Label>
+                            <div
+                              key={iva}
+                              className={`flex items-center gap-4 p-3 rounded border ${
+                                !isIVARecognized
+                                  ? "bg-yellow-50 border-yellow-300"
+                                  : "bg-white"
+                              }`}
+                            >
+                              <Label className="min-w-[80px] font-medium">
+                                {ivaFormatted}% IVA
+                              </Label>
                               <div className="flex items-center gap-2 flex-1">
                                 <Input
                                   type="text"
                                   value={reFormatted}
                                   onChange={(e) => {
                                     // Convertir formato español a número
-                                    const valueStr = e.target.value.replace(',', '.')
-                                    const value = parseFloat(valueStr) || 0
-                                    setRecargos(prev => ({ ...prev, [iva]: value }))
+                                    const valueStr = e.target.value.replace(
+                                      ",",
+                                      "."
+                                    );
+                                    const value = parseFloat(valueStr) || 0;
+                                    setRecargos((prev) => ({
+                                      ...prev,
+                                      [iva]: value,
+                                    }));
                                   }}
                                   className="w-28 bg-white"
                                 />
-                                <span className="text-sm text-muted-foreground">% RE</span>
+                                <span className="text-sm text-muted-foreground">
+                                  % RE
+                                </span>
                               </div>
                               {!isIVARecognized && (
                                 <div className="flex items-center gap-1 text-xs text-yellow-700">
@@ -1018,26 +1184,34 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                                 </div>
                               )}
                             </div>
-                          )
+                          );
                         })}
                       </div>
                     ) : (
                       <p className="text-sm text-muted-foreground">
-                        No se detectaron IVAs en esta tarifa. Por favor, verifica la tarifa.
+                        No se detectaron IVAs en esta tarifa. Por favor,
+                        verifica la tarifa.
                       </p>
                     )}
-                    {tariff.ivas_presentes && tariff.ivas_presentes.some((iva: number) => !ivasReconocidos.has(iva)) && (
-                      <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 p-3 rounded text-xs">
-                        <p className="font-semibold">⚠️ Advertencia de IVAs no reconocidos:</p>
-                        <p className="mt-1">
-                          Algunos porcentajes de IVA no están configurados en el sistema. El Recargo de Equivalencia por defecto es 0,00%.
-                          Puedes corregir el IVA en la tarifa o aceptar el valor 0,00% si es correcto.
-                        </p>
-                      </div>
-                    )}
+                    {tariff.ivas_presentes &&
+                      tariff.ivas_presentes.some(
+                        (iva: number) => !ivasReconocidos.has(iva)
+                      ) && (
+                        <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 p-3 rounded text-xs">
+                          <p className="font-semibold">
+                            ⚠️ Advertencia de IVAs no reconocidos:
+                          </p>
+                          <p className="mt-1">
+                            Algunos porcentajes de IVA no están configurados en
+                            el sistema. El Recargo de Equivalencia por defecto
+                            es 0,00%. Puedes corregir el IVA en la tarifa o
+                            aceptar el valor 0,00% si es correcto.
+                          </p>
+                        </div>
+                      )}
                     <p className="text-xs text-muted-foreground italic">
-                      Los valores por defecto se cargan automáticamente según la normativa.
-                      Puedes modificarlos si es necesario.
+                      Los valores por defecto se cargan automáticamente según la
+                      normativa. Puedes modificarlos si es necesario.
                     </p>
                   </div>
                 )}
@@ -1050,12 +1224,20 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                 <Input
                   id="client_name"
                   value={clientData.client_name}
-                  onChange={(e) => handleClientDataChange('client_name', e.target.value)}
-                  className={errors.client_name ? 'border-destructive' : ''}
-                  placeholder={clientData.client_type === 'empresa' ? 'Nombre de la empresa' : 'Nombre y apellidos'}
+                  onChange={(e) =>
+                    handleClientDataChange("client_name", e.target.value)
+                  }
+                  className={errors.client_name ? "border-destructive" : ""}
+                  placeholder={
+                    clientData.client_type === "empresa"
+                      ? "Nombre de la empresa"
+                      : "Nombre y apellidos"
+                  }
                 />
                 {errors.client_name && (
-                  <p className="text-sm text-destructive">{errors.client_name}</p>
+                  <p className="text-sm text-destructive">
+                    {errors.client_name}
+                  </p>
                 )}
               </div>
 
@@ -1063,16 +1245,23 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                 <Input
                   id="client_nif_nie"
                   value={clientData.client_nif_nie}
-                  onChange={(e) => handleClientDataChange('client_nif_nie', e.target.value.toUpperCase())}
-                  className={errors.client_nif_nie ? 'border-destructive' : ''}
+                  onChange={(e) =>
+                    handleClientDataChange(
+                      "client_nif_nie",
+                      e.target.value.toUpperCase()
+                    )
+                  }
+                  className={errors.client_nif_nie ? "border-destructive" : ""}
                   placeholder={
-                    clientData.client_type === 'empresa'
-                      ? 'CIF (A12345678)'
-                      : 'DNI/NIE (12345678Z)'
+                    clientData.client_type === "empresa"
+                      ? "CIF (A12345678)"
+                      : "DNI/NIE (12345678Z)"
                   }
                 />
                 {errors.client_nif_nie && (
-                  <p className="text-sm text-destructive">{errors.client_nif_nie}</p>
+                  <p className="text-sm text-destructive">
+                    {errors.client_nif_nie}
+                  </p>
                 )}
               </div>
             </div>
@@ -1084,12 +1273,16 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                   id="client_phone"
                   type="tel"
                   value={clientData.client_phone}
-                  onChange={(e) => handleClientDataChange('client_phone', e.target.value)}
+                  onChange={(e) =>
+                    handleClientDataChange("client_phone", e.target.value)
+                  }
                   placeholder="Teléfono"
-                  className={errors.client_phone ? 'border-destructive' : ''}
+                  className={errors.client_phone ? "border-destructive" : ""}
                 />
                 {errors.client_phone && (
-                  <p className="text-sm text-destructive">{errors.client_phone}</p>
+                  <p className="text-sm text-destructive">
+                    {errors.client_phone}
+                  </p>
                 )}
               </div>
 
@@ -1098,12 +1291,16 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                   id="client_email"
                   type="email"
                   value={clientData.client_email}
-                  onChange={(e) => handleClientDataChange('client_email', e.target.value)}
+                  onChange={(e) =>
+                    handleClientDataChange("client_email", e.target.value)
+                  }
                   placeholder="Email"
-                  className={errors.client_email ? 'border-destructive' : ''}
+                  className={errors.client_email ? "border-destructive" : ""}
                 />
                 {errors.client_email && (
-                  <p className="text-sm text-destructive">{errors.client_email}</p>
+                  <p className="text-sm text-destructive">
+                    {errors.client_email}
+                  </p>
                 )}
               </div>
 
@@ -1111,8 +1308,10 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                 <Input
                   id="client_web"
                   type="url"
-                  value={clientData.client_web || ''}
-                  onChange={(e) => handleClientDataChange('client_web', e.target.value)}
+                  value={clientData.client_web || ""}
+                  onChange={(e) =>
+                    handleClientDataChange("client_web", e.target.value)
+                  }
                   placeholder="Web"
                 />
               </div>
@@ -1124,12 +1323,16 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                 <Input
                   id="client_address"
                   value={clientData.client_address}
-                  onChange={(e) => handleClientDataChange('client_address', e.target.value)}
+                  onChange={(e) =>
+                    handleClientDataChange("client_address", e.target.value)
+                  }
                   placeholder="Dirección"
-                  className={errors.client_address ? 'border-destructive' : ''}
+                  className={errors.client_address ? "border-destructive" : ""}
                 />
                 {errors.client_address && (
-                  <p className="text-sm text-destructive">{errors.client_address}</p>
+                  <p className="text-sm text-destructive">
+                    {errors.client_address}
+                  </p>
                 )}
               </div>
 
@@ -1137,12 +1340,18 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                 <Input
                   id="client_postal_code"
                   value={clientData.client_postal_code}
-                  onChange={(e) => handleClientDataChange('client_postal_code', e.target.value)}
+                  onChange={(e) =>
+                    handleClientDataChange("client_postal_code", e.target.value)
+                  }
                   placeholder="C.P."
-                  className={errors.client_postal_code ? 'border-destructive' : ''}
+                  className={
+                    errors.client_postal_code ? "border-destructive" : ""
+                  }
                 />
                 {errors.client_postal_code && (
-                  <p className="text-sm text-destructive">{errors.client_postal_code}</p>
+                  <p className="text-sm text-destructive">
+                    {errors.client_postal_code}
+                  </p>
                 )}
               </div>
             </div>
@@ -1153,12 +1362,16 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                 <Input
                   id="client_locality"
                   value={clientData.client_locality}
-                  onChange={(e) => handleClientDataChange('client_locality', e.target.value)}
+                  onChange={(e) =>
+                    handleClientDataChange("client_locality", e.target.value)
+                  }
                   placeholder="Localidad"
-                  className={errors.client_locality ? 'border-destructive' : ''}
+                  className={errors.client_locality ? "border-destructive" : ""}
                 />
                 {errors.client_locality && (
-                  <p className="text-sm text-destructive">{errors.client_locality}</p>
+                  <p className="text-sm text-destructive">
+                    {errors.client_locality}
+                  </p>
                 )}
               </div>
 
@@ -1166,12 +1379,16 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                 <Input
                   id="client_province"
                   value={clientData.client_province}
-                  onChange={(e) => handleClientDataChange('client_province', e.target.value)}
+                  onChange={(e) =>
+                    handleClientDataChange("client_province", e.target.value)
+                  }
                   placeholder="Provincia"
-                  className={errors.client_province ? 'border-destructive' : ''}
+                  className={errors.client_province ? "border-destructive" : ""}
                 />
                 {errors.client_province && (
-                  <p className="text-sm text-destructive">{errors.client_province}</p>
+                  <p className="text-sm text-destructive">
+                    {errors.client_province}
+                  </p>
                 )}
               </div>
             </div>
@@ -1182,23 +1399,30 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                 <Checkbox
                   id="client_acceptance"
                   checked={clientData.client_acceptance}
-                  onCheckedChange={(checked) => handleClientDataChange('client_acceptance', !!checked)}
-                  className={errors.client_acceptance ? 'border-destructive' : ''}
+                  onCheckedChange={(checked) =>
+                    handleClientDataChange("client_acceptance", !!checked)
+                  }
+                  className={
+                    errors.client_acceptance ? "border-destructive" : ""
+                  }
                 />
                 <Label htmlFor="client_acceptance" className="text-sm">
                   Acepto la política de privacidad *
                 </Label>
               </div>
               {errors.client_acceptance && (
-                <p className="text-sm text-destructive">{errors.client_acceptance}</p>
+                <p className="text-sm text-destructive">
+                  {errors.client_acceptance}
+                </p>
               )}
 
               {/* Nota legal */}
               {tariff.legal_note && (
                 <div className="pt-4 border-t">
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {tariff.legal_note}
-                  </p>
+                  <div
+                    className="text-xs text-muted-foreground leading-relaxed prose prose-xs max-w-none"
+                    dangerouslySetInnerHTML={{ __html: tariff.legal_note }}
+                  />
                 </div>
               )}
             </div>
@@ -1215,7 +1439,8 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
           >
             <CardTitle className="text-white">Datos del Presupuesto</CardTitle>
             <CardDescription className="text-white/90">
-              Ajusta las cantidades de los elementos para crear tu presupuesto personalizado
+              Ajusta las cantidades de los elementos para crear tu presupuesto
+              personalizado
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 pt-6">
@@ -1223,7 +1448,8 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
               <BudgetHierarchyForm
                 tariffData={
                   existingBudget?.json_budget_data
-                    ? (existingBudget.json_budget_data as any)?.items || (existingBudget.json_budget_data as unknown[])
+                    ? (existingBudget.json_budget_data as any)?.items ||
+                      (existingBudget.json_budget_data as unknown[])
                     : (tariff.json_tariff_data as unknown[])
                 }
                 onBudgetDataChange={handleBudgetDataChange}
@@ -1241,26 +1467,31 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
       )}
 
       {/* Diálogo 1: "Guardar" vs "Guardar como" (en modo edición) */}
-      <AlertDialog open={showSaveAsOrSaveDialog} onOpenChange={setShowSaveAsOrSaveDialog}>
+      <AlertDialog
+        open={showSaveAsOrSaveDialog}
+        onOpenChange={setShowSaveAsOrSaveDialog}
+      >
         <AlertDialogContent className="sm:max-w-[500px]">
           <AlertDialogHeader>
             <AlertDialogTitle>¿Cómo deseas guardar?</AlertDialogTitle>
             <AlertDialogDescription>
-              Elige si deseas guardar los cambios en este presupuesto o crear uno nuevo.
+              Elige si deseas guardar los cambios en este presupuesto o crear
+              uno nuevo.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex flex-col gap-3 py-4">
             <Button
               onClick={() => {
-                setShowSaveAsOrSaveDialog(false)
-                setShowOverwriteOrVersionDialog(true)
+                setShowSaveAsOrSaveDialog(false);
+                setShowOverwriteOrVersionDialog(true);
               }}
               className="w-full flex flex-col items-start h-auto py-3"
               style={{ backgroundColor: tariff.primary_color }}
             >
               <span className="font-semibold">Guardar</span>
               <span className="text-xs font-normal opacity-90">
-                Guardar cambios en este presupuesto (sobreescribir o nueva versión)
+                Guardar cambios en este presupuesto (sobreescribir o nueva
+                versión)
               </span>
             </Button>
             <Button
@@ -1270,7 +1501,8 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
             >
               <span className="font-semibold">Guardar como</span>
               <span className="text-xs font-normal opacity-90">
-                Crear un nuevo presupuesto independiente{existingBudget?.pdf_url && " (sin copiar PDF)"}
+                Crear un nuevo presupuesto independiente
+                {existingBudget?.pdf_url && " (sin copiar PDF)"}
               </span>
             </Button>
           </div>
@@ -1281,7 +1513,10 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
       </AlertDialog>
 
       {/* Diálogo 2: "Sobreescribir" vs "Nueva versión" (dentro de "Guardar") */}
-      <AlertDialog open={showOverwriteOrVersionDialog} onOpenChange={setShowOverwriteOrVersionDialog}>
+      <AlertDialog
+        open={showOverwriteOrVersionDialog}
+        onOpenChange={setShowOverwriteOrVersionDialog}
+      >
         <AlertDialogContent className="sm:max-w-[500px]">
           <AlertDialogHeader>
             <AlertDialogTitle>¿Sobreescribir o nueva versión?</AlertDialogTitle>
@@ -1293,14 +1528,17 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
             <Button
               variant="destructive"
               onClick={() => {
-                setShowOverwriteOrVersionDialog(false)
-                setShowOverwriteConfirm(true)
+                setShowOverwriteOrVersionDialog(false);
+                setShowOverwriteConfirm(true);
               }}
               className="w-full flex flex-col items-start h-auto py-3"
             >
               <span className="font-semibold">Sobreescribir</span>
               <span className="text-xs font-normal opacity-90">
-                ⚠️ Los datos anteriores de cliente y presupuesto serán sobreescritos{existingBudget?.pdf_url && ". Se eliminará el archivo PDF si existe"}
+                ⚠️ Los datos anteriores de cliente y presupuesto serán
+                sobreescritos
+                {existingBudget?.pdf_url &&
+                  ". Se eliminará el archivo PDF si existe"}
               </span>
             </Button>
             <Button
@@ -1323,20 +1561,32 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
       </AlertDialog>
 
       {/* Diálogo 3: Confirmación final de sobrescritura */}
-      <AlertDialog open={showOverwriteConfirm} onOpenChange={setShowOverwriteConfirm}>
+      <AlertDialog
+        open={showOverwriteConfirm}
+        onOpenChange={setShowOverwriteConfirm}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>⚠️ Confirma que deseas sobrescribir</AlertDialogTitle>
+            <AlertDialogTitle>
+              ⚠️ Confirma que deseas sobrescribir
+            </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <p className="font-semibold">Esta acción NO se puede deshacer.</p>
-              <p>Los datos anteriores de cliente y presupuesto serán sobreescritos por los actuales.</p>
+              <p>
+                Los datos anteriores de cliente y presupuesto serán
+                sobreescritos por los actuales.
+              </p>
               {existingBudget?.pdf_url && (
-                <p className="text-destructive font-medium">Se eliminará el archivo PDF si existe.</p>
+                <p className="text-destructive font-medium">
+                  Se eliminará el archivo PDF si existe.
+                </p>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setShowOverwriteOrVersionDialog(true)}>
+            <AlertDialogCancel
+              onClick={() => setShowOverwriteOrVersionDialog(true)}
+            >
               No, volver atrás
             </AlertDialogCancel>
             <AlertDialogAction
@@ -1353,15 +1603,21 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
       <AlertDialog open={showPdfConfirm} onOpenChange={setShowPdfConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirma la generación del nuevo PDF</AlertDialogTitle>
+            <AlertDialogTitle>
+              Confirma la generación del nuevo PDF
+            </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
-              <p>Al generar un nuevo PDF se realizarán las siguientes acciones:</p>
+              <p>
+                Al generar un nuevo PDF se realizarán las siguientes acciones:
+              </p>
               <ul className="list-disc list-inside space-y-1">
                 <li>Se guardarán los datos actuales del presupuesto</li>
                 <li>Se eliminará el PDF anterior</li>
                 <li>Se generará un nuevo PDF con los datos actualizados</li>
               </ul>
-              <p className="font-semibold mt-2">⚠️ Los datos y PDF anteriores se perderán permanentemente</p>
+              <p className="font-semibold mt-2">
+                ⚠️ Los datos y PDF anteriores se perderán permanentemente
+              </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1376,14 +1632,16 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
         </AlertDialogContent>
       </AlertDialog>
 
-
       {/* AlertDialog: Confirmación de cierre con cambios sin guardar */}
       <AlertDialog open={showCloseConfirm} onOpenChange={setShowCloseConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Cerrar ventana con cambios sin guardar?</AlertDialogTitle>
+            <AlertDialogTitle>
+              ¿Cerrar ventana con cambios sin guardar?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Has realizado cambios que no se han guardado. Si cierras la ventana ahora, se perderán todos los cambios.
+              Has realizado cambios que no se han guardado. Si cierras la
+              ventana ahora, se perderán todos los cambios.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1398,5 +1656,5 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  )
+  );
 }

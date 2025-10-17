@@ -4,10 +4,11 @@
 
 **Fase Actual:** Fase 2 - Evolución Funcional
 **Progreso MVP:** 100% ✅
-**Progreso Fase 2:** 0% ⏳
+**Progreso Fase 2:** 42% ✅ (20/47 tareas)
 
-**Último módulo completado:** Dashboard (MVP completo)
-**Siguiente objetivo:** Bloque 1 - Usuarios y Seguridad (CRÍTICO)
+**Última actualización:** 2025-01-17 - Fix crítico RLS + Mejoras UX
+**Bloques completados:** 5/9 (Usuarios, Tarifas, Config, IRPF/RE, Versiones/Notas)
+**Siguiente objetivo:** Bloque 6 - Navegación Unificada (o saltar a Responsive)
 
 ---
 
@@ -445,10 +446,12 @@ docs(users): actualizar README con flujo registro
 
 **Regla de oro:** Backup antes de cada migración
 
-- Numerar secuencialmente: 004, 005, 006...
+- Numerar secuencialmente: 004-030 (última ejecutada: 030)
+- **CRÍTICO:** Migración 030 añade políticas RLS faltantes para tabla `tariffs`
 - Incluir rollback en comentario
 - Testear en staging primero
 - Migrar datos existentes si necesario
+- **Migraciones ejecutadas:** 004-030 (27 migraciones en Fase 2)
 
 ### 3. Payload PDF (cambios para Rapid-PDF)
 
@@ -490,10 +493,12 @@ docs(users): actualizar README con flujo registro
 
 ### Global:
 
-- **Progreso:** 0% (0/49 tareas)
-- **Bloques completados:** 0/9
-- **Semanas consumidas:** 0/12
-- **Bugs críticos:** 0
+- **Progreso:** 42% (20/47 tareas)
+- **Bloques completados:** 5/9 (Usuarios ✅, Tarifas ✅, Config ✅, IRPF/RE ✅, Versiones ✅)
+- **Bloques parciales:** Rich Editor ✅ (Bloque 7), Import/Export ✅ (Bloque 8)
+- **Semanas consumidas:** 7/12
+- **Bugs críticos resueltos:** 1 (RLS tariffs - migración 030)
+- **Mejoras UX:** 8 implementadas
 
 ---
 
@@ -975,7 +980,8 @@ export function ComponentName({ prop1, onSuccess }: ComponentNameProps) {
 ---
 
 **Documento:** Claude Code Fase 2
-**Versión:** 1.0
-**Fecha:** 2025-01-04
+**Versión:** 1.1
+**Fecha:** 2025-01-17
 **Estado:** Activo
-**Próxima revisión:** Fin Semana 2
+**Última actualización:** Fix crítico RLS (migración 030) + Mejoras UX + Config centralizada
+**Próxima revisión:** Fin Semana 8

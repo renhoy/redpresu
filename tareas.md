@@ -967,9 +967,9 @@ Completado:
 
 ---
 
-## ✅ MEJORAS ADICIONALES IMPLEMENTADAS (2025-01-10)
+## ✅ MEJORAS ADICIONALES IMPLEMENTADAS
 
-### Correcciones y Mejoras UX
+### Correcciones y Mejoras UX (2025-01-10)
 
 **Prioridad:** ALTA | **Estado:** ✅ Completado
 
@@ -1051,20 +1051,124 @@ Completado:
 
 ---
 
+### Mejoras UX y Configuración (2025-01-17)
+
+**Prioridad:** MEDIA | **Estado:** ✅ Completado
+
+#### Configuración Centralizada default_tariff
+- ✅ Migración 028: Creada config `default_tariff` con JSON completo (13 campos)
+- ✅ Eliminada config obsoleta `default_colors`
+- ✅ Expandida interfaz `TariffDefaults` de 3 a 13 campos
+- ✅ Reescrita función `getTariffDefaultsAction()` con prioridades:
+  1. Tarifa con `is_template=true` de la empresa
+  2. Config `default_tariff` de BD
+  3. Fallback hardcodeado
+- ✅ Actualizada página `/tariffs/create` para cargar TODOS los campos
+- ✅ Fix: `getUserIssuerData()` usa `.maybeSingle()` en vez de `.single()`
+- ✅ Migración 029: Config `default_empresa_id` para superadmin sin empresa
+- ✅ Función `getDefaultEmpresaId()` con fallback a empresa 1
+- ✅ Página `/tariffs/create` usa empresa por defecto si user.empresa_id = null
+
+**Archivos nuevos:**
+- `migrations/EJECUTAR_028_add_default_tariff.sql`
+- `migrations/EJECUTAR_029_add_default_empresa.sql`
+
+**Archivos modificados:**
+- `src/app/actions/config.ts` - TariffDefaults (13 campos), getTariffDefaultsAction(), getDefaultEmpresaId()
+- `src/app/actions/tariffs.ts` - getUserIssuerData() con .maybeSingle()
+- `src/app/tariffs/create/page.tsx` - Carga completa de 13 campos + empresa por defecto
+
+**Criterios de completado:**
+- ✅ Configuración centralizada en una sola clave `default_tariff`
+- ✅ Todos los campos cargados correctamente al crear tarifa
+- ✅ Superadmin puede crear tarifas usando empresa por defecto
+- ✅ No falla cuando usuario no tiene issuer
+
+---
+
+#### Rich Text Editor - Mejoras UX
+- ✅ Vista previa inline para datos empresa (eliminada modal)
+- ✅ Eliminada vista previa duplicada en LogoUploader
+- ✅ Textareas de notas PDF ahora clicables (sin botón "Editar")
+- ✅ Modal editor 80% viewport (ancho y alto)
+- ✅ Toolbar y header fijos, contenido scrolleable
+- ✅ Botón "Copiar HTML" con escape JSON-safe
+- ✅ Feedback visual (icono Check al copiar)
+- ✅ SSR guard en getPlainText()
+
+**Archivos modificados:**
+- `src/components/tariffs/TariffFormFields.tsx` - Preview inline empresa
+- `src/components/tariffs/LogoUploader.tsx` - Eliminada preview duplicada
+- `src/components/shared/RichTextEditorDialog.tsx` - Modal 80%, copiar HTML, áreas clicables
+- `src/components/shared/RichTextEditor.tsx` - Toolbar fijo, contenido scroll
+- Eliminado: `src/components/tariffs/CompanyDataPreviewModal.tsx`
+
+**Criterios de completado:**
+- ✅ Preview empresa visible directamente en formulario
+- ✅ Modal ocupa 80% viewport con layout correcto
+- ✅ HTML copiable compatible con JSON
+- ✅ Toolbar siempre visible al hacer scroll
+- ✅ No errores SSR
+
+---
+
+#### Configuración del Sistema - Mejoras UI
+- ✅ Tabla settings: botón editar movido a primera columna
+- ✅ Modal edición: 80% ancho viewport, alto automático (contenido)
+
+**Archivos modificados:**
+- `src/components/settings/ConfigTable.tsx` - Reordenación columnas + modal responsive
+
+**Criterios de completado:**
+- ✅ Botón editar visible en primera columna
+- ✅ Modal ocupa 80% ancho sin altura fija
+
+---
+
+#### FIX CRÍTICO: Políticas RLS faltantes para tabla tariffs
+- ✅ Migración 030: Añadidas 4 políticas RLS (SELECT, INSERT, UPDATE, DELETE)
+- ✅ SELECT: usuarios de la misma empresa
+- ✅ INSERT: usuarios autenticados en su empresa
+- ✅ UPDATE: creador o admin/superadmin
+- ✅ DELETE: solo admin/superadmin
+- ✅ Solucionado error: "new row violates row-level security policy for table tariffs"
+
+**Archivos nuevos:**
+- `migrations/EJECUTAR_030_add_tariffs_rls_policies.sql`
+
+**Razón del bug:**
+- La tabla `tariffs` tenía RLS habilitado pero sin políticas definidas
+- Bloqueaba todas las operaciones (INSERT, SELECT, UPDATE, DELETE)
+
+**Criterios de completado:**
+- ✅ Crear tarifa funciona correctamente
+- ✅ Listado de tarifas visible
+- ✅ Edición de tarifas permitida según rol
+- ✅ Eliminación solo para admin/superadmin
+
+---
+
 ## ESTADO GLOBAL FASE 2
 
-**Progreso:** 40% (19/47 tareas) - Multi-tenant + Notas + Mejoras UX completados
+**Progreso:** 42% (20/47 tareas) - Multi-tenant + Config + Rich Editor + Import/Export completados
 **Bloques completados:** 5/9 (Usuarios ✅, Mejoras Tarifas ✅, Configuración ✅, IRPF y RE ✅, Versiones y Notas ✅)
-**Mejoras adicionales:** 4 correcciones críticas de UX implementadas
-**Semanas transcurridas:** 6/12
+**Bloques parciales:** Rich Editor ✅, Import/Export ✅ (Bloques 7 y 8 completados)
+**Mejoras adicionales:** 8 correcciones críticas + mejoras UX implementadas
+**Semanas transcurridas:** 7/12
 **Duración estimada:** 12 semanas
 
-**Bloque activo:** Bloque 6 - Navegación Unificada
-**Próximo paso:** Componente HierarchicalNavigator (6.1)
+**Última actualización:** 2025-01-17
+- ✅ Fix crítico: Políticas RLS para tabla tariffs (migración 030)
+- ✅ Configuración centralizada default_tariff (migraciones 028, 029)
+- ✅ Mejoras UX: Rich Editor (modal 80%, copiar HTML, preview inline)
+- ✅ Settings UI: botón editar en primera columna + modal responsive
+
+**Bloque activo:** Bloque 6 - Navegación Unificada (pendiente)
+**Próximo paso:** Componente HierarchicalNavigator (6.1) o saltar a Bloque 9 (Responsive)
 
 ---
 
 **Documento:** Tareas Fase 2
-**Versión:** 1.1
-**Fecha:** 2025-01-10
+**Versión:** 1.2
+**Fecha:** 2025-01-17
 **Estado:** Activo
