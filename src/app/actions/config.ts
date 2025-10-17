@@ -546,7 +546,7 @@ export interface IssuerData {
 }
 
 /**
- * Obtiene los datos del issuer por empresa_id
+ * Obtiene los datos del issuer por empresa_id (company_id en tabla issuers)
  * Solo superadmin puede acceder
  */
 export async function getIssuerByEmpresaId(empresaId: number): Promise<{
@@ -561,10 +561,11 @@ export async function getIssuerByEmpresaId(empresaId: number): Promise<{
   }
 
   try {
+    // Nota: La tabla issuers usa "company_id" no "empresa_id"
     const { data, error } = await supabaseAdmin
       .from('issuers')
-      .select('issuers_name, issuers_nif_nie, issuers_type, issuers_address, issuers_postal_code, issuers_locality, issuers_province, issuers_phone, issuers_email, issuers_web')
-      .eq('empresa_id', empresaId)
+      .select('issuers_name, issuers_nif_nie: issuers_nif, issuers_type, issuers_address, issuers_postal_code, issuers_locality, issuers_province, issuers_phone, issuers_email, issuers_web')
+      .eq('company_id', empresaId)
       .single()
 
     if (error || !data) {
