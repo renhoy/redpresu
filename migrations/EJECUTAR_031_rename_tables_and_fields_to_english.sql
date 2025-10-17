@@ -140,7 +140,10 @@ ALTER TABLE public.redpresu_budget_notes ENABLE ROW LEVEL SECURITY;
 -- ============================================
 
 -- Función: get_next_budget_version_number
-CREATE OR REPLACE FUNCTION public.get_next_budget_version_number(p_parent_budget_id uuid)
+-- DROP y recrear para evitar error de parámetros
+DROP FUNCTION IF EXISTS public.get_next_budget_version_number(uuid);
+
+CREATE FUNCTION public.get_next_budget_version_number(p_parent_budget_id uuid)
 RETURNS integer
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -162,7 +165,10 @@ COMMENT ON FUNCTION public.get_next_budget_version_number(uuid) IS
 
 -- Función: get_user_empresa_id (mantener nombre, actualizar implementación)
 -- NOTA: Mantenemos el nombre get_user_empresa_id para compatibilidad con políticas RLS existentes
-CREATE OR REPLACE FUNCTION public.get_user_empresa_id(p_user_id uuid)
+-- DROP y recrear para evitar error de parámetros
+DROP FUNCTION IF EXISTS public.get_user_empresa_id(uuid);
+
+CREATE FUNCTION public.get_user_empresa_id(p_user_id uuid)
 RETURNS integer
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -183,7 +189,10 @@ COMMENT ON FUNCTION public.get_user_empresa_id(uuid) IS
   'Obtiene el company_id de un usuario dado su user_id (nombre mantenido para compatibilidad)';
 
 -- Función: get_user_role_by_id
-CREATE OR REPLACE FUNCTION public.get_user_role_by_id(p_user_id uuid)
+-- DROP y recrear para evitar error de parámetros
+DROP FUNCTION IF EXISTS public.get_user_role_by_id(uuid);
+
+CREATE FUNCTION public.get_user_role_by_id(p_user_id uuid)
 RETURNS text
 LANGUAGE plpgsql
 SECURITY DEFINER
