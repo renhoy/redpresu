@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Upload, X, FileText, AlertCircle } from "lucide-react";
+import { Upload, X, FileText, AlertCircle, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { HierarchyPreview } from "./HierarchyPreview";
 import { processCSV } from "@/app/actions/tariffs";
+import { CSV2JSONConverter } from "@/lib/validators/csv-converter";
 
 interface CSVUploadPreviewProps {
   data: unknown;
@@ -37,6 +38,7 @@ export function CSVUploadPreview({
   const [isProcessing, setIsProcessing] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [processingErrors, setProcessingErrors] = useState<unknown[]>([]);
+  const [csvFileName, setCsvFileName] = useState<string>("");
 
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -55,6 +57,7 @@ export function CSVUploadPreview({
 
       if (result.success && result.jsonData) {
         onChange(result.jsonData);
+        setCsvFileName(file.name); // Guardar nombre del archivo
       } else {
         setProcessingErrors(
           result.errors || [{ message: "Error al procesar el CSV" }]
@@ -75,7 +78,34 @@ export function CSVUploadPreview({
   const handleDeleteCSV = () => {
     onChange(null);
     setProcessingErrors([]);
+    setCsvFileName("");
     setShowDeleteDialog(false);
+  };
+
+  const handleExportCSV = () => {
+    if (!data || !Array.isArray(data)) return;
+
+    try {
+      const converter = new CSV2JSONConverter();
+      const csvContent = converter.jsonToCSV(data);
+
+      // Crear blob y descargar
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+
+      link.setAttribute("href", url);
+      link.setAttribute("download", csvFileName || "tarifa.csv");
+      link.style.visibility = "hidden";
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error exporting CSV:", error);
+    }
   };
 
   // Estado inicial: sin datos CSV cargados
@@ -250,7 +280,7 @@ export function CSVUploadPreview({
     <Card className="bg-blue-50">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>Previsualización Tarifa</CardTitle>
+          <CardTitle>Previsualización de Estructura de Precios</CardTitle>
           <Button
             variant="ghost"
             size="sm"
@@ -258,6 +288,26 @@ export function CSVUploadPreview({
             className="h-8 w-8 p-0 hover:bg-destructive/10"
           >
             <X className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+
+        {/* Nombre del archivo y botón exportar */}
+        <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-200">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <FileText className="h-4 w-4" />
+            <span>CSV importado:</span>
+            <span className="font-mono font-medium text-gray-900">
+              {csvFileName || "archivo.csv"}
+            </span>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCSV}
+            className="gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Exportar
           </Button>
         </div>
       </CardHeader>
