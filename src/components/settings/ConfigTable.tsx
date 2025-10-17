@@ -84,10 +84,10 @@ export function ConfigTable({ config }: ConfigTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[80px]">Acciones</TableHead>
               <TableHead className="w-[200px]">Clave</TableHead>
               <TableHead>Descripción</TableHead>
               <TableHead className="w-[400px]">Valor</TableHead>
-              <TableHead className="w-[80px]">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -100,15 +100,6 @@ export function ConfigTable({ config }: ConfigTableProps) {
             ) : (
               config.map((item) => (
                 <TableRow key={item.key} className="bg-white hover:bg-lime-50/50">
-                  <TableCell className="font-mono text-sm">{item.key}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {item.description || '-'}
-                  </TableCell>
-                  <TableCell>
-                    <pre className="text-xs bg-muted p-2 rounded max-h-20 overflow-auto">
-                      {formatValue(item.value)}
-                    </pre>
-                  </TableCell>
                   <TableCell>
                     <Button
                       variant="ghost"
@@ -119,6 +110,15 @@ export function ConfigTable({ config }: ConfigTableProps) {
                       <Pencil className="h-4 w-4" />
                     </Button>
                   </TableCell>
+                  <TableCell className="font-mono text-sm">{item.key}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {item.description || '-'}
+                  </TableCell>
+                  <TableCell>
+                    <pre className="text-xs bg-muted p-2 rounded max-h-20 overflow-auto">
+                      {formatValue(item.value)}
+                    </pre>
+                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -128,7 +128,7 @@ export function ConfigTable({ config }: ConfigTableProps) {
 
       {/* Dialog de edición */}
       <Dialog open={!!editingConfig} onOpenChange={() => setEditingConfig(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="w-[80vw] max-w-none sm:max-w-none">
           <DialogHeader>
             <DialogTitle>Editar Configuración</DialogTitle>
             <DialogDescription>
