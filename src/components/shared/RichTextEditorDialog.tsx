@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Edit } from 'lucide-react'
+import { Edit, Copy, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -13,6 +13,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { RichTextEditor } from './RichTextEditor'
+import { toast } from 'sonner'
 
 interface RichTextEditorDialogProps {
   value: string
@@ -35,10 +36,12 @@ export function RichTextEditorDialog({
 }: RichTextEditorDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [tempValue, setTempValue] = useState(value)
+  const [copied, setCopied] = useState(false)
 
   const handleOpen = () => {
     setTempValue(value)
     setIsOpen(true)
+    setCopied(false) // Reset copied state when opening
   }
 
   const handleSave = () => {
@@ -49,6 +52,22 @@ export function RichTextEditorDialog({
   const handleCancel = () => {
     setTempValue(value)
     setIsOpen(false)
+  }
+
+  const handleCopyHTML = async () => {
+    try {
+      await navigator.clipboard.writeText(tempValue)
+      setCopied(true)
+      toast.success('HTML copiado al portapapeles')
+
+      // Reset icon after 2 seconds
+      setTimeout(() => {
+        setCopied(false)
+      }, 2000)
+    } catch (error) {
+      console.error('Error copying to clipboard:', error)
+      toast.error('Error al copiar al portapapeles')
+    }
   }
 
   // Convertir HTML a texto plano para preview
@@ -96,22 +115,43 @@ export function RichTextEditorDialog({
             />
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex items-center justify-between">
             <Button
               type="button"
               variant="outline"
-              onClick={handleCancel}
-              className="border-gray-600 text-gray-600 hover:bg-gray-50"
+              size="sm"
+              onClick={handleCopyHTML}
+              className="gap-2"
             >
-              Cancelar
+              {copied ? (
+                <>
+                  <Check className="h-4 w-4" />
+                  Copiado
+                </>
+              ) : (
+                <>
+                  <Copy className="h-4 w-4" />
+                  Copiar HTML
+                </>
+              )}
             </Button>
-            <Button
-              type="button"
-              onClick={handleSave}
-              className="bg-cyan-600 hover:bg-cyan-700 text-white"
-            >
-              Guardar
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCancel}
+                className="border-gray-600 text-gray-600 hover:bg-gray-50"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSave}
+                className="bg-cyan-600 hover:bg-cyan-700 text-white"
+              >
+                Guardar
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -158,22 +198,43 @@ export function RichTextEditorDialog({
             />
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex items-center justify-between">
             <Button
               type="button"
               variant="outline"
-              onClick={handleCancel}
-              className="border-gray-600 text-gray-600 hover:bg-gray-50"
+              size="sm"
+              onClick={handleCopyHTML}
+              className="gap-2"
             >
-              Cancelar
+              {copied ? (
+                <>
+                  <Check className="h-4 w-4" />
+                  Copiado
+                </>
+              ) : (
+                <>
+                  <Copy className="h-4 w-4" />
+                  Copiar HTML
+                </>
+              )}
             </Button>
-            <Button
-              type="button"
-              onClick={handleSave}
-              className="bg-cyan-600 hover:bg-cyan-700 text-white"
-            >
-              Guardar
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCancel}
+                className="border-gray-600 text-gray-600 hover:bg-gray-50"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSave}
+                className="bg-cyan-600 hover:bg-cyan-700 text-white"
+              >
+                Guardar
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
