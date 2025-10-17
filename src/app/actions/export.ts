@@ -94,7 +94,7 @@ export async function exportTariffs(
     const supabase = createServerActionClient({ cookies: () => cookieStore })
 
     const { data: tariffs, error } = await supabase
-      .from('tariffs')
+      .from('redpresu_tariffs')
       .select('*')
       .in('id', ids)
       .order('name', { ascending: true })
@@ -220,7 +220,7 @@ export async function exportBudgets(
     const supabase = createServerActionClient({ cookies: () => cookieStore })
 
     const { data: budgets, error } = await supabase
-      .from('budgets')
+      .from('redpresu_budgets')
       .select('*')
       .in('id', ids)
       .order('client_name', { ascending: true })

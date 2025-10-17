@@ -23,7 +23,7 @@ export default async function CreateUserPage() {
       <div className="container mx-auto py-10">
         <UserForm
           mode="create"
-          empresaId={user.empresa_id}
+          empresaId={user.company_id}
           currentUserRole={user.role}
         />
       </div>

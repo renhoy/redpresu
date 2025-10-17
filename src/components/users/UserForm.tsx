@@ -189,7 +189,7 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
             nombre: formData.nombre,
             apellidos: formData.apellidos,
             role: formData.role,
-            empresa_id: empresaId
+            company_id: empresaId
           }
 
           const result = await createUser(createData)

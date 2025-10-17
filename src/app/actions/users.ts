@@ -19,7 +19,7 @@ export interface User {
   nombre: string | null
   apellidos: string | null
   role: 'vendedor' | 'admin' | 'superadmin'
-  empresa_id: number
+  company_id: number
   status: 'active' | 'inactive' | 'pending'
   invited_by: string | null
   last_login: string | null
@@ -43,7 +43,7 @@ const createUserSchema = z.object({
   role: z.enum(['vendedor', 'admin', 'superadmin'], {
     required_error: 'El rol es requerido'
   }),
-  empresa_id: z.number().int().positive()
+  company_id: z.number().int().positive()
 })
 
 const updateUserSchema = z.object({
@@ -63,7 +63,7 @@ export type UpdateUserData = z.infer<typeof updateUserSchema>
 /**
  * Verifica si el usuario actual es admin o superadmin
  */
-async function checkAdminPermission(): Promise<{ allowed: boolean; currentUser: { id: string; role: string; empresa_id: number } | null }> {
+async function checkAdminPermission(): Promise<{ allowed: boolean; currentUser: { id: string; role: string; company_id: number } | null }> {
   const user = await getServerUser()
 
   if (!user || !['admin', 'superadmin'].includes(user.role)) {
@@ -75,7 +75,7 @@ async function checkAdminPermission(): Promise<{ allowed: boolean; currentUser: 
     currentUser: {
       id: user.id,
       role: user.role,
-      empresa_id: user.empresa_id
+      company_id: user.company_id
     }
   }
 }
@@ -83,7 +83,7 @@ async function checkAdminPermission(): Promise<{ allowed: boolean; currentUser: 
 /**
  * Verifica si el usuario actual tiene acceso (incluye vendedor para lectura)
  */
-async function checkUserAccess(): Promise<{ allowed: boolean; currentUser: { id: string; role: string; empresa_id: number } | null }> {
+async function checkUserAccess(): Promise<{ allowed: boolean; currentUser: { id: string; role: string; company_id: number } | null }> {
   const user = await getServerUser()
 
   if (!user) {
@@ -95,7 +95,7 @@ async function checkUserAccess(): Promise<{ allowed: boolean; currentUser: { id:
     currentUser: {
       id: user.id,
       role: user.role,
-      empresa_id: user.empresa_id
+      company_id: user.company_id
     }
   }
 }
@@ -132,7 +132,7 @@ export async function getUsers() {
 
   // Construir query base
   let query = supabaseAdmin
-    .from('users')
+    .from('redpresu_users')
     .select(`
       *,
       inviter:invited_by (
@@ -141,7 +141,7 @@ export async function getUsers() {
         email
       )
     `)
-    .eq('empresa_id', currentUser.empresa_id)
+    .eq('company_id', currentUser.company_id)
 
   // Si el usuario NO es superadmin, filtrar para NO mostrar superadmins
   if (currentUser.role !== 'superadmin') {
@@ -194,7 +194,7 @@ export async function getUserById(userId: string) {
   }
 
   const { data: user, error } = await supabaseAdmin
-    .from('users')
+    .from('redpresu_users')
     .select(`
       *,
       inviter:invited_by (
@@ -204,7 +204,7 @@ export async function getUserById(userId: string) {
       )
     `)
     .eq('id', userId)
-    .eq('empresa_id', currentUser.empresa_id)
+    .eq('company_id', currentUser.company_id)
     .single()
 
   if (error) {
@@ -242,7 +242,7 @@ export async function createUser(data: CreateUserData) {
   }
 
   // Validar que sea de la misma empresa
-  if (data.empresa_id !== currentUser.empresa_id) {
+  if (data.company_id !== currentUser.company_id) {
     return {
       success: false,
       error: 'No puedes crear usuarios de otra empresa'
@@ -290,14 +290,14 @@ export async function createUser(data: CreateUserData) {
 
     // 2. Crear registro en public.users
     const { data: userData, error: userError } = await supabaseAdmin
-      .from('users')
+      .from('redpresu_users')
       .insert({
         id: authData.user.id,
         email: data.email,
         nombre: data.nombre,
         apellidos: data.apellidos,
         role: data.role,
-        empresa_id: data.empresa_id,
+        company_id: data.company_id,
         status: 'pending', // Usuario debe cambiar password en primer login
         invited_by: currentUser.id
       })
@@ -360,8 +360,8 @@ export async function updateUser(userId: string, data: UpdateUserData) {
 
   // Verificar que el usuario pertenece a la misma empresa
   const { data: targetUser, error: checkError } = await supabaseAdmin
-    .from('users')
-    .select('empresa_id, role')
+    .from('redpresu_users')
+    .select('company_id, role')
     .eq('id', userId)
     .single()
 
@@ -372,7 +372,7 @@ export async function updateUser(userId: string, data: UpdateUserData) {
     }
   }
 
-  if (targetUser.empresa_id !== currentUser.empresa_id) {
+  if (targetUser.company_id !== currentUser.company_id) {
     return {
       success: false,
       error: 'No puedes actualizar usuarios de otra empresa'
@@ -389,7 +389,7 @@ export async function updateUser(userId: string, data: UpdateUserData) {
 
   // Actualizar usuario
   const { data: updatedUser, error: updateError } = await supabaseAdmin
-    .from('users')
+    .from('redpresu_users')
     .update({
       ...data,
       updated_at: new Date().toISOString()
@@ -442,12 +442,12 @@ export async function deleteUser(userId: string) {
 
   // Verificar que el usuario pertenece a la misma empresa
   const { data: targetUser } = await supabaseAdmin
-    .from('users')
-    .select('empresa_id')
+    .from('redpresu_users')
+    .select('company_id')
     .eq('id', userId)
     .single()
 
-  if (!targetUser || targetUser.empresa_id !== currentUser.empresa_id) {
+  if (!targetUser || targetUser.company_id !== currentUser.company_id) {
     return {
       success: false,
       error: 'Usuario no encontrado'

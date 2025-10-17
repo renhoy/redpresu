@@ -15,14 +15,14 @@ export default async function TariffsPage({ searchParams }: PageProps) {
   // El layout ya maneja la autenticación, solo obtenemos el usuario
   const user = await getServerUser()
 
-  if (!user || !user.empresa_id) {
+  if (!user || !user.company_id) {
     redirect('/login')
   }
 
   // Cargar tarifas iniciales
   let initialTariffs = []
   try {
-    initialTariffs = await getTariffs(user.empresa_id)
+    initialTariffs = await getTariffs(user.company_id)
   } catch (error) {
     console.error('Error loading initial tariffs:', error)
   }
@@ -33,7 +33,7 @@ export default async function TariffsPage({ searchParams }: PageProps) {
     const { data } = await supabaseAdmin
       .from('users')
       .select('id, nombre, apellidos')
-      .eq('empresa_id', user.empresa_id)
+      .eq('company_id', user.company_id)
       .eq('status', 'active')
       .order('nombre')
 
@@ -49,7 +49,7 @@ export default async function TariffsPage({ searchParams }: PageProps) {
           </div>
         }>
           <TariffList
-            empresaId={user.empresa_id}
+            empresaId={user.company_id}
             initialTariffs={initialTariffs}
             users={users}
             currentUserRole={user.role}

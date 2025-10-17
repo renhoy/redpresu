@@ -98,9 +98,9 @@ export async function getTariffs(
   try {
     // Primero obtener tarifas sin el JOIN
     let query = supabase
-      .from('tariffs')
+      .from('redpresu_tariffs')
       .select('*')
-      .eq('empresa_id', empresaId)
+      .eq('company_id', empresaId)
       .order('created_at', { ascending: false })
 
     // Filtro por estado
@@ -139,7 +139,7 @@ export async function getTariffs(
     }
 
     const { data: users, error: usersError } = await supabase
-      .from('users')
+      .from('redpresu_users')
       .select('id, nombre, apellidos, email')
       .in('id', userIds)
 
@@ -155,7 +155,7 @@ export async function getTariffs(
     // Obtener conteo de presupuestos por tarifa
     const tariffIds = tariffs.map(t => t.id)
     const { data: budgetCounts, error: budgetCountsError } = await supabase
-      .from('budgets')
+      .from('redpresu_budgets')
       .select('tariff_id')
       .in('tariff_id', tariffIds)
 
@@ -191,7 +191,7 @@ export async function toggleTariffStatus(
   const newStatus = currentStatus === 'Activa' ? 'Inactiva' : 'Activa'
 
   const { error } = await supabase
-    .from('tariffs')
+    .from('redpresu_tariffs')
     .update({
       status: newStatus,
       updated_at: new Date().toISOString()
@@ -217,7 +217,7 @@ export async function deleteTariff(
 
   // Verificar si la tarifa tiene presupuestos asociados
   const { data: budgets, error: budgetError } = await supabase
-    .from('budgets')
+    .from('redpresu_budgets')
     .select('id')
     .eq('tariff_id', tariffId)
     .limit(1)
@@ -238,7 +238,7 @@ export async function deleteTariff(
   }
 
   const { error } = await supabase
-    .from('tariffs')
+    .from('redpresu_tariffs')
     .delete()
     .eq('id', tariffId)
 
@@ -260,7 +260,7 @@ export async function getTariffById(
   const supabase = supabaseAdmin
 
   const { data, error } = await supabase
-    .from('tariffs')
+    .from('redpresu_tariffs')
     .select('*')
     .eq('id', tariffId)
     .single()
@@ -310,21 +310,21 @@ export async function createTariff(data: TariffFormData): Promise<{
       return { success: false, error: 'Usuario no autenticado' }
     }
 
-    // Obtener empresa_id del usuario actual
+    // Obtener company_id del usuario actual
     console.log('[createTariff] Obteniendo datos del usuario...')
     const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('empresa_id')
+      .from('redpresu_users')
+      .select('company_id')
       .eq('id', user.id)
       .single()
 
     console.log('[createTariff] User data:', {
       hasUserData: !!userData,
-      empresaId: userData?.empresa_id,
+      companyId: userData?.company_id,
       userError: userError?.message
     })
 
-    if (userError || !userData?.empresa_id) {
+    if (userError || !userData?.company_id) {
       console.error('[createTariff] User data error:', userError)
       return { success: false, error: 'No se pudo obtener la empresa del usuario' }
     }
@@ -351,9 +351,9 @@ export async function createTariff(data: TariffFormData): Promise<{
     // Crear tarifa
     console.log('[createTariff] Insertando tarifa en BD...')
     const { error } = await supabase
-      .from('tariffs')
+      .from('redpresu_tariffs')
       .insert({
-        empresa_id: userData.empresa_id,
+        company_id: userData.company_id,
         user_id: user.id, // Añadir trazabilidad de creación
         title: data.title,
         description: data.description,
@@ -447,7 +447,7 @@ export async function updateTariff(id: string, data: TariffFormData): Promise<{
     // Actualizar tarifa
     console.log('[updateTariff] Actualizando tarifa en BD...')
     const { error } = await supabase
-      .from('tariffs')
+      .from('redpresu_tariffs')
       .update({
         title: data.title,
         description: data.description,
@@ -509,8 +509,8 @@ export async function setTariffAsTemplate(tariffId: string): Promise<{
 
     // Verificar que el usuario es admin/superadmin
     const { data: userData } = await supabase
-      .from('users')
-      .select('role, empresa_id')
+      .from('redpresu_users')
+      .select('role, company_id')
       .eq('id', user.id)
       .single()
 
@@ -520,10 +520,10 @@ export async function setTariffAsTemplate(tariffId: string): Promise<{
 
     // Marcar como plantilla (el trigger se encargará de desmarcar las demás)
     const { error } = await supabase
-      .from('tariffs')
+      .from('redpresu_tariffs')
       .update({ is_template: true })
       .eq('id', tariffId)
-      .eq('empresa_id', userData.empresa_id) // Seguridad: solo su empresa
+      .eq('company_id', userData.company_id) // Seguridad: solo su empresa
 
     if (error) {
       console.error('[setTariffAsTemplate] Error:', error)
@@ -562,8 +562,8 @@ export async function unsetTariffAsTemplate(tariffId: string): Promise<{
 
     // Verificar que el usuario es admin/superadmin
     const { data: userData } = await supabase
-      .from('users')
-      .select('role, empresa_id')
+      .from('redpresu_users')
+      .select('role, company_id')
       .eq('id', user.id)
       .single()
 
@@ -573,10 +573,10 @@ export async function unsetTariffAsTemplate(tariffId: string): Promise<{
 
     // Desmarcar como plantilla
     const { error } = await supabase
-      .from('tariffs')
+      .from('redpresu_tariffs')
       .update({ is_template: false })
       .eq('id', tariffId)
-      .eq('empresa_id', userData.empresa_id) // Seguridad: solo su empresa
+      .eq('company_id', userData.company_id) // Seguridad: solo su empresa
 
     if (error) {
       console.error('[unsetTariffAsTemplate] Error:', error)
@@ -604,9 +604,9 @@ export async function getTemplateTariff(empresaId: number): Promise<{
     console.log('[getTemplateTariff] Obteniendo plantilla para empresa:', empresaId)
 
     const { data, error } = await supabaseAdmin
-      .from('tariffs')
+      .from('redpresu_tariffs')
       .select('*')
-      .eq('empresa_id', empresaId)
+      .eq('company_id', empresaId)
       .eq('is_template', true)
       .single()
 
@@ -827,7 +827,7 @@ export async function getUserIssuerData(userId: string): Promise<{
 }> {
   try {
     const { data, error } = await supabaseAdmin
-      .from('issuers')
+      .from('redpresu_issuers')
       .select('issuers_name, issuers_nif, issuers_address, issuers_postal_code, issuers_locality, issuers_province, issuers_phone, issuers_email, issuers_web')
       .eq('user_id', userId)
       .maybeSingle()

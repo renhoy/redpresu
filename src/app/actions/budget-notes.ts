@@ -40,7 +40,7 @@ export async function getBudgetNotes(budgetId: string): Promise<ActionResult> {
 
     // Obtener notas
     const { data: notesData, error: notesError } = await supabase
-      .from('budget_notes')
+      .from('redpresu_budget_notes')
       .select('*')
       .eq('budget_id', budgetId)
       .order('created_at', { ascending: false })
@@ -58,7 +58,7 @@ export async function getBudgetNotes(budgetId: string): Promise<ActionResult> {
     // Obtener usuarios para las notas
     const userIds = [...new Set(notesData.map(note => note.user_id))]
     const { data: usersData, error: usersError } = await supabase
-      .from('users')
+      .from('redpresu_users')
       .select('id, nombre, email')
       .in('id', userIds)
 
@@ -103,7 +103,7 @@ export async function addBudgetNote(budgetId: string, content: string): Promise<
 
     // Insertar nota
     const { data: noteData, error: noteError } = await supabase
-      .from('budget_notes')
+      .from('redpresu_budget_notes')
       .insert({
         budget_id: budgetId,
         user_id: user.id,
@@ -119,7 +119,7 @@ export async function addBudgetNote(budgetId: string, content: string): Promise<
 
     // Obtener datos del usuario
     const { data: userData } = await supabase
-      .from('users')
+      .from('redpresu_users')
       .select('id, nombre, email')
       .eq('id', user.id)
       .single()
@@ -160,7 +160,7 @@ export async function updateBudgetNote(noteId: string, content: string): Promise
 
     // Actualizar nota
     const { data: noteData, error: noteError } = await supabase
-      .from('budget_notes')
+      .from('redpresu_budget_notes')
       .update({
         content: content.trim()
       })
@@ -176,7 +176,7 @@ export async function updateBudgetNote(noteId: string, content: string): Promise
 
     // Obtener datos del usuario
     const { data: userData } = await supabase
-      .from('users')
+      .from('redpresu_users')
       .select('id, nombre, email')
       .eq('id', user.id)
       .single()
@@ -215,7 +215,7 @@ export async function deleteBudgetNote(noteId: string): Promise<ActionResult> {
     const isSuperadmin = user.role === 'superadmin'
 
     let query = supabase
-      .from('budget_notes')
+      .from('redpresu_budget_notes')
       .delete()
       .eq('id', noteId)
 
@@ -249,7 +249,7 @@ export async function getBudgetNotesCount(budgetId: string): Promise<number> {
     const supabase = createServerActionClient({ cookies: () => cookieStore })
 
     const { count, error } = await supabase
-      .from('budget_notes')
+      .from('redpresu_budget_notes')
       .select('*', { count: 'exact', head: true })
       .eq('budget_id', budgetId)
 

@@ -7,7 +7,7 @@ export interface AuthUser {
   nombre: string
   apellidos: string | null
   role: UserRole
-  empresa_id: number
+  company_id: number
 }
 
 export interface AuthResponse<T = unknown> {
@@ -47,8 +47,8 @@ export async function getUser(): Promise<AuthResponse<AuthUser>> {
 
     // Obtener datos extendidos del usuario desde public.users
     const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('id, email, name, role, empresa_id')
+      .from('redpresu_users')
+      .select('id, email, name, role, company_id')
       .eq('id', session.user.id)
       .single()
 
@@ -75,7 +75,7 @@ export async function getUser(): Promise<AuthResponse<AuthUser>> {
         nombre: userData.nombre,
         apellidos: userData.apellidos,
         role: userData.role as UserRole,
-        empresa_id: userData.empresa_id
+        company_id: userData.company_id
       },
       error: null,
       success: true

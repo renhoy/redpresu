@@ -12,10 +12,10 @@ export default async function CreateTariffPage() {
     redirect('/login')
   }
 
-  // Obtener empresa_id (usar empresa por defecto si usuario no tiene asignada)
-  let empresaId = user.empresa_id
+  // Obtener company_id (usar empresa por defecto si usuario no tiene asignada)
+  let empresaId = user.company_id
   if (!empresaId) {
-    console.log('[CreateTariffPage] Usuario sin empresa_id, obteniendo empresa por defecto...')
+    console.log('[CreateTariffPage] Usuario sin company_id, obteniendo empresa por defecto...')
     empresaId = await getDefaultEmpresaId()
     console.log('[CreateTariffPage] Usando empresa por defecto:', empresaId)
   }

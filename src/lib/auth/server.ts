@@ -16,7 +16,7 @@ export async function getServerUser() {
   console.log('[getServerUser] Auth user found:', user.id, user.email)
 
   const { data: userData, error: dbError } = await supabase
-    .from('users')
+    .from('redpresu_users')
     .select('*')
     .eq('id', user.id)
     .single()

@@ -29,7 +29,7 @@ export enum ClientType {
 export interface User {
   id: string
   role: string
-  empresa_id: number
+  company_id: number
   name: string
   email: string
   created_at: string
@@ -38,7 +38,7 @@ export interface User {
 
 export interface Tariff {
   id: string
-  empresa_id: number
+  company_id: number
   title: string
   description: string | null
   logo_url: string | null
@@ -87,7 +87,7 @@ export interface TariffItem {
 
 export interface Budget {
   id: string
-  empresa_id: number
+  company_id: number
   tariff_id: string
   json_tariff_data: JsonValue
   client_type: string
@@ -111,7 +111,7 @@ export interface Budget {
   base: number
   irpf?: number
   irpf_percentage?: number
-  total_pagar?: number
+  total_pay?: number
   pdf_url: string | null
   start_date: string | null
   end_date: string | null
@@ -139,7 +139,7 @@ export interface BudgetVersion {
   base_amount: number
   irpf: number | null
   irpf_percentage: number | null
-  total_pagar: number | null
+  total_pay: number | null
   created_by: string | null
   created_at: string
   notes: string | null

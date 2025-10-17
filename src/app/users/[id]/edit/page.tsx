@@ -39,7 +39,7 @@ export default async function EditUserPage({ params }: EditUserPageProps) {
       <UserForm
         mode="edit"
         user={result.data}
-        empresaId={user.empresa_id}
+        empresaId={user.company_id}
         currentUserRole={user.role}
       />
     </div>

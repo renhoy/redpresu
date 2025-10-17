@@ -166,10 +166,10 @@ export function VersionTimeline({
                         <p className="text-xs text-muted-foreground">Total</p>
                         <p className="font-semibold">{formatCurrency(version.total_amount)}</p>
                       </div>
-                      {version.total_pagar && version.total_pagar !== version.total_amount && (
+                      {version.total_pay && version.total_pay !== version.total_amount && (
                         <div>
                           <p className="text-xs text-muted-foreground">A Pagar</p>
-                          <p className="font-semibold">{formatCurrency(version.total_pagar)}</p>
+                          <p className="font-semibold">{formatCurrency(version.total_pay)}</p>
                         </div>
                       )}
                     </div>

@@ -42,7 +42,7 @@ export async function signInAction(email: string, password: string): Promise<Sig
 
     // Obtener datos completos del usuario desde public.users
     const { data: userData, error: userError } = await supabase
-      .from('users')
+      .from('redpresu_users')
       .select('*')
       .eq('id', data.user.id)
       .single()
@@ -212,7 +212,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
       }
 
       const { data: userData, error: userError } = await supabase
-        .from('users')
+        .from('redpresu_users')
         .select('role')
         .eq('id', user.id)
         .single()
@@ -226,7 +226,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
 
       // Obtener el emisor existente
       const { data: issuerData, error: issuerError } = await supabaseAdmin
-        .from('issuers')
+        .from('redpresu_issuers')
         .select('id, company_id')
         .eq('id', data.issuer_id)
         .single()
@@ -249,7 +249,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
     } else {
       // 1. Validar que el NIF no esté ya registrado en TODA la base de datos
       const { data: existingIssuer, error: checkError } = await supabase
-        .from('issuers')
+        .from('redpresu_issuers')
         .select('id, issuers_nif')
         .eq('issuers_nif', data.nif.trim().toUpperCase())
         .maybeSingle()
@@ -264,7 +264,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
 
       // 2. Crear nueva empresa para este emisor
       const { data: empresaData, error: empresaError } = await supabaseAdmin
-        .from('empresas')
+        .from('redpresu_companies')
         .insert({
           nombre: data.nombreComercial,
           status: 'active'
@@ -329,14 +329,14 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
     // 5. Crear registro en public.users
     // Usar supabaseAdmin para bypass RLS policies
     const { error: userError } = await supabaseAdmin
-      .from('users')
+      .from('redpresu_users')
       .insert({
         id: userId,
         nombre: data.nombre.trim(),
         apellidos: data.apellidos.trim(),
         email: data.email.trim().toLowerCase(),
         role: userRole,
-        empresa_id: empresaId,
+        company_id: empresaId,
         status: 'active'
       })
 
@@ -347,7 +347,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
       await supabaseAdmin.auth.admin.deleteUser(userId)
       // Solo eliminar empresa si fue creada en este proceso (no existía issuer_id)
       if (!data.issuer_id) {
-        await supabaseAdmin.from('empresas').delete().eq('id', empresaId)
+        await supabaseAdmin.from('redpresu_companies').delete().eq('id', empresaId)
       }
 
       return {
@@ -361,7 +361,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
     // 6. Crear registro en public.issuers SOLO si no se proporcionó issuer_id
     if (!data.issuer_id) {
       const { data: issuerData, error: issuerError } = await supabaseAdmin
-        .from('issuers')
+        .from('redpresu_issuers')
         .insert({
           user_id: userId,
           company_id: empresaId,
@@ -385,9 +385,9 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
         console.error('[registerUser] Error al crear issuer:', issuerError)
 
         // Intentar rollback: eliminar usuario, auth y empresa
-        await supabaseAdmin.from('users').delete().eq('id', userId)
+        await supabaseAdmin.from('redpresu_users').delete().eq('id', userId)
         await supabaseAdmin.auth.admin.deleteUser(userId)
-        await supabaseAdmin.from('empresas').delete().eq('id', empresaId)
+        await supabaseAdmin.from('redpresu_companies').delete().eq('id', empresaId)
 
         return {
           success: false,
@@ -399,9 +399,9 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
         console.error('[registerUser] No se obtuvo el issuer creado')
 
         // Rollback: eliminar usuario, auth y empresa
-        await supabaseAdmin.from('users').delete().eq('id', userId)
+        await supabaseAdmin.from('redpresu_users').delete().eq('id', userId)
         await supabaseAdmin.auth.admin.deleteUser(userId)
-        await supabaseAdmin.from('empresas').delete().eq('id', empresaId)
+        await supabaseAdmin.from('redpresu_companies').delete().eq('id', empresaId)
 
         return {
           success: false,
@@ -626,7 +626,7 @@ export interface UserProfile {
   name: string
   email: string
   role: string
-  empresa_id: number
+  company_id: number
 
   // Datos emisor
   emisor?: {
@@ -703,7 +703,7 @@ export async function getUserProfile(): Promise<ProfileResult> {
 
     // Obtener datos del usuario desde public.users
     const { data: userData, error: userError } = await supabase
-      .from('users')
+      .from('redpresu_users')
       .select('*')
       .eq('id', user.id)
       .single()
@@ -718,7 +718,7 @@ export async function getUserProfile(): Promise<ProfileResult> {
 
     // Obtener datos del issuer
     const { data: issuerData, error: issuerError } = await supabase
-      .from('issuers')
+      .from('redpresu_issuers')
       .select('*')
       .eq('user_id', user.id)
       .single()
@@ -867,7 +867,7 @@ export async function updateUserProfile(data: UpdateProfileData): Promise<Profil
 
       // Actualizar issuer
       const { error: issuerError } = await supabase
-        .from('issuers')
+        .from('redpresu_issuers')
         .update(updateData)
         .eq('user_id', user.id)
 
@@ -953,7 +953,7 @@ export async function getIssuers(): Promise<{
     }
 
     const { data: userData, error: userError } = await supabase
-      .from('users')
+      .from('redpresu_users')
       .select('role')
       .eq('id', user.id)
       .single()
@@ -967,7 +967,7 @@ export async function getIssuers(): Promise<{
 
     // Obtener lista de emisores
     const { data: issuers, error: issuersError } = await supabase
-      .from('issuers')
+      .from('redpresu_issuers')
       .select('id, company_id, issuers_type, issuers_name, issuers_nif, issuers_address, issuers_postal_code, issuers_locality, issuers_province, issuers_phone, issuers_email, issuers_web')
       .order('issuers_name')
 

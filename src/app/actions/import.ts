@@ -86,13 +86,13 @@ export async function importTariffs(
       }
 
       // Eliminar campos internos y regenerables
-      const { id, created_at, updated_at, empresa_id, user_id, ...tariffData } = tariff
+      const { id, created_at, updated_at, company_id, user_id, ...tariffData } = tariff
 
       // Construir tarifa limpia
       const cleanTariff = {
         ...tariffData,
         // Asignar a usuario actual
-        empresa_id: user.empresa_id,
+        company_id: user.company_id,
         user_id: user.id,
         // Forzar valores para importación
         is_template: false,
@@ -113,7 +113,7 @@ export async function importTariffs(
     const supabase = createServerActionClient({ cookies: () => cookieStore })
 
     const { data, error } = await supabase
-      .from('tariffs')
+      .from('redpresu_tariffs')
       .insert(validatedTariffs)
       .select()
 
@@ -198,10 +198,10 @@ export async function importBudgets(
       let tariffId = budget.tariff_id
       if (tariffId) {
         const { data: tariffExists } = await supabase
-          .from('tariffs')
+          .from('redpresu_tariffs')
           .select('id')
           .eq('id', tariffId)
-          .eq('empresa_id', user.empresa_id)
+          .eq('company_id', user.company_id)
           .single()
 
         if (!tariffExists) {
@@ -211,7 +211,7 @@ export async function importBudgets(
       }
 
       // Eliminar campos internos y regenerables
-      const { id, created_at, updated_at, empresa_id, user_id, parent_budget_id, version_number, ...budgetData } = budget
+      const { id, created_at, updated_at, company_id, user_id, parent_budget_id, version_number, ...budgetData } = budget
 
       // Construir presupuesto limpio
       const cleanBudget = {
@@ -219,7 +219,7 @@ export async function importBudgets(
         // Asignar tarifa (null si no existe)
         tariff_id: tariffId,
         // Asignar a usuario actual
-        empresa_id: user.empresa_id,
+        company_id: user.company_id,
         user_id: user.id,
         // Resetear relaciones de versiones
         parent_budget_id: null,
@@ -238,7 +238,7 @@ export async function importBudgets(
 
     // 5. Insertar en BD
     const { data, error } = await supabase
-      .from('budgets')
+      .from('redpresu_budgets')
       .insert(validatedBudgets)
       .select()
 

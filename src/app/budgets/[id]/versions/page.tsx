@@ -32,7 +32,7 @@ export default async function BudgetVersionsPage({ params }: PageProps) {
       ),
       users (
         name,
-        empresa_id
+        company_id
       )
     `)
     .eq('id', id)
@@ -44,7 +44,7 @@ export default async function BudgetVersionsPage({ params }: PageProps) {
 
   // Verificar que el usuario pertenece a la misma empresa
   const budgetUser = Array.isArray(budget.users) ? budget.users[0] : budget.users
-  if (budgetUser && budgetUser.empresa_id !== user.empresa_id) {
+  if (budgetUser && budgetUser.company_id !== user.company_id) {
     redirect('/budgets')
   }
 

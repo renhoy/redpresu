@@ -330,7 +330,7 @@ function escapeCsvValue(value: string): string {
 export function convertTariffsToJSON(tariffs: Tariff[]): string {
   // Limpiar campos internos y regenerables
   const cleanTariffs = tariffs.map((tariff) => {
-    const { id, created_at, updated_at, empresa_id, user_id, ...rest } = tariff
+    const { id, created_at, updated_at, company_id, user_id, ...rest } = tariff
     return rest
   })
 
@@ -347,7 +347,7 @@ export function convertBudgetsToJSON(budgets: any[]): string {
       id,
       created_at,
       updated_at,
-      empresa_id,
+      company_id,
       user_id,
       parent_budget_id,
       version_number,

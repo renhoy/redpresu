@@ -39,7 +39,7 @@ async function getUserIssuer(userId: string): Promise<{
 } | null> {
   try {
     const { data, error } = await supabaseAdmin
-      .from('issuers')
+      .from('redpresu_issuers')
       .select('issuers_type, issuers_irpf_percentage')
       .eq('user_id', userId)
       .single()
@@ -73,10 +73,10 @@ export async function getActiveTariffs(): Promise<Tariff[]> {
       return []
     }
 
-    // Obtener empresa_id del usuario
+    // Obtener company_id del usuario
     const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('empresa_id')
+      .from('redpresu_users')
+      .select('company_id')
       .eq('id', user.id)
       .single()
 
@@ -85,10 +85,10 @@ export async function getActiveTariffs(): Promise<Tariff[]> {
       return []
     }
 
-    // Si el usuario no tiene empresa_id (superadmin), usar empresa por defecto
-    let empresaId = userData?.empresa_id
+    // Si el usuario no tiene company_id (superadmin), usar empresa por defecto
+    let empresaId = userData?.company_id
     if (!empresaId) {
-      console.log('[getActiveTariffs] Usuario sin empresa_id, obteniendo empresa por defecto...')
+      console.log('[getActiveTariffs] Usuario sin company_id, obteniendo empresa por defecto...')
       empresaId = await getDefaultEmpresaId()
       console.log('[getActiveTariffs] Empresa por defecto obtenida:', empresaId)
     }
@@ -97,9 +97,9 @@ export async function getActiveTariffs(): Promise<Tariff[]> {
 
     // Obtener tarifas activas de la empresa
     const { data: tariffs, error: tariffsError } = await supabaseAdmin
-      .from('tariffs')
+      .from('redpresu_tariffs')
       .select('*')
-      .eq('empresa_id', empresaId)
+      .eq('company_id', empresaId)
       .eq('status', 'Activa')
       .order('title')
 
@@ -181,10 +181,10 @@ export async function createDraftBudget(data: {
       return { success: false, error: 'No autenticado' }
     }
 
-    // Obtener empresa_id del usuario
+    // Obtener company_id del usuario
     const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('empresa_id')
+      .from('redpresu_users')
+      .select('company_id')
       .eq('id', user.id)
       .single()
 
@@ -193,10 +193,10 @@ export async function createDraftBudget(data: {
       return { success: false, error: 'Error obteniendo datos del usuario' }
     }
 
-    // Si el usuario no tiene empresa_id (superadmin), usar empresa por defecto
-    let empresaId = userData?.empresa_id
+    // Si el usuario no tiene company_id (superadmin), usar empresa por defecto
+    let empresaId = userData?.company_id
     if (!empresaId) {
-      console.log('[createDraftBudget] Usuario sin empresa_id, obteniendo empresa por defecto...')
+      console.log('[createDraftBudget] Usuario sin company_id, obteniendo empresa por defecto...')
       empresaId = await getDefaultEmpresaId()
       console.log('[createDraftBudget] Empresa por defecto obtenida:', empresaId)
     }
@@ -240,9 +240,9 @@ export async function createDraftBudget(data: {
 
     // Crear borrador
     const { data: budget, error: insertError } = await supabaseAdmin
-      .from('budgets')
+      .from('redpresu_budgets')
       .insert({
-        empresa_id: empresaId,
+        company_id: empresaId,
         tariff_id: data.tariffId,
         user_id: user.id,
         json_tariff_data: data.tariffData,
@@ -267,9 +267,9 @@ export async function createDraftBudget(data: {
         base: data.totals.base,
         irpf: 0,
         irpf_percentage: 0,
-        re_aplica: false,
+        re_apply: false,
         re_total: 0,
-        total_pagar: data.totals.total,
+        total_pay: data.totals.total,
         validity_days: data.validity,
         start_date: null,
         end_date: null
@@ -319,7 +319,7 @@ export async function updateBudgetDraft(
 
     // Verificar que el usuario es owner del budget
     const { data: existingBudget, error: budgetError } = await supabaseAdmin
-      .from('budgets')
+      .from('redpresu_budgets')
       .select('user_id, status')
       .eq('id', budgetId)
       .single()
@@ -371,7 +371,7 @@ export async function updateBudgetDraft(
 
     // Actualizar
     const { error: updateError } = await supabaseAdmin
-      .from('budgets')
+      .from('redpresu_budgets')
       .update(updateData)
       .eq('id', budgetId)
 
@@ -427,7 +427,7 @@ export async function saveBudget(
 
     // Obtener budget
     const { data: budget, error: budgetError } = await supabaseAdmin
-      .from('budgets')
+      .from('redpresu_budgets')
       .select('*')
       .eq('id', budgetId)
       .single()
@@ -541,9 +541,9 @@ export async function saveBudget(
       base: totals.base,
       irpf: irpfAmount,
       irpf_percentage: irpfPercentage,
-      re_aplica: recargoData?.aplica || false,
+      re_apply: recargoData?.aplica || false,
       re_total: totalRE,
-      total_pagar: totalPagar,
+      total_pay: totalPagar,
       json_budget_data: extendedBudgetData,
       start_date: startDate.toISOString(),
       end_date: budget.validity_days ? endDate.toISOString() : null,
@@ -586,7 +586,7 @@ export async function saveBudget(
 
     // Actualizar como borrador
     const { error: updateError } = await supabaseAdmin
-      .from('budgets')
+      .from('redpresu_budgets')
       .update(updateData)
       .eq('id', budgetId)
 
@@ -646,7 +646,7 @@ export async function duplicateBudget(
 
     // Obtener budget original para copiar datos base
     const { data: originalBudget, error: budgetError } = await supabaseAdmin
-      .from('budgets')
+      .from('redpresu_budgets')
       .select('*')
       .eq('id', originalBudgetId)
       .single()
@@ -741,9 +741,9 @@ export async function duplicateBudget(
 
     // Crear NUEVO presupuesto con los datos actualizados
     const { data: newBudget, error: insertError } = await supabaseAdmin
-      .from('budgets')
+      .from('redpresu_budgets')
       .insert({
-        empresa_id: originalBudget.empresa_id,
+        company_id: originalBudget.company_id,
         user_id: user.id,
         tariff_id: originalBudget.tariff_id,
         status: BudgetStatus.BORRADOR,
@@ -792,7 +792,7 @@ export async function duplicateBudget(
         // Datos fiscales
         irpf: irpf > 0 ? irpf : null,
         irpf_percentage: irpfPercentage > 0 ? irpfPercentage : null,
-        total_pagar: totalPagar, // Siempre asignar, puede ser igual a total o modificado
+        total_pay: totalPagar, // Siempre asignar, puede ser igual a total o modificado
 
         // Fechas y validez
         validity_days: originalBudget.validity_days,
@@ -841,7 +841,7 @@ export async function updateBudgetStatus(
 
     // Obtener budget
     const { data: budget, error: budgetError } = await supabaseAdmin
-      .from('budgets')
+      .from('redpresu_budgets')
       .select('*')
       .eq('id', budgetId)
       .single()
@@ -876,7 +876,7 @@ export async function updateBudgetStatus(
 
     // Actualizar estado
     const { error: updateError } = await supabaseAdmin
-      .from('budgets')
+      .from('redpresu_budgets')
       .update({
         status: newStatus,
         updated_at: new Date().toISOString()
@@ -920,7 +920,7 @@ export async function getBudgetById(
 
     // Obtener budget (RLS se encargará de verificar permisos)
     const { data: budget, error: budgetError } = await supabase
-      .from('budgets')
+      .from('redpresu_budgets')
       .select('*')
       .eq('id', budgetId)
       .single()
@@ -980,10 +980,10 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
 
     // Obtener budget con join a tariff
     const { data: budget, error: budgetError } = await supabase
-      .from('budgets')
+      .from('redpresu_budgets')
       .select(`
         *,
-        tariff:tariffs(*)
+        tariff:redpresu_tariffs(*)
       `)
       .eq('id', budgetId)
       .single()
@@ -1146,7 +1146,7 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
 
     // 6. Actualizar pdf_url en budgets
     const { error: updateError } = await supabaseAdmin
-      .from('budgets')
+      .from('redpresu_budgets')
       .update({ pdf_url: pdfUrl })
       .eq('id', budgetId)
 
@@ -1186,10 +1186,10 @@ export async function getBudgets(filters?: {
       return []
     }
 
-    // Obtener empresa_id y rol del usuario
+    // Obtener company_id y rol del usuario
     const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('empresa_id, role')
+      .from('redpresu_users')
+      .select('company_id, role')
       .eq('id', user.id)
       .single()
 
@@ -1198,15 +1198,15 @@ export async function getBudgets(filters?: {
       return []
     }
 
-    console.log('[getBudgets] Usuario:', userData.role, 'Empresa:', userData.empresa_id)
+    console.log('[getBudgets] Usuario:', userData.role, 'Empresa:', userData.company_id)
 
     // Construir query base con JOIN a tariffs
     // Nota: users se obtiene por separado ya que la relación puede no estar definida
     let query = supabase
-      .from('budgets')
+      .from('redpresu_budgets')
       .select(`
         *,
-        tariffs (
+        redpresu_tariffs (
           title
         )
       `)
@@ -1217,7 +1217,7 @@ export async function getBudgets(filters?: {
       query = query.eq('user_id', user.id)
     } else if (userData.role === 'admin') {
       // Admin: presupuestos de su empresa
-      query = query.eq('empresa_id', userData.empresa_id)
+      query = query.eq('company_id', userData.company_id)
     }
     // Superadmin: todos (no filtrar)
 
@@ -1249,7 +1249,7 @@ export async function getBudgets(filters?: {
     if (budgets && budgets.length > 0) {
       const userIds = [...new Set(budgets.map(b => b.user_id))]
       const { data: users } = await supabase
-        .from('users')
+        .from('redpresu_users')
         .select('id, name')
         .in('id', userIds)
 
@@ -1323,8 +1323,8 @@ export async function deleteBudget(budgetId: string): Promise<{
 
     // Obtener presupuesto para verificar permisos
     const { data: budget, error: budgetError } = await supabaseAdmin
-      .from('budgets')
-      .select('user_id, pdf_url, empresa_id')
+      .from('redpresu_budgets')
+      .select('user_id, pdf_url, company_id')
       .eq('id', budgetId)
       .single()
 
@@ -1335,8 +1335,8 @@ export async function deleteBudget(budgetId: string): Promise<{
 
     // Verificar permisos
     const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('role, empresa_id')
+      .from('redpresu_users')
+      .select('role, company_id')
       .eq('id', user.id)
       .single()
 
@@ -1348,7 +1348,7 @@ export async function deleteBudget(budgetId: string): Promise<{
     // Validar permisos según rol
     const canDelete =
       budget.user_id === user.id || // Owner
-      (userData.role === 'admin' && budget.empresa_id === userData.empresa_id) || // Admin de la empresa
+      (userData.role === 'admin' && budget.company_id === userData.company_id) || // Admin de la empresa
       userData.role === 'superadmin' // Superadmin
 
     if (!canDelete) {
@@ -1364,7 +1364,7 @@ export async function deleteBudget(budgetId: string): Promise<{
 
     // Eliminar presupuesto
     const { error: deleteError } = await supabaseAdmin
-      .from('budgets')
+      .from('redpresu_budgets')
       .delete()
       .eq('id', budgetId)
 
@@ -1400,7 +1400,7 @@ export async function userHasBudgets(): Promise<boolean> {
 
     // Contar presupuestos del usuario (limitado a 1 para eficiencia)
     const { count, error } = await supabase
-      .from('budgets')
+      .from('redpresu_budgets')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', user.id)
       .limit(1)

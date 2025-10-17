@@ -31,10 +31,10 @@ export async function getDashboardStats(periodo: Periodo = 'mes'): Promise<Dashb
       return null
     }
 
-    // Obtener empresa_id y rol del usuario
+    // Obtener company_id y rol del usuario
     const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('empresa_id, role')
+      .from('redpresu_users')
+      .select('company_id, role')
       .eq('id', user.id)
       .single()
 
@@ -64,9 +64,9 @@ export async function getDashboardStats(periodo: Periodo = 'mes'): Promise<Dashb
 
     // Construir query base según rol
     let query = supabase
-      .from('budgets')
+      .from('redpresu_budgets')
       .select('*')
-      .eq('empresa_id', userData.empresa_id)
+      .eq('company_id', userData.company_id)
 
     // Vendedor: solo sus presupuestos
     if (userData.role === 'vendedor') {
@@ -74,7 +74,7 @@ export async function getDashboardStats(periodo: Periodo = 'mes'): Promise<Dashb
     }
 
     // Admin/Superadmin: todos de la empresa
-    // (ya filtrado por empresa_id arriba)
+    // (ya filtrado por company_id arriba)
 
     const { data: budgets, error: budgetsError } = await query
 
