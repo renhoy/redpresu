@@ -107,7 +107,7 @@ export function RichTextEditorDialog({
           </Button>
         </DialogTrigger>
 
-        <DialogContent className="w-[80vw] h-[80vh] max-w-none flex flex-col p-0">
+        <DialogContent className="w-[80vw] h-[80vh] max-w-none sm:max-w-none flex flex-col p-0">
           <DialogHeader className="px-6 pt-6 pb-4 border-b flex-shrink-0">
             <DialogTitle>{label}</DialogTitle>
             {description && (
@@ -190,7 +190,7 @@ export function RichTextEditorDialog({
       </div>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="w-[80vw] h-[80vh] max-w-none flex flex-col p-0">
+        <DialogContent className="w-[80vw] h-[80vh] max-w-none sm:max-w-none flex flex-col p-0">
         <DialogHeader className="px-6 pt-6 pb-4 border-b flex-shrink-0">
           <DialogTitle>{label}</DialogTitle>
           {description && (
