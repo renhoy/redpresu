@@ -79,8 +79,9 @@ export function RichTextEditorDialog({
     }
   }
 
-  // Convertir HTML a texto plano para preview
+  // Convertir HTML a texto plano para preview (solo en cliente)
   const getPlainText = (html: string) => {
+    if (typeof window === 'undefined') return '' // SSR guard
     const temp = document.createElement('div')
     temp.innerHTML = html
     return temp.textContent || temp.innerText || ''
