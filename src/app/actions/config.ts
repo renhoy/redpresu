@@ -528,3 +528,53 @@ export async function getDefaultEmpresaId(): Promise<number> {
     return 1 // Fallback hardcodeado
   }
 }
+
+/**
+ * Interfaz para datos del issuer
+ */
+export interface IssuerData {
+  issuers_name: string
+  issuers_nif_nie: string
+  issuers_type: 'empresa' | 'autonomo'
+  issuers_address: string
+  issuers_postal_code: string
+  issuers_locality: string
+  issuers_province: string
+  issuers_phone: string
+  issuers_email: string
+  issuers_web: string | null
+}
+
+/**
+ * Obtiene los datos del issuer por empresa_id
+ * Solo superadmin puede acceder
+ */
+export async function getIssuerByEmpresaId(empresaId: number): Promise<{
+  success: boolean
+  data?: IssuerData
+  error?: string
+}> {
+  const { allowed, error: permError } = await checkSuperadminPermission()
+
+  if (!allowed) {
+    return { success: false, error: permError }
+  }
+
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('issuers')
+      .select('issuers_name, issuers_nif_nie, issuers_type, issuers_address, issuers_postal_code, issuers_locality, issuers_province, issuers_phone, issuers_email, issuers_web')
+      .eq('empresa_id', empresaId)
+      .single()
+
+    if (error || !data) {
+      console.error('[getIssuerByEmpresaId] Error:', error)
+      return { success: false, error: 'No se encontró issuer para esta empresa' }
+    }
+
+    return { success: true, data: data as IssuerData }
+  } catch (error) {
+    console.error('[getIssuerByEmpresaId] Error inesperado:', error)
+    return { success: false, error: 'Error inesperado al obtener issuer' }
+  }
+}

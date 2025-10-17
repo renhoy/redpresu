@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Database } from '@/lib/types/database.types'
 import { Button } from '@/components/ui/button'
-import { Pencil } from 'lucide-react'
+import { Pencil, Eye } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { updateConfigValue } from '@/app/actions/config'
+import { updateConfigValue, getIssuerByEmpresaId, type IssuerData } from '@/app/actions/config'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 
@@ -39,10 +39,31 @@ export function ConfigTable({ config }: ConfigTableProps) {
   const [editDescription, setEditDescription] = useState('')
   const [isSaving, setIsSaving] = useState(false)
 
+  // Estado para visualizar issuer
+  const [viewingIssuer, setViewingIssuer] = useState<IssuerData | null>(null)
+  const [isLoadingIssuer, setIsLoadingIssuer] = useState(false)
+
   const handleEdit = (item: ConfigRow) => {
     setEditingConfig(item)
     setEditValue(JSON.stringify(item.value, null, 2))
     setEditDescription(item.description || '')
+  }
+
+  const handleViewIssuer = async (empresaId: number) => {
+    setIsLoadingIssuer(true)
+    try {
+      const result = await getIssuerByEmpresaId(empresaId)
+
+      if (result.success && result.data) {
+        setViewingIssuer(result.data)
+      } else {
+        toast.error(result.error || 'Error al obtener datos del issuer')
+      }
+    } catch (error) {
+      toast.error('Error inesperado al cargar issuer')
+    } finally {
+      setIsLoadingIssuer(false)
+    }
   }
 
   const handleSave = async () => {
@@ -101,14 +122,27 @@ export function ConfigTable({ config }: ConfigTableProps) {
               config.map((item) => (
                 <TableRow key={item.key} className="bg-white hover:bg-lime-50/50">
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleEdit(item)}
-                      title="Editar configuración"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEdit(item)}
+                        title="Editar configuración"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      {item.key === 'default_empresa_id' && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleViewIssuer(item.value as number)}
+                          disabled={isLoadingIssuer}
+                          title="Ver datos de la empresa"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="font-mono text-sm">{item.key}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
@@ -172,6 +206,49 @@ export function ConfigTable({ config }: ConfigTableProps) {
             </Button>
             <Button onClick={handleSave} disabled={isSaving}>
               {isSaving ? 'Guardando...' : 'Guardar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog para visualizar issuer */}
+      <Dialog open={!!viewingIssuer} onOpenChange={() => setViewingIssuer(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Datos de la Empresa por Defecto</DialogTitle>
+            <DialogDescription>
+              Información del issuer asociado
+            </DialogDescription>
+          </DialogHeader>
+
+          {viewingIssuer && (
+            <div className="space-y-3">
+              <div className="text-sm">
+                <p className="font-semibold text-base">
+                  {viewingIssuer.issuers_name} ({viewingIssuer.issuers_nif_nie})
+                </p>
+                <p className="text-muted-foreground capitalize">
+                  ({viewingIssuer.issuers_type})
+                </p>
+              </div>
+
+              <div className="text-sm space-y-1">
+                <p>
+                  {viewingIssuer.issuers_address}, {viewingIssuer.issuers_postal_code}, {viewingIssuer.issuers_locality} ({viewingIssuer.issuers_province})
+                </p>
+              </div>
+
+              <div className="text-sm text-muted-foreground">
+                <p>
+                  {viewingIssuer.issuers_phone} • {viewingIssuer.issuers_email} • {viewingIssuer.issuers_web || '-'}
+                </p>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button onClick={() => setViewingIssuer(null)}>
+              Cerrar
             </Button>
           </DialogFooter>
         </DialogContent>
