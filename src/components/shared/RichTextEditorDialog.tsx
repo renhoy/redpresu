@@ -115,12 +115,13 @@ export function RichTextEditorDialog({
             )}
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="flex-1 overflow-hidden flex flex-col">
             <RichTextEditor
               value={tempValue}
               onChange={setTempValue}
               placeholder={placeholder}
               disabled={disabled}
+              className="flex-1 flex flex-col overflow-hidden"
             />
           </div>
 
@@ -198,12 +199,13 @@ export function RichTextEditorDialog({
           )}
         </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="flex-1 overflow-hidden flex flex-col">
             <RichTextEditor
               value={tempValue}
               onChange={setTempValue}
               placeholder={placeholder}
               disabled={disabled}
+              className="flex-1 flex flex-col overflow-hidden"
             />
           </div>
 

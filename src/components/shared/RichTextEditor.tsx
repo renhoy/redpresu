@@ -218,9 +218,9 @@ export function RichTextEditor({
   }
 
   return (
-    <div className={`border rounded-md bg-white relative ${className}`}>
-      {/* Toolbar */}
-      <div className="flex items-center gap-1 p-2 border-b bg-gray-50">
+    <div className={`border-0 bg-white relative ${className}`}>
+      {/* Toolbar - FIJO */}
+      <div className="flex items-center gap-1 px-6 py-2 border-b bg-gray-50 flex-shrink-0">
           <Button
             type="button"
             variant="ghost"
@@ -280,8 +280,9 @@ export function RichTextEditor({
           </Button>
         </div>
 
-        {/* Editor content */}
+        {/* Editor content - SCROLLEABLE */}
         <div
+          className="flex-1 overflow-y-auto"
           onMouseOver={(e) => {
             const target = e.target as HTMLElement
             if (target.tagName === 'A') {
@@ -297,7 +298,7 @@ export function RichTextEditor({
         >
           <EditorContent
             editor={editor}
-            className="p-4 prose prose-sm max-w-none focus:outline-none [&_.ProseMirror]:outline-none [&_.ProseMirror]:min-h-[300px] [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:ml-0"
+            className="px-6 py-4 prose prose-sm max-w-none focus:outline-none [&_.ProseMirror]:outline-none [&_.ProseMirror]:min-h-[200px] [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:ml-0"
           />
         </div>
 
