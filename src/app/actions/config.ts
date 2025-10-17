@@ -363,22 +363,31 @@ export interface TariffDefaults {
  * Acción pública (no requiere superadmin)
  *
  * Prioridad:
- * 1. Si existe tarifa con is_template=true, usar sus valores
+ * 1. Si existe tarifa con is_template=true de la empresa especificada, usar sus valores
  * 2. Si no, usar valores de default_tariff en config
  * 3. Si no existe default_tariff, usar fallbacks hardcodeados
+ *
+ * @param empresaId - ID de la empresa para buscar plantilla específica (opcional)
  */
-export async function getTariffDefaultsAction(): Promise<{
+export async function getTariffDefaultsAction(empresaId?: number): Promise<{
   success: boolean
   data?: TariffDefaults
   error?: string
 }> {
   try {
-    // Paso 1: Buscar tarifa plantilla (is_template = true)
-    const { data: templateTariff } = await supabaseAdmin
+    // Paso 1: Buscar tarifa plantilla (is_template = true) de la empresa especificada
+    let query = supabaseAdmin
       .from('tariffs')
       .select('*')
       .eq('is_template', true)
-      .single()
+
+    // Si se especifica empresa, buscar solo de esa empresa
+    if (empresaId) {
+      console.log('[getTariffDefaultsAction] Buscando plantilla de empresa:', empresaId)
+      query = query.eq('empresa_id', empresaId)
+    }
+
+    const { data: templateTariff } = await query.maybeSingle()
 
     if (templateTariff) {
       console.log('[getTariffDefaultsAction] Usando tarifa plantilla:', templateTariff.id)
@@ -489,5 +498,33 @@ export async function getTariffDefaultsAction(): Promise<{
         legal_note: ''
       }
     }
+  }
+}
+
+/**
+ * Obtiene la empresa por defecto del sistema
+ * Usada cuando el usuario no tiene empresa_id asignada (ej: superadmin)
+ * Acción pública (no requiere superadmin)
+ */
+export async function getDefaultEmpresaId(): Promise<number> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('config')
+      .select('value')
+      .eq('key', 'default_empresa_id')
+      .single()
+
+    if (error || !data) {
+      console.log('[getDefaultEmpresaId] No existe default_empresa_id, usando fallback: 1')
+      return 1 // Fallback hardcodeado
+    }
+
+    const empresaId = typeof data.value === 'number' ? data.value : parseInt(String(data.value))
+    console.log('[getDefaultEmpresaId] Usando empresa por defecto:', empresaId)
+    return empresaId
+
+  } catch (error) {
+    console.error('[getDefaultEmpresaId] Error inesperado:', error)
+    return 1 // Fallback hardcodeado
   }
 }

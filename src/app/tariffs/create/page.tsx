@@ -2,20 +2,28 @@ import { TariffForm } from '@/components/tariffs/TariffForm'
 import { getServerUser } from '@/lib/auth/server'
 import { redirect } from 'next/navigation'
 import { getTemplateTariff, getUserIssuerData } from '@/app/actions/tariffs'
-import { getTariffDefaultsAction } from '@/app/actions/config'
+import { getTariffDefaultsAction, getDefaultEmpresaId } from '@/app/actions/config'
 
 export default async function CreateTariffPage() {
   // Verificar autenticación
   const user = await getServerUser()
 
-  if (!user || !user.empresa_id) {
+  if (!user) {
     redirect('/login')
   }
 
-  // Intentar cargar plantilla
+  // Obtener empresa_id (usar empresa por defecto si usuario no tiene asignada)
+  let empresaId = user.empresa_id
+  if (!empresaId) {
+    console.log('[CreateTariffPage] Usuario sin empresa_id, obteniendo empresa por defecto...')
+    empresaId = await getDefaultEmpresaId()
+    console.log('[CreateTariffPage] Usando empresa por defecto:', empresaId)
+  }
+
+  // Intentar cargar plantilla de la empresa correspondiente
   let templateData = undefined
   try {
-    const result = await getTemplateTariff(user.empresa_id)
+    const result = await getTemplateTariff(empresaId)
     if (result.success && result.data) {
       // Pre-cargar datos de la plantilla (excepto id, created_at, updated_at, json_tariff_data)
       templateData = {
@@ -41,7 +49,7 @@ export default async function CreateTariffPage() {
     } else {
       // Si no hay plantilla, cargar valores por defecto de configuración (default_tariff)
       console.log('[CreateTariffPage] No hay plantilla, cargando valores por defecto...')
-      const defaultsResult = await getTariffDefaultsAction()
+      const defaultsResult = await getTariffDefaultsAction(empresaId)
       const issuerResult = await getUserIssuerData(user.id)
 
       if (defaultsResult.success && defaultsResult.data) {
@@ -100,7 +108,7 @@ export default async function CreateTariffPage() {
     console.warn('[CreateTariffPage] Error al cargar datos iniciales:', error)
     // Intentar cargar al menos los valores por defecto de configuración
     try {
-      const defaultsResult = await getTariffDefaultsAction()
+      const defaultsResult = await getTariffDefaultsAction(empresaId)
       const issuerResult = await getUserIssuerData(user.id)
 
       if (defaultsResult.success && defaultsResult.data) {
