@@ -56,9 +56,18 @@ export function RichTextEditorDialog({
 
   const handleCopyHTML = async () => {
     try {
-      await navigator.clipboard.writeText(tempValue)
+      // Escapar el HTML para que sea compatible con JSON
+      // Reemplazar comillas dobles por comillas simples y escapar backslashes
+      const jsonSafeHTML = tempValue
+        .replace(/\\/g, '\\\\')  // Escapar backslashes primero
+        .replace(/"/g, '\\"')     // Escapar comillas dobles
+        .replace(/\n/g, '\\n')    // Escapar saltos de línea
+        .replace(/\r/g, '\\r')    // Escapar retornos de carro
+        .replace(/\t/g, '\\t')    // Escapar tabulaciones
+
+      await navigator.clipboard.writeText(jsonSafeHTML)
       setCopied(true)
-      toast.success('HTML copiado al portapapeles')
+      toast.success('HTML copiado al portapapeles (compatible JSON)')
 
       // Reset icon after 2 seconds
       setTimeout(() => {
@@ -98,15 +107,15 @@ export function RichTextEditorDialog({
           </Button>
         </DialogTrigger>
 
-        <DialogContent className="max-w-[90vw] max-h-[90vh] w-full">
-          <DialogHeader>
+        <DialogContent className="w-[80vw] h-[80vh] max-w-none flex flex-col p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b flex-shrink-0">
             <DialogTitle>{label}</DialogTitle>
             {description && (
               <DialogDescription>{description}</DialogDescription>
             )}
           </DialogHeader>
 
-          <div className="overflow-y-auto max-h-[calc(90vh-200px)]">
+          <div className="flex-1 overflow-y-auto px-6 py-4">
             <RichTextEditor
               value={tempValue}
               onChange={setTempValue}
@@ -115,7 +124,7 @@ export function RichTextEditorDialog({
             />
           </div>
 
-          <DialogFooter className="flex items-center justify-between">
+          <DialogFooter className="flex items-center justify-between px-6 py-4 border-t flex-shrink-0">
             <Button
               type="button"
               variant="outline"
@@ -181,15 +190,15 @@ export function RichTextEditorDialog({
       </div>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-[90vw] max-h-[90vh] w-full">
-        <DialogHeader>
+        <DialogContent className="w-[80vw] h-[80vh] max-w-none flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b flex-shrink-0">
           <DialogTitle>{label}</DialogTitle>
           {description && (
             <DialogDescription>{description}</DialogDescription>
           )}
         </DialogHeader>
 
-          <div className="overflow-y-auto max-h-[calc(90vh-200px)]">
+          <div className="flex-1 overflow-y-auto px-6 py-4">
             <RichTextEditor
               value={tempValue}
               onChange={setTempValue}
@@ -198,7 +207,7 @@ export function RichTextEditorDialog({
             />
           </div>
 
-          <DialogFooter className="flex items-center justify-between">
+          <DialogFooter className="flex items-center justify-between px-6 py-4 border-t flex-shrink-0">
             <Button
               type="button"
               variant="outline"
