@@ -4,10 +4,10 @@
 
 **Fase Actual:** Fase 2 - Evolución Funcional
 **Progreso MVP:** 100% ✅
-**Progreso Fase 2:** 38% ✅ (20/53 tareas)
+**Progreso Fase 2:** 34% ✅ (20/59 tareas)
 
-**Última actualización:** 2025-01-18 - Añadido Bloque 10: Sistema de Ayuda
-**Bloques completados:** 5/10 (Usuarios, Tarifas, Config, IRPF/RE, Versiones/Notas)
+**Última actualización:** 2025-01-18 - Añadido Bloque 11: Suscripciones Stripe (Post Fase 2 - Opcional)
+**Bloques completados:** 5/11 (Usuarios, Tarifas, Config, IRPF/RE, Versiones/Notas)
 **Siguiente objetivo:** Bloque 6 - Navegación Unificada (o saltar a Responsive)
 
 ---
@@ -202,6 +202,25 @@
 ⚠️ package.json (AÑADIR: gray-matter, marked, driver.js)
 ```
 
+### Bloque 11: Suscripciones Stripe (Post Fase 2 - Opcional)
+
+**Status:** ⏳ Pendiente (Post Fase 2)
+
+```
+✅ migrations/025_subscriptions.sql (NUEVO - tabla subscriptions + función check_plan_limit)
+✅ src/lib/stripe.ts (NUEVO - Stripe SDK + helpers)
+✅ src/app/actions/subscriptions.ts (NUEVO - checkout, cancelar, estado, límites)
+✅ src/app/api/webhooks/stripe/route.ts (NUEVO - webhook handler)
+✅ src/app/subscriptions/page.tsx (NUEVO - página suscripciones)
+✅ src/components/subscriptions/CurrentPlan.tsx (NUEVO)
+✅ src/components/subscriptions/SubscriptionPlans.tsx (NUEVO)
+⚠️ src/app/actions/tariffs.ts (EXTENDER - verificar límites antes crear)
+⚠️ src/app/actions/budgets.ts (EXTENDER - verificar límites antes crear)
+⚠️ src/app/actions/users.ts (EXTENDER - verificar límites antes crear)
+⚠️ .env.local (AÑADIR: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+⚠️ package.json (AÑADIR: stripe)
+```
+
 ---
 
 ## 📋 REGLAS FASE 2
@@ -354,6 +373,7 @@ export async function getTariffs() {
 - `import-export`: Bloque 8
 - `responsive`: Bloque 9
 - `help`: Bloque 10 (Sistema de Ayuda)
+- `subscriptions`: Bloque 11 (Suscripciones Stripe - Post Fase 2)
 
 **Ejemplos:**
 
@@ -425,6 +445,10 @@ docs(users): actualizar README con flujo registro
 16. ✅ Responsive completo
 17. ⏳ Sistema de ayuda (Markdown + Driver.js)
 
+### POST FASE 2 (Semanas 14-15 - Opcional): ⏳
+
+18. ⏳ Suscripciones Stripe (Free/Pro/Enterprise)
+
 ---
 
 ## 🚀 Stack Tecnológico (Sin cambios Fase 2)
@@ -450,6 +474,7 @@ docs(users): actualizar README con flujo registro
 - `gray-matter` - Frontmatter parser para Markdown (Bloque 10)
 - `marked` - Markdown to HTML converter (Bloque 10)
 - `driver.js` - Interactive tours library (Bloque 10)
+- `stripe` - Stripe SDK para suscripciones (Bloque 11)
 
 ---
 
@@ -515,10 +540,10 @@ docs(users): actualizar README con flujo registro
 
 ### Global:
 
-- **Progreso:** 38% (20/53 tareas)
-- **Bloques completados:** 5/10 (Usuarios ✅, Tarifas ✅, Config ✅, IRPF/RE ✅, Versiones ✅)
+- **Progreso:** 34% (20/59 tareas)
+- **Bloques completados:** 5/11 (Usuarios ✅, Tarifas ✅, Config ✅, IRPF/RE ✅, Versiones ✅)
 - **Bloques parciales:** Rich Editor ✅ (Bloque 7), Import/Export ✅ (Bloque 8)
-- **Semanas consumidas:** 7/13
+- **Semanas consumidas:** 11/15
 - **Bugs críticos resueltos:** 1 (RLS tariffs - migración 030)
 - **Mejoras UX:** 8 implementadas
 
@@ -1003,8 +1028,8 @@ export function ComponentName({ prop1, onSuccess }: ComponentNameProps) {
 ---
 
 **Documento:** Claude Code Fase 2
-**Versión:** 1.2
+**Versión:** 1.3
 **Fecha:** 2025-01-18
 **Estado:** Activo
-**Última actualización:** Añadido Bloque 10 - Sistema de Ayuda (Markdown + Driver.js)
-**Próxima revisión:** Fin Semana 9
+**Última actualización:** Añadido Bloque 11 - Suscripciones Stripe (Post Fase 2 - Opcional)
+**Próxima revisión:** Fin Semana 15
