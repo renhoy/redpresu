@@ -865,6 +865,165 @@ Completado:
 
 ---
 
+## BLOQUE 10: SISTEMA DE AYUDA ⏳
+
+### Tareas Críticas:
+
+#### 10.1 Setup Básico
+
+**Prioridad:** ALTA | **Estimación:** 0.5 días | **Estado:** ⏳ Pendiente
+
+- [ ] Instalar dependencias: `npm install driverjs gray-matter marked`
+- [ ] Crear estructura `/public/help/`
+- [ ] Crear `tours.json` con ejemplo
+- [ ] Documentar README.md para usuarios
+
+**Archivos nuevos:**
+
+- `public/help/tours.json`
+- `public/help/README.md`
+- `public/help/crear-proyecto.md` (ejemplo)
+
+**Archivos modificados:**
+
+- `package.json` (dependencias)
+
+**Criterios de completado:**
+
+- Dependencias instaladas sin errores
+- Estructura de directorios creada
+- tours.json con al menos 1 tour de ejemplo
+
+---
+
+#### 10.2 Lector Markdown
+
+**Prioridad:** ALTA | **Estimación:** 1 día | **Estado:** ⏳ Pendiente
+
+- [ ] Componente `MarkdownReader.tsx`
+- [ ] Parsear frontmatter con gray-matter
+- [ ] Convertir a HTML con marked
+- [ ] Renderizar con estilos prose
+- [ ] Helper `markdown-helpers.ts`
+
+**Archivos nuevos:**
+
+- `src/components/help/MarkdownReader.tsx`
+- `src/lib/helpers/markdown-helpers.ts`
+
+**Criterios de completado:**
+
+- Lee y parsea Markdown correctamente
+- Frontmatter extraído
+- HTML renderizado con estilos
+- Maneja errores (archivo no encontrado)
+
+---
+
+#### 10.3 Página Ayuda Individual
+
+**Prioridad:** ALTA | **Estimación:** 0.5 días | **Estado:** ⏳ Pendiente
+
+- [ ] Crear ruta dinámica `/app/help/[slug]/page.tsx`
+- [ ] Integrar `MarkdownReader`
+- [ ] Layout con breadcrumb
+- [ ] Botón "Volver al índice"
+- [ ] Detectar tourId desde frontmatter
+
+**Archivos nuevos:**
+
+- `src/app/help/[slug]/page.tsx`
+
+**Criterios de completado:**
+
+- Página carga Markdown dinámicamente
+- URL `/help/crear-proyecto` funciona
+- Botón volver funcional
+- Muestra tourId si existe
+
+---
+
+#### 10.4 Tour Button Driver.js
+
+**Prioridad:** ALTA | **Estimación:** 1 día | **Estado:** ⏳ Pendiente
+
+- [ ] Componente `TourButton.tsx`
+- [ ] Lee configuración desde `/help/tours.json`
+- [ ] Guarda tourId en sessionStorage
+- [ ] Redirige a ruta de la app
+- [ ] Helper `tour-helpers.ts` para detectar y lanzar
+- [ ] Hook `useEffect` en layout principal
+
+**Archivos nuevos:**
+
+- `src/components/help/TourButton.tsx`
+- `src/lib/helpers/tour-helpers.ts`
+
+**Criterios de completado:**
+
+- Botón lanza tour correctamente
+- sessionStorage guarda tourId
+- Redirección funciona
+- Driver.js se ejecuta en página destino
+
+---
+
+#### 10.5 Índice de Ayuda
+
+**Prioridad:** MEDIA | **Estimación:** 1 día | **Estado:** ⏳ Pendiente
+
+- [ ] Página `/app/help/page.tsx` (índice principal)
+- [ ] Componente `HelpIndex.tsx`
+- [ ] Componente `HelpCard.tsx`
+- [ ] Agrupar por categoría (desde frontmatter)
+- [ ] Mostrar cards clickables
+- [ ] Badge indica si hay tour disponible
+
+**Archivos nuevos:**
+
+- `src/app/help/page.tsx`
+- `src/components/help/HelpIndex.tsx`
+- `src/components/help/HelpCard.tsx`
+
+**Criterios de completado:**
+
+- Índice muestra todos los artículos
+- Agrupación por categoría funciona
+- Cards clickables llevan a artículo
+- Badge indica si hay tour disponible
+
+---
+
+#### 10.6 Integración Layout
+
+**Prioridad:** MEDIA | **Estimación:** 0.5 días | **Estado:** ⏳ Pendiente
+
+- [ ] Añadir enlace "Ayuda" en Header
+- [ ] Hook `useEffect` en layout principal
+- [ ] Detecta `pendingTour` en sessionStorage
+- [ ] Lanza Driver.js automáticamente
+
+**Archivos modificados:**
+
+- `src/components/layout/Header.tsx`
+- `src/app/(dashboard)/layout.tsx`
+
+**Criterios de completado:**
+
+- Enlace "Ayuda" visible en header
+- Hook detecta tour pendiente
+- Driver.js se lanza automáticamente al llegar a página
+
+---
+
+## ✅ BLOQUE 10 RESUMEN
+
+Completado: 0/6 tareas (0%)
+**Estado:** ⏳ Pendiente
+**Siguiente paso:** 10.1 Setup Básico
+
+---
+
 ## RESUMEN DE PRIORIDADES
 
 ### INMEDIATO (Semanas 1-2):
@@ -883,12 +1042,13 @@ Completado:
 - ✅ Bloque 4: IRPF y RE completos
 - ✅ Bloque 5: Versiones y notas
 
-### LARGO PLAZO (Semanas 9-12):
+### LARGO PLAZO (Semanas 9-13):
 
-- ✅ Bloque 6: Navegación unificada
+- ⏳ Bloque 6: Navegación unificada
 - ✅ Bloque 7: Rich text editor
 - ✅ Bloque 8: Import/Export
-- ✅ Bloque 9: Responsive completo
+- ⏳ Bloque 9: Responsive completo
+- ⏳ Bloque 10: Sistema de ayuda
 
 ---
 
@@ -1150,21 +1310,28 @@ Completado:
 
 ## ESTADO GLOBAL FASE 2
 
-**Progreso:** 42% (20/47 tareas) - Multi-tenant + Config + Rich Editor + Import/Export completados
-**Bloques completados:** 5/9 (Usuarios ✅, Mejoras Tarifas ✅, Configuración ✅, IRPF y RE ✅, Versiones y Notas ✅)
+**Progreso:** 38% (20/53 tareas) - Multi-tenant + Config + Rich Editor + Import/Export completados
+**Bloques completados:** 5/10 (Usuarios ✅, Mejoras Tarifas ✅, Configuración ✅, IRPF y RE ✅, Versiones y Notas ✅)
 **Bloques parciales:** Rich Editor ✅, Import/Export ✅ (Bloques 7 y 8 completados)
-**Mejoras adicionales:** 8 correcciones críticas + mejoras UX implementadas
-**Semanas transcurridas:** 7/12
-**Duración estimada:** 12 semanas
+**Bloques pendientes:** Navegación Unificada, Responsive, Sistema de Ayuda
+**Mejoras adicionales:** 9 correcciones críticas + mejoras UX implementadas (incluye duplicar tarifas/presupuestos)
+**Semanas transcurridas:** 7/13
+**Duración estimada:** 13 semanas
 
-**Última actualización:** 2025-01-17
+**Última actualización:** 2025-01-18
+- ✅ Funcionalidad duplicar tarifas (estado Inactiva, fecha actual)
+- ✅ Funcionalidad duplicar presupuestos (copia simple, estado borrador, sin PDF)
+- ✅ UI responsive: botones duplicar en desktop (Row/Table) y mobile (Card)
 - ✅ Fix crítico: Políticas RLS para tabla tariffs (migración 030)
 - ✅ Configuración centralizada default_tariff (migraciones 028, 029)
 - ✅ Mejoras UX: Rich Editor (modal 80%, copiar HTML, preview inline)
 - ✅ Settings UI: botón editar en primera columna + modal responsive
 
-**Bloque activo:** Bloque 6 - Navegación Unificada (pendiente)
-**Próximo paso:** Componente HierarchicalNavigator (6.1) o saltar a Bloque 9 (Responsive)
+**Bloque activo:** Ninguno (listos para comenzar nuevo bloque)
+**Próximos pasos disponibles:**
+- Bloque 6: Navegación Unificada (HierarchicalNavigator)
+- Bloque 9: Responsive Mobile-First
+- Bloque 10: Sistema de Ayuda (nuevo)
 
 ---
 
