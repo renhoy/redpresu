@@ -1245,19 +1245,19 @@ export async function getBudgets(filters?: {
 
     console.log('[getBudgets] Presupuestos encontrados:', budgets?.length || 0)
 
-    // Obtener nombres de usuarios por separado
+    // Obtener nombres y roles de usuarios por separado
     if (budgets && budgets.length > 0) {
       const userIds = [...new Set(budgets.map(b => b.user_id))]
       const { data: users } = await supabase
         .from('redpresu_users')
-        .select('id, name')
+        .select('id, name, role')
         .in('id', userIds)
 
       // Mapear usuarios a presupuestos
-      const usersMap = new Map(users?.map(u => [u.id, u.name]) || [])
+      const usersMap = new Map(users?.map(u => [u.id, { name: u.name, role: u.role }]) || [])
       const budgetsWithUsers = budgets.map(budget => ({
         ...budget,
-        users: { name: usersMap.get(budget.user_id) || 'N/A' }
+        users: usersMap.get(budget.user_id) || { name: 'N/A', role: 'N/A' }
       }))
 
       // Construir jerarquía: separar padres e hijos
@@ -1385,6 +1385,105 @@ export async function deleteBudget(budgetId: string): Promise<{
 }
 
 /**
+ * Eliminar solo el PDF de un presupuesto (mantiene el presupuesto)
+ */
+export async function deleteBudgetPDF(budgetId: string): Promise<{
+  success: boolean
+  error?: string
+}> {
+  const fs = require('fs')
+  const path = require('path')
+
+  try {
+    console.log('[deleteBudgetPDF] Eliminando PDF del presupuesto:', budgetId)
+
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+    // Obtener usuario actual
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      console.error('[deleteBudgetPDF] Error de autenticación:', authError)
+      return { success: false, error: 'No autenticado' }
+    }
+
+    // Obtener presupuesto para verificar permisos y obtener pdf_url
+    const { data: budget, error: budgetError } = await supabaseAdmin
+      .from('redpresu_budgets')
+      .select('user_id, pdf_url, company_id')
+      .eq('id', budgetId)
+      .single()
+
+    if (budgetError || !budget) {
+      console.error('[deleteBudgetPDF] Presupuesto no encontrado:', budgetError)
+      return { success: false, error: 'Presupuesto no encontrado' }
+    }
+
+    // Verificar permisos
+    const { data: userData, error: userError } = await supabase
+      .from('redpresu_users')
+      .select('role, company_id')
+      .eq('id', user.id)
+      .single()
+
+    if (userError || !userData) {
+      console.error('[deleteBudgetPDF] Error obteniendo usuario:', userError)
+      return { success: false, error: 'Usuario no encontrado' }
+    }
+
+    // Validar permisos según rol
+    const canDelete =
+      budget.user_id === user.id || // Owner
+      (userData.role === 'admin' && budget.company_id === userData.company_id) || // Admin de la empresa
+      userData.role === 'superadmin' // Superadmin
+
+    if (!canDelete) {
+      console.error('[deleteBudgetPDF] Usuario no autorizado')
+      return { success: false, error: 'No tiene permisos para eliminar el PDF' }
+    }
+
+    // Verificar que existe PDF
+    if (!budget.pdf_url) {
+      return { success: false, error: 'No hay PDF para eliminar' }
+    }
+
+    // Eliminar archivo físico
+    try {
+      const filePath = path.join(process.cwd(), 'public', budget.pdf_url)
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath)
+        console.log('[deleteBudgetPDF] PDF físico eliminado:', filePath)
+      } else {
+        console.warn('[deleteBudgetPDF] Archivo PDF no encontrado en disco:', filePath)
+      }
+    } catch (fsError) {
+      console.error('[deleteBudgetPDF] Error eliminando archivo físico:', fsError)
+      // Continuar para actualizar BD aunque falle la eliminación del archivo
+    }
+
+    // Actualizar BD para quitar pdf_url
+    const { error: updateError } = await supabaseAdmin
+      .from('redpresu_budgets')
+      .update({ pdf_url: null })
+      .eq('id', budgetId)
+
+    if (updateError) {
+      console.error('[deleteBudgetPDF] Error actualizando BD:', updateError)
+      return { success: false, error: 'Error al actualizar presupuesto' }
+    }
+
+    console.log('[deleteBudgetPDF] PDF eliminado exitosamente')
+    revalidatePath('/budgets')
+
+    return { success: true }
+
+  } catch (error) {
+    console.error('[deleteBudgetPDF] Error crítico:', error)
+    return { success: false, error: 'Error interno del servidor' }
+  }
+}
+
+/**
  * Verificar si el usuario tiene al menos un presupuesto
  */
 export async function userHasBudgets(): Promise<boolean> {
@@ -1415,5 +1514,127 @@ export async function userHasBudgets(): Promise<boolean> {
   } catch (error) {
     console.error('[userHasBudgets] Error crítico:', error)
     return false
+  }
+}
+
+/**
+ * Duplicar presupuesto (crear copia simple, no versión)
+ * Crea una copia del presupuesto sin PDF y en estado borrador
+ */
+export async function duplicateBudgetCopy(budgetId: string): Promise<{
+  success: boolean
+  newBudgetId?: string
+  error?: string
+}> {
+  try {
+    console.log('[duplicateBudgetCopy] Duplicando presupuesto:', budgetId)
+
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+    // Obtener usuario actual
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      console.error('[duplicateBudgetCopy] Error de autenticación:', authError)
+      return { success: false, error: 'No autenticado' }
+    }
+
+    // Obtener company_id del usuario
+    const { data: userData, error: userError } = await supabase
+      .from('redpresu_users')
+      .select('company_id')
+      .eq('id', user.id)
+      .single()
+
+    if (userError || !userData?.company_id) {
+      console.error('[duplicateBudgetCopy] Error obteniendo usuario:', userError)
+      return { success: false, error: 'No se pudo obtener la empresa del usuario' }
+    }
+
+    // Obtener presupuesto original
+    const { data: originalBudget, error: budgetError } = await supabaseAdmin
+      .from('redpresu_budgets')
+      .select('*')
+      .eq('id', budgetId)
+      .single()
+
+    if (budgetError || !originalBudget) {
+      console.error('[duplicateBudgetCopy] Presupuesto no encontrado:', budgetError)
+      return { success: false, error: 'Presupuesto no encontrado' }
+    }
+
+    // Verificar que el presupuesto pertenece a la empresa del usuario
+    if (originalBudget.company_id !== userData.company_id) {
+      console.error('[duplicateBudgetCopy] Presupuesto no pertenece a la empresa del usuario')
+      return { success: false, error: 'No tienes permisos para duplicar este presupuesto' }
+    }
+
+    // Crear copia del presupuesto como nuevo presupuesto independiente (no versión)
+    const { data: newBudget, error: insertError } = await supabaseAdmin
+      .from('redpresu_budgets')
+      .insert({
+        company_id: originalBudget.company_id,
+        user_id: user.id, // Usuario que crea la copia
+        tariff_id: originalBudget.tariff_id,
+
+        // Nueva copia independiente (no versión)
+        parent_budget_id: null,
+        version_number: 1,
+
+        // Estado borrador sin PDF
+        status: BudgetStatus.BORRADOR,
+        pdf_url: null,
+
+        // Copiar datos del cliente
+        client_type: originalBudget.client_type,
+        client_name: originalBudget.client_name,
+        client_nif_nie: originalBudget.client_nif_nie,
+        client_phone: originalBudget.client_phone,
+        client_email: originalBudget.client_email,
+        client_web: originalBudget.client_web,
+        client_address: originalBudget.client_address,
+        client_postal_code: originalBudget.client_postal_code,
+        client_locality: originalBudget.client_locality,
+        client_province: originalBudget.client_province,
+        client_acceptance: originalBudget.client_acceptance,
+
+        // Copiar snapshots JSON
+        json_tariff_data: originalBudget.json_tariff_data,
+        json_budget_data: originalBudget.json_budget_data,
+        json_client_data: originalBudget.json_client_data,
+
+        // Copiar totales y cálculos
+        total: originalBudget.total,
+        iva: originalBudget.iva,
+        base: originalBudget.base,
+        irpf: originalBudget.irpf,
+        irpf_percentage: originalBudget.irpf_percentage,
+        re_apply: originalBudget.re_apply,
+        re_total: originalBudget.re_total,
+        total_pay: originalBudget.total_pay,
+
+        // Copiar validez
+        validity_days: originalBudget.validity_days,
+        start_date: originalBudget.start_date,
+        end_date: originalBudget.end_date
+
+        // created_at se establece automáticamente con la fecha actual
+      })
+      .select()
+      .single()
+
+    if (insertError || !newBudget) {
+      console.error('[duplicateBudgetCopy] Error creando copia:', insertError)
+      return { success: false, error: 'Error al duplicar presupuesto' }
+    }
+
+    console.log('[duplicateBudgetCopy] Presupuesto duplicado exitosamente:', newBudget.id)
+    revalidatePath('/budgets')
+
+    return { success: true, newBudgetId: newBudget.id }
+
+  } catch (error) {
+    console.error('[duplicateBudgetCopy] Error crítico:', error)
+    return { success: false, error: 'Error crítico al duplicar presupuesto' }
   }
 }

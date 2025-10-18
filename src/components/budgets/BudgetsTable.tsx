@@ -21,6 +21,16 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Pencil,
   Trash2,
   FileStack,
@@ -30,8 +40,11 @@ import {
   Download,
   Upload,
   Plus,
+  Eye,
+  FilePlus,
+  Copy,
 } from "lucide-react";
-import { deleteBudget, updateBudgetStatus } from "@/app/actions/budgets";
+import { deleteBudget, deleteBudgetPDF, updateBudgetStatus, generateBudgetPDF, duplicateBudgetCopy } from "@/app/actions/budgets";
 import { exportBudgets } from "@/app/actions/export";
 import { importBudgets } from "@/app/actions/import";
 import { downloadFile } from "@/lib/helpers/export-helpers";
@@ -65,6 +78,14 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
   const [selectedBudgets, setSelectedBudgets] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState<string | null>(null);
+  const [duplicating, setDuplicating] = useState<string | null>(null);
+  const [deleteDialog, setDeleteDialog] = useState<{
+    budgetId: string;
+    clientName: string;
+    hasPdf: boolean;
+  } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Filtrado local
   const filteredBudgets = budgets.filter((budget) => {
@@ -80,16 +101,84 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
     return matchesSearch && matchesStatus;
   });
 
-  const handleDelete = async (budgetId: string, clientName: string) => {
-    if (!confirm(`¿Eliminar presupuesto de ${clientName}?`)) return;
+  const handleDelete = (budgetId: string, clientName: string, hasPdf: boolean) => {
+    setDeleteDialog({ budgetId, clientName, hasPdf });
+  };
 
-    const result = await deleteBudget(budgetId);
+  const handleDeletePDF = async () => {
+    if (!deleteDialog) return;
+
+    setIsDeleting(true);
+    const result = await deleteBudgetPDF(deleteDialog.budgetId);
+
+    if (result.success) {
+      toast.success("PDF eliminado");
+      setDeleteDialog(null);
+      router.refresh();
+    } else {
+      toast.error(result.error || "Error al eliminar PDF");
+    }
+    setIsDeleting(false);
+  };
+
+  const handleDeleteBudget = async () => {
+    if (!deleteDialog) return;
+
+    setIsDeleting(true);
+    const result = await deleteBudget(deleteDialog.budgetId);
 
     if (result.success) {
       toast.success("Presupuesto eliminado");
+      setDeleteDialog(null);
       router.refresh();
     } else {
       toast.error(result.error || "Error al eliminar");
+    }
+    setIsDeleting(false);
+  };
+
+  const handleGeneratePDF = async (budgetId: string) => {
+    setGeneratingPdf(budgetId);
+    toast.info("Generando PDF... Esto puede tardar hasta 60 segundos");
+
+    try {
+      const result = await generateBudgetPDF(budgetId);
+
+      if (result.success && result.pdf_url) {
+        toast.success("PDF generado exitosamente");
+        // Abrir PDF en nueva pestaña
+        window.open(result.pdf_url, "_blank");
+        // Refrescar la tabla para mostrar el nuevo PDF
+        router.refresh();
+      } else if (result.success && result.debug) {
+        toast.success("Payload generado (modo desarrollo)");
+      } else {
+        toast.error(result.error || "Error generando PDF");
+      }
+    } catch (error) {
+      toast.error("Error inesperado al generar PDF");
+    } finally {
+      setGeneratingPdf(null);
+    }
+  };
+
+  const handleDuplicate = async (budgetId: string, clientName: string) => {
+    if (duplicating) return;
+
+    setDuplicating(budgetId);
+    try {
+      const result = await duplicateBudgetCopy(budgetId);
+
+      if (result.success) {
+        toast.success(`Presupuesto de "${clientName}" duplicado exitosamente`);
+        router.refresh();
+      } else {
+        toast.error(result.error || "Error al duplicar presupuesto");
+      }
+    } catch {
+      toast.error("Error inesperado al duplicar");
+    } finally {
+      setDuplicating(null);
     }
   };
 
@@ -131,7 +220,18 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
       typeof budget.users === "object" &&
       "name" in budget.users
     ) {
-      return (budget.users as { name: string }).nombre;
+      return (budget.users as { name: string; role?: string }).name;
+    }
+    return "N/A";
+  };
+
+  const getUserRole = (budget: Budget) => {
+    if (
+      budget.users &&
+      typeof budget.users === "object" &&
+      "role" in budget.users
+    ) {
+      return (budget.users as { name: string; role: string }).role;
     }
     return "N/A";
   };
@@ -505,51 +605,117 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
             </Select>
           </td>
 
-          <td
-            className="p-4 text-muted-foreground"
-            style={{ fontSize: "12px" }}
-          >
-            {getUserName(budget)}
+          <td className="p-4">
+            <div className="space-y-0.5">
+              <div className="text-sm font-medium">{getUserName(budget)}</div>
+              <div className="text-xs text-muted-foreground capitalize">
+                {getUserRole(budget)}
+              </div>
+            </div>
           </td>
 
           <td className="p-4 text-center">
-            {budget.pdf_url && (
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => window.open(budget.pdf_url!, "_blank")}
-                title="Descargar PDF"
-              >
-                <FileStack className="h-4 w-4" />
-              </Button>
+            {/* Si NO es borrador */}
+            {budget.status !== "borrador" && (
+              <>
+                {/* Si tiene PDF: botón Ver PDF */}
+                {budget.pdf_url ? (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => window.open(budget.pdf_url!, "_blank")}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Ver PDF</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ) : (
+                  /* Si NO tiene PDF: botón Generar PDF */
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleGeneratePDF(budget.id)}
+                          disabled={generatingPdf === budget.id}
+                        >
+                          <FilePlus className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Generar PDF</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </>
             )}
           </td>
 
           <td className="p-4">
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() =>
-                  window.open(
-                    `/budgets/create?tariff_id=${budget.tariff_id}&budget_id=${budget.id}`,
-                    "_blank"
-                  )
-                }
-                title="Editar"
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handleDelete(budget.id, budget.client_name)}
-                title="Eliminar"
-                className="border-destructive text-destructive hover:bg-destructive/10"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
+            <TooltipProvider>
+              <div className="flex justify-end gap-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() =>
+                        window.open(
+                          `/budgets/create?tariff_id=${budget.tariff_id}&budget_id=${budget.id}`,
+                          "_blank"
+                        )
+                      }
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Editar</p>
+                  </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleDuplicate(budget.id, budget.client_name)}
+                      disabled={duplicating === budget.id}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Duplicar</p>
+                  </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleDelete(budget.id, budget.client_name, !!budget.pdf_url)}
+                      className="border-destructive text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Eliminar</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            </TooltipProvider>
           </td>
         </tr>
 
@@ -717,15 +883,73 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
               budget={budget}
               onStatusChange={handleStatusChange}
               onDelete={handleDelete}
+              onGeneratePDF={handleGeneratePDF}
+              onDuplicate={handleDuplicate}
               statusColors={statusColors}
               getValidTransitions={getValidTransitions}
               getUserName={getUserName}
+              getUserRole={getUserRole}
               formatDate={formatDate}
               getDaysRemaining={getDaysRemaining}
+              generatingPdf={generatingPdf}
+              duplicating={duplicating}
             />
           ))
         )}
       </div>
+
+      {/* Dialog para confirmar eliminación */}
+      <AlertDialog open={!!deleteDialog} onOpenChange={() => setDeleteDialog(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {deleteDialog?.hasPdf ? "¿Qué deseas eliminar?" : "¿Eliminar presupuesto?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteDialog?.hasPdf ? (
+                <>
+                  El presupuesto de <strong>{deleteDialog.clientName}</strong> tiene un PDF generado.
+                  Puedes eliminar solo el PDF o eliminar el presupuesto completo (incluido el PDF).
+                </>
+              ) : (
+                <>
+                  Esta acción no se puede deshacer. Se eliminará permanentemente el presupuesto de{" "}
+                  <strong>{deleteDialog?.clientName}</strong> y todos sus datos asociados.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            {deleteDialog?.hasPdf ? (
+              <>
+                <AlertDialogAction
+                  onClick={handleDeletePDF}
+                  disabled={isDeleting}
+                  className="bg-orange-600 hover:bg-orange-700"
+                >
+                  {isDeleting ? "Eliminando..." : "Borrar PDF"}
+                </AlertDialogAction>
+                <AlertDialogAction
+                  onClick={handleDeleteBudget}
+                  disabled={isDeleting}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  {isDeleting ? "Eliminando..." : "Borrar Presupuesto"}
+                </AlertDialogAction>
+              </>
+            ) : (
+              <AlertDialogAction
+                onClick={handleDeleteBudget}
+                disabled={isDeleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isDeleting ? "Eliminando..." : "Eliminar"}
+              </AlertDialogAction>
+            )}
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

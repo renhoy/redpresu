@@ -5,7 +5,7 @@ import { formatCurrency } from "@/lib/helpers/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Pencil, Trash2, FileStack, FileText } from "lucide-react";
+import { Pencil, Trash2, FileStack, FileText, Eye, FilePlus, Copy } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -24,15 +24,20 @@ interface BudgetCardProps {
     newStatus: string,
     clientName: string
   ) => void;
-  onDelete: (budgetId: string, clientName: string) => void;
+  onDelete: (budgetId: string, clientName: string, hasPdf: boolean) => void;
+  onGeneratePDF: (budgetId: string) => void;
+  onDuplicate: (budgetId: string, clientName: string) => void;
   statusColors: Record<string, string>;
   getValidTransitions: (status: string) => string[];
   getUserName: (budget: Budget) => string;
+  getUserRole: (budget: Budget) => string;
   formatDate: (date: string) => string;
   getDaysRemaining: (
     startDate: string | null,
     validityDays: number | null
   ) => any;
+  generatingPdf: string | null;
+  duplicating: string | null;
 }
 
 const statusColors = {
@@ -48,10 +53,15 @@ export function BudgetCard({
   budget,
   onStatusChange,
   onDelete,
+  onGeneratePDF,
+  onDuplicate,
   getValidTransitions,
   getUserName,
+  getUserRole,
   formatDate,
   getDaysRemaining,
+  generatingPdf,
+  duplicating,
 }: BudgetCardProps) {
   const days = getDaysRemaining(budget.start_date, budget.validity_days);
   const tariffTitle =
@@ -180,24 +190,43 @@ export function BudgetCard({
           {/* Fila 3: Usuario + Acciones */}
           <div className="flex justify-between items-center gap-3 border-t pt-3">
             {/* Usuario */}
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>Usuario:</span>
-              <span className="font-medium text-foreground truncate">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-xs font-medium text-foreground">
                 {getUserName(budget)}
+              </span>
+              <span className="text-[10px] text-muted-foreground capitalize">
+                {getUserRole(budget)}
               </span>
             </div>
 
             {/* Acciones */}
             <div className="flex items-center gap-1 flex-shrink-0">
-              {budget.pdf_url && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => window.open(budget.pdf_url!, "_blank")}
-                  className="h-7 px-2"
-                >
-                  <FileStack className="h-3 w-3" />
-                </Button>
+              {/* Botón PDF - Solo si NO es borrador */}
+              {budget.status !== "borrador" && (
+                <>
+                  {budget.pdf_url ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(budget.pdf_url!, "_blank")}
+                      className="h-7 px-2"
+                      title="Ver PDF"
+                    >
+                      <Eye className="h-3 w-3" />
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onGeneratePDF(budget.id)}
+                      disabled={generatingPdf === budget.id}
+                      className="h-7 px-2"
+                      title="Generar PDF"
+                    >
+                      <FilePlus className="h-3 w-3" />
+                    </Button>
+                  )}
+                </>
               )}
               <Button
                 variant="outline"
@@ -209,14 +238,26 @@ export function BudgetCard({
                   )
                 }
                 className="h-7 px-2"
+                title="Editar"
               >
                 <Pencil className="h-3 w-3" />
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onDelete(budget.id, budget.client_name)}
+                onClick={() => onDuplicate(budget.id, budget.client_name)}
+                disabled={duplicating === budget.id}
+                className="h-7 px-2"
+                title="Duplicar"
+              >
+                <Copy className="h-3 w-3" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onDelete(budget.id, budget.client_name, !!budget.pdf_url)}
                 className="h-7 px-2 border-destructive text-destructive hover:bg-destructive/10"
+                title="Eliminar"
               >
                 <Trash2 className="h-3 w-3" />
               </Button>
