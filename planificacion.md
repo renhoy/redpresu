@@ -295,6 +295,40 @@ Semana 13:     Sistema de Ayuda
 
 ---
 
+## SEMANA 14-15: Suscripciones Stripe ⏳
+
+### Objetivo: Sistema completo de monetización (Post Fase 2 - Opcional)
+
+**Bloque 11: Suscripciones Stripe**
+
+| Día | Tarea | Responsable | Estado |
+|-----|-------|-------------|--------|
+| 1 | Setup Stripe + Feature Flag + Migración BD | Backend | ⏳ |
+| 2-3 | Server Actions + Webhook Handler | Backend | ⏳ |
+| 4-5 | UI Suscripciones | Frontend | ⏳ |
+| 6 | Integración recursos + Testing | Full-stack | ⏳ |
+
+**Entregables:**
+
+- ⏳ Sistema de planes (Free/Pro/Enterprise)
+- ⏳ Checkout Stripe funcional
+- ⏳ Webhooks sincronizados
+- ⏳ Límites automáticos por plan
+- ⏳ Feature flag para activar/desactivar
+- ⏳ Portal del cliente (opcional)
+
+**Criterio de completado:**
+
+- Checkout funcional en test mode
+- Webhooks procesan eventos correctamente
+- BD sincronizada con Stripe
+- Límites verificados antes de crear recursos
+- Feature flag activa/desactiva módulo sin romper funcionalidad
+- UI muestra planes y permite upgrade
+- Cancelación funciona correctamente
+
+---
+
 ## Dependencias Críticas
 
 ```
@@ -420,10 +454,10 @@ Bloque 6 (Navegación) ──> Bloque 9 (Responsive)
 
 ### Global Fase 2:
 
-- **Progreso:** Tareas completadas / Total tareas
-- **Bloques completados:** X / 10
-- **Semanas consumidas:** X / 13
-- **Calidad:** Bugs críticos pendientes
+- **Progreso:** 34% (20/59 tareas completadas)
+- **Bloques completados:** 5 / 11
+- **Semanas consumidas:** 11 / 15
+- **Calidad:** 0 bugs críticos pendientes
 
 ---
 
@@ -532,22 +566,22 @@ FASE 1 (COMPLETADA) ✅
 ├─ Semana 7: PDF Generation
 └─ Semana 8: Dashboard
 
-FASE 2 (EN CURSO) ⏳ - 38% Completado
+FASE 2 (EN CURSO) ⏳ - 34% Completado
 ├─ Semanas 1-2: Usuarios y Seguridad ✅ + Multi-Tenant ✅
 ├─ Semanas 3-4: Mejoras Tarifas ✅ + Config ✅
 ├─ Semanas 5-6: IRPF y RE ✅
 ├─ Semanas 7-8: Versiones ✅ + Notas ✅
 ├─ Semanas 9-10: Navegación ⏳ + Rich Text ✅
 ├─ Semanas 11-12: Import/Export ✅ + Responsive ⏳
-└─ Semana 13: Sistema de Ayuda ⏳
+├─ Semana 13: Sistema de Ayuda ⏳
+└─ Semanas 14-15: Suscripciones Stripe ⏳ (Post Fase 2 - Opcional)
 
 FASE 3 (PLANIFICADA) 📋
-├─ Suscripciones
 ├─ Temas y Dark Mode
-├─ Multi-tenant
-├─ Analytics
-├─ Notificaciones
-└─ Integraciones
+├─ Multi-tenant Completo (Registro público)
+├─ Analytics Avanzados
+├─ Notificaciones Automáticas
+└─ Integraciones (CRM, Contabilidad)
 ```
 
 ---
@@ -655,8 +689,8 @@ FASE 3 (PLANIFICADA) 📋
 ---
 
 **Documento:** Planificación Fase 2
-**Versión:** 1.3
+**Versión:** 1.4
 **Fecha:** 2025-01-18 (actualizado)
-**Última actualización:** Bloque 10 Sistema de Ayuda añadido + funcionalidad duplicar tarifas/presupuestos
-**Estado:** Activo - 50% completado (5/10 bloques)
-**Próxima revisión:** Fin Semana 13 (Hito 8)
+**Última actualización:** Bloque 11 Suscripciones Stripe añadido (Post Fase 2 - Opcional)
+**Estado:** Activo - 34% completado (5/11 bloques)
+**Próxima revisión:** Fin Semana 15
