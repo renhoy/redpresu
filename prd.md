@@ -2111,6 +2111,1146 @@ Descripción del flujo...
 
 ---
 
+## BLOQUE 11: Suscripciones con Stripe (Post Fase 2 - Opcional)
+
+**Prioridad:** MEDIA-BAJA (Post Fase 2)
+**Complejidad:** ALTA
+**Impacto:** Monetización, preparación SaaS
+**Estado:** ⏳ Pendiente
+**Duración estimada:** 6 días
+
+### Descripción
+
+Sistema modular de suscripciones con Stripe que permite monetizar la aplicación de forma gradual. Se implementa con feature flag para activar/desactivar el módulo sin romper funcionalidad existente. Incluye planes Free, Pro y Enterprise con límites automáticos de recursos.
+
+**Características principales:**
+- Checkout Stripe para suscripciones mensuales/anuales
+- Webhooks para sincronizar estado BD ↔ Stripe
+- Límites automáticos por plan (tarifas, presupuestos, usuarios)
+- Feature flag `subscriptions_enabled` (default: false)
+- Portal del cliente (opcional) para gestionar suscripción
+- Cero dependencias externas (implementación custom sin SaaS helpers)
+
+### Funcionalidades
+
+#### 11.1 Setup Stripe + Feature Flag
+
+**Prioridad:** ALTA
+**Estimación:** 0.5 días
+
+**Instalación SDK:**
+```bash
+npm install stripe
+```
+
+**Variables de entorno (.env.local):**
+```bash
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+```
+
+**Crear cuenta Stripe:**
+1. Registrarse en https://stripe.com
+2. Activar modo test
+3. Crear productos (Free, Pro, Enterprise)
+4. Obtener API keys
+5. Configurar webhook endpoint
+
+**Config en BD:**
+```sql
+-- Insertar configuración inicial
+INSERT INTO public.config (config_key, config_value, description) VALUES
+('subscriptions_enabled', 'false', 'Feature flag para activar/desactivar módulo de suscripciones'),
+('stripe_plans', '{
+  "free": {
+    "name": "Free",
+    "price": 0,
+    "interval": "month",
+    "limits": {
+      "tariffs": 5,
+      "budgets": 20,
+      "users": 1
+    }
+  },
+  "pro": {
+    "name": "Pro",
+    "price": 2900,
+    "interval": "month",
+    "stripe_price_id": "price_...",
+    "limits": {
+      "tariffs": 50,
+      "budgets": 500,
+      "users": 5
+    }
+  },
+  "enterprise": {
+    "name": "Enterprise",
+    "price": 9900,
+    "interval": "month",
+    "stripe_price_id": "price_...",
+    "limits": {
+      "tariffs": 999999,
+      "budgets": 999999,
+      "users": 999999
+    }
+  }
+}', 'Configuración de planes de suscripción');
+```
+
+**Archivo helpers:**
+```typescript
+// src/lib/stripe.ts
+import Stripe from 'stripe';
+
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2024-12-18.acacia',
+});
+
+export async function getStripePlans() {
+  const config = await getConfigValue('stripe_plans');
+  return config || {};
+}
+
+export async function isSubscriptionsEnabled(): Promise<boolean> {
+  const enabled = await getConfigValue('subscriptions_enabled');
+  return enabled === 'true';
+}
+```
+
+**Archivos modificados:**
+- `.env.local` (añadir vars)
+- Tabla `config` (SQL insert)
+
+**Archivos nuevos:**
+- `src/lib/stripe.ts`
+
+---
+
+#### 11.2 Migración BD: Tabla Suscripciones
+
+**Prioridad:** ALTA
+**Estimación:** 0.5 días
+
+**Schema SQL:**
+```sql
+-- migrations/025_subscriptions.sql
+CREATE TABLE public.subscriptions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  empresa_id INTEGER REFERENCES empresas(id) ON DELETE CASCADE,
+  plan TEXT NOT NULL CHECK (plan IN ('free', 'pro', 'enterprise')),
+  stripe_customer_id TEXT UNIQUE,
+  stripe_subscription_id TEXT UNIQUE,
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'canceled', 'past_due', 'trialing')),
+  current_period_start TIMESTAMPTZ,
+  current_period_end TIMESTAMPTZ,
+  cancel_at_period_end BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Índices
+CREATE INDEX idx_subscriptions_empresa ON subscriptions(empresa_id);
+CREATE INDEX idx_subscriptions_stripe_customer ON subscriptions(stripe_customer_id);
+
+-- RLS Policies
+ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "subscriptions_select_own_empresa"
+ON subscriptions FOR SELECT
+USING (empresa_id = get_user_empresa_id());
+
+CREATE POLICY "subscriptions_insert_own_empresa"
+ON subscriptions FOR INSERT
+WITH CHECK (empresa_id = get_user_empresa_id());
+
+CREATE POLICY "subscriptions_update_own_empresa"
+ON subscriptions FOR UPDATE
+USING (empresa_id = get_user_empresa_id());
+
+-- Datos iniciales: todas las empresas empiezan en plan Free
+INSERT INTO subscriptions (empresa_id, plan, status)
+SELECT id, 'free', 'active'
+FROM empresas
+WHERE NOT EXISTS (
+  SELECT 1 FROM subscriptions WHERE subscriptions.empresa_id = empresas.id
+);
+```
+
+**Función helper para verificar límites:**
+```sql
+-- Función para verificar si empresa puede crear recurso
+CREATE OR REPLACE FUNCTION check_plan_limit(
+  p_empresa_id INTEGER,
+  p_resource_type TEXT
+) RETURNS BOOLEAN AS $$
+DECLARE
+  v_plan TEXT;
+  v_limits JSONB;
+  v_current_count INTEGER;
+  v_max_limit INTEGER;
+BEGIN
+  -- Obtener plan actual
+  SELECT plan INTO v_plan
+  FROM subscriptions
+  WHERE empresa_id = p_empresa_id AND status = 'active';
+
+  IF v_plan IS NULL THEN
+    v_plan := 'free';
+  END IF;
+
+  -- Obtener límites del plan
+  SELECT config_value->v_plan->'limits' INTO v_limits
+  FROM config
+  WHERE config_key = 'stripe_plans';
+
+  -- Obtener límite del recurso
+  v_max_limit := (v_limits->>p_resource_type)::INTEGER;
+
+  -- Contar recursos actuales
+  IF p_resource_type = 'tariffs' THEN
+    SELECT COUNT(*) INTO v_current_count FROM tariffs WHERE empresa_id = p_empresa_id;
+  ELSIF p_resource_type = 'budgets' THEN
+    SELECT COUNT(*) INTO v_current_count FROM budgets WHERE empresa_id = p_empresa_id;
+  ELSIF p_resource_type = 'users' THEN
+    SELECT COUNT(*) INTO v_current_count FROM users WHERE empresa_id = p_empresa_id;
+  ELSE
+    RETURN true; -- recurso no limitado
+  END IF;
+
+  -- Verificar si puede crear más
+  RETURN v_current_count < v_max_limit;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+```
+
+**Archivos nuevos:**
+- `migrations/025_subscriptions.sql`
+
+---
+
+#### 11.3 Server Actions: Checkout y Gestión
+
+**Prioridad:** ALTA
+**Estimación:** 1.5 días
+
+**Crear sesión de Checkout:**
+```typescript
+// src/app/actions/subscriptions.ts
+"use server";
+
+import { stripe } from '@/lib/stripe';
+import { createServerActionClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
+import { getServerUser } from '@/lib/auth/server';
+
+export async function createCheckoutSession(plan: 'pro' | 'enterprise') {
+  try {
+    const user = await getServerUser();
+    if (!user) {
+      return { success: false, error: 'No autenticado' };
+    }
+
+    // Obtener configuración de planes
+    const plans = await getStripePlans();
+    const selectedPlan = plans[plan];
+
+    if (!selectedPlan || !selectedPlan.stripe_price_id) {
+      return { success: false, error: 'Plan no válido' };
+    }
+
+    // Obtener o crear customer en Stripe
+    const cookieStore = await cookies();
+    const supabase = createServerActionClient({ cookies: () => cookieStore });
+
+    const { data: subscription } = await supabase
+      .from('subscriptions')
+      .select('stripe_customer_id')
+      .eq('empresa_id', user.empresa_id)
+      .single();
+
+    let customerId = subscription?.stripe_customer_id;
+
+    if (!customerId) {
+      // Crear nuevo customer en Stripe
+      const customer = await stripe.customers.create({
+        email: user.email,
+        metadata: {
+          empresa_id: user.empresa_id.toString(),
+          user_id: user.id,
+        },
+      });
+
+      customerId = customer.id;
+
+      // Guardar customer_id en BD
+      await supabase
+        .from('subscriptions')
+        .update({ stripe_customer_id: customerId })
+        .eq('empresa_id', user.empresa_id);
+    }
+
+    // Crear sesión de Checkout
+    const session = await stripe.checkout.sessions.create({
+      customer: customerId,
+      mode: 'subscription',
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price: selectedPlan.stripe_price_id,
+          quantity: 1,
+        },
+      ],
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?checkout=success`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscriptions?checkout=canceled`,
+      metadata: {
+        empresa_id: user.empresa_id.toString(),
+        plan,
+      },
+    });
+
+    return { success: true, url: session.url };
+  } catch (error) {
+    console.error('[createCheckoutSession] Error:', error);
+    return { success: false, error: 'Error al crear sesión de pago' };
+  }
+}
+```
+
+**Cancelar suscripción:**
+```typescript
+export async function cancelSubscription() {
+  try {
+    const user = await getServerUser();
+    if (!user) {
+      return { success: false, error: 'No autenticado' };
+    }
+
+    const cookieStore = await cookies();
+    const supabase = createServerActionClient({ cookies: () => cookieStore });
+
+    const { data: subscription } = await supabase
+      .from('subscriptions')
+      .select('stripe_subscription_id')
+      .eq('empresa_id', user.empresa_id)
+      .single();
+
+    if (!subscription?.stripe_subscription_id) {
+      return { success: false, error: 'Sin suscripción activa' };
+    }
+
+    // Cancelar al final del período
+    await stripe.subscriptions.update(subscription.stripe_subscription_id, {
+      cancel_at_period_end: true,
+    });
+
+    // Actualizar BD
+    await supabase
+      .from('subscriptions')
+      .update({ cancel_at_period_end: true })
+      .eq('empresa_id', user.empresa_id);
+
+    return { success: true };
+  } catch (error) {
+    console.error('[cancelSubscription] Error:', error);
+    return { success: false, error: 'Error al cancelar suscripción' };
+  }
+}
+```
+
+**Obtener estado suscripción:**
+```typescript
+export async function getSubscriptionStatus() {
+  try {
+    const user = await getServerUser();
+    if (!user) {
+      return { success: false, error: 'No autenticado' };
+    }
+
+    const cookieStore = await cookies();
+    const supabase = createServerActionClient({ cookies: () => cookieStore });
+
+    const { data: subscription } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('empresa_id', user.empresa_id)
+      .single();
+
+    const plans = await getStripePlans();
+    const currentPlan = plans[subscription?.plan || 'free'];
+
+    return {
+      success: true,
+      data: {
+        plan: subscription?.plan || 'free',
+        status: subscription?.status || 'active',
+        limits: currentPlan?.limits || plans.free.limits,
+        current_period_end: subscription?.current_period_end,
+        cancel_at_period_end: subscription?.cancel_at_period_end || false,
+      },
+    };
+  } catch (error) {
+    console.error('[getSubscriptionStatus] Error:', error);
+    return { success: false, error: 'Error al obtener estado' };
+  }
+}
+```
+
+**Verificar límites antes de crear:**
+```typescript
+export async function canCreateResource(resourceType: 'tariffs' | 'budgets' | 'users'): Promise<boolean> {
+  try {
+    const user = await getServerUser();
+    if (!user) return false;
+
+    const cookieStore = await cookies();
+    const supabase = createServerActionClient({ cookies: () => cookieStore });
+
+    const { data, error } = await supabase
+      .rpc('check_plan_limit', {
+        p_empresa_id: user.empresa_id,
+        p_resource_type: resourceType,
+      });
+
+    return data === true;
+  } catch (error) {
+    console.error('[canCreateResource] Error:', error);
+    return false;
+  }
+}
+```
+
+**Archivos nuevos:**
+- `src/app/actions/subscriptions.ts`
+
+**Archivos modificados:**
+- `src/app/actions/tariffs.ts` (añadir verificación límites)
+- `src/app/actions/budgets.ts` (añadir verificación límites)
+- `src/app/actions/users.ts` (añadir verificación límites)
+
+---
+
+#### 11.4 Webhook Handler: Sincronizar Stripe → BD
+
+**Prioridad:** CRÍTICA
+**Estimación:** 1.5 días
+
+**Endpoint API:**
+```typescript
+// src/app/api/webhooks/stripe/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { stripe } from '@/lib/stripe';
+import { createClient } from '@supabase/supabase-js';
+import Stripe from 'stripe';
+
+// Usar service_role para bypass RLS
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+export async function POST(req: NextRequest) {
+  const body = await req.text();
+  const signature = req.headers.get('stripe-signature');
+
+  if (!signature) {
+    return NextResponse.json({ error: 'No signature' }, { status: 400 });
+  }
+
+  let event: Stripe.Event;
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      body,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET!
+    );
+  } catch (error) {
+    console.error('[Webhook] Error verificando firma:', error);
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+  }
+
+  console.log('[Webhook] Evento recibido:', event.type);
+
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed':
+        await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
+        break;
+
+      case 'customer.subscription.updated':
+        await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
+        break;
+
+      case 'customer.subscription.deleted':
+        await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
+        break;
+
+      default:
+        console.log('[Webhook] Evento no manejado:', event.type);
+    }
+
+    return NextResponse.json({ received: true });
+  } catch (error) {
+    console.error('[Webhook] Error procesando evento:', error);
+    return NextResponse.json({ error: 'Webhook error' }, { status: 500 });
+  }
+}
+
+async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+  const empresaId = parseInt(session.metadata?.empresa_id || '0');
+  const plan = session.metadata?.plan || 'free';
+
+  if (!empresaId || !plan) {
+    console.error('[Webhook] Metadata faltante en checkout.session');
+    return;
+  }
+
+  // Obtener suscripción de Stripe
+  const subscription = await stripe.subscriptions.retrieve(
+    session.subscription as string
+  );
+
+  // Actualizar BD
+  const { error } = await supabase
+    .from('subscriptions')
+    .update({
+      plan,
+      stripe_subscription_id: subscription.id,
+      status: subscription.status,
+      current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+      cancel_at_period_end: subscription.cancel_at_period_end,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('empresa_id', empresaId);
+
+  if (error) {
+    console.error('[Webhook] Error actualizando BD:', error);
+  } else {
+    console.log(`[Webhook] Suscripción actualizada: empresa ${empresaId} → plan ${plan}`);
+  }
+}
+
+async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
+  const empresaId = parseInt(subscription.metadata?.empresa_id || '0');
+
+  if (!empresaId) {
+    console.error('[Webhook] empresa_id no encontrado en metadata');
+    return;
+  }
+
+  const { error } = await supabase
+    .from('subscriptions')
+    .update({
+      status: subscription.status,
+      current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+      cancel_at_period_end: subscription.cancel_at_period_end,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('stripe_subscription_id', subscription.id);
+
+  if (error) {
+    console.error('[Webhook] Error actualizando suscripción:', error);
+  } else {
+    console.log(`[Webhook] Suscripción actualizada: ${subscription.id} → ${subscription.status}`);
+  }
+}
+
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+  // Revertir a plan Free
+  const { error } = await supabase
+    .from('subscriptions')
+    .update({
+      plan: 'free',
+      status: 'canceled',
+      stripe_subscription_id: null,
+      current_period_end: null,
+      cancel_at_period_end: false,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('stripe_subscription_id', subscription.id);
+
+  if (error) {
+    console.error('[Webhook] Error cancelando suscripción:', error);
+  } else {
+    console.log(`[Webhook] Suscripción cancelada: ${subscription.id} → plan free`);
+  }
+}
+```
+
+**Configuración webhook en Stripe Dashboard:**
+1. Ir a Developers > Webhooks
+2. Añadir endpoint: `https://tu-dominio.com/api/webhooks/stripe`
+3. Seleccionar eventos:
+   - `checkout.session.completed`
+   - `customer.subscription.updated`
+   - `customer.subscription.deleted`
+4. Copiar `Signing secret` → `.env.local` (STRIPE_WEBHOOK_SECRET)
+
+**Testing local webhooks:**
+```bash
+# Instalar Stripe CLI
+brew install stripe/stripe-cli/stripe
+
+# Login
+stripe login
+
+# Reenviar eventos a localhost
+stripe listen --forward-to localhost:3000/api/webhooks/stripe
+```
+
+**Archivos nuevos:**
+- `src/app/api/webhooks/stripe/route.ts`
+
+---
+
+#### 11.5 UI: Página Suscripciones
+
+**Prioridad:** ALTA
+**Estimación:** 1.5 días
+
+**Página principal:**
+```typescript
+// src/app/subscriptions/page.tsx
+import { getServerUser } from '@/lib/auth/server';
+import { getSubscriptionStatus } from '@/app/actions/subscriptions';
+import { SubscriptionPlans } from '@/components/subscriptions/SubscriptionPlans';
+import { CurrentPlan } from '@/components/subscriptions/CurrentPlan';
+import { redirect } from 'next/navigation';
+
+export default async function SubscriptionsPage() {
+  const user = await getServerUser();
+  if (!user) redirect('/login');
+
+  // Verificar si módulo está habilitado
+  const enabled = await isSubscriptionsEnabled();
+  if (!enabled) {
+    return (
+      <div className="p-8">
+        <h1 className="text-2xl font-bold">Suscripciones</h1>
+        <p className="text-muted-foreground mt-2">
+          Módulo de suscripciones no disponible actualmente.
+        </p>
+      </div>
+    );
+  }
+
+  const { data: status } = await getSubscriptionStatus();
+
+  return (
+    <div className="p-8 max-w-6xl mx-auto">
+      <h1 className="text-3xl font-bold mb-2">Gestión de Suscripción</h1>
+      <p className="text-muted-foreground mb-8">
+        Administra tu plan y límites de uso
+      </p>
+
+      <CurrentPlan status={status} />
+
+      <div className="mt-12">
+        <h2 className="text-2xl font-semibold mb-6">Planes Disponibles</h2>
+        <SubscriptionPlans currentPlan={status?.plan || 'free'} />
+      </div>
+    </div>
+  );
+}
+```
+
+**Componente CurrentPlan:**
+```typescript
+// src/components/subscriptions/CurrentPlan.tsx
+"use client";
+
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { formatDate } from '@/lib/helpers/format';
+import { cancelSubscription } from '@/app/actions/subscriptions';
+import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
+
+interface CurrentPlanProps {
+  status: {
+    plan: string;
+    status: string;
+    limits: {
+      tariffs: number;
+      budgets: number;
+      users: number;
+    };
+    current_period_end?: string;
+    cancel_at_period_end: boolean;
+  };
+}
+
+export function CurrentPlan({ status }: CurrentPlanProps) {
+  const router = useRouter();
+
+  async function handleCancel() {
+    const confirmed = confirm('¿Estás seguro de cancelar tu suscripción? Continuarás teniendo acceso hasta el final del período actual.');
+    if (!confirmed) return;
+
+    const result = await cancelSubscription();
+    if (result.success) {
+      toast.success('Suscripción cancelada. Tendrás acceso hasta el final del período.');
+      router.refresh();
+    } else {
+      toast.error(result.error);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="text-xl">Plan Actual</CardTitle>
+            <CardDescription>
+              {status.cancel_at_period_end
+                ? 'Cancelado (acceso hasta ' + formatDate(status.current_period_end!) + ')'
+                : 'Activo'}
+            </CardDescription>
+          </div>
+          <Badge variant={status.plan === 'free' ? 'secondary' : 'default'} className="text-lg">
+            {status.plan.toUpperCase()}
+          </Badge>
+        </div>
+      </CardHeader>
+
+      <CardContent>
+        <div className="space-y-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Tarifas</p>
+              <p className="text-2xl font-bold">{status.limits.tariffs}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Presupuestos</p>
+              <p className="text-2xl font-bold">{status.limits.budgets}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Usuarios</p>
+              <p className="text-2xl font-bold">{status.limits.users}</p>
+            </div>
+          </div>
+
+          {status.plan !== 'free' && status.current_period_end && !status.cancel_at_period_end && (
+            <div className="pt-4 border-t">
+              <p className="text-sm text-muted-foreground mb-2">
+                Próxima renovación: {formatDate(status.current_period_end)}
+              </p>
+              <Button variant="outline" onClick={handleCancel}>
+                Cancelar Suscripción
+              </Button>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+**Componente SubscriptionPlans:**
+```typescript
+// src/components/subscriptions/SubscriptionPlans.tsx
+"use client";
+
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Check } from 'lucide-react';
+import { createCheckoutSession } from '@/app/actions/subscriptions';
+import { toast } from 'sonner';
+import { useState } from 'react';
+
+const plans = [
+  {
+    id: 'free',
+    name: 'Free',
+    price: '0€',
+    interval: '/mes',
+    features: [
+      '5 tarifas',
+      '20 presupuestos',
+      '1 usuario',
+      'Soporte comunidad',
+    ],
+  },
+  {
+    id: 'pro',
+    name: 'Pro',
+    price: '29€',
+    interval: '/mes',
+    features: [
+      '50 tarifas',
+      '500 presupuestos',
+      '5 usuarios',
+      'Soporte email 24h',
+      'Exportación avanzada',
+    ],
+  },
+  {
+    id: 'enterprise',
+    name: 'Enterprise',
+    price: '99€',
+    interval: '/mes',
+    features: [
+      'Tarifas ilimitadas',
+      'Presupuestos ilimitados',
+      'Usuarios ilimitados',
+      'Soporte prioritario',
+      'Integraciones API',
+      'Manager dedicado',
+    ],
+  },
+];
+
+interface SubscriptionPlansProps {
+  currentPlan: string;
+}
+
+export function SubscriptionPlans({ currentPlan }: SubscriptionPlansProps) {
+  const [loading, setLoading] = useState<string | null>(null);
+
+  async function handleUpgrade(planId: 'pro' | 'enterprise') {
+    setLoading(planId);
+
+    const result = await createCheckoutSession(planId);
+
+    if (result.success && result.url) {
+      window.location.href = result.url;
+    } else {
+      toast.error(result.error);
+      setLoading(null);
+    }
+  }
+
+  return (
+    <div className="grid md:grid-cols-3 gap-6">
+      {plans.map((plan) => {
+        const isCurrent = plan.id === currentPlan;
+        const isDowngrade = (currentPlan === 'enterprise' && plan.id !== 'enterprise') ||
+                           (currentPlan === 'pro' && plan.id === 'free');
+
+        return (
+          <Card key={plan.id} className={isCurrent ? 'border-primary' : ''}>
+            <CardHeader>
+              <CardTitle>{plan.name}</CardTitle>
+              <CardDescription>
+                <span className="text-3xl font-bold">{plan.price}</span>
+                {plan.interval}
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent>
+              <ul className="space-y-2">
+                {plan.features.map((feature, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-600" />
+                    <span className="text-sm">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+
+            <CardFooter>
+              {isCurrent ? (
+                <Button variant="outline" disabled className="w-full">
+                  Plan Actual
+                </Button>
+              ) : isDowngrade ? (
+                <Button variant="ghost" disabled className="w-full">
+                  Contactar soporte para downgrade
+                </Button>
+              ) : plan.id === 'free' ? (
+                <Button variant="outline" disabled className="w-full">
+                  Plan Gratuito
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => handleUpgrade(plan.id as 'pro' | 'enterprise')}
+                  disabled={loading === plan.id}
+                  className="w-full"
+                >
+                  {loading === plan.id ? 'Procesando...' : 'Actualizar Plan'}
+                </Button>
+              )}
+            </CardFooter>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+```
+
+**Archivos nuevos:**
+- `src/app/subscriptions/page.tsx`
+- `src/components/subscriptions/CurrentPlan.tsx`
+- `src/components/subscriptions/SubscriptionPlans.tsx`
+
+---
+
+#### 11.6 Integración: Verificar Límites en Server Actions
+
+**Prioridad:** ALTA
+**Estimación:** 0.5 días
+
+**Modificar createTariff:**
+```typescript
+// src/app/actions/tariffs.ts
+
+export async function createTariff(formData: TariffFormData) {
+  try {
+    const user = await getServerUser();
+    if (!user) {
+      return { success: false, error: 'No autenticado' };
+    }
+
+    // NUEVO: Verificar límites antes de crear
+    const canCreate = await canCreateResource('tariffs');
+    if (!canCreate) {
+      return {
+        success: false,
+        error: 'Has alcanzado el límite de tarifas de tu plan. Actualiza tu suscripción para continuar.',
+      };
+    }
+
+    // ... resto del código existente
+  } catch (error) {
+    // ...
+  }
+}
+```
+
+**Modificar saveBudget:**
+```typescript
+// src/app/actions/budgets.ts
+
+export async function saveBudget(budgetData: BudgetData) {
+  try {
+    const user = await getServerUser();
+    if (!user) {
+      return { success: false, error: 'No autenticado' };
+    }
+
+    // NUEVO: Verificar límites antes de crear
+    const canCreate = await canCreateResource('budgets');
+    if (!canCreate) {
+      return {
+        success: false,
+        error: 'Has alcanzado el límite de presupuestos de tu plan. Actualiza tu suscripción para continuar.',
+      };
+    }
+
+    // ... resto del código existente
+  } catch (error) {
+    // ...
+  }
+}
+```
+
+**Modificar createUser:**
+```typescript
+// src/app/actions/users.ts
+
+export async function createUser(userData: UserFormData) {
+  try {
+    const user = await getServerUser();
+    if (!user) {
+      return { success: false, error: 'No autenticado' };
+    }
+
+    // Verificar permisos
+    if (user.role !== 'admin' && user.role !== 'superadmin') {
+      return { success: false, error: 'Sin permisos' };
+    }
+
+    // NUEVO: Verificar límites antes de crear
+    const canCreate = await canCreateResource('users');
+    if (!canCreate) {
+      return {
+        success: false,
+        error: 'Has alcanzado el límite de usuarios de tu plan. Actualiza tu suscripción para continuar.',
+      };
+    }
+
+    // ... resto del código existente
+  } catch (error) {
+    // ...
+  }
+}
+```
+
+**Archivos modificados:**
+- `src/app/actions/tariffs.ts`
+- `src/app/actions/budgets.ts`
+- `src/app/actions/users.ts`
+
+---
+
+### Criterios de Aceptación
+
+#### Funcionales:
+- ✅ Checkout Stripe redirige correctamente
+- ✅ Webhooks sincronizan BD automáticamente
+- ✅ Límites de plan se verifican antes de crear recursos
+- ✅ Mensajes de error claros cuando se alcanza límite
+- ✅ Cancelación funciona (mantiene acceso hasta fin de período)
+- ✅ Plan Free se activa automáticamente al cancelar
+- ✅ Feature flag activa/desactiva módulo sin errores
+
+#### No Funcionales:
+- ✅ Webhooks procesan eventos < 5s
+- ✅ Idempotencia de webhooks (eventos duplicados manejados)
+- ✅ UI responsive en móvil/tablet
+- ✅ Mensajes de error user-friendly
+- ✅ Logs detallados para debugging
+
+#### Testing:
+- ✅ Test mode Stripe funciona correctamente
+- ✅ Webhooks locales con Stripe CLI
+- ✅ Casos edge: cancelar y reactivar, downgrade, upgrade
+- ✅ Verificar RLS policies no permiten bypass de límites
+
+### Dependencias Técnicas
+
+**NPM Packages:**
+- `stripe` (SDK oficial)
+
+**Variables de entorno:**
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
+- `NEXT_PUBLIC_APP_URL`
+- `SUPABASE_SERVICE_ROLE_KEY` (para webhooks)
+
+**Migraciones SQL:**
+- `migrations/025_subscriptions.sql`
+
+**Configuración externa:**
+- Cuenta Stripe (modo test)
+- Productos y precios creados en Stripe Dashboard
+- Webhook endpoint configurado
+
+### Limitaciones Conocidas
+
+- **Solo tarjeta de crédito:** No soporta otros métodos de pago (transferencia, PayPal, etc.)
+- **Sin proration:** Cambios de plan no calculan prorrateo automático
+- **Sin trials:** No hay período de prueba gratuito (implementar en Fase 3)
+- **Downgrade manual:** Requiere contactar soporte (evitar abuso)
+- **Sin analytics suscripciones:** No trackea churn, MRR, LTV (Fase 3)
+- **Webhooks críticos:** App depende de webhooks Stripe (si caen, desincronización)
+
+### Beneficios
+
+- **Monetización inmediata:** Comienza a generar ingresos sin cambios arquitectónicos masivos
+- **Feature flag seguro:** Desactivar módulo sin afectar funcionalidad core
+- **Escalabilidad:** Preparado para multi-tenant completo en Fase 3
+- **UX transparente:** Usuarios ven límites claramente antes de alcanzarlos
+- **Seguridad:** RLS + verificación servidor previene bypass de límites
+- **Mantenimiento bajo:** Stripe maneja compliance, PCI, facturación
+
+### Testing Guidelines
+
+**Unit tests:**
+```typescript
+// src/app/actions/__tests__/subscriptions.test.ts
+describe('canCreateResource', () => {
+  it('should return false when limit reached', async () => {
+    // Mock: empresa en plan Free con 5 tarifas
+    const result = await canCreateResource('tariffs');
+    expect(result).toBe(false);
+  });
+
+  it('should return true when limit not reached', async () => {
+    // Mock: empresa en plan Pro con 10 tarifas
+    const result = await canCreateResource('tariffs');
+    expect(result).toBe(true);
+  });
+});
+```
+
+**Integration tests:**
+```typescript
+// Testar webhook handler con eventos mock
+describe('POST /api/webhooks/stripe', () => {
+  it('should update subscription on checkout.session.completed', async () => {
+    const mockEvent = {
+      type: 'checkout.session.completed',
+      data: { object: mockSession },
+    };
+
+    const response = await POST(mockRequest);
+    expect(response.status).toBe(200);
+
+    // Verificar BD actualizada
+    const subscription = await getSubscription(empresaId);
+    expect(subscription.plan).toBe('pro');
+  });
+});
+```
+
+**E2E tests (Playwright):**
+```typescript
+test('upgrade plan flow', async ({ page }) => {
+  // 1. Login
+  await page.goto('/login');
+  await login(page, testUser);
+
+  // 2. Ir a suscripciones
+  await page.goto('/subscriptions');
+
+  // 3. Seleccionar plan Pro
+  await page.click('text=Actualizar Plan >> nth=1');
+
+  // 4. Completar checkout Stripe (test mode)
+  // ...
+
+  // 5. Verificar redirección success
+  await expect(page).toHaveURL('/dashboard?checkout=success');
+
+  // 6. Verificar plan actualizado
+  await page.goto('/subscriptions');
+  await expect(page.locator('text=PRO')).toBeVisible();
+});
+```
+
+### Troubleshooting
+
+**Problema: Webhook no recibe eventos**
+```bash
+# Verificar endpoint configurado en Stripe Dashboard
+# Verificar STRIPE_WEBHOOK_SECRET correcto
+# Testear localmente con Stripe CLI:
+stripe listen --forward-to localhost:3000/api/webhooks/stripe
+```
+
+**Problema: Límites no se verifican**
+```sql
+-- Verificar función SQL
+SELECT check_plan_limit(1, 'tariffs');
+
+-- Verificar plan actual
+SELECT * FROM subscriptions WHERE empresa_id = 1;
+
+-- Verificar config planes
+SELECT config_value FROM config WHERE config_key = 'stripe_plans';
+```
+
+**Problema: Checkout falla**
+```typescript
+// Verificar logs detallados
+console.log('[createCheckoutSession] Customer ID:', customerId);
+console.log('[createCheckoutSession] Price ID:', selectedPlan.stripe_price_id);
+
+// Verificar precio existe en Stripe Dashboard
+// Verificar URL success/cancel correctas
+```
+
+---
+
 ## MEJORAS ADICIONALES IMPLEMENTADAS (2025-01-10)
 
 ### Correcciones Críticas UX
@@ -2149,7 +3289,7 @@ Descripción del flujo...
 ---
 
 **Documento:** Fase 2 - Requisitos y Funcionalidades
-**Versión:** 1.2
+**Versión:** 1.3
 **Fecha:** 2025-01-18
 **Estado:** Aprobado
-**Última actualización:** Bloque 10 Sistema de Ayuda añadido + duplicar tarifas/presupuestos
+**Última actualización:** Bloque 11 Suscripciones Stripe añadido (Post Fase 2 - Opcional)
