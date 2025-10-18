@@ -1,20 +1,21 @@
 # Planificación - Fase 2: Evolución Funcional
 
-## FASE 2: EVOLUCIÓN Y PREPARACIÓN MULTI-TENANT (12 semanas)
+## FASE 2: EVOLUCIÓN Y PREPARACIÓN MULTI-TENANT (13 semanas)
 
-**Objetivo:** Completar funcionalidades fiscales, mejorar UX, preparar arquitectura para SaaS multi-tenant
+**Objetivo:** Completar funcionalidades fiscales, mejorar UX, preparar arquitectura para SaaS multi-tenant, sistema de ayuda
 
 ---
 
 ## Timeline General
 
 ```
-Semanas 1-2:  Usuarios y Autenticación (CRÍTICO)
-Semanas 3-4:  Mejoras Tarifas + Configuración
-Semanas 5-6:  IRPF y Recargo de Equivalencia
-Semanas 7-8:  Versiones y Notas
-Semanas 9-10: Navegación Unificada + Rich Text
+Semanas 1-2:   Usuarios y Autenticación (CRÍTICO)
+Semanas 3-4:   Mejoras Tarifas + Configuración
+Semanas 5-6:   IRPF y Recargo de Equivalencia
+Semanas 7-8:   Versiones y Notas
+Semanas 9-10:  Navegación Unificada + Rich Text
 Semanas 11-12: Import/Export + Responsive Mobile
+Semana 13:     Sistema de Ayuda
 ```
 
 ---
@@ -261,6 +262,39 @@ Semanas 11-12: Import/Export + Responsive Mobile
 
 ---
 
+## SEMANA 13: Sistema de Ayuda ⏳
+
+### Objetivo: Documentación dinámica con tours interactivos
+
+**Bloque 10: Sistema de Ayuda**
+
+| Día | Tarea | Responsable | Estado |
+|-----|-------|-------------|--------|
+| 1 | Setup + Markdown Reader | Frontend | ⏳ |
+| 2 | Página individual + TourButton | Full-stack | ⏳ |
+| 3-4 | Índice de ayuda | Frontend | ⏳ |
+| 5 | Integración layout + testing | Full-stack | ⏳ |
+
+**Entregables:**
+
+- ⏳ Sistema lee Markdown dinámicamente desde `/public/help/`
+- ⏳ Tours interactivos con Driver.js
+- ⏳ Índice categorizado con búsqueda
+- ⏳ Usuarios pueden actualizar Markdown fácilmente sin rebuild
+- ⏳ Enlace "Ayuda" en header principal
+- ⏳ Tours se lanzan automáticamente tras redirección
+
+**Criterio de completado:**
+
+- Markdown se parsea correctamente con frontmatter
+- Tours Driver.js funcionan sin errores
+- Índice muestra artículos agrupados por categoría
+- Botón "Iniciar Tour" redirige y lanza Driver.js
+- Actualizaciones de archivos .md visibles sin rebuild
+- UX intuitiva para usuarios no técnicos
+
+---
+
 ## Dependencias Críticas
 
 ```
@@ -387,8 +421,8 @@ Bloque 6 (Navegación) ──> Bloque 9 (Responsive)
 ### Global Fase 2:
 
 - **Progreso:** Tareas completadas / Total tareas
-- **Bloques completados:** X / 9
-- **Semanas consumidas:** X / 12
+- **Bloques completados:** X / 10
+- **Semanas consumidas:** X / 13
 - **Calidad:** Bugs críticos pendientes
 
 ---
@@ -421,10 +455,11 @@ Bloque 6 (Navegación) ──> Bloque 9 (Responsive)
 - ✅ RE implementado y validado
 - ✅ Versiones de presupuestos funcional
 - ✅ Notas con timeline operativo
-- ✅ Navegación unificada
+- ⏳ Navegación unificada
 - ✅ Rich text editor integrado
 - ✅ Import/Export funcional
-- ✅ Responsive completo
+- ⏳ Responsive completo
+- ⏳ Sistema de ayuda con tours
 
 ### Calidad:
 
@@ -497,13 +532,14 @@ FASE 1 (COMPLETADA) ✅
 ├─ Semana 7: PDF Generation
 └─ Semana 8: Dashboard
 
-FASE 2 (EN CURSO) ⏳ - 39% Completado
+FASE 2 (EN CURSO) ⏳ - 38% Completado
 ├─ Semanas 1-2: Usuarios y Seguridad ✅ + Multi-Tenant ✅
 ├─ Semanas 3-4: Mejoras Tarifas ✅ + Config ✅
 ├─ Semanas 5-6: IRPF y RE ✅
 ├─ Semanas 7-8: Versiones ✅ + Notas ✅
-├─ Semanas 9-10: Navegación ⏳ + Rich Text ⏳
-└─ Semanas 11-12: Import/Export ⏳ + Responsive ⏳
+├─ Semanas 9-10: Navegación ⏳ + Rich Text ✅
+├─ Semanas 11-12: Import/Export ✅ + Responsive ⏳
+└─ Semana 13: Sistema de Ayuda ⏳
 
 FASE 3 (PLANIFICADA) 📋
 ├─ Suscripciones
@@ -619,8 +655,8 @@ FASE 3 (PLANIFICADA) 📋
 ---
 
 **Documento:** Planificación Fase 2
-**Versión:** 1.2
-**Fecha:** 2025-01-13 (actualizado)
-**Última actualización:** Bloque 8 Import/Export completado
-**Estado:** Activo - 78% completado (7/9 bloques)
-**Próxima revisión:** Fin Semana 12 (Hito 8)
+**Versión:** 1.3
+**Fecha:** 2025-01-18 (actualizado)
+**Última actualización:** Bloque 10 Sistema de Ayuda añadido + funcionalidad duplicar tarifas/presupuestos
+**Estado:** Activo - 50% completado (5/10 bloques)
+**Próxima revisión:** Fin Semana 13 (Hito 8)
