@@ -4,10 +4,10 @@
 
 **Fase Actual:** Fase 2 - Evolución Funcional
 **Progreso MVP:** 100% ✅
-**Progreso Fase 2:** 42% ✅ (20/47 tareas)
+**Progreso Fase 2:** 38% ✅ (20/53 tareas)
 
-**Última actualización:** 2025-01-17 - Fix crítico RLS + Mejoras UX
-**Bloques completados:** 5/9 (Usuarios, Tarifas, Config, IRPF/RE, Versiones/Notas)
+**Última actualización:** 2025-01-18 - Añadido Bloque 10: Sistema de Ayuda
+**Bloques completados:** 5/10 (Usuarios, Tarifas, Config, IRPF/RE, Versiones/Notas)
 **Siguiente objetivo:** Bloque 6 - Navegación Unificada (o saltar a Responsive)
 
 ---
@@ -185,6 +185,23 @@
 ⚠️ src/components/budgets/BudgetHierarchyForm.tsx (MODIFICAR - condicional mobile)
 ```
 
+### Bloque 10: Sistema de Ayuda
+
+**Status:** ⏳ Pendiente
+
+```
+✅ public/help/ (NUEVO - archivos markdown)
+✅ public/help/tours.json (NUEVO - configuración tours)
+✅ src/components/help/MarkdownReader.tsx (NUEVO)
+✅ src/components/help/TourButton.tsx (NUEVO)
+✅ src/components/help/HelpIndex.tsx (NUEVO)
+✅ src/lib/helpers/markdown-helpers.ts (NUEVO)
+✅ src/lib/helpers/tour-helpers.ts (NUEVO)
+✅ src/app/help/[slug]/page.tsx (NUEVO)
+⚠️ src/components/layout/Header.tsx (MODIFICAR - añadir enlace ayuda)
+⚠️ package.json (AÑADIR: gray-matter, marked, driver.js)
+```
+
 ---
 
 ## 📋 REGLAS FASE 2
@@ -336,6 +353,7 @@ export async function getTariffs() {
 - `editor`: Bloque 7
 - `import-export`: Bloque 8
 - `responsive`: Bloque 9
+- `help`: Bloque 10 (Sistema de Ayuda)
 
 **Ejemplos:**
 
@@ -399,12 +417,13 @@ docs(users): actualizar README con flujo registro
 11. ✅ Sistema versiones
 12. ✅ Sistema notas
 
-### LARGO PLAZO (Semanas 9-12): ⏳
+### LARGO PLAZO (Semanas 9-13): ⏳
 
 13. ✅ Navegación unificada
 14. ✅ Rich text editor
 15. ✅ Import/Export
 16. ✅ Responsive completo
+17. ⏳ Sistema de ayuda (Markdown + Driver.js)
 
 ---
 
@@ -428,6 +447,9 @@ docs(users): actualizar README con flujo registro
 - `@tiptap/react` - Rich text editor (Bloque 7)
 - `@tiptap/starter-kit` - Extensiones básicas Tiptap
 - `@tiptap/extension-placeholder` - Placeholder text
+- `gray-matter` - Frontmatter parser para Markdown (Bloque 10)
+- `marked` - Markdown to HTML converter (Bloque 10)
+- `driver.js` - Interactive tours library (Bloque 10)
 
 ---
 
@@ -493,10 +515,10 @@ docs(users): actualizar README con flujo registro
 
 ### Global:
 
-- **Progreso:** 42% (20/47 tareas)
-- **Bloques completados:** 5/9 (Usuarios ✅, Tarifas ✅, Config ✅, IRPF/RE ✅, Versiones ✅)
+- **Progreso:** 38% (20/53 tareas)
+- **Bloques completados:** 5/10 (Usuarios ✅, Tarifas ✅, Config ✅, IRPF/RE ✅, Versiones ✅)
 - **Bloques parciales:** Rich Editor ✅ (Bloque 7), Import/Export ✅ (Bloque 8)
-- **Semanas consumidas:** 7/12
+- **Semanas consumidas:** 7/13
 - **Bugs críticos resueltos:** 1 (RLS tariffs - migración 030)
 - **Mejoras UX:** 8 implementadas
 
@@ -516,6 +538,7 @@ docs(users): actualizar README con flujo registro
 - ✅ Rich text editor integrado
 - ✅ Import/Export operativo
 - ✅ Responsive tablet/móvil
+- ⏳ Sistema de ayuda (Markdown + Tours)
 
 ### Calidad:
 
@@ -980,8 +1003,8 @@ export function ComponentName({ prop1, onSuccess }: ComponentNameProps) {
 ---
 
 **Documento:** Claude Code Fase 2
-**Versión:** 1.1
-**Fecha:** 2025-01-17
+**Versión:** 1.2
+**Fecha:** 2025-01-18
 **Estado:** Activo
-**Última actualización:** Fix crítico RLS (migración 030) + Mejoras UX + Config centralizada
-**Próxima revisión:** Fin Semana 8
+**Última actualización:** Añadido Bloque 10 - Sistema de Ayuda (Markdown + Driver.js)
+**Próxima revisión:** Fin Semana 9
