@@ -1024,6 +1024,168 @@ Completado: 0/6 tareas (0%)
 
 ---
 
+## BLOQUE 11: SUSCRIPCIONES STRIPE ⏳
+
+**Estado:** ⏳ Pendiente (Post Fase 2)
+**Prioridad:** MEDIA-BAJA
+**Duración:** 6 días
+
+### Tareas Críticas:
+
+#### 11.1 Setup Stripe + Feature Flag
+
+**Prioridad:** ALTA | **Estimación:** 0.5 días | **Estado:** ⏳ Pendiente
+
+- [ ] Instalar `stripe` SDK
+- [ ] Crear cuenta Stripe (test mode)
+- [ ] Añadir env vars: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
+- [ ] Crear config `subscriptions_enabled` (default: false)
+- [ ] Crear config `stripe_plans` con Free/Pro/Enterprise
+
+**Archivos nuevos:**
+
+- `src/lib/stripe.ts`
+
+**Archivos modificados:**
+
+- `.env.local`
+- Tabla `config` (SQL insert)
+
+**Criterios de completado:**
+
+- ✅ SDK instalado
+- ✅ Config creada en BD
+- ✅ Cliente Stripe funcional
+
+---
+
+#### 11.2 Migración Base de Datos
+
+**Prioridad:** ALTA | **Estimación:** 1 día | **Estado:** ⏳ Pendiente
+
+- [ ] Crear tabla `subscriptions`
+- [ ] Añadir columna `plan` a `empresas`
+- [ ] Trigger para verificar límites
+- [ ] Función helper `checkPlanLimit()`
+
+**Archivos nuevos:**
+
+- `migrations/031_subscriptions.sql`
+
+**Criterios de completado:**
+
+- ✅ Tabla subscriptions creada
+- ✅ Columna plan en empresas
+- ✅ RLS policies aplicadas
+- ✅ Función límites funcional
+
+---
+
+#### 11.3 Server Actions Suscripciones
+
+**Prioridad:** ALTA | **Estimación:** 1.5 días | **Estado:** ⏳ Pendiente
+
+- [ ] `createCheckoutSession()` - Crear sesión Stripe
+- [ ] `getSubscription()` - Obtener suscripción actual
+- [ ] `cancelSubscription()` - Cancelar suscripción
+- [ ] `checkResourceLimit()` - Verificar límite antes de crear recurso
+
+**Archivos nuevos:**
+
+- `src/app/actions/subscriptions.ts`
+
+**Criterios de completado:**
+
+- ✅ Checkout session funcional
+- ✅ Obtención suscripción correcta
+- ✅ Cancelación al final de periodo
+- ✅ Verificación límites operativa
+
+---
+
+#### 11.4 Webhook Handler Stripe
+
+**Prioridad:** CRÍTICA | **Estimación:** 1 día | **Estado:** ⏳ Pendiente
+
+- [ ] Crear API route `/api/webhooks/stripe`
+- [ ] Verificar signature Stripe
+- [ ] Manejar eventos: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`
+- [ ] Actualizar BD según eventos
+
+**Archivos nuevos:**
+
+- `src/app/api/webhooks/stripe/route.ts`
+
+**Criterios de completado:**
+
+- ✅ Webhook verifica signature
+- ✅ Eventos procesados correctamente
+- ✅ BD sincronizada con Stripe
+- ✅ Plan actualizado en empresas
+
+---
+
+#### 11.5 UI Suscripciones
+
+**Prioridad:** MEDIA | **Estimación:** 1.5 días | **Estado:** ⏳ Pendiente
+
+- [ ] Página `/settings/subscription`
+- [ ] Componente `SubscriptionPlans.tsx` (cards planes)
+- [ ] Componente `CurrentSubscription.tsx` (plan actual)
+- [ ] Badge plan en Header
+- [ ] Bloqueo UI cuando límite alcanzado
+
+**Archivos nuevos:**
+
+- `src/app/settings/subscription/page.tsx`
+- `src/components/subscriptions/SubscriptionPlans.tsx`
+- `src/components/subscriptions/CurrentSubscription.tsx`
+- `src/components/subscriptions/PlanBadge.tsx`
+- `src/components/subscriptions/LimitWarning.tsx`
+
+**Criterios de completado:**
+
+- ✅ UI muestra planes disponibles
+- ✅ Plan actual resaltado
+- ✅ Checkout funcional
+- ✅ Badge en header visible
+- ✅ Bloqueo al alcanzar límite
+
+---
+
+#### 11.6 Integración con Recursos Existentes
+
+**Prioridad:** ALTA | **Estimación:** 0.5 días | **Estado:** ⏳ Pendiente
+
+- [ ] Modificar `createTariff()` - verificar límite
+- [ ] Modificar `createBudget()` - verificar límite
+- [ ] Modificar `createUser()` - verificar límite
+- [ ] Toast informativo cuando límite alcanzado
+
+**Archivos modificados:**
+
+- `src/app/actions/tariffs.ts`
+- `src/app/actions/budgets.ts`
+- `src/app/actions/users.ts`
+
+**Criterios de completado:**
+
+- ✅ Límites verificados en creación
+- ✅ Mensajes informativos
+- ✅ Enlaces a upgrade en error
+- ✅ No rompe funcionalidad existente
+
+---
+
+## ✅ BLOQUE 11 RESUMEN
+
+Completado: 0/6 tareas (0%)
+**Estado:** ⏳ Pendiente (Post Fase 2)
+**Duración total:** 6 días
+**Siguiente paso:** 11.1 Setup Stripe + Feature Flag
+
+---
+
 ## RESUMEN DE PRIORIDADES
 
 ### INMEDIATO (Semanas 1-2):
@@ -1310,13 +1472,13 @@ Completado: 0/6 tareas (0%)
 
 ## ESTADO GLOBAL FASE 2
 
-**Progreso:** 38% (20/53 tareas) - Multi-tenant + Config + Rich Editor + Import/Export completados
-**Bloques completados:** 5/10 (Usuarios ✅, Mejoras Tarifas ✅, Configuración ✅, IRPF y RE ✅, Versiones y Notas ✅)
+**Progreso:** 34% (20/59 tareas) - Multi-tenant + Config + Rich Editor + Import/Export completados
+**Bloques completados:** 5/11 (Usuarios ✅, Mejoras Tarifas ✅, Configuración ✅, IRPF y RE ✅, Versiones y Notas ✅)
 **Bloques parciales:** Rich Editor ✅, Import/Export ✅ (Bloques 7 y 8 completados)
-**Bloques pendientes:** Navegación Unificada, Responsive, Sistema de Ayuda
+**Bloques pendientes:** Navegación Unificada, Responsive, Sistema de Ayuda, Suscripciones Stripe
 **Mejoras adicionales:** 9 correcciones críticas + mejoras UX implementadas (incluye duplicar tarifas/presupuestos)
 **Semanas transcurridas:** 7/13
-**Duración estimada:** 13 semanas
+**Duración estimada:** 13 semanas (+ Bloque 11 opcional post-Fase 2)
 
 **Última actualización:** 2025-01-18
 - ✅ Funcionalidad duplicar tarifas (estado Inactiva, fecha actual)
@@ -1331,11 +1493,12 @@ Completado: 0/6 tareas (0%)
 **Próximos pasos disponibles:**
 - Bloque 6: Navegación Unificada (HierarchicalNavigator)
 - Bloque 9: Responsive Mobile-First
-- Bloque 10: Sistema de Ayuda (nuevo)
+- Bloque 10: Sistema de Ayuda (Markdown + Driver.js)
+- Bloque 11: Suscripciones Stripe (Post Fase 2 - opcional)
 
 ---
 
 **Documento:** Tareas Fase 2
-**Versión:** 1.2
-**Fecha:** 2025-01-17
+**Versión:** 1.3
+**Fecha:** 2025-01-18
 **Estado:** Activo
