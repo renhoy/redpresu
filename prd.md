@@ -1923,10 +1923,191 @@ export function BudgetHierarchyForm({ tariff, onUpdate }: Props) {
 ### ⏳ LARGO PLAZO (Semanas 9-12): PENDIENTE
 
 12. ⏳ Navegación unificada
-13. ⏳ Rich text editor
-14. ⏳ Import/Export
+13. ✅ Rich text editor
+14. ✅ Import/Export
 15. ⏳ Responsive completo
 16. ⏳ Mobile-first
+17. ⏳ Sistema de ayuda con tours interactivos
+
+---
+
+## BLOQUE 10: Sistema de Ayuda
+
+**Prioridad:** MEDIA
+**Complejidad:** MEDIA
+**Impacto:** UX, reducción tickets soporte, onboarding
+
+### Descripción
+
+Sistema de documentación integrado con tours interactivos que permite a los usuarios:
+- Leer artículos de ayuda en Markdown sin rebuild de la aplicación
+- Seguir tours guiados con Driver.js para aprender funcionalidades
+- Buscar y navegar por categorías de ayuda
+- Actualizar contenido fácilmente (usuarios no técnicos)
+
+### Funcionalidades
+
+#### 10.1 Lector de Markdown Dinámico
+- Lectura de archivos .md desde `/public/help/`
+- Parsing de frontmatter (metadata del artículo)
+- Conversión Markdown → HTML con marked
+- Renderizado con estilos Tailwind Typography (prose)
+- Manejo de errores (archivo no encontrado)
+
+#### 10.2 Tours Interactivos con Driver.js
+- Configuración en `/public/help/tours.json`
+- Botón "Iniciar Tour" en artículos de ayuda
+- SessionStorage para persistir tour pendiente
+- Redirección automática a página correspondiente
+- Auto-inicio del tour al llegar a destino
+- Indicadores visuales de progreso
+- Tours paso a paso con highlights de elementos
+
+#### 10.3 Índice Categorizado
+- Listado de artículos agrupados por categoría
+- Cards clicables con preview
+- Badge indicando si tour disponible
+- Búsqueda simple por título (opcional)
+- Responsive (grid adaptativo)
+
+#### 10.4 Mantenimiento Sin Rebuild
+- Archivos .md editables directamente en `/public/help/`
+- Cambios visibles inmediatamente (sin deploy)
+- Formato Markdown estándar
+- Frontmatter simple (YAML)
+
+### Estructura de Archivos
+
+```
+/public/help/
+├── tours.json              # Configuración Driver.js
+├── README.md               # Instrucciones para autores
+├── crear-tarifa.md         # Ejemplo: Crear tarifa
+├── editar-usuario.md       # Ejemplo: Editar usuario
+└── generar-presupuesto.md  # Ejemplo: Generar presupuesto
+```
+
+**Frontmatter ejemplo:**
+```markdown
+---
+id: crear-tarifa
+title: Cómo crear una tarifa
+category: Primeros pasos
+tourId: crear-tarifa
+---
+
+# Cómo crear una tarifa
+
+Descripción del flujo...
+```
+
+**tours.json ejemplo:**
+```json
+{
+  "crear-tarifa": {
+    "steps": [
+      {
+        "element": "#btn-nueva-tarifa",
+        "popover": {
+          "title": "Paso 1: Nueva tarifa",
+          "description": "Haz clic en el botón 'Nueva Tarifa'"
+        }
+      },
+      {
+        "element": "#campo-nombre",
+        "popover": {
+          "title": "Paso 2: Nombre",
+          "description": "Introduce el nombre de la tarifa"
+        }
+      }
+    ]
+  }
+}
+```
+
+### Flujo de Usuario
+
+1. Usuario accede a `/help`
+2. Ve índice categorizado de artículos
+3. Hace clic en artículo que le interesa
+4. Lee contenido Markdown renderizado
+5. (Opcional) Hace clic en "Iniciar Tour Interactivo"
+6. Sistema guarda tourId en sessionStorage
+7. Redirige a página correspondiente (ej: `/tariffs/create`)
+8. Al llegar, hook detecta tour pendiente
+9. Driver.js se lanza automáticamente
+10. Usuario sigue pasos del tour
+
+### Flujo de Mantenimiento
+
+1. Usuario no técnico crea/edita archivo .md en `/public/help/`
+2. Guarda cambios (commit + push si en Git)
+3. Cambios visibles inmediatamente en `/help/[slug]`
+4. Si crea nuevo tour: actualiza `tours.json`
+5. Documenta mapeo de rutas en README.md
+
+### Dependencias Técnicas
+
+**NPM Packages:**
+- `driverjs` - Tours interactivos (open source, ligero)
+- `gray-matter` - Parsing frontmatter Markdown
+- `marked` - Conversión Markdown → HTML
+
+**Archivos Nuevos:**
+- `src/components/help/MarkdownReader.tsx`
+- `src/components/help/TourButton.tsx`
+- `src/components/help/HelpIndex.tsx`
+- `src/components/help/HelpCard.tsx`
+- `src/lib/helpers/markdown-helpers.ts`
+- `src/lib/helpers/tour-helpers.ts`
+- `src/app/help/page.tsx`
+- `src/app/help/[slug]/page.tsx`
+
+**Archivos Modificados:**
+- `src/components/layout/Header.tsx` (enlace "Ayuda")
+- `src/app/(dashboard)/layout.tsx` (hook detectar tour)
+
+### Criterios de Aceptación
+
+#### Funcionales:
+- ✅ Markdown se parsea correctamente desde `/public/help/`
+- ✅ HTML renderizado con estilos coherentes
+- ✅ Frontmatter extraído y utilizado
+- ✅ Tours Driver.js funcionan sin errores
+- ✅ SessionStorage persiste tour entre páginas
+- ✅ Redirección y auto-inicio funcionan
+- ✅ Índice muestra artículos agrupados por categoría
+- ✅ Badge "Tour disponible" visible cuando aplica
+- ✅ Actualizaciones de .md visibles sin rebuild
+
+#### No Funcionales:
+- ✅ Tiempo de carga < 1s por artículo
+- ✅ Responsive en móvil/tablet
+- ✅ Accesibilidad básica (ARIA labels)
+- ✅ Manejo de errores (archivo no encontrado)
+- ✅ UX intuitiva para usuarios no técnicos
+
+#### Testing:
+- ✅ Unit tests: parsing Markdown
+- ✅ Integration tests: tours Driver.js
+- ✅ E2E tests: flujo completo ayuda → tour → completar tarea
+
+### Limitaciones Conocidas
+
+- **Solo HTML básico:** Markdown renderiza HTML estándar (no componentes React)
+- **Sin búsqueda avanzada:** Búsqueda simple por título (no full-text)
+- **Sin versionado:** Cambios en .md no tienen historial (usar Git)
+- **Tours manuales:** Configuración tours.json requiere conocer selectores CSS
+- **Sin analytics:** No trackea qué artículos/tours se usan más
+
+### Beneficios
+
+- **Reducción tickets soporte:** Usuarios auto-resuelven dudas
+- **Onboarding mejorado:** Tours guiados para nuevos usuarios
+- **Mantenimiento simple:** Usuarios no técnicos actualizan contenido
+- **Sin rebuild:** Cambios visibles inmediatamente
+- **Open source:** Driver.js sin coste de licencia
+- **Ligero:** < 100KB JavaScript adicional
 
 ---
 
@@ -1968,7 +2149,7 @@ export function BudgetHierarchyForm({ tariff, onUpdate }: Props) {
 ---
 
 **Documento:** Fase 2 - Requisitos y Funcionalidades
-**Versión:** 1.1
-**Fecha:** 2025-01-10
+**Versión:** 1.2
+**Fecha:** 2025-01-18
 **Estado:** Aprobado
-**Última actualización:** Correcciones UX críticas + persistencia RE
+**Última actualización:** Bloque 10 Sistema de Ayuda añadido + duplicar tarifas/presupuestos
