@@ -10,6 +10,7 @@ import {
   Receipt,
   Star,
   Eye,
+  Copy,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -44,15 +45,15 @@ import {
   deleteTariff,
   setTariffAsTemplate,
   unsetTariffAsTemplate,
+  duplicateTariff,
 } from "@/app/actions/tariffs";
 import { Database } from "@/lib/types/database.types";
 import { toast } from "sonner";
 
 type Tariff = Database["public"]["Tables"]["tariffs"]["Row"] & {
   creator?: {
-    name: string | null;
-    last_name: string | null;
-    email: string | null;
+    name: string;
+    role: string;
   } | null;
   budget_count?: number;
 };
@@ -78,6 +79,7 @@ export function TariffRow({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [isTogglingTemplate, setIsTogglingTemplate] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState(false);
 
   const handleStatusChange = async (newStatus: string) => {
     try {
@@ -140,6 +142,26 @@ export function TariffRow({
       toast.error("Error inesperado");
     } finally {
       setIsTogglingTemplate(false);
+    }
+  };
+
+  const handleDuplicate = async () => {
+    if (isDuplicating) return;
+
+    setIsDuplicating(true);
+    try {
+      const result = await duplicateTariff(tariff.id);
+
+      if (result.success) {
+        toast.success(`Tarifa "${tariff.title}" duplicada exitosamente`);
+        onStatusChange?.(); // Refrescar lista
+      } else {
+        toast.error(result.error || "Error al duplicar tarifa");
+      }
+    } catch {
+      toast.error("Error inesperado al duplicar");
+    } finally {
+      setIsDuplicating(false);
     }
   };
 
@@ -279,18 +301,14 @@ export function TariffRow({
         </TableCell>
 
         {/* Columna Usuario */}
-        <TableCell className="p-4 text-center" style={{ fontSize: "12px" }}>
+        <TableCell className="p-4 text-center">
           {tariff.creator ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="text-muted-foreground cursor-help">
-                  {tariff.creator.name}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{tariff.creator.email}</p>
-              </TooltipContent>
-            </Tooltip>
+            <div className="space-y-0.5">
+              <div className="text-sm font-medium">{tariff.creator.name}</div>
+              <div className="text-xs text-muted-foreground capitalize">
+                {tariff.creator.role}
+              </div>
+            </div>
           ) : (
             <span className="text-muted-foreground">-</span>
           )}
@@ -364,6 +382,23 @@ export function TariffRow({
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Editar</p>
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleDuplicate}
+                    disabled={isDuplicating}
+                    className="border-cyan-600 text-cyan-600 hover:bg-blue-50"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Duplicar</p>
                 </TooltipContent>
               </Tooltip>
 

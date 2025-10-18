@@ -140,7 +140,7 @@ export async function getTariffs(
 
     const { data: users, error: usersError } = await supabase
       .from('redpresu_users')
-      .select('id, nombre, apellidos, email')
+      .select('id, name, role')
       .in('id', userIds)
 
     if (usersError) {
@@ -150,7 +150,7 @@ export async function getTariffs(
     }
 
     // Mapear usuarios a tarifas
-    const usersMap = new Map(users?.map(u => [u.id, u]) || [])
+    const usersMap = new Map(users?.map(u => [u.id, { name: u.name, role: u.role }]) || [])
 
     // Obtener conteo de presupuestos por tarifa
     const tariffIds = tariffs.map(t => t.id)
@@ -876,5 +876,104 @@ export async function getUserIssuerData(userId: string): Promise<{
   } catch (error) {
     console.error('[getUserIssuerData] Error crítico:', error)
     return { success: false, error: 'Error al obtener datos del emisor' }
+  }
+}
+
+/**
+ * Duplicar tarifa (crear copia exacta con estado Inactiva y fecha actual)
+ */
+export async function duplicateTariff(tariffId: string): Promise<{
+  success: boolean
+  newTariffId?: string
+  error?: string
+}> {
+  try {
+    console.log('[duplicateTariff] Duplicando tarifa:', tariffId)
+
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({
+      cookies: () => cookieStore
+    })
+
+    // Obtener usuario actual
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      console.error('[duplicateTariff] Error de autenticación:', authError)
+      return { success: false, error: 'No autenticado' }
+    }
+
+    // Obtener company_id del usuario
+    const { data: userData, error: userError } = await supabase
+      .from('redpresu_users')
+      .select('company_id')
+      .eq('id', user.id)
+      .single()
+
+    if (userError || !userData?.company_id) {
+      console.error('[duplicateTariff] Error obteniendo usuario:', userError)
+      return { success: false, error: 'No se pudo obtener la empresa del usuario' }
+    }
+
+    // Obtener tarifa original
+    const { data: originalTariff, error: tariffError } = await supabaseAdmin
+      .from('redpresu_tariffs')
+      .select('*')
+      .eq('id', tariffId)
+      .single()
+
+    if (tariffError || !originalTariff) {
+      console.error('[duplicateTariff] Tarifa no encontrada:', tariffError)
+      return { success: false, error: 'Tarifa no encontrada' }
+    }
+
+    // Verificar que la tarifa pertenece a la empresa del usuario
+    if (originalTariff.company_id !== userData.company_id) {
+      console.error('[duplicateTariff] Tarifa no pertenece a la empresa del usuario')
+      return { success: false, error: 'No tienes permisos para duplicar esta tarifa' }
+    }
+
+    // Crear copia de la tarifa con estado Inactiva y fecha actual
+    const { data: newTariff, error: insertError } = await supabaseAdmin
+      .from('redpresu_tariffs')
+      .insert({
+        company_id: originalTariff.company_id,
+        user_id: user.id, // Usuario que crea la copia
+        title: `${originalTariff.title} (Copia)`,
+        description: originalTariff.description,
+        validity: originalTariff.validity,
+        status: 'Inactiva', // Siempre Inactiva
+        logo_url: originalTariff.logo_url,
+        name: originalTariff.name,
+        nif: originalTariff.nif,
+        address: originalTariff.address,
+        contact: originalTariff.contact,
+        template: originalTariff.template,
+        primary_color: originalTariff.primary_color,
+        secondary_color: originalTariff.secondary_color,
+        summary_note: originalTariff.summary_note,
+        conditions_note: originalTariff.conditions_note,
+        legal_note: originalTariff.legal_note,
+        json_tariff_data: originalTariff.json_tariff_data,
+        ivas_presentes: originalTariff.ivas_presentes,
+        is_template: false // La copia nunca es plantilla
+        // created_at se establece automáticamente con la fecha actual
+      })
+      .select()
+      .single()
+
+    if (insertError || !newTariff) {
+      console.error('[duplicateTariff] Error creando copia:', insertError)
+      return { success: false, error: 'Error al duplicar tarifa' }
+    }
+
+    console.log('[duplicateTariff] Tarifa duplicada exitosamente:', newTariff.id)
+    revalidatePath('/tariffs')
+
+    return { success: true, newTariffId: newTariff.id }
+
+  } catch (error) {
+    console.error('[duplicateTariff] Error crítico:', error)
+    return { success: false, error: 'Error crítico al duplicar tarifa' }
   }
 }

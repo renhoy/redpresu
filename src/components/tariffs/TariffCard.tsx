@@ -7,9 +7,9 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Pencil, Trash2, Plus, Receipt, Star, FileText, Eye } from 'lucide-react'
+import { Pencil, Trash2, Plus, Receipt, Star, FileText, Eye, Copy } from 'lucide-react'
 import { formatDate } from '@/lib/validators'
-import { toggleTariffStatus, deleteTariff, setTariffAsTemplate, unsetTariffAsTemplate } from '@/app/actions/tariffs'
+import { toggleTariffStatus, deleteTariff, setTariffAsTemplate, unsetTariffAsTemplate, duplicateTariff } from '@/app/actions/tariffs'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,9 +24,8 @@ import { toast } from 'sonner'
 
 type Tariff = Database['public']['Tables']['tariffs']['Row'] & {
   creator?: {
-    name: string | null
-    last_name: string | null
-    email: string | null
+    name: string
+    role: string
   } | null
   budget_count?: number
 }
@@ -48,6 +47,7 @@ export function TariffCard({ tariff, onStatusChange, onDelete, currentUserRole }
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showTemplateDialog, setShowTemplateDialog] = useState(false)
   const [isTogglingTemplate, setIsTogglingTemplate] = useState(false)
+  const [isDuplicating, setIsDuplicating] = useState(false)
 
   const handleStatusChange = async (newStatus: string) => {
     try {
@@ -106,6 +106,26 @@ export function TariffCard({ tariff, onStatusChange, onDelete, currentUserRole }
     }
   }
 
+  const handleDuplicate = async () => {
+    if (isDuplicating) return
+
+    setIsDuplicating(true)
+    try {
+      const result = await duplicateTariff(tariff.id)
+
+      if (result.success) {
+        toast.success(`Tarifa "${tariff.title}" duplicada exitosamente`)
+        onStatusChange?.()
+      } else {
+        toast.error(result.error || 'Error al duplicar tarifa')
+      }
+    } catch {
+      toast.error('Error inesperado al duplicar')
+    } finally {
+      setIsDuplicating(false)
+    }
+  }
+
   const isAdmin = currentUserRole && ['admin', 'superadmin'].includes(currentUserRole)
 
   return (
@@ -156,9 +176,16 @@ export function TariffCard({ tariff, onStatusChange, onDelete, currentUserRole }
 
               <div className="min-w-0">
                 <div className="text-xs text-muted-foreground mb-1">Usuario</div>
-                <div className="text-sm truncate">
-                  {tariff.creator ? `${tariff.creator.name} ${tariff.creator.last_name}` : '-'}
-                </div>
+                {tariff.creator ? (
+                  <div className="space-y-0.5">
+                    <div className="text-sm font-medium truncate">{tariff.creator.name}</div>
+                    <div className="text-xs text-muted-foreground capitalize truncate">
+                      {tariff.creator.role}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-sm">-</div>
+                )}
               </div>
 
               <div className="min-w-0 text-right">
@@ -210,6 +237,16 @@ export function TariffCard({ tariff, onStatusChange, onDelete, currentUserRole }
                 <Link href={`/tariffs/edit/${tariff.id}`}>
                   <Pencil className="h-3 w-3" />
                 </Link>
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDuplicate}
+                disabled={isDuplicating}
+                className="h-7 px-2"
+              >
+                <Copy className="h-3 w-3" />
               </Button>
 
               <Button
