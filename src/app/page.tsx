@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { FileText, CheckCircle, Clock, Users } from "lucide-react";
 import { getServerUser } from '@/lib/auth/server'
+import { Header } from '@/components/layout/Header'
 
 export default async function Index() {
   // Verificar si el usuario ya está autenticado
@@ -24,28 +25,7 @@ export default async function Index() {
   return (
     <div className="min-h-screen" style={{ background: '#f7fee7' }}>
       {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-lime-500 rounded-lg flex items-center justify-center">
-                <FileText className="h-5 w-5 text-white" />
-              </div>
-              <span className="text-2xl font-bold text-gray-900">Redpresu</span>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link href="/login">
-                <Button variant="outline">Iniciar Sesión</Button>
-              </Link>
-              <Link href="/register">
-                <Button className="bg-lime-500 hover:bg-lime-600">
-                  Registro
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header isAuthenticated={false} />
 
       {/* Hero Section */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
