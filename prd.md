@@ -3367,25 +3367,28 @@ if (!multiempresa) {
 ---
 
 #### 12.4 Server Actions sin Límites
-**Prioridad:** ALTA | **Estimación:** 0.5 días | **Estado:** ⏳ Pendiente
+**Prioridad:** BAJA | **Estimación:** 0.5 días | **Estado:** ⏳ Pendiente (requiere Bloque 11)
 
-- [ ] `createTariff()`: skip verificación límites en modo mono
+**NOTA:** Esta tarea solo aplica si el Bloque 11 (Suscripciones Stripe) está implementado. Si no hay sistema de límites, esta tarea no es necesaria.
+
+- [ ] `createTariff()`: skip verificación límites en modo mono (si existe `canCreateResource`)
 - [ ] `saveBudget()`: skip verificación límites en modo mono
 - [ ] `createUser()`: skip verificación límites en modo mono
 - [ ] `registerUser()`: empresa fija en modo mono (no crear nueva)
 
 **Archivos modificados:**
-- `src/app/actions/tariffs.ts`
-- `src/app/actions/budgets.ts`
-- `src/app/actions/users.ts`
-- `src/app/actions/auth.ts`
+- `src/app/actions/tariffs.ts` (si Bloque 11 activo)
+- `src/app/actions/budgets.ts` (si Bloque 11 activo)
+- `src/app/actions/users.ts` (si Bloque 11 activo)
+- `src/app/actions/auth.ts` (empresa fija en modo mono)
 
-**Patrón:**
+**Patrón (solo si Bloque 11 implementado):**
 ```typescript
 export async function createTariff(data) {
   const multiempresa = await isMultiEmpresa();
 
-  if (multiempresa) {
+  // Solo verificar límites si está en modo multiempresa Y Bloque 11 activo
+  if (multiempresa && typeof canCreateResource === 'function') {
     const canCreate = await canCreateResource('tariffs');
     if (!canCreate) return { error: 'Límite alcanzado' };
   }
