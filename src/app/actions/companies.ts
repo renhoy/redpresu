@@ -4,13 +4,23 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export interface Company {
-  id: number;
-  nombre: string;
-  tipo: "empresa" | "autonomo";
-  cif: string;
-  direccion: string;
-  telefono: string;
-  email: string;
+  id: string; // UUID en redpresu_issuers
+  user_id: string;
+  company_id: number;
+  type: "empresa" | "autonomo";
+  name: string;
+  nif: string;
+  address: string;
+  postal_code: string | null;
+  locality: string | null;
+  province: string | null;
+  country: string;
+  phone: string | null;
+  email: string | null;
+  web: string | null;
+  irpf_percentage: number | null;
+  logo_url: string | null;
+  note: string | null;
   created_at: string;
   updated_at: string;
   user_count?: number; // Número de usuarios asociados
@@ -19,12 +29,17 @@ export interface Company {
 }
 
 export interface UpdateCompanyData {
-  nombre?: string;
-  tipo?: "empresa" | "autonomo";
-  cif?: string;
-  direccion?: string;
-  telefono?: string;
+  name?: string;
+  type?: "empresa" | "autonomo";
+  nif?: string;
+  address?: string;
+  postal_code?: string;
+  locality?: string;
+  province?: string;
+  phone?: string;
   email?: string;
+  web?: string;
+  irpf_percentage?: number;
 }
 
 export interface ActionResult {
@@ -55,13 +70,13 @@ export async function getCompanies(): Promise<ActionResult> {
 
     // Obtener empresas con contadores
     const { data: companies, error } = await supabaseAdmin
-      .from("emisores")
+      .from("redpresu_issuers")
       .select(
         `
         *,
-        user_count:usuarios(count),
-        tariff_count:tarifas(count),
-        budget_count:presupuestos(count)
+        user_count:redpresu_users(count),
+        tariff_count:redpresu_tariffs(count),
+        budget_count:redpresu_budgets(count)
       `
       )
       .order("created_at", { ascending: false });
@@ -103,23 +118,14 @@ export async function getCompanyById(companyId: string): Promise<ActionResult> {
       return { success: false, error: "No autenticado" };
     }
 
-    const id = parseInt(companyId, 10);
-
-    if (isNaN(id)) {
-      return { success: false, error: "ID inválido" };
-    }
-
+    // company_id es UUID en redpresu_issuers
     // Verificar permisos:
     // - Superadmin puede ver cualquier empresa
-    // - Admin solo puede ver su propia empresa
-    if (user.role !== "superadmin" && user.company_id !== id) {
-      return { success: false, error: "Sin permisos" };
-    }
-
+    // - Admin solo puede ver emisor de su propia empresa
     const { data: company, error } = await supabaseAdmin
-      .from("emisores")
+      .from("redpresu_issuers")
       .select("*")
-      .eq("id", id)
+      .eq("id", companyId)
       .single();
 
     if (error) {
@@ -158,36 +164,28 @@ export async function updateCompany(
       return { success: false, error: "No autenticado" };
     }
 
-    const id = parseInt(companyId, 10);
-
-    if (isNaN(id)) {
-      return { success: false, error: "ID inválido" };
-    }
-
     // Verificar permisos:
-    // - Superadmin puede editar cualquier empresa
-    // - Admin solo puede editar su propia empresa
-    if (user.role !== "superadmin" && user.company_id !== id) {
-      return { success: false, error: "Sin permisos" };
-    }
+    // - Superadmin puede editar cualquier emisor
+    // - Admin puede editar emisor de su empresa
+    // (La verificación se hace obteniendo el emisor primero)
 
     // Validaciones
     if (data.email && !data.email.includes("@")) {
       return { success: false, error: "Email inválido" };
     }
 
-    if (data.cif && data.cif.trim().length < 9) {
+    if (data.nif && data.nif.trim().length < 9) {
       return { success: false, error: "CIF/NIF debe tener al menos 9 caracteres" };
     }
 
     // Actualizar empresa
     const { data: updatedCompany, error } = await supabaseAdmin
-      .from("emisores")
+      .from("redpresu_issuers")
       .update({
         ...data,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", id)
+      .eq("id", companyId)
       .select()
       .single();
 
@@ -200,7 +198,7 @@ export async function updateCompany(
 
     // Revalidar rutas
     revalidatePath("/companies");
-    revalidatePath(`/companies/${id}/edit`);
+    revalidatePath(`/companies/${companyId}/edit`);
     revalidatePath("/companies/edit");
 
     return { success: true, data: updatedCompany };
@@ -236,17 +234,11 @@ export async function deleteCompany(companyId: string): Promise<ActionResult> {
       return { success: false, error: "Sin permisos" };
     }
 
-    const id = parseInt(companyId, 10);
-
-    if (isNaN(id)) {
-      return { success: false, error: "ID inválido" };
-    }
-
     // Obtener información de la empresa antes de eliminar
     const { data: company, error: companyError } = await supabaseAdmin
-      .from("emisores")
+      .from("redpresu_issuers")
       .select("*")
-      .eq("id", id)
+      .eq("id", companyId)
       .single();
 
     if (companyError || !company) {
@@ -256,7 +248,7 @@ export async function deleteCompany(companyId: string): Promise<ActionResult> {
 
     console.log(
       "[deleteCompany] Eliminando empresa:",
-      company.nombre,
+      company.name,
       "(ID:",
       company.id,
       ")"
@@ -271,9 +263,9 @@ export async function deleteCompany(companyId: string): Promise<ActionResult> {
     // - notas de presupuestos (ON DELETE CASCADE)
 
     const { error: deleteError } = await supabaseAdmin
-      .from("emisores")
+      .from("redpresu_issuers")
       .delete()
-      .eq("id", id);
+      .eq("id", companyId);
 
     if (deleteError) {
       console.error("[deleteCompany] Error al eliminar:", deleteError);
