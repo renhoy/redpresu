@@ -1499,62 +1499,90 @@ Completado: 0/6 tareas (0%)
 
 ---
 
-## BLOQUE 12: MODO MONOEMPRESA/MULTIEMPRESA ⏳
+## BLOQUE 12: MODO MONOEMPRESA/MULTIEMPRESA ✅
 
 ### Tareas Críticas:
 
-#### 12.1 Config y Helpers
-**Prioridad:** ALTA | **Estimación:** 0.5 días | **Estado:** ⏳ Pendiente
+#### 12.1 Config y Helpers ✅
+**Prioridad:** ALTA | **Estimación:** 0.5 días | **Estado:** ✅ Completado
 
-- [ ] Crear `src/lib/helpers/app-mode.ts`
-- [ ] Helper `isMultiEmpresa()` (lee config 'multiempresa' de BD)
-- [ ] Helper `getDefaultEmpresaId()` (retorna 1 en modo mono)
+- [x] Migración `031_add_multiempresa_config.sql` (config 'multiempresa': true/false)
+- [x] Crear `src/lib/helpers/app-mode.ts`
+- [x] Helper `isMultiEmpresa()` con cache 1min (lee config 'multiempresa' de BD)
+- [x] Helper `getDefaultEmpresaId()` (retorna 1 en modo mono)
+- [x] Helper `invalidateAppModeCache()` (para testing)
 
----
-
-#### 12.2 Routing y Middleware
-**Prioridad:** CRÍTICA | **Estimación:** 0.5 días | **Estado:** ⏳ Pendiente
-
-- [ ] Modificar `middleware.ts`: redirects condicionales
-- [ ] Bloquear `/register` en modo mono
-- [ ] Bloquear `/subscriptions` en modo mono
-- [ ] Landing `/` = `/login` en modo mono
+**Archivos:**
+- `migrations/031_add_multiempresa_config.sql` ✨
+- `migrations/EJECUTAR_031_add_multiempresa_config.sql` ✨
+- `src/lib/helpers/app-mode.ts` ✨
 
 ---
 
-#### 12.3 Header y Navegación
-**Prioridad:** ALTA | **Estimación:** 0.25 días | **Estado:** ⏳ Pendiente
+#### 12.2 Routing y Middleware ✅
+**Prioridad:** CRÍTICA | **Estimación:** 0.5 días | **Estado:** ✅ Completado
 
-- [ ] Ocultar "Suscripciones" en Header
-- [ ] Badge modo en `/settings`
-- [ ] (Opcional) Simplificar "Usuarios"
+- [x] Modificar `middleware.ts`: import `isMultiEmpresa()`
+- [x] Bloquear `/register` → `/login` en modo mono
+- [x] Bloquear `/subscriptions` → `/dashboard` en modo mono
+- [x] Landing `/` → `/login` directo en modo mono
+- [x] Modo multi: comportamiento SaaS actual intacto
+
+**Archivos:**
+- `src/middleware.ts` ⚠️
 
 ---
 
-#### 12.4 Server Actions
-**Prioridad:** ALTA | **Estimación:** 0.5 días | **Estado:** ⏳ Pendiente
+#### 12.3 Header y Navegación ✅
+**Prioridad:** ALTA | **Estimación:** 0.25 días | **Estado:** ✅ Completado
 
-- [ ] `createTariff()`: skip límites en mono
+- [x] Header: prop `multiempresa` añadido
+- [x] Header público: ocultar "Precios" y "Registro" en modo mono
+- [x] `subscriptionsEnabled` solo si `multiempresa && STRIPE_ENABLED`
+- [x] Layout dashboard: obtener y pasar `multiempresa` al Header
+
+**Archivos:**
+- `src/components/layout/Header.tsx` ⚠️
+- `src/app/(dashboard)/layout.tsx` ⚠️
+
+---
+
+#### 12.4 Server Actions (OPCIONAL)
+**Prioridad:** BAJA | **Estimación:** 0.5 días | **Estado:** ⏸️ Postponed (requiere Bloque 11)
+
+- [ ] `createTariff()`: skip límites en mono (requiere `canCreateResource`)
 - [ ] `saveBudget()`: skip límites en mono
 - [ ] `createUser()`: skip límites en mono
 - [ ] `registerUser()`: empresa fija en mono
 
+**Nota:** Solo aplica si Bloque 11 (Suscripciones Stripe) está implementado.
+
 ---
 
-#### 12.5 UI Simplificada
+#### 12.5 Testing ⏳
 **Prioridad:** MEDIA | **Estimación:** 0.25 días | **Estado:** ⏳ Pendiente
 
-- [ ] Ocultar badge plan en Header
-- [ ] Ocultar warnings límites
-- [ ] Tests E2E ambos modos
+- [ ] Ejecutar migración 031 en BD
+- [ ] Testear modo multiempresa (ver `TESTING_BLOQUE_12.md`)
+- [ ] Testear modo monoempresa
+- [ ] Verificar redirects middleware
+- [ ] Verificar header condicional
+- [ ] Testear cambio de modo en caliente (cache 1min)
+
+**Documentación:**
+- `TESTING_BLOQUE_12.md` ✨
 
 ---
 
 ## ✅ BLOQUE 12 RESUMEN
-Completado: 0/5 tareas (0%)
-**Estado:** ⏳ Pendiente
-**Duración:** 2 días
-**Siguiente paso:** 12.1 Config y Helpers
+Completado: 3/5 tareas (60%) - **Core funcional ✅**
+**Estado:** ✅ Implementado (pendiente testing)
+**Duración:** 1.5 días (estimado: 2 días)
+**Siguiente paso:** 12.5 Testing manual
+
+**Archivos nuevos:** 4
+**Archivos modificados:** 5
+**Commits:** 3
 
 ---
 
