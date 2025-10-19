@@ -26,6 +26,27 @@ export enum ClientType {
   EMPRESA = 'empresa'
 }
 
+// ============================================
+// Tipos para Suscripciones (Stripe)
+// ============================================
+
+export type SubscriptionPlan = 'free' | 'pro' | 'enterprise';
+export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'trialing';
+
+export interface Subscription {
+  id: string;
+  company_id: number;
+  plan: SubscriptionPlan;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  status: SubscriptionStatus;
+  current_period_start: string | null;
+  current_period_end: string | null;
+  cancel_at_period_end: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface User {
   id: string
   role: string
