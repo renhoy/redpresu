@@ -1,6 +1,6 @@
 /**
  * Helpers para acceder a la configuración del sistema
- * Tabla: public.config
+ * Tabla: public.redpresu_config
  */
 
 import { supabaseAdmin } from '@/lib/supabase/server'
@@ -13,7 +13,7 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 export async function getConfigValue<T = unknown>(key: string): Promise<T | null> {
   try {
     const { data, error } = await supabaseAdmin
-      .from('config')
+      .from('redpresu_config')
       .select('value')
       .eq('key', key)
       .single()
@@ -46,7 +46,7 @@ export async function setConfigValue(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const { error } = await supabaseAdmin
-      .from('config')
+      .from('redpresu_config')
       .upsert({
         key,
         value: value as any, // Supabase manejará la conversión a jsonb

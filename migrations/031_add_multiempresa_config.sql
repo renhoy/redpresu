@@ -3,6 +3,7 @@
 -- Fecha: 2025-01-19
 -- Bloque: 12 (Modo Monoempresa/Multiempresa)
 -- Fase: 2
+-- Ejecutar desde: Supabase SQL Editor (copiar/pegar)
 
 -- ============================================
 -- UP: Aplicar cambios
@@ -13,7 +14,7 @@ BEGIN;
 -- Insertar configuración del modo multiempresa
 -- true = modo multiempresa (SaaS con registro público, suscripciones, límites)
 -- false = modo monoempresa (1 empresa fija, sin registro, sin límites)
-INSERT INTO public.config (key, value, description, category, is_system)
+INSERT INTO public.redpresu_config (key, value, description, category, is_system)
 VALUES (
   'multiempresa',
   'true'::jsonb,
@@ -33,29 +34,36 @@ COMMIT;
 -- COMENTARIOS
 -- ============================================
 
-COMMENT ON TABLE public.config IS
+COMMENT ON TABLE public.redpresu_config IS
   'Configuración global del sistema editable por superadmin';
-
--- ============================================
--- DOWN: Rollback (documentar, no ejecutar automáticamente)
--- ============================================
--- Para revertir esta migración, ejecutar:
---
--- BEGIN;
--- DELETE FROM public.config WHERE key = 'multiempresa';
--- COMMIT;
 
 -- ============================================
 -- VERIFICACIÓN POST-MIGRACIÓN
 -- ============================================
 --
 -- Ver la configuración creada:
--- SELECT key, value, description, category, is_system, created_at
--- FROM public.config
--- WHERE key = 'multiempresa';
+SELECT key, value, description, category, is_system, created_at
+FROM public.redpresu_config
+WHERE key = 'multiempresa';
 --
--- Para cambiar el modo (solo superadmin):
--- UPDATE public.config SET value = 'false'::jsonb WHERE key = 'multiempresa'; -- Activar modo monoempresa
--- UPDATE public.config SET value = 'true'::jsonb WHERE key = 'multiempresa'; -- Activar modo multiempresa
+-- Resultado esperado:
+-- key          | value | description                              | category | is_system
+-- multiempresa | true  | Modo de operación: true=multiempresa...  | general  | true
+--
+-- ============================================
+-- CAMBIAR MODO (solo superadmin)
+-- ============================================
+--
+-- Activar modo monoempresa:
+-- UPDATE public.redpresu_config SET value = 'false'::jsonb WHERE key = 'multiempresa';
+--
+-- Activar modo multiempresa:
+-- UPDATE public.redpresu_config SET value = 'true'::jsonb WHERE key = 'multiempresa';
+--
+-- ============================================
+-- ROLLBACK (si es necesario)
+-- ============================================
+--
+-- DELETE FROM public.redpresu_config WHERE key = 'multiempresa';
 --
 -- ============================================

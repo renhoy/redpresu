@@ -2,28 +2,21 @@
 
 ## 📋 Preparación
 
-### 1. Ejecutar migración 031
+### 1. Ejecutar migración 031 en Supabase
 
-**Opción A: Desde psql**
-```bash
-psql -d tu_base_de_datos -f migrations/031_add_multiempresa_config.sql
-```
-
-**Opción B: Desde Supabase Dashboard**
-1. Ir a SQL Editor
-2. Copiar contenido de `migrations/031_add_multiempresa_config.sql`
-3. Ejecutar
-
-**Opción C: Ejecutar script helper**
-```bash
-psql -d tu_base_de_datos -f migrations/EJECUTAR_031_add_multiempresa_config.sql
-```
+**Desde Supabase SQL Editor:**
+1. Ir a tu proyecto Supabase → SQL Editor
+2. Copiar todo el contenido de `migrations/031_add_multiempresa_config.sql`
+3. Pegar en SQL Editor
+4. Click en "Run" o Ctrl+Enter
 
 ### 2. Verificar migración exitosa
 
+La misma migración incluye una query de verificación al final. O ejecuta manualmente:
+
 ```sql
 SELECT key, value, description, category, is_system, created_at
-FROM public.config
+FROM public.redpresu_config
 WHERE key = 'multiempresa';
 ```
 
@@ -39,8 +32,8 @@ multiempresa | true  | Modo de operación: true=multiempresa...  | general  | tr
 
 ### Preparar entorno
 ```sql
--- Asegurar que está en modo multi
-UPDATE public.config SET value = 'true'::jsonb WHERE key = 'multiempresa';
+-- Asegurar que está en modo multi (desde Supabase SQL Editor)
+UPDATE public.redpresu_config SET value = 'true'::jsonb WHERE key = 'multiempresa';
 ```
 
 ### Tests a realizar:
@@ -80,8 +73,8 @@ Abrir DevTools → Console, verificar:
 
 ### Preparar entorno
 ```sql
--- Cambiar a modo monoempresa
-UPDATE public.config SET value = 'false'::jsonb WHERE key = 'multiempresa';
+-- Cambiar a modo monoempresa (desde Supabase SQL Editor)
+UPDATE public.redpresu_config SET value = 'false'::jsonb WHERE key = 'multiempresa';
 ```
 
 **IMPORTANTE:** Reiniciar servidor después de cambiar el modo (cache de 1min):
@@ -134,7 +127,7 @@ Abrir DevTools → Console, verificar:
 
 ### 1. Desde modo MULTI → MONO
 ```sql
-UPDATE public.config SET value = 'false'::jsonb WHERE key = 'multiempresa';
+UPDATE public.redpresu_config SET value = 'false'::jsonb WHERE key = 'multiempresa';
 ```
 
 - [ ] Esperar 1 minuto (cache TTL)
@@ -143,7 +136,7 @@ UPDATE public.config SET value = 'false'::jsonb WHERE key = 'multiempresa';
 
 ### 2. Desde modo MONO → MULTI
 ```sql
-UPDATE public.config SET value = 'true'::jsonb WHERE key = 'multiempresa';
+UPDATE public.redpresu_config SET value = 'true'::jsonb WHERE key = 'multiempresa';
 ```
 
 - [ ] Esperar 1 minuto (cache TTL)
@@ -172,7 +165,7 @@ invalidateAppModeCache(); // Fuerza recarga inmediata
 - Verificar que migración 031 se ejecutó correctamente
 - Ejecutar query de verificación:
 ```sql
-SELECT * FROM public.config WHERE key = 'multiempresa';
+SELECT * FROM public.redpresu_config WHERE key = 'multiempresa';
 ```
 
 ### Problema: Redirects no funcionan
