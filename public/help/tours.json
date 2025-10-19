@@ -1,0 +1,45 @@
+{
+  "crear-tarifa": {
+    "steps": [
+      {
+        "element": "#btn-nueva-tarifa",
+        "popover": {
+          "title": "Paso 1: Nueva tarifa",
+          "description": "Haz clic en el botón 'Nueva Tarifa' para comenzar a crear una tarifa."
+        }
+      },
+      {
+        "element": "#tariff-form",
+        "popover": {
+          "title": "Paso 2: Formulario de tarifa",
+          "description": "Completa los campos del formulario con los datos de tu empresa y los detalles de la tarifa."
+        }
+      }
+    ]
+  },
+  "generar-presupuesto": {
+    "steps": [
+      {
+        "element": "#select-tariff",
+        "popover": {
+          "title": "Paso 1: Seleccionar tarifa",
+          "description": "Elige la tarifa base que quieres usar para generar el presupuesto."
+        }
+      },
+      {
+        "element": "#client-data-form",
+        "popover": {
+          "title": "Paso 2: Datos del cliente",
+          "description": "Introduce los datos completos del cliente que recibirá el presupuesto."
+        }
+      },
+      {
+        "element": "#budget-items",
+        "popover": {
+          "title": "Paso 3: Seleccionar partidas",
+          "description": "Navega por la jerarquía y marca las cantidades de las partidas que quieres incluir."
+        }
+      }
+    ]
+  }
+}
