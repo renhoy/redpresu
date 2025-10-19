@@ -9,6 +9,7 @@ import {
   Settings,
   LogOut,
   ChevronDown,
+  Building2,
 } from "lucide-react";
 import LogoutButton from "@/components/auth/LogoutButton";
 import {
@@ -123,6 +124,16 @@ export function UserMenu({
         )}
 
         {/* Opciones del menú */}
+        {/* Empresas - Superadmin ve lista, Admin ve edición de su empresa */}
+        {(userRole === "superadmin" || userRole === "admin") && (
+          <Link href={userRole === "superadmin" ? "/companies" : "/companies/edit"}>
+            <DropdownMenuItem className="cursor-pointer">
+              <Building2 className="mr-2 h-4 w-4" />
+              <span>{userRole === "superadmin" ? "Empresas" : "Empresa"}</span>
+            </DropdownMenuItem>
+          </Link>
+        )}
+
         <Link href="/users">
           <DropdownMenuItem className="cursor-pointer">
             <Users className="mr-2 h-4 w-4" />
