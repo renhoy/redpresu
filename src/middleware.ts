@@ -92,8 +92,14 @@ export async function middleware(req: NextRequest) {
 
     // Verificar acceso a rutas restringidas por rol
     if (isAuthenticated && session?.user) {
-      const userMetadata = session.user.user_metadata
-      const userRole = userMetadata?.role || 'vendedor'
+      // Obtener rol desde la base de datos (no desde user_metadata que puede estar desactualizado)
+      const { data: userData } = await supabase
+        .from('usuarios')
+        .select('role')
+        .eq('id', session.user.id)
+        .single()
+
+      const userRole = userData?.role || 'vendedor'
 
       console.log(`[Middleware] Verificando permisos - Path: ${pathname}, Rol: ${userRole}, MultiEmpresa: ${multiempresa}`)
 
