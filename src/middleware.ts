@@ -95,12 +95,24 @@ export async function middleware(req: NextRequest) {
       const userMetadata = session.user.user_metadata
       const userRole = userMetadata?.role || 'vendedor'
 
-      // /companies - Solo superadmin puede acceder a la lista
-      if (pathname === '/companies' && userRole !== 'superadmin') {
-        console.log(`[Middleware] Acceso denegado a /companies (rol: ${userRole}) → /dashboard`)
-        const redirectUrl = req.nextUrl.clone()
-        redirectUrl.pathname = '/dashboard'
-        return NextResponse.redirect(redirectUrl)
+      // /companies - Solo superadmin en modo multiempresa
+      // En modo monoempresa, admin redirige a /companies/edit
+      if (pathname === '/companies') {
+        if (userRole === 'superadmin') {
+          // Superadmin siempre puede ver lista de empresas
+        } else if (userRole === 'admin' && !multiempresa) {
+          // Admin en modo mono redirige a editar su empresa
+          console.log(`[Middleware] Modo mono: admin /companies → /companies/edit`)
+          const redirectUrl = req.nextUrl.clone()
+          redirectUrl.pathname = '/companies/edit'
+          return NextResponse.redirect(redirectUrl)
+        } else {
+          // Otros roles no tienen acceso
+          console.log(`[Middleware] Acceso denegado a /companies (rol: ${userRole}) → /dashboard`)
+          const redirectUrl = req.nextUrl.clone()
+          redirectUrl.pathname = '/dashboard'
+          return NextResponse.redirect(redirectUrl)
+        }
       }
 
       // /companies/[id]/edit - Solo superadmin puede editar cualquier empresa
