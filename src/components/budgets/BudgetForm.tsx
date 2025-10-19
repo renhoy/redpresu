@@ -1416,6 +1416,18 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                 </p>
               )}
 
+              {/* Botón Siguiente adicional */}
+              <div className="flex justify-end pt-4">
+                <Button
+                  onClick={handleStep1Continue}
+                  style={{ backgroundColor: tariff.primary_color }}
+                  className="gap-2"
+                >
+                  Siguiente
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </div>
+
               {/* Nota legal */}
               {tariff.legal_note && (
                 <div className="pt-4 border-t">
@@ -1463,6 +1475,18 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
               />
             )}
           </CardContent>
+
+          {/* Botón Atrás al final del formulario */}
+          <div className="p-6 pt-4 border-t">
+            <Button
+              onClick={() => setCurrentStep(1)}
+              style={{ backgroundColor: tariff.primary_color }}
+              className="gap-2 text-white hover:opacity-90"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Atrás
+            </Button>
+          </div>
         </Card>
       )}
 

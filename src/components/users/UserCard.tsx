@@ -1,18 +1,18 @@
-"use client"
+"use client";
 
-import { UserWithInviter } from '@/app/actions/users'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Pencil, Trash2, Mail, UserCheck, UserX } from 'lucide-react'
-import Link from 'next/link'
+import { UserWithInviter } from "@/app/actions/users";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Pencil, Trash2, Mail, UserCheck, UserX } from "lucide-react";
+import Link from "next/link";
 
 interface UserCardProps {
-  user: UserWithInviter
-  currentUserId: string
-  currentUserRole: string
-  onToggleStatus: (user: UserWithInviter) => void
-  formatDate: (date: string | null) => string
+  user: UserWithInviter;
+  currentUserId: string;
+  currentUserRole: string;
+  onToggleStatus: (user: UserWithInviter) => void;
+  formatDate: (date: string | null) => string;
 }
 
 export function UserCard({
@@ -20,49 +20,49 @@ export function UserCard({
   currentUserId,
   currentUserRole,
   onToggleStatus,
-  formatDate
+  formatDate,
 }: UserCardProps) {
   const getRoleBadge = (role: string) => {
-    const variants: Record<string, 'default' | 'secondary' | 'destructive'> = {
-      superadmin: 'destructive',
-      admin: 'default',
-      vendedor: 'secondary'
-    }
+    const variants: Record<string, "default" | "secondary" | "destructive"> = {
+      superadmin: "destructive",
+      admin: "default",
+      vendedor: "secondary",
+    };
 
     const labels: Record<string, string> = {
-      superadmin: 'Superadmin',
-      admin: 'Admin',
-      vendedor: 'Vendedor'
-    }
+      superadmin: "Super Admin",
+      admin: "Admin",
+      vendedor: "Comercial",
+    };
 
     return (
-      <Badge variant={variants[role] || 'secondary'}>
+      <Badge variant={variants[role] || "secondary"}>
         {labels[role] || role}
       </Badge>
-    )
-  }
+    );
+  };
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, 'default' | 'secondary' | 'outline'> = {
-      active: 'default',
-      inactive: 'secondary',
-      pending: 'outline'
-    }
+    const variants: Record<string, "default" | "secondary" | "outline"> = {
+      active: "default",
+      inactive: "secondary",
+      pending: "outline",
+    };
 
     const labels: Record<string, string> = {
-      active: 'Activo',
-      inactive: 'Inactivo',
-      pending: 'Pendiente'
-    }
+      active: "Activo",
+      inactive: "Inactivo",
+      pending: "Pendiente",
+    };
 
     return (
-      <Badge variant={variants[status] || 'outline'}>
+      <Badge variant={variants[status] || "outline"}>
         {labels[status] || status}
       </Badge>
-    )
-  }
+    );
+  };
 
-  const canEdit = currentUserRole !== 'vendedor' || user.id === currentUserId
+  const canEdit = currentUserRole !== "vendedor" || user.id === currentUserId;
 
   return (
     <Card className="w-full mb-3">
@@ -92,8 +92,12 @@ export function UserCard({
               <div className="text-muted-foreground mb-1">Invitado por</div>
               {user.inviter_name ? (
                 <div className="space-y-0.5">
-                  <div className="font-medium truncate">{user.inviter_name}</div>
-                  <div className="text-muted-foreground truncate">{user.inviter_email}</div>
+                  <div className="font-medium truncate">
+                    {user.inviter_name}
+                  </div>
+                  <div className="text-muted-foreground truncate">
+                    {user.inviter_email}
+                  </div>
                 </div>
               ) : (
                 <div className="text-muted-foreground">-</div>
@@ -101,7 +105,9 @@ export function UserCard({
             </div>
             <div className="min-w-0 text-right">
               <div className="text-muted-foreground mb-1">Último acceso</div>
-              <div className="text-sm font-medium">{formatDate(user.last_login)}</div>
+              <div className="text-sm font-medium">
+                {formatDate(user.last_login)}
+              </div>
             </div>
           </div>
 
@@ -124,18 +130,18 @@ export function UserCard({
                 </Button>
 
                 {/* Botón Activar/Desactivar - Solo admin/superadmin */}
-                {currentUserRole !== 'vendedor' && (
+                {currentUserRole !== "vendedor" && (
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => onToggleStatus(user)}
                     className={`h-7 px-2 ${
-                      user.status === 'active'
-                        ? 'border-orange-500 text-orange-600 hover:bg-orange-50'
-                        : 'border-green-600 text-green-600 hover:bg-green-50'
+                      user.status === "active"
+                        ? "border-orange-500 text-orange-600 hover:bg-orange-50"
+                        : "border-green-600 text-green-600 hover:bg-green-50"
                     }`}
                   >
-                    {user.status === 'active' ? (
+                    {user.status === "active" ? (
                       <UserX className="h-3 w-3" />
                     ) : (
                       <UserCheck className="h-3 w-3" />
@@ -144,20 +150,21 @@ export function UserCard({
                 )}
 
                 {/* Botón Reenviar invitación - Solo si pending */}
-                {user.status === 'pending' && currentUserRole !== 'vendedor' && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-7 px-2 border-blue-500 text-blue-600 hover:bg-blue-50"
-                  >
-                    <Mail className="h-3 w-3" />
-                  </Button>
-                )}
+                {user.status === "pending" &&
+                  currentUserRole !== "vendedor" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2 border-blue-500 text-blue-600 hover:bg-blue-50"
+                    >
+                      <Mail className="h-3 w-3" />
+                    </Button>
+                  )}
               </>
             )}
           </div>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

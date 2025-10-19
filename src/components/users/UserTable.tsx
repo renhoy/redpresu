@@ -1,10 +1,10 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { UserWithInviter, toggleUserStatus } from '@/app/actions/users'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { useState } from "react";
+import Link from "next/link";
+import { UserWithInviter, toggleUserStatus } from "@/app/actions/users";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -12,7 +12,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
+} from "@/components/ui/table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,120 +22,126 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+} from "@/components/ui/alert-dialog";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip'
-import { Pencil, UserX, UserCheck, Mail } from 'lucide-react'
-import { toast } from 'sonner'
-import { useRouter } from 'next/navigation'
-import { UserCard } from './UserCard'
+} from "@/components/ui/tooltip";
+import { Pencil, Trash2, UserCheck, Mail } from "lucide-react";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { UserCard } from "./UserCard";
 
 interface UserTableProps {
-  users: UserWithInviter[]
-  currentUserId: string
-  currentUserRole: string
+  users: UserWithInviter[];
+  currentUserId: string;
+  currentUserRole: string;
 }
 
-export default function UserTable({ users: initialUsers, currentUserId, currentUserRole }: UserTableProps) {
-  const [users, setUsers] = useState(initialUsers)
-  const [selectedUser, setSelectedUser] = useState<UserWithInviter | null>(null)
-  const [isToggleDialogOpen, setIsToggleDialogOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
+export default function UserTable({
+  users: initialUsers,
+  currentUserId,
+  currentUserRole,
+}: UserTableProps) {
+  const [users, setUsers] = useState(initialUsers);
+  const [selectedUser, setSelectedUser] = useState<UserWithInviter | null>(
+    null
+  );
+  const [isToggleDialogOpen, setIsToggleDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const handleToggleStatus = async () => {
-    if (!selectedUser) return
+    if (!selectedUser) return;
 
-    setIsLoading(true)
+    setIsLoading(true);
 
-    const newStatus = selectedUser.status === 'active' ? 'inactive' : 'active'
+    const newStatus = selectedUser.status === "active" ? "inactive" : "active";
 
-    const result = await toggleUserStatus(selectedUser.id, newStatus)
+    const result = await toggleUserStatus(selectedUser.id, newStatus);
 
     if (result.success) {
       toast.success(
-        `Usuario ${newStatus === 'active' ? 'activado' : 'desactivado'} correctamente`
-      )
+        `Usuario ${
+          newStatus === "active" ? "activado" : "desactivado"
+        } correctamente`
+      );
 
       // Actualizar lista local
-      setUsers(prev =>
-        prev.map(u =>
-          u.id === selectedUser.id
-            ? { ...u, status: newStatus }
-            : u
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === selectedUser.id ? { ...u, status: newStatus } : u
         )
-      )
+      );
 
-      router.refresh()
+      router.refresh();
     } else {
-      toast.error(result.error || 'Error al cambiar estado')
+      toast.error(result.error || "Error al cambiar estado");
     }
 
-    setIsLoading(false)
-    setIsToggleDialogOpen(false)
-    setSelectedUser(null)
-  }
+    setIsLoading(false);
+    setIsToggleDialogOpen(false);
+    setSelectedUser(null);
+  };
 
   const getRoleBadge = (role: string) => {
-    const variants: Record<string, 'default' | 'secondary' | 'destructive'> = {
-      superadmin: 'destructive',
-      admin: 'default',
-      vendedor: 'secondary'
-    }
+    const variants: Record<string, "default" | "secondary" | "destructive"> = {
+      superadmin: "destructive",
+      admin: "default",
+      vendedor: "secondary",
+    };
 
     const labels: Record<string, string> = {
-      superadmin: 'Superadmin',
-      admin: 'Admin',
-      vendedor: 'Vendedor'
-    }
+      superadmin: "Super Admin",
+      admin: "Admin",
+      vendedor: "Comercial",
+    };
 
     return (
-      <Badge variant={variants[role] || 'secondary'}>
+      <Badge variant={variants[role] || "secondary"}>
         {labels[role] || role}
       </Badge>
-    )
-  }
+    );
+  };
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, 'default' | 'secondary' | 'outline'> = {
-      active: 'default',
-      inactive: 'secondary',
-      pending: 'outline'
-    }
+    const variants: Record<string, "default" | "secondary" | "outline"> = {
+      active: "default",
+      inactive: "secondary",
+      pending: "outline",
+    };
 
     const labels: Record<string, string> = {
-      active: 'Activo',
-      inactive: 'Inactivo',
-      pending: 'Pendiente'
-    }
+      active: "Activo",
+      inactive: "Inactivo",
+      pending: "Pendiente",
+    };
 
     return (
-      <Badge variant={variants[status] || 'outline'}>
+      <Badge variant={variants[status] || "outline"}>
         {labels[status] || status}
       </Badge>
-    )
-  }
+    );
+  };
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return '-'
+    if (!dateString) return "-";
 
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
+    return new Date(dateString).toLocaleDateString("es-ES", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   const handleToggleStatusFromCard = (user: UserWithInviter) => {
-    setSelectedUser(user)
-    setIsToggleDialogOpen(true)
-  }
+    setSelectedUser(user);
+    setIsToggleDialogOpen(true);
+  };
 
   return (
     <>
@@ -155,17 +161,27 @@ export default function UserTable({ users: initialUsers, currentUserId, currentU
           <TableBody>
             {users.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                <TableCell
+                  colSpan={6}
+                  className="text-center text-muted-foreground"
+                >
                   No hay usuarios registrados
                 </TableCell>
               </TableRow>
             ) : (
               users.map((user) => (
-                <TableRow key={user.id} className="bg-white hover:bg-lime-50/50">
+                <TableRow
+                  key={user.id}
+                  className="bg-white hover:bg-lime-50/50"
+                >
                   <TableCell className="font-medium">
                     <div className="flex flex-col">
-                      <span>{user.name} {user.apellidos}</span>
-                      <span className="text-xs text-muted-foreground">{getRoleBadge(user.role)}</span>
+                      <span>
+                        {user.name} {user.apellidos}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {getRoleBadge(user.role)}
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell>{user.email}</TableCell>
@@ -183,24 +199,25 @@ export default function UserTable({ users: initialUsers, currentUserId, currentU
                     )}
                   </TableCell>
                   <TableCell>
-                    <span className="text-sm">{formatDate(user.last_login)}</span>
+                    <span className="text-sm">
+                      {formatDate(user.last_login)}
+                    </span>
                   </TableCell>
                   <TableCell className="text-right">
                     <TooltipProvider>
                       <div className="flex justify-end gap-2">
-                        {/* Vendedor solo puede editar su propio usuario */}
-                        {currentUserRole === 'vendedor' && user.id !== currentUserId ? (
-                          <span className="text-muted-foreground text-sm">-</span>
+                        {/* Comercial solo puede editar su propio usuario */}
+                        {currentUserRole === "vendedor" &&
+                        user.id !== currentUserId ? (
+                          <span className="text-muted-foreground text-sm">
+                            -
+                          </span>
                         ) : (
                           <>
                             {/* Botón Editar */}
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  asChild
-                                >
+                                <Button variant="outline" size="icon" asChild>
                                   <Link href={`/users/${user.id}/edit`}>
                                     <Pencil className="h-4 w-4" />
                                   </Link>
@@ -212,48 +229,57 @@ export default function UserTable({ users: initialUsers, currentUserId, currentU
                             </Tooltip>
 
                             {/* Botón Activar/Desactivar - Solo admin/superadmin */}
-                            {currentUserRole !== 'vendedor' && (
+                            {currentUserRole !== "vendedor" && (
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Button
                                     variant="outline"
                                     size="icon"
                                     onClick={() => {
-                                      setSelectedUser(user)
-                                      setIsToggleDialogOpen(true)
+                                      setSelectedUser(user);
+                                      setIsToggleDialogOpen(true);
                                     }}
-                                    className={user.status === 'active' ? 'border-orange-500 text-orange-600 hover:bg-orange-50' : 'border-green-600 text-green-600 hover:bg-green-50'}
+                                    className={
+                                      user.status === "active"
+                                        ? "border-orange-500 text-orange-600 hover:bg-orange-50"
+                                        : "border-green-600 text-green-600 hover:bg-green-50"
+                                    }
                                   >
-                                    {user.status === 'active' ? (
-                                      <UserX className="h-4 w-4" />
+                                    {user.status === "active" ? (
+                                      <Trash2 className="h-4 w-4" />
                                     ) : (
                                       <UserCheck className="h-4 w-4" />
                                     )}
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>{user.status === 'active' ? 'Desactivar' : 'Activar'}</p>
+                                  <p>
+                                    {user.status === "active"
+                                      ? "Desactivar"
+                                      : "Activar"}
+                                  </p>
                                 </TooltipContent>
                               </Tooltip>
                             )}
 
                             {/* Botón Reenviar invitación - Solo si pending */}
-                            {user.status === 'pending' && currentUserRole !== 'vendedor' && (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="border-blue-500 text-blue-600 hover:bg-blue-50"
-                                  >
-                                    <Mail className="h-4 w-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Reenviar invitación</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            )}
+                            {user.status === "pending" &&
+                              currentUserRole !== "vendedor" && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                                    >
+                                      <Mail className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Reenviar invitación</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
                           </>
                         )}
                       </div>
@@ -287,34 +313,42 @@ export default function UserTable({ users: initialUsers, currentUserId, currentU
       </div>
 
       {/* Dialog confirmar cambio de estado */}
-      <AlertDialog open={isToggleDialogOpen} onOpenChange={setIsToggleDialogOpen}>
+      <AlertDialog
+        open={isToggleDialogOpen}
+        onOpenChange={setIsToggleDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {selectedUser?.status === 'active' ? 'Desactivar' : 'Activar'} usuario
+              {selectedUser?.status === "active" ? "Desactivar" : "Activar"}{" "}
+              usuario
             </AlertDialogTitle>
             <AlertDialogDescription>
-              ¿Estás seguro de que quieres{' '}
-              {selectedUser?.status === 'active' ? 'desactivar' : 'activar'} a{' '}
+              ¿Estás seguro de que quieres{" "}
+              {selectedUser?.status === "active" ? "desactivar" : "activar"} a{" "}
               <strong>
                 {selectedUser?.nombre} {selectedUser?.apellidos}
               </strong>
               ?
-              {selectedUser?.status === 'active' && (
+              {selectedUser?.status === "active" && (
                 <span className="block mt-2 text-destructive">
-                  El usuario no podrá acceder al sistema hasta que sea reactivado.
+                  El usuario no podrá acceder al sistema hasta que sea
+                  reactivado.
                 </span>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isLoading}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleToggleStatus} disabled={isLoading}>
-              {isLoading ? 'Procesando...' : 'Confirmar'}
+            <AlertDialogAction
+              onClick={handleToggleStatus}
+              disabled={isLoading}
+            >
+              {isLoading ? "Procesando..." : "Confirmar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </>
-  )
+  );
 }

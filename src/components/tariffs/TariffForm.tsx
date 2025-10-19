@@ -212,7 +212,7 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-cyan-600">
+              <h1 className="text-3xl font-bold text-cyan-600">
                 {mode === "create" ? "Nueva Tarifa" : "Editar Tarifa"}
               </h1>
               <p className="text-sm text-cyan-600">

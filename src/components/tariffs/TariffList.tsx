@@ -231,9 +231,12 @@ export function TariffList({
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-cyan-600">Tarifas</h1>
+          <h1 className="text-3xl font-bold text-cyan-600 flex items-center gap-2">
+            <FileText className="h-6 w-6" />
+            Tarifas
+          </h1>
           <p className="text-sm text-cyan-600">
-            Gestiona las tarifas de tu empresa
+            Gestiona tus tarifas y crea presupuestos
           </p>
         </div>
         <div className="flex gap-2">

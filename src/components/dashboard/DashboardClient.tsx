@@ -20,6 +20,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import {
+  Home,
   FileText,
   Receipt,
   PlusCircle,
@@ -30,10 +31,12 @@ import {
   CheckCircle,
   Clock,
   XCircle,
+  BookOpen,
 } from "lucide-react";
 import { getDashboardStats } from "@/app/actions/dashboard";
 import { Budget } from "@/lib/types/database";
 import { formatCurrency } from "@/lib/helpers/format";
+import type { HelpArticleMeta } from "@/lib/helpers/markdown-types";
 
 interface DashboardClientProps {
   initialStats: {
@@ -47,6 +50,7 @@ interface DashboardClientProps {
   };
   userRole: string;
   hasBudgets?: boolean;
+  helpArticles?: HelpArticleMeta[];
 }
 
 const statusColors = {
@@ -73,6 +77,7 @@ export function DashboardClient({
   initialStats,
   userRole,
   hasBudgets = true,
+  helpArticles = [],
 }: DashboardClientProps) {
   const [stats, setStats] = useState(initialStats);
   const [periodo, setPeriodo] = useState<Periodo>("mes");
@@ -101,13 +106,15 @@ export function DashboardClient({
 
   return (
     <div className="min-h-screen bg-lime-50">
-      <div className="container mx-auto px-4 py-8 space-y-8">
+      <div className="container mx-auto px-4 py-6 space-y-8">
         {/* Header con filtro de período */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-lime-700">Dashboard</h1>
-            <p className="text-lime-600 mt-1">
-              Resumen y estadísticas de presupuestos
+            <h1 className="text-3xl font-bold text-lime-700 flex items-center gap-2">
+              <Home className="h-6 w-6" /> Panel de control
+            </h1>
+            <p className="text-sm text-lime-600">
+              Información, resumen y estadísticas
             </p>
           </div>
 
@@ -254,6 +261,36 @@ export function DashboardClient({
             </div>
           </CardContent>
         </Card>
+
+        {/* Primeros Pasos - Solo si hay artículos */}
+        {helpArticles.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-lime-600" />
+                Primeros Pasos
+              </CardTitle>
+              <CardDescription>
+                Guías para comenzar a usar la aplicación
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {helpArticles.map((article) => (
+                  <Link key={article.id} href={`/help/${article.id}`}>
+                    <Button
+                      className="w-full h-16 flex items-center gap-2 justify-center bg-gray-600 hover:bg-gray-800 text-white border-gray-600"
+                      variant="outline"
+                    >
+                      <BookOpen className="w-5 h-5" />
+                      <span className="text-sm">{article.title}</span>
+                    </Button>
+                  </Link>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Listados */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -1,48 +1,53 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { signOutAction } from '@/app/actions/auth'
-import { Button } from '@/components/ui/button'
-import { LogOut, Loader2 } from 'lucide-react'
+import { useState } from "react";
+import { signOutAction } from "@/app/actions/auth";
+import { Button } from "@/components/ui/button";
+import { LogOut, Loader2 } from "lucide-react";
 
 interface LogoutButtonProps {
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
-  size?: 'default' | 'sm' | 'lg' | 'icon'
-  className?: string
-  showText?: boolean
+  variant?:
+    | "default"
+    | "destructive"
+    | "outline"
+    | "secondary"
+    | "ghost"
+    | "link";
+  size?: "default" | "sm" | "lg" | "icon";
+  className?: string;
+  showText?: boolean;
 }
 
 export default function LogoutButton({
-  variant = 'ghost',
-  size = 'default',
+  variant = "ghost",
+  size = "default",
   className,
-  showText = true
+  showText = true,
 }: LogoutButtonProps) {
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogout = async () => {
     try {
-      setIsLoading(true)
+      setIsLoading(true);
 
-      const result = await signOutAction()
+      const result = await signOutAction();
 
       if (!result.success) {
         // El error se maneja en el Server Action
         // pero podríamos mostrar un toast aquí si fuera necesario
-        console.error('Logout error:', result.error)
+        console.error("Logout error:", result.error);
       }
 
       // El Server Action maneja el redirect automáticamente
       // No necesitamos hacer nada más aquí
-
     } catch (error) {
-      console.error('Error durante logout:', error)
+      console.error("Error durante logout:", error);
     } finally {
       // Note: setIsLoading(false) podría no ejecutarse si hay redirect
       // pero está bien porque el componente se desmontará
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <Button
@@ -59,10 +64,10 @@ export default function LogoutButton({
       )}
 
       {showText && (
-        <span className={size === 'icon' ? 'sr-only' : 'ml-2'}>
-          {isLoading ? 'Cerrando sesión...' : 'Cerrar Sesión'}
+        <span className={size === "icon" ? "sr-only" : "ml-2"}>
+          {isLoading ? "Salir..." : "Salir"}
         </span>
       )}
     </Button>
-  )
+  );
 }

@@ -31,6 +31,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  Receipt,
   Pencil,
   Trash2,
   FileStack,
@@ -44,7 +45,13 @@ import {
   FilePlus,
   Copy,
 } from "lucide-react";
-import { deleteBudget, deleteBudgetPDF, updateBudgetStatus, generateBudgetPDF, duplicateBudgetCopy } from "@/app/actions/budgets";
+import {
+  deleteBudget,
+  deleteBudgetPDF,
+  updateBudgetStatus,
+  generateBudgetPDF,
+  duplicateBudgetCopy,
+} from "@/app/actions/budgets";
 import { exportBudgets } from "@/app/actions/export";
 import { importBudgets } from "@/app/actions/import";
 import { downloadFile } from "@/lib/helpers/export-helpers";
@@ -101,7 +108,11 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
     return matchesSearch && matchesStatus;
   });
 
-  const handleDelete = (budgetId: string, clientName: string, hasPdf: boolean) => {
+  const handleDelete = (
+    budgetId: string,
+    clientName: string,
+    hasPdf: boolean
+  ) => {
     setDeleteDialog({ budgetId, clientName, hasPdf });
   };
 
@@ -688,7 +699,9 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => handleDuplicate(budget.id, budget.client_name)}
+                      onClick={() =>
+                        handleDuplicate(budget.id, budget.client_name)
+                      }
                       disabled={duplicating === budget.id}
                     >
                       <Copy className="h-4 w-4" />
@@ -704,7 +717,13 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => handleDelete(budget.id, budget.client_name, !!budget.pdf_url)}
+                      onClick={() =>
+                        handleDelete(
+                          budget.id,
+                          budget.client_name,
+                          !!budget.pdf_url
+                        )
+                      }
                       className="border-destructive text-destructive hover:bg-destructive/10"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -732,7 +751,10 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
       {/* Header con botones */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-lime-700">Presupuestos</h1>
+          <h1 className="text-3xl font-bold text-lime-700 flex items-center gap-2">
+            <Receipt className="h-6 w-6" />
+            Presupuestos
+          </h1>
           <p className="text-sm text-lime-600">
             Gestiona tus presupuestos creados
           </p>
@@ -899,28 +921,37 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
       </div>
 
       {/* Dialog para confirmar eliminación */}
-      <AlertDialog open={!!deleteDialog} onOpenChange={() => setDeleteDialog(null)}>
+      <AlertDialog
+        open={!!deleteDialog}
+        onOpenChange={() => setDeleteDialog(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {deleteDialog?.hasPdf ? "¿Qué deseas eliminar?" : "¿Eliminar presupuesto?"}
+              {deleteDialog?.hasPdf
+                ? "¿Qué deseas eliminar?"
+                : "¿Eliminar presupuesto?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {deleteDialog?.hasPdf ? (
                 <>
-                  El presupuesto de <strong>{deleteDialog.clientName}</strong> tiene un PDF generado.
-                  Puedes eliminar solo el PDF o eliminar el presupuesto completo (incluido el PDF).
+                  El presupuesto de <strong>{deleteDialog.clientName}</strong>{" "}
+                  tiene un PDF generado. Puedes eliminar solo el PDF o eliminar
+                  el presupuesto completo (incluido el PDF).
                 </>
               ) : (
                 <>
-                  Esta acción no se puede deshacer. Se eliminará permanentemente el presupuesto de{" "}
-                  <strong>{deleteDialog?.clientName}</strong> y todos sus datos asociados.
+                  Esta acción no se puede deshacer. Se eliminará permanentemente
+                  el presupuesto de <strong>{deleteDialog?.clientName}</strong>{" "}
+                  y todos sus datos asociados.
                 </>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>
+              Cancelar
+            </AlertDialogCancel>
             {deleteDialog?.hasPdf ? (
               <>
                 <AlertDialogAction

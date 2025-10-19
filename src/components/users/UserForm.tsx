@@ -1,187 +1,219 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { createUser, updateUser, type CreateUserData, type UpdateUserData, type User } from '@/app/actions/users'
-import { getIssuers, registerUser, type IssuerData, type RegisterData } from '@/app/actions/auth'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, Copy, Check, Search, Filter } from 'lucide-react'
-import { toast } from 'sonner'
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import {
+  createUser,
+  updateUser,
+  type CreateUserData,
+  type UpdateUserData,
+  type User,
+} from "@/app/actions/users";
+import {
+  getIssuers,
+  registerUser,
+  type IssuerData,
+  type RegisterData,
+} from "@/app/actions/auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2, Copy, Check, Search, Filter } from "lucide-react";
+import { toast } from "sonner";
 
 interface UserFormProps {
-  mode: 'create' | 'edit'
-  user?: User
-  empresaId: number
-  currentUserRole?: string
+  mode: "create" | "edit";
+  user?: User;
+  empresaId: number;
+  currentUserRole?: string;
 }
 
 interface FormData {
-  email: string
-  name: string
-  last_name: string
-  role: 'vendedor' | 'admin' | 'superadmin'
-  status?: 'active' | 'inactive' | 'pending'
-  issuer_id?: string  // ID del emisor al que se asignará el usuario (solo superadmin)
+  email: string;
+  name: string;
+  last_name: string;
+  role: "vendedor" | "admin" | "superadmin";
+  status?: "active" | "inactive" | "pending";
+  issuer_id?: string; // ID del emisor al que se asignará el usuario (solo superadmin)
 }
 
-export default function UserForm({ mode, user, empresaId, currentUserRole }: UserFormProps) {
+export default function UserForm({
+  mode,
+  user,
+  empresaId,
+  currentUserRole,
+}: UserFormProps) {
   const [formData, setFormData] = useState<FormData>({
-    email: user?.email || '',
-    name: user?.nombre || '',
-    last_name: user?.apellidos || '',
-    role: user?.role || 'vendedor',
-    status: user?.status || 'active',
-    issuer_id: undefined
-  })
+    email: user?.email || "",
+    name: user?.nombre || "",
+    last_name: user?.apellidos || "",
+    role: user?.role || "vendedor",
+    status: user?.status || "active",
+    issuer_id: undefined,
+  });
 
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [isLoading, setIsLoading] = useState(false)
-  const [temporaryPassword, setTemporaryPassword] = useState<string | null>(null)
-  const [copiedPassword, setCopiedPassword] = useState(false)
-  const [issuers, setIssuers] = useState<IssuerData[]>([])
-  const [loadingIssuers, setLoadingIssuers] = useState(false)
-  const [selectedIssuer, setSelectedIssuer] = useState<IssuerData | null>(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filterType, setFilterType] = useState<'all' | 'empresa' | 'autonomo'>('all')
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [temporaryPassword, setTemporaryPassword] = useState<string | null>(
+    null
+  );
+  const [copiedPassword, setCopiedPassword] = useState(false);
+  const [issuers, setIssuers] = useState<IssuerData[]>([]);
+  const [loadingIssuers, setLoadingIssuers] = useState(false);
+  const [selectedIssuer, setSelectedIssuer] = useState<IssuerData | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState<"all" | "empresa" | "autonomo">(
+    "all"
+  );
 
-  const router = useRouter()
+  const router = useRouter();
 
   // Generar password temporal segura
   const generateTemporaryPassword = (): string => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%'
-    let password = ''
+    const chars =
+      "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%";
+    let password = "";
     for (let i = 0; i < 12; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length))
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    return password
-  }
+    return password;
+  };
 
   // Cargar emisores si el usuario es superadmin
   useEffect(() => {
-    if (currentUserRole === 'superadmin' && mode === 'create') {
-      loadIssuers()
+    if (currentUserRole === "superadmin" && mode === "create") {
+      loadIssuers();
     }
-  }, [currentUserRole, mode])
+  }, [currentUserRole, mode]);
 
   const loadIssuers = async () => {
-    setLoadingIssuers(true)
+    setLoadingIssuers(true);
     try {
-      const result = await getIssuers()
+      const result = await getIssuers();
       if (result.success && result.data) {
-        setIssuers(result.data)
+        setIssuers(result.data);
       } else {
-        toast.error(result.error || 'Error al cargar emisores')
+        toast.error(result.error || "Error al cargar emisores");
       }
     } catch (error) {
-      toast.error('Error al cargar emisores')
+      toast.error("Error al cargar emisores");
     } finally {
-      setLoadingIssuers(false)
+      setLoadingIssuers(false);
     }
-  }
+  };
 
   // Manejar selección de empresa
   const handleIssuerChange = (issuerId: string) => {
-    const issuer = issuers.find(i => i.id === issuerId)
+    const issuer = issuers.find((i) => i.id === issuerId);
     if (issuer) {
-      setSelectedIssuer(issuer)
-      setFormData(prev => ({ ...prev, issuer_id: issuerId }))
+      setSelectedIssuer(issuer);
+      setFormData((prev) => ({ ...prev, issuer_id: issuerId }));
 
       // Limpiar error si existe
       if (errors.issuer_id) {
-        setErrors(prev => {
-          const newErrors = { ...prev }
-          delete newErrors.issuer_id
-          return newErrors
-        })
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors.issuer_id;
+          return newErrors;
+        });
       }
     }
-  }
+  };
 
-  const handleInputChange = (field: keyof FormData) => (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const value = e.target.value
+  const handleInputChange =
+    (field: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
 
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }))
+      setFormData((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
 
-    // Limpiar error del campo
-    if (errors[field]) {
-      setErrors(prev => {
-        const newErrors = { ...prev }
-        delete newErrors[field]
-        return newErrors
-      })
-    }
-  }
+      // Limpiar error del campo
+      if (errors[field]) {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[field];
+          return newErrors;
+        });
+      }
+    };
 
   const handleSelectChange = (field: keyof FormData) => (value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
-    }))
+      [field]: value,
+    }));
 
     // Limpiar error del campo
     if (errors[field]) {
-      setErrors(prev => {
-        const newErrors = { ...prev }
-        delete newErrors[field]
-        return newErrors
-      })
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setErrors({})
-    setIsLoading(true)
+    e.preventDefault();
+    setErrors({});
+    setIsLoading(true);
 
     try {
-      if (mode === 'create') {
+      if (mode === "create") {
         // Si es superadmin, validar y usar registerUser
-        if (currentUserRole === 'superadmin') {
+        if (currentUserRole === "superadmin") {
           // Validar que se haya seleccionado una empresa
           if (!formData.issuer_id || !selectedIssuer) {
-            setErrors({ issuer_id: 'Debes seleccionar una empresa' })
-            setIsLoading(false)
-            return
+            setErrors({ issuer_id: "Debes seleccionar una empresa" });
+            setIsLoading(false);
+            return;
           }
 
           // Generar password temporal
-          const temporaryPassword = generateTemporaryPassword()
+          const temporaryPassword = generateTemporaryPassword();
 
           const registerData: RegisterData = {
             email: formData.email,
             name: formData.nombre,
             last_name: formData.apellidos,
             password: temporaryPassword,
-            tipo: 'empresa', // No importa, no se usará
-            nombreComercial: '', // No importa, no se usará
-            nif: '', // No importa, no se usará
-            direccionFiscal: '', // No importa, no se usará
+            tipo: "empresa", // No importa, no se usará
+            nombreComercial: "", // No importa, no se usará
+            nif: "", // No importa, no se usará
+            direccionFiscal: "", // No importa, no se usará
             issuer_id: formData.issuer_id,
-            role: formData.role
-          }
+            role: formData.role,
+          };
 
-          const result = await registerUser(registerData)
+          const result = await registerUser(registerData);
 
           if (!result.success) {
-            setErrors({ general: result.error || 'Error al crear usuario' })
-            return
+            setErrors({ general: result.error || "Error al crear usuario" });
+            return;
           }
 
           // Mostrar password temporal
-          setTemporaryPassword(temporaryPassword)
-          toast.success('Usuario creado correctamente')
-
+          setTemporaryPassword(temporaryPassword);
+          toast.success("Usuario creado correctamente");
         } else {
           // Flujo normal para admin (crear usuario de su misma empresa)
           const createData: CreateUserData = {
@@ -189,129 +221,129 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
             name: formData.nombre,
             last_name: formData.apellidos,
             role: formData.role,
-            company_id: empresaId
-          }
+            company_id: empresaId,
+          };
 
-          const result = await createUser(createData)
+          const result = await createUser(createData);
 
           if (!result.success) {
-            setErrors({ general: result.error || 'Error al crear usuario' })
-            return
+            setErrors({ general: result.error || "Error al crear usuario" });
+            return;
           }
 
           // Mostrar password temporal
           if (result.temporaryPassword) {
-            setTemporaryPassword(result.temporaryPassword)
+            setTemporaryPassword(result.temporaryPassword);
           }
 
-          toast.success('Usuario creado correctamente')
+          toast.success("Usuario creado correctamente");
         }
 
         // No redirigir aún, mostrar password primero
-
       } else {
         // Actualizar usuario
         const updateData: UpdateUserData = {
           name: formData.nombre !== user?.nombre ? formData.nombre : undefined,
-          last_name: formData.apellidos !== user?.apellidos ? formData.apellidos : undefined,
+          last_name:
+            formData.apellidos !== user?.apellidos
+              ? formData.apellidos
+              : undefined,
           role: formData.role !== user?.role ? formData.role : undefined,
-          status: formData.status !== user?.status ? formData.status : undefined
-        }
+          status:
+            formData.status !== user?.status ? formData.status : undefined,
+        };
 
         // Si no hay cambios
-        if (Object.values(updateData).every(v => v === undefined)) {
-          toast.info('No hay cambios que guardar')
-          return
+        if (Object.values(updateData).every((v) => v === undefined)) {
+          toast.info("No hay cambios que guardar");
+          return;
         }
 
-        const result = await updateUser(user!.id, updateData)
+        const result = await updateUser(user!.id, updateData);
 
         if (!result.success) {
-          setErrors({ general: result.error || 'Error al actualizar usuario' })
-          return
+          setErrors({ general: result.error || "Error al actualizar usuario" });
+          return;
         }
 
-        toast.success('Usuario actualizado correctamente')
-        router.push('/users')
-        router.refresh()
+        toast.success("Usuario actualizado correctamente");
+        router.push("/users");
+        router.refresh();
       }
-
     } catch (error) {
       setErrors({
-        general: error instanceof Error ? error.message : 'Error inesperado'
-      })
+        general: error instanceof Error ? error.message : "Error inesperado",
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleCopyPassword = async () => {
-    if (!temporaryPassword) return
+    if (!temporaryPassword) return;
 
     try {
-      await navigator.clipboard.writeText(temporaryPassword)
-      setCopiedPassword(true)
-      toast.success('Contraseña copiada al portapapeles')
+      await navigator.clipboard.writeText(temporaryPassword);
+      setCopiedPassword(true);
+      toast.success("Contraseña copiada al portapapeles");
 
-      setTimeout(() => setCopiedPassword(false), 2000)
+      setTimeout(() => setCopiedPassword(false), 2000);
     } catch (error) {
-      toast.error('Error al copiar contraseña')
+      toast.error("Error al copiar contraseña");
     }
-  }
+  };
 
   const handleGoToUsers = () => {
-    router.push('/users')
-    router.refresh()
-  }
+    router.push("/users");
+    router.refresh();
+  };
 
   // Determinar qué roles puede asignar el usuario actual
   const getAvailableRoles = () => {
-    if (currentUserRole === 'superadmin') {
+    if (currentUserRole === "superadmin") {
       // Superadmin puede crear cualquier rol
       return [
-        { value: 'vendedor', label: 'Vendedor' },
-        { value: 'admin', label: 'Admin' },
-        { value: 'superadmin', label: 'Superadmin' }
-      ]
-    } else if (currentUserRole === 'admin') {
+        { value: "vendedor", label: "Comercial" },
+        { value: "admin", label: "Admin" },
+        { value: "superadmin", label: "Superadmin" },
+      ];
+    } else if (currentUserRole === "admin") {
       // Admin solo puede crear admin y vendedor (NO superadmin)
       return [
-        { value: 'vendedor', label: 'Vendedor' },
-        { value: 'admin', label: 'Admin' }
-      ]
+        { value: "vendedor", label: "Comercial" },
+        { value: "admin", label: "Admin" },
+      ];
     } else {
-      // Vendedor no puede crear usuarios (no debería llegar aquí)
-      return [
-        { value: 'vendedor', label: 'Vendedor' }
-      ]
+      // Comercial no puede crear usuarios (no debería llegar aquí)
+      return [{ value: "vendedor", label: "Comercial" }];
     }
-  }
+  };
 
-  const availableRoles = getAvailableRoles()
+  const availableRoles = getAvailableRoles();
 
   // Filtrar issuers según búsqueda y tipo
-  const filteredIssuers = issuers.filter(issuer => {
+  const filteredIssuers = issuers.filter((issuer) => {
     // Filtro por tipo
-    if (filterType !== 'all' && issuer.type !== filterType) {
-      return false
+    if (filterType !== "all" && issuer.type !== filterType) {
+      return false;
     }
 
     // Filtro por búsqueda (nombre o NIF)
     if (searchTerm) {
-      const search = searchTerm.toLowerCase()
+      const search = searchTerm.toLowerCase();
       return (
         issuer.name.toLowerCase().includes(search) ||
         issuer.nif.toLowerCase().includes(search) ||
         issuer.address?.toLowerCase().includes(search) ||
         issuer.locality?.toLowerCase().includes(search)
-      )
+      );
     }
 
-    return true
-  })
+    return true;
+  });
 
   // Si ya se creó el usuario y hay password temporal
-  if (mode === 'create' && temporaryPassword) {
+  if (mode === "create" && temporaryPassword) {
     return (
       <Card className="w-full max-w-2xl mx-auto">
         <CardHeader>
@@ -326,8 +358,8 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
         <CardContent className="space-y-6">
           <Alert>
             <AlertDescription>
-              <strong>Importante:</strong> Esta es la única vez que verás esta contraseña.
-              Cópiala y envíala al usuario de forma segura.
+              <strong>Importante:</strong> Esta es la única vez que verás esta
+              contraseña. Cópiala y envíala al usuario de forma segura.
             </AlertDescription>
           </Alert>
 
@@ -358,7 +390,8 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
               </Button>
             </div>
             <p className="text-sm text-muted-foreground">
-              El usuario deberá cambiar esta contraseña en su primer inicio de sesión.
+              El usuario deberá cambiar esta contraseña en su primer inicio de
+              sesión.
             </p>
           </div>
         </CardContent>
@@ -369,7 +402,7 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
           </Button>
         </CardFooter>
       </Card>
-    )
+    );
   }
 
   // Formulario normal
@@ -381,12 +414,12 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold tracking-tight">
-                {mode === 'create' ? 'Crear Usuario' : 'Editar Usuario'}
+                {mode === "create" ? "Crear Usuario" : "Editar Usuario"}
               </h1>
               <p className="text-muted-foreground">
-                {mode === 'create'
-                  ? 'Invita a un nuevo usuario a tu empresa'
-                  : 'Modifica los datos del usuario'}
+                {mode === "create"
+                  ? "Invita a un nuevo usuario a tu empresa"
+                  : "Modifica los datos del usuario"}
               </p>
             </div>
 
@@ -394,7 +427,7 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => router.push('/users')}
+                onClick={() => router.push("/users")}
                 disabled={isLoading}
               >
                 Cancelar
@@ -403,10 +436,12 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {mode === 'create' ? 'Creando...' : 'Guardando...'}
+                    {mode === "create" ? "Creando..." : "Guardando..."}
                   </>
+                ) : mode === "create" ? (
+                  "Crear Usuario"
                 ) : (
-                  mode === 'create' ? 'Crear Usuario' : 'Guardar Cambios'
+                  "Guardar Cambios"
                 )}
               </Button>
             </div>
@@ -425,7 +460,7 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
               {/* Línea 1: Email + Rol (25%) */}
               <div className="flex gap-4">
                 <div className="flex-1 space-y-2">
-                  {mode === 'create' ? (
+                  {mode === "create" ? (
                     <>
                       <Label htmlFor="email">Email *</Label>
                       <Input
@@ -433,8 +468,8 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
                         type="email"
                         placeholder="usuario@empresa.com"
                         value={formData.email}
-                        onChange={handleInputChange('email')}
-                        className={errors.email ? 'border-red-500' : ''}
+                        onChange={handleInputChange("email")}
+                        className={errors.email ? "border-red-500" : ""}
                         disabled={isLoading}
                         required
                       />
@@ -457,17 +492,20 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
 
                 <div className="w-1/4 space-y-2">
                   <Label htmlFor="role">Rol *</Label>
-                  {mode === 'edit' && currentUserRole === 'vendedor' ? (
+                  {mode === "edit" && currentUserRole === "vendedor" ? (
                     <div className="p-3 bg-muted rounded-md text-muted-foreground text-sm">
-                      {availableRoles.find(r => r.value === formData.role)?.label || formData.role}
+                      {availableRoles.find((r) => r.value === formData.role)
+                        ?.label || formData.role}
                     </div>
                   ) : (
                     <Select
                       value={formData.role}
-                      onValueChange={handleSelectChange('role')}
+                      onValueChange={handleSelectChange("role")}
                       disabled={isLoading || loadingIssuers}
                     >
-                      <SelectTrigger className={errors.role ? 'border-red-500' : ''}>
+                      <SelectTrigger
+                        className={errors.role ? "border-red-500" : ""}
+                      >
                         <SelectValue placeholder="Rol" />
                       </SelectTrigger>
                       <SelectContent>
@@ -494,8 +532,8 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
                     type="text"
                     placeholder="Juan"
                     value={formData.nombre}
-                    onChange={handleInputChange('name')}
-                    className={errors.nombre ? 'border-red-500' : ''}
+                    onChange={handleInputChange("name")}
+                    className={errors.nombre ? "border-red-500" : ""}
                     disabled={isLoading}
                     required
                   />
@@ -511,8 +549,8 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
                     type="text"
                     placeholder="García López"
                     value={formData.apellidos}
-                    onChange={handleInputChange('last_name')}
-                    className={errors.apellidos ? 'border-red-500' : ''}
+                    onChange={handleInputChange("last_name")}
+                    className={errors.apellidos ? "border-red-500" : ""}
                     disabled={isLoading}
                     required
                   />
@@ -525,19 +563,20 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
               {/* Línea 3: Descripción de roles */}
               <div className="p-4 bg-lime-50 border border-lime-200 rounded-lg">
                 <p className="text-sm text-gray-700">
-                  <strong>Superadmin:</strong> Acceso total al sistema. {' '}
-                  <strong>Admin:</strong> Gestión completa empresa y usuarios Admin y Vendedor. {' '}
-                  <strong>Vendedor:</strong> Solo crear/editar presupuestos.
+                  <strong>Superadmin:</strong> Acceso total al sistema.{" "}
+                  <strong>Admin:</strong> Gestión completa empresa y usuarios
+                  Admin y Comercial. <strong>Comercial:</strong> Solo
+                  crear/editar presupuestos.
                 </p>
               </div>
 
               {/* Status (solo en edición y solo admin/superadmin) */}
-              {mode === 'edit' && currentUserRole !== 'vendedor' && (
+              {mode === "edit" && currentUserRole !== "vendedor" && (
                 <div className="space-y-2">
                   <Label htmlFor="status">Estado</Label>
                   <Select
                     value={formData.status}
-                    onValueChange={handleSelectChange('status')}
+                    onValueChange={handleSelectChange("status")}
                     disabled={isLoading}
                   >
                     <SelectTrigger>
@@ -556,11 +595,13 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
               )}
 
               {/* Selección de Empresa (solo para superadmin creando) */}
-              {mode === 'create' && currentUserRole === 'superadmin' && (
+              {mode === "create" && currentUserRole === "superadmin" && (
                 <>
                   {/* Línea 5: Título y Filtros */}
                   <div className="pt-4 border-t space-y-4">
-                    <h3 className="text-lg font-semibold">Empresa / Autónomo</h3>
+                    <h3 className="text-lg font-semibold">
+                      Empresa / Autónomo
+                    </h3>
 
                     {/* Filtros de búsqueda */}
                     <div className="flex gap-4">
@@ -573,7 +614,10 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
                           className="pl-10"
                         />
                       </div>
-                      <Select value={filterType} onValueChange={(value: any) => setFilterType(value)}>
+                      <Select
+                        value={filterType}
+                        onValueChange={(value: any) => setFilterType(value)}
+                      >
                         <SelectTrigger className="w-[200px]">
                           <Filter className="mr-2 h-4 w-4" />
                           <SelectValue />
@@ -581,7 +625,9 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
                         <SelectContent>
                           <SelectItem value="all">Todos</SelectItem>
                           <SelectItem value="empresa">Solo Empresas</SelectItem>
-                          <SelectItem value="autonomo">Solo Autónomos</SelectItem>
+                          <SelectItem value="autonomo">
+                            Solo Autónomos
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -589,7 +635,8 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
                     {/* Contador de resultados */}
                     {!loadingIssuers && issuers.length > 0 && (
                       <p className="text-sm text-muted-foreground">
-                        Mostrando {filteredIssuers.length} de {issuers.length} {issuers.length === 1 ? 'empresa' : 'empresas'}
+                        Mostrando {filteredIssuers.length} de {issuers.length}{" "}
+                        {issuers.length === 1 ? "empresa" : "empresas"}
                       </p>
                     )}
                   </div>
@@ -599,23 +646,27 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
                     {loadingIssuers ? (
                       <div className="p-8 bg-white rounded-lg border flex items-center justify-center gap-2">
                         <Loader2 className="h-5 w-5 animate-spin text-lime-600" />
-                        <span className="text-muted-foreground">Cargando empresas...</span>
+                        <span className="text-muted-foreground">
+                          Cargando empresas...
+                        </span>
                       </div>
                     ) : issuers.length === 0 ? (
                       <Alert>
                         <AlertDescription>
-                          No hay empresas registradas en el sistema. Por favor, registra una empresa primero.
+                          No hay empresas registradas en el sistema. Por favor,
+                          registra una empresa primero.
                         </AlertDescription>
                       </Alert>
                     ) : filteredIssuers.length === 0 ? (
                       <Alert>
                         <AlertDescription>
-                          No se encontraron empresas que coincidan con los filtros aplicados.
+                          No se encontraron empresas que coincidan con los
+                          filtros aplicados.
                         </AlertDescription>
                       </Alert>
                     ) : (
                       <RadioGroup
-                        value={formData.issuer_id || ''}
+                        value={formData.issuer_id || ""}
                         onValueChange={handleIssuerChange}
                         disabled={isLoading}
                         className="space-y-3"
@@ -625,8 +676,8 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
                             key={issuer.id}
                             className={`relative flex items-start space-x-3 p-4 rounded-lg border-2 transition-colors ${
                               formData.issuer_id === issuer.id
-                                ? 'border-lime-500 bg-lime-50'
-                                : 'border-gray-200 bg-white hover:border-gray-300'
+                                ? "border-lime-500 bg-lime-50"
+                                : "border-gray-200 bg-white hover:border-gray-300"
                             }`}
                           >
                             <RadioGroupItem
@@ -643,21 +694,27 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
                                 <p className="font-semibold text-base">
                                   {issuer.name} ({issuer.nif})
                                   <span className="ml-1 text-xs font-normal text-gray-500">
-                                    ({issuer.type === 'empresa' ? 'Empresa' : 'Autónomo'})
+                                    (
+                                    {issuer.type === "empresa"
+                                      ? "Empresa"
+                                      : "Autónomo"}
+                                    )
                                   </span>
                                 </p>
 
                                 {/* Datos de Dirección */}
                                 <p className="text-sm text-gray-600">
                                   {issuer.address}
-                                  {issuer.postal_code && `, ${issuer.postal_code}`}
+                                  {issuer.postal_code &&
+                                    `, ${issuer.postal_code}`}
                                   {issuer.locality && `, ${issuer.locality}`}
                                   {issuer.province && ` (${issuer.province})`}
                                 </p>
 
                                 {/* Datos de Contacto */}
                                 <p className="text-sm text-gray-500">
-                                  {issuer.phone || '-'} • {issuer.email || '-'} • {issuer.web || '-'}
+                                  {issuer.phone || "-"} • {issuer.email || "-"}{" "}
+                                  • {issuer.web || "-"}
                                 </p>
                               </div>
                             </Label>
@@ -676,5 +733,5 @@ export default function UserForm({ mode, user, empresaId, currentUserRole }: Use
         </form>
       </div>
     </div>
-  )
+  );
 }

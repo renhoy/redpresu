@@ -1,9 +1,9 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Database } from '@/lib/types/database.types'
-import { Button } from '@/components/ui/button'
-import { Pencil, Eye } from 'lucide-react'
+import { useState } from "react";
+import { Database } from "@/lib/types/database.types";
+import { Button } from "@/components/ui/button";
+import { Pencil, Eye } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -11,7 +11,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -19,85 +19,89 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
-import { updateConfigValue, getIssuerByEmpresaId, type IssuerData } from '@/app/actions/config'
-import { toast } from 'sonner'
-import { useRouter } from 'next/navigation'
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  updateConfigValue,
+  getIssuerByEmpresaId,
+  type IssuerData,
+} from "@/app/actions/config";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
-type ConfigRow = Database['public']['Tables']['config']['Row']
+type ConfigRow = Database["public"]["Tables"]["config"]["Row"];
 
 interface ConfigTableProps {
-  config: ConfigRow[]
+  config: ConfigRow[];
 }
 
 export function ConfigTable({ config }: ConfigTableProps) {
-  const router = useRouter()
-  const [editingConfig, setEditingConfig] = useState<ConfigRow | null>(null)
-  const [editValue, setEditValue] = useState('')
-  const [editDescription, setEditDescription] = useState('')
-  const [isSaving, setIsSaving] = useState(false)
+  const router = useRouter();
+  const [editingConfig, setEditingConfig] = useState<ConfigRow | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   // Estado para visualizar issuer
-  const [viewingIssuer, setViewingIssuer] = useState<IssuerData | null>(null)
-  const [isLoadingIssuer, setIsLoadingIssuer] = useState(false)
+  const [viewingIssuer, setViewingIssuer] = useState<IssuerData | null>(null);
+  const [isLoadingIssuer, setIsLoadingIssuer] = useState(false);
 
   const handleEdit = (item: ConfigRow) => {
-    setEditingConfig(item)
-    setEditValue(JSON.stringify(item.value, null, 2))
-    setEditDescription(item.description || '')
-  }
+    setEditingConfig(item);
+    setEditValue(JSON.stringify(item.value, null, 2));
+    setEditDescription(item.description || "");
+  };
 
   const handleViewIssuer = async (empresaId: number) => {
-    setIsLoadingIssuer(true)
+    setIsLoadingIssuer(true);
     try {
-      const result = await getIssuerByEmpresaId(empresaId)
+      const result = await getIssuerByEmpresaId(empresaId);
 
       if (result.success && result.data) {
-        setViewingIssuer(result.data)
+        setViewingIssuer(result.data);
       } else {
-        toast.error(result.error || 'Error al obtener datos del issuer')
+        toast.error(result.error || "Error al obtener datos del issuer");
       }
     } catch (error) {
-      toast.error('Error inesperado al cargar issuer')
+      toast.error("Error inesperado al cargar issuer");
     } finally {
-      setIsLoadingIssuer(false)
+      setIsLoadingIssuer(false);
     }
-  }
+  };
 
   const handleSave = async () => {
-    if (!editingConfig) return
+    if (!editingConfig) return;
 
-    setIsSaving(true)
+    setIsSaving(true);
     try {
       // Parsear el JSON
-      const parsedValue = JSON.parse(editValue)
+      const parsedValue = JSON.parse(editValue);
 
       const result = await updateConfigValue(
         editingConfig.key,
         parsedValue,
         editDescription
-      )
+      );
 
       if (result.success) {
-        toast.success('Configuración actualizada')
-        setEditingConfig(null)
-        router.refresh()
+        toast.success("Configuración actualizada");
+        setEditingConfig(null);
+        router.refresh();
       } else {
-        toast.error(result.error || 'Error al actualizar')
+        toast.error(result.error || "Error al actualizar");
       }
     } catch (error) {
-      toast.error('Error: JSON inválido')
+      toast.error("Error: JSON inválido");
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
   const formatValue = (value: unknown): string => {
-    if (typeof value === 'string') return value
-    return JSON.stringify(value, null, 2)
-  }
+    if (typeof value === "string") return value;
+    return JSON.stringify(value, null, 2);
+  };
 
   return (
     <>
@@ -107,31 +111,37 @@ export function ConfigTable({ config }: ConfigTableProps) {
             <TableRow>
               <TableHead className="w-[80px]">Acciones</TableHead>
               <TableHead className="w-[200px]">Clave</TableHead>
-              <TableHead>Descripción</TableHead>
-              <TableHead className="w-[400px]">Valor</TableHead>
+              <TableHead className="w-[200px]">Descripción</TableHead>
+              <TableHead>Valor</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {config.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                <TableCell
+                  colSpan={4}
+                  className="text-center text-muted-foreground py-8"
+                >
                   No hay configuración en esta categoría
                 </TableCell>
               </TableRow>
             ) : (
               config.map((item) => (
-                <TableRow key={item.key} className="bg-white hover:bg-lime-50/50">
+                <TableRow
+                  key={item.key}
+                  className="bg-white hover:bg-lime-50/50"
+                >
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => handleEdit(item)}
-                        title="Editar configuración"
+                        title="Editar valor"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      {item.key === 'default_empresa_id' && (
+                      {item.key === "default_empresa_id" && (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -144,9 +154,11 @@ export function ConfigTable({ config }: ConfigTableProps) {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="font-mono text-sm">{item.key}</TableCell>
+                  <TableCell className="font-mono text-sm">
+                    {item.key}
+                  </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {item.description || '-'}
+                    {item.description || "-"}
                   </TableCell>
                   <TableCell>
                     <pre className="text-xs bg-muted p-2 rounded max-h-20 overflow-auto">
@@ -161,12 +173,15 @@ export function ConfigTable({ config }: ConfigTableProps) {
       </div>
 
       {/* Dialog de edición */}
-      <Dialog open={!!editingConfig} onOpenChange={() => setEditingConfig(null)}>
+      <Dialog
+        open={!!editingConfig}
+        onOpenChange={() => setEditingConfig(null)}
+      >
         <DialogContent className="w-[80vw] max-w-none sm:max-w-none">
           <DialogHeader>
-            <DialogTitle>Editar Configuración</DialogTitle>
+            <DialogTitle>Editar valor de Clave</DialogTitle>
             <DialogDescription>
-              Clave: <code className="font-mono">{editingConfig?.key}</code>
+              <code className="font-mono">{editingConfig?.key}</code>
             </DialogDescription>
           </DialogHeader>
 
@@ -205,14 +220,17 @@ export function ConfigTable({ config }: ConfigTableProps) {
               Cancelar
             </Button>
             <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving ? 'Guardando...' : 'Guardar'}
+              {isSaving ? "Guardando..." : "Guardar"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Dialog para visualizar issuer */}
-      <Dialog open={!!viewingIssuer} onOpenChange={() => setViewingIssuer(null)}>
+      <Dialog
+        open={!!viewingIssuer}
+        onOpenChange={() => setViewingIssuer(null)}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Datos de la Empresa por Defecto</DialogTitle>
@@ -234,25 +252,25 @@ export function ConfigTable({ config }: ConfigTableProps) {
 
               <div className="text-sm space-y-1">
                 <p>
-                  {viewingIssuer.address}, {viewingIssuer.postal_code}, {viewingIssuer.locality} ({viewingIssuer.province})
+                  {viewingIssuer.address}, {viewingIssuer.postal_code},{" "}
+                  {viewingIssuer.locality} ({viewingIssuer.province})
                 </p>
               </div>
 
               <div className="text-sm text-muted-foreground">
                 <p>
-                  {viewingIssuer.phone} • {viewingIssuer.email} • {viewingIssuer.web || '-'}
+                  {viewingIssuer.phone} • {viewingIssuer.email} •{" "}
+                  {viewingIssuer.web || "-"}
                 </p>
               </div>
             </div>
           )}
 
           <DialogFooter>
-            <Button onClick={() => setViewingIssuer(null)}>
-              Cerrar
-            </Button>
+            <Button onClick={() => setViewingIssuer(null)}>Cerrar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
-  )
+  );
 }
