@@ -1,37 +1,37 @@
-import { redirect, notFound } from 'next/navigation'
-import { getServerUser } from '@/lib/auth/server'
-import { getUserById } from '@/app/actions/users'
-import UserForm from '@/components/users/UserForm'
+import { redirect, notFound } from "next/navigation";
+import { getServerUser } from "@/lib/auth/server";
+import { getUserById } from "@/app/actions/users";
+import UserForm from "@/components/users/UserForm";
 
 export const metadata = {
-  title: 'Editar Usuario | JEYCA Presupuestos',
-  description: 'Modificar datos del usuario'
-}
+  title: "Editar Usuario | JEYCA Presupuestos",
+  description: "Modificar datos del usuario",
+};
 
 interface EditUserPageProps {
   params: Promise<{
-    id: string
-  }>
+    id: string;
+  }>;
 }
 
 export default async function EditUserPage({ params }: EditUserPageProps) {
-  const { id: userId } = await params
-  const user = await getServerUser()
+  const { id: userId } = await params;
+  const user = await getServerUser();
 
   if (!user) {
-    redirect('/login')
+    redirect("/login");
   }
 
-  // Vendedor solo puede editar su propio usuario
-  if (user.role === 'vendedor' && userId !== user.id) {
-    redirect('/users')
+  // Comercial solo puede editar su propio usuario
+  if (user.role === "vendedor" && userId !== user.id) {
+    redirect("/users");
   }
 
   // Obtener usuario a editar
-  const result = await getUserById(userId)
+  const result = await getUserById(userId);
 
   if (!result.success || !result.data) {
-    notFound()
+    notFound();
   }
 
   return (
@@ -43,5 +43,5 @@ export default async function EditUserPage({ params }: EditUserPageProps) {
         currentUserRole={user.role}
       />
     </div>
-  )
+  );
 }
