@@ -1185,33 +1185,20 @@ export async function getBudgets(filters?: {
   try {
     console.log('[getBudgets] Obteniendo presupuestos con filtros:', filters)
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+    // Usar getServerUser() para evitar problemas con cookies en Server Components
+    const { getServerUser } = await import('@/lib/auth/server')
+    const userData = await getServerUser()
 
-    // Obtener usuario actual
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      console.error('[getBudgets] Error de autenticación:', authError)
-      return []
-    }
-
-    // Obtener company_id y rol del usuario
-    const { data: userData, error: userError } = await supabase
-      .from('redpresu_users')
-      .select('company_id, role')
-      .eq('id', user.id)
-      .single()
-
-    if (userError || !userData) {
-      console.error('[getBudgets] Error obteniendo usuario:', userError)
+    if (!userData) {
+      console.error('[getBudgets] Error de autenticación: usuario no encontrado')
       return []
     }
 
     console.log('[getBudgets] Usuario:', userData.role, 'Empresa:', userData.company_id)
 
-    // Construir query base con JOIN a tariffs
+    // Construir query base con JOIN a tariffs usando supabaseAdmin
     // Nota: users se obtiene por separado ya que la relación puede no estar definida
-    let query = supabase
+    let query = supabaseAdmin
       .from('redpresu_budgets')
       .select(`
         *,
@@ -1223,7 +1210,7 @@ export async function getBudgets(filters?: {
     // Filtrar según rol
     if (userData.role === 'vendedor') {
       // Comercial: solo sus presupuestos
-      query = query.eq('user_id', user.id)
+      query = query.eq('user_id', userData.id)
     } else if (userData.role === 'admin') {
       // Admin: presupuestos de su empresa
       query = query.eq('company_id', userData.company_id)
@@ -1257,7 +1244,7 @@ export async function getBudgets(filters?: {
     // Obtener nombres y roles de usuarios por separado
     if (budgets && budgets.length > 0) {
       const userIds = [...new Set(budgets.map(b => b.user_id))]
-      const { data: users } = await supabase
+      const { data: users } = await supabaseAdmin
         .from('redpresu_users')
         .select('id, name, role')
         .in('id', userIds)
