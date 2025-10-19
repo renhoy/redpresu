@@ -35,13 +35,15 @@ export default async function EditUserPage({ params }: EditUserPageProps) {
   }
 
   return (
-    <div className="container mx-auto py-10">
-      <UserForm
-        mode="edit"
-        user={result.data}
-        empresaId={user.company_id}
-        currentUserRole={user.role}
-      />
+    <div className="min-h-screen bg-lime-50">
+      <div className="container mx-auto px-4 py-6">
+        <UserForm
+          mode="edit"
+          user={result.data}
+          empresaId={user.company_id}
+          currentUserRole={user.role}
+        />
+      </div>
     </div>
   );
 }

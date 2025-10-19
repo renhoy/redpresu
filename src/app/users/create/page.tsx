@@ -20,7 +20,7 @@ export default async function CreateUserPage() {
 
   return (
     <div className="min-h-screen bg-lime-50">
-      <div className="container mx-auto py-10">
+      <div className="container mx-auto px-4 py-6">
         <UserForm
           mode="create"
           empresaId={user.company_id}

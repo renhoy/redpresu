@@ -38,63 +38,33 @@ export default async function UsersPage() {
 
   return (
     <div className="min-h-screen bg-lime-50">
-      <div className="container mx-auto py-10">
-        <div className="flex flex-col gap-6">
-          {/* Header */}
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-lime-700 flex items-center gap-2">
-                <Users className="h-6 w-6" />
-                Gestión de Usuarios
-              </h1>
-              <p className="text-sm text-lime-600">Administra los usuarios</p>
-            </div>
-
-            {canCreateUsers && (
-              <Button asChild>
-                <Link href="/users/create">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Nuevo Usuario
-                </Link>
-              </Button>
-            )}
+      <div className="container mx-auto px-4 py-6">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-cyan-600 flex items-center gap-2">
+              <Users className="h-6 w-6" />
+              Usuarios
+            </h1>
+            <p className="text-sm text-cyan-600">Gestiona tus usuarios de la empresa</p>
           </div>
 
-          {/* Stats */}
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-lg border p-4 bg-white">
-              <div className="text-sm font-medium text-muted-foreground">
-                Total Usuarios
-              </div>
-              <div className="text-2xl font-bold">{users.length}</div>
-            </div>
-
-            <div className="rounded-lg border p-4 bg-white">
-              <div className="text-sm font-medium text-muted-foreground">
-                Usuarios Activos
-              </div>
-              <div className="text-2xl font-bold text-green-600">
-                {users.filter((u) => u.status === "active").length}
-              </div>
-            </div>
-
-            <div className="rounded-lg border p-4 bg-white">
-              <div className="text-sm font-medium text-muted-foreground">
-                Pendientes
-              </div>
-              <div className="text-2xl font-bold text-orange-600">
-                {users.filter((u) => u.status === "pending").length}
-              </div>
-            </div>
-          </div>
-
-          {/* Table */}
-          <UserTable
-            users={users}
-            currentUserId={user.id}
-            currentUserRole={user.role}
-          />
+          {canCreateUsers && (
+            <Button asChild>
+              <Link href="/users/create">
+                <Plus className="mr-2 h-4 w-4" />
+                Nuevo Usuario
+              </Link>
+            </Button>
+          )}
         </div>
+
+        {/* Table */}
+        <UserTable
+          users={users}
+          currentUserId={user.id}
+          currentUserRole={user.role}
+        />
       </div>
     </div>
   );

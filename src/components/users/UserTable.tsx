@@ -146,12 +146,13 @@ export default function UserTable({
   return (
     <>
       {/* Vista Desktop - Tabla */}
-      <div className="hidden lg:block rounded-md border">
+      <div className="hidden lg:block rounded-md border bg-white">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="hover:bg-transparent">
               <TableHead>Usuario</TableHead>
               <TableHead>Email</TableHead>
+              <TableHead>Rol</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead>Invitado por</TableHead>
               <TableHead>Último acceso</TableHead>
@@ -162,8 +163,8 @@ export default function UserTable({
             {users.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={6}
-                  className="text-center text-muted-foreground"
+                  colSpan={7}
+                  className="text-center text-muted-foreground py-8"
                 >
                   No hay usuarios registrados
                 </TableCell>
@@ -172,19 +173,17 @@ export default function UserTable({
               users.map((user) => (
                 <TableRow
                   key={user.id}
-                  className="bg-white hover:bg-lime-50/50"
+                  className="hover:bg-lime-50/30"
                 >
                   <TableCell className="font-medium">
                     <div className="flex flex-col">
                       <span>
                         {user.name} {user.apellidos}
                       </span>
-                      <span className="text-xs text-muted-foreground">
-                        {getRoleBadge(user.role)}
-                      </span>
                     </div>
                   </TableCell>
-                  <TableCell>{user.email}</TableCell>
+                  <TableCell className="text-sm">{user.email}</TableCell>
+                  <TableCell>{getRoleBadge(user.role)}</TableCell>
                   <TableCell>{getStatusBadge(user.status)}</TableCell>
                   <TableCell>
                     {user.inviter_name ? (
