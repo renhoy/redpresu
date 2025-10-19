@@ -407,45 +407,43 @@ export default function UserForm({
 
   // Formulario normal
   return (
-    <div className="min-h-screen bg-lime-50">
-      <div className="container mx-auto py-10">
-        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-          {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">
-                {mode === "create" ? "Crear Usuario" : "Editar Usuario"}
-              </h1>
-              <p className="text-muted-foreground">
-                {mode === "create"
-                  ? "Invita a un nuevo usuario a tu empresa"
-                  : "Modifica los datos del usuario"}
-              </p>
-            </div>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-cyan-600">
+            {mode === "create" ? "Crear Usuario" : "Editar Usuario"}
+          </h1>
+          <p className="text-sm text-cyan-600">
+            {mode === "create"
+              ? "Invita a un nuevo usuario a tu empresa"
+              : "Modifica los datos del usuario"}
+          </p>
+        </div>
 
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push("/users")}
-                disabled={isLoading}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {mode === "create" ? "Creando..." : "Guardando..."}
-                  </>
-                ) : mode === "create" ? (
-                  "Crear Usuario"
-                ) : (
-                  "Guardar Cambios"
-                )}
-              </Button>
-            </div>
-          </div>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.push("/users")}
+            disabled={isLoading}
+          >
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {mode === "create" ? "Creando..." : "Guardando..."}
+              </>
+            ) : mode === "create" ? (
+              "Crear Usuario"
+            ) : (
+              "Guardar Cambios"
+            )}
+          </Button>
+        </div>
+      </div>
 
           {/* Error general */}
           {errors.general && (
@@ -730,8 +728,6 @@ export default function UserForm({
               )}
             </CardContent>
           </Card>
-        </form>
-      </div>
-    </div>
+    </form>
   );
 }
