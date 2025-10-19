@@ -14,6 +14,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -53,6 +60,29 @@ export default function UserTable({
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
+  const handleStatusChange = async (userId: string, newStatus: "active" | "inactive" | "pending") => {
+    setIsLoading(true);
+
+    const result = await toggleUserStatus(userId, newStatus);
+
+    if (result.success) {
+      toast.success(`Estado actualizado a ${newStatus === "active" ? "Activo" : newStatus === "inactive" ? "Inactivo" : "Pendiente"}`);
+
+      // Actualizar lista local
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === userId ? { ...u, status: newStatus } : u
+        )
+      );
+
+      router.refresh();
+    } else {
+      toast.error(result.error || "Error al cambiar estado");
+    }
+
+    setIsLoading(false);
+  };
+
   const handleToggleStatus = async () => {
     if (!selectedUser) return;
 
@@ -86,44 +116,25 @@ export default function UserTable({
     setSelectedUser(null);
   };
 
-  const getRoleBadge = (role: string) => {
-    const variants: Record<string, "default" | "secondary" | "destructive"> = {
-      superadmin: "destructive",
-      admin: "default",
-      vendedor: "secondary",
-    };
-
+  const getRoleLabel = (role: string) => {
     const labels: Record<string, string> = {
       superadmin: "Super Admin",
       admin: "Admin",
       vendedor: "Comercial",
     };
-
-    return (
-      <Badge variant={variants[role] || "secondary"}>
-        {labels[role] || role}
-      </Badge>
-    );
+    return labels[role] || role;
   };
 
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "outline"> = {
-      active: "default",
-      inactive: "secondary",
-      pending: "outline",
-    };
+  const statusColors = {
+    active: "bg-green-100 text-green-800",
+    inactive: "bg-gray-200 text-gray-700",
+    pending: "bg-orange-100 text-orange-800",
+  };
 
-    const labels: Record<string, string> = {
-      active: "Activo",
-      inactive: "Inactivo",
-      pending: "Pendiente",
-    };
-
-    return (
-      <Badge variant={variants[status] || "outline"}>
-        {labels[status] || status}
-      </Badge>
-    );
+  const statusLabels = {
+    active: "Activo",
+    inactive: "Inactivo",
+    pending: "Pendiente",
   };
 
   const formatDate = (dateString: string | null) => {
@@ -150,20 +161,19 @@ export default function UserTable({
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead>Usuario</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Rol</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead>Invitado por</TableHead>
-              <TableHead>Último acceso</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
+              <TableHead className="p-4">Email</TableHead>
+              <TableHead className="p-4 text-center">Usuario</TableHead>
+              <TableHead className="p-4 text-center">Estado</TableHead>
+              <TableHead className="p-4 text-center">Invitado por</TableHead>
+              <TableHead className="p-4 text-center">Último acceso</TableHead>
+              <TableHead className="p-4 text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {users.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={6}
                   className="text-center text-muted-foreground py-8"
                 >
                   No hay usuarios registrados
@@ -173,23 +183,70 @@ export default function UserTable({
               users.map((user) => (
                 <TableRow
                   key={user.id}
-                  className="hover:bg-lime-50/30"
+                  className="bg-white border-t hover:bg-lime-50/50"
                 >
-                  <TableCell className="font-medium">
-                    <div className="flex flex-col">
-                      <span>
-                        {user.name} {user.apellidos}
+                  {/* Columna Email */}
+                  <TableCell className="p-4">
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium" style={{ fontSize: "12px" }}>
+                        {user.email}
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-sm">{user.email}</TableCell>
-                  <TableCell>{getRoleBadge(user.role)}</TableCell>
-                  <TableCell>{getStatusBadge(user.status)}</TableCell>
-                  <TableCell>
+
+                  {/* Columna Usuario (Nombre + Rol) */}
+                  <TableCell className="p-4 text-center">
+                    <div className="space-y-0.5">
+                      <div className="text-sm font-medium">
+                        {user.name} {user.apellidos}
+                      </div>
+                      <div className="text-xs text-muted-foreground capitalize">
+                        {getRoleLabel(user.role)}
+                      </div>
+                    </div>
+                  </TableCell>
+
+                  {/* Columna Estado con Selector */}
+                  <TableCell className="p-4">
+                    <div className="flex justify-center">
+                      <Select
+                        value={user.status}
+                        onValueChange={(value) => handleStatusChange(user.id, value as "active" | "inactive" | "pending")}
+                        disabled={currentUserRole === "vendedor" && user.id !== currentUserId}
+                      >
+                        <SelectTrigger className="w-[140px] bg-white">
+                          <SelectValue>
+                            <Badge
+                              className={
+                                statusColors[user.status as keyof typeof statusColors] || "bg-gray-200 text-gray-700"
+                              }
+                            >
+                              {statusLabels[user.status as keyof typeof statusLabels] || user.status}
+                            </Badge>
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent className="bg-white">
+                          <SelectItem value="active">
+                            <Badge className="bg-green-100 text-green-800">Activo</Badge>
+                          </SelectItem>
+                          <SelectItem value="inactive">
+                            <Badge className="bg-gray-200 text-gray-700">Inactivo</Badge>
+                          </SelectItem>
+                          <SelectItem value="pending">
+                            <Badge className="bg-orange-100 text-orange-800">Pendiente</Badge>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </TableCell>
+
+                  {/* Columna Invitado por */}
+                  <TableCell className="p-4 text-center">
                     {user.inviter_name ? (
-                      <div className="text-sm">
-                        <div>{user.inviter_name}</div>
-                        <div className="text-muted-foreground text-xs">
+                      <div className="space-y-0.5">
+                        <div className="text-sm font-medium">{user.inviter_name}</div>
+                        <div className="text-xs text-muted-foreground">
                           {user.inviter_email}
                         </div>
                       </div>
@@ -197,12 +254,14 @@ export default function UserTable({
                       <span className="text-muted-foreground">-</span>
                     )}
                   </TableCell>
-                  <TableCell>
-                    <span className="text-sm">
-                      {formatDate(user.last_login)}
-                    </span>
+
+                  {/* Columna Último acceso */}
+                  <TableCell className="p-4 text-center text-muted-foreground" style={{ fontSize: "12px" }}>
+                    {formatDate(user.last_login)}
                   </TableCell>
-                  <TableCell className="text-right">
+
+                  {/* Columna Acciones */}
+                  <TableCell className="p-4">
                     <TooltipProvider>
                       <div className="flex justify-end gap-2">
                         {/* Comercial solo puede editar su propio usuario */}
