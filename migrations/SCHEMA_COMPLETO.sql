@@ -31,6 +31,70 @@ COMMENT ON SCHEMA public IS 'standard public schema';
 
 
 --
+-- Name: check_plan_limit(integer, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.check_plan_limit(p_company_id integer, p_resource_type text) RETURNS boolean
+    LANGUAGE plpgsql SECURITY DEFINER
+    AS $$
+DECLARE
+  v_plan TEXT;
+  v_limits JSONB;
+  v_current_count INTEGER;
+  v_max_limit INTEGER;
+  v_config_value JSONB;
+BEGIN
+  -- Obtener plan actual
+  SELECT plan INTO v_plan
+  FROM redpresu_subscriptions
+  WHERE company_id = p_company_id AND status = 'active'
+  LIMIT 1;
+
+  IF v_plan IS NULL THEN
+    v_plan := 'free';
+  END IF;
+
+  -- Obtener configuración de planes
+  SELECT config_value::JSONB INTO v_config_value
+  FROM redpresu_config
+  WHERE config_key = 'stripe_plans';
+
+  IF v_config_value IS NULL THEN
+    RETURN true; -- Sin configuración, permitir todo
+  END IF;
+
+  -- Obtener límites del plan
+  v_limits := v_config_value->v_plan->'limits';
+
+  IF v_limits IS NULL THEN
+    RETURN true; -- Plan sin límites definidos
+  END IF;
+
+  -- Obtener límite del recurso
+  v_max_limit := (v_limits->>p_resource_type)::INTEGER;
+
+  IF v_max_limit IS NULL THEN
+    RETURN true; -- Recurso sin límite
+  END IF;
+
+  -- Contar recursos actuales
+  IF p_resource_type = 'tariffs' THEN
+    SELECT COUNT(*) INTO v_current_count FROM redpresu_tariffs WHERE company_id = p_company_id;
+  ELSIF p_resource_type = 'budgets' THEN
+    SELECT COUNT(*) INTO v_current_count FROM redpresu_budgets WHERE company_id = p_company_id;
+  ELSIF p_resource_type = 'users' THEN
+    SELECT COUNT(*) INTO v_current_count FROM redpresu_users WHERE company_id = p_company_id;
+  ELSE
+    RETURN true; -- Recurso no limitado
+  END IF;
+
+  -- Verificar si puede crear más
+  RETURN v_current_count < v_max_limit;
+END;
+$$;
+
+
+--
 -- Name: ensure_single_template(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -937,6 +1001,27 @@ COMMENT ON COLUMN public.redpresu_issuers.note IS 'Nota o descripción adicional
 
 
 --
+-- Name: redpresu_subscriptions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.redpresu_subscriptions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    company_id integer DEFAULT 1 NOT NULL,
+    plan text DEFAULT 'free'::text NOT NULL,
+    stripe_customer_id text,
+    stripe_subscription_id text,
+    status text DEFAULT 'active'::text NOT NULL,
+    current_period_start timestamp with time zone,
+    current_period_end timestamp with time zone,
+    cancel_at_period_end boolean DEFAULT false,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    CONSTRAINT redpresu_subscriptions_plan_check CHECK ((plan = ANY (ARRAY['free'::text, 'pro'::text, 'enterprise'::text]))),
+    CONSTRAINT redpresu_subscriptions_status_check CHECK ((status = ANY (ARRAY['active'::text, 'canceled'::text, 'past_due'::text, 'trialing'::text])))
+);
+
+
+--
 -- Name: redpresu_tariffs; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1270,6 +1355,30 @@ ALTER TABLE ONLY public.redpresu_issuers
 
 
 --
+-- Name: redpresu_subscriptions redpresu_subscriptions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.redpresu_subscriptions
+    ADD CONSTRAINT redpresu_subscriptions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: redpresu_subscriptions redpresu_subscriptions_stripe_customer_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.redpresu_subscriptions
+    ADD CONSTRAINT redpresu_subscriptions_stripe_customer_id_key UNIQUE (stripe_customer_id);
+
+
+--
+-- Name: redpresu_subscriptions redpresu_subscriptions_stripe_subscription_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.redpresu_subscriptions
+    ADD CONSTRAINT redpresu_subscriptions_stripe_subscription_id_key UNIQUE (stripe_subscription_id);
+
+
+--
 -- Name: redpresu_tariffs tariffs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1445,6 +1554,27 @@ CREATE INDEX idx_issuers_type ON public.redpresu_issuers USING btree (type);
 --
 
 CREATE INDEX idx_issuers_user_id ON public.redpresu_issuers USING btree (user_id);
+
+
+--
+-- Name: idx_redpresu_subscriptions_company; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_redpresu_subscriptions_company ON public.redpresu_subscriptions USING btree (company_id);
+
+
+--
+-- Name: idx_redpresu_subscriptions_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_redpresu_subscriptions_status ON public.redpresu_subscriptions USING btree (status);
+
+
+--
+-- Name: idx_redpresu_subscriptions_stripe_customer; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_redpresu_subscriptions_stripe_customer ON public.redpresu_subscriptions USING btree (stripe_customer_id);
 
 
 --
@@ -1886,6 +2016,33 @@ ALTER TABLE public.redpresu_config ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.redpresu_issuers ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: redpresu_subscriptions; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.redpresu_subscriptions ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: redpresu_subscriptions redpresu_subscriptions_insert_own_company; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY redpresu_subscriptions_insert_own_company ON public.redpresu_subscriptions FOR INSERT WITH CHECK ((company_id = 1));
+
+
+--
+-- Name: redpresu_subscriptions redpresu_subscriptions_select_own_company; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY redpresu_subscriptions_select_own_company ON public.redpresu_subscriptions FOR SELECT USING ((company_id = 1));
+
+
+--
+-- Name: redpresu_subscriptions redpresu_subscriptions_update_own_company; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY redpresu_subscriptions_update_own_company ON public.redpresu_subscriptions FOR UPDATE USING ((company_id = 1));
+
 
 --
 -- Name: redpresu_tariffs; Type: ROW SECURITY; Schema: public; Owner: -
