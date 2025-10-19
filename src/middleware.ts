@@ -19,9 +19,12 @@ export async function middleware(req: NextRequest) {
     // Verificar modo de operación
     const multiempresa = await isMultiEmpresa()
 
+    // Verificar si hay sesión válida
+    const isAuthenticated = !error && !!session
+
     // MODO MONOEMPRESA: Bloquear rutas específicas y redirigir home a login
     if (!multiempresa) {
-      // Bloquear registro en modo monoempresa
+      // Bloquear registro en modo monoempresa (siempre, autenticado o no)
       if (pathname === '/register' || pathname.startsWith('/register/')) {
         console.log('[Middleware] Modo mono: bloqueando /register → /login')
         const redirectUrl = req.nextUrl.clone()
@@ -29,19 +32,30 @@ export async function middleware(req: NextRequest) {
         return NextResponse.redirect(redirectUrl)
       }
 
-      // Bloquear suscripciones en modo monoempresa
+      // Bloquear suscripciones en modo monoempresa (redirigir a dashboard si autenticado, a login si no)
       if (pathname.startsWith('/subscriptions')) {
-        console.log('[Middleware] Modo mono: bloqueando /subscriptions → /dashboard')
+        const target = isAuthenticated ? '/dashboard' : '/login'
+        console.log(`[Middleware] Modo mono: bloqueando /subscriptions → ${target}`)
         const redirectUrl = req.nextUrl.clone()
-        redirectUrl.pathname = '/dashboard'
+        redirectUrl.pathname = target
         return NextResponse.redirect(redirectUrl)
       }
 
-      // En modo mono, home redirige directamente a login
+      // En modo mono, home redirige a login (sin importar si está autenticado)
       if (pathname === '/') {
-        console.log('[Middleware] Modo mono: / → /login')
+        const target = isAuthenticated ? '/dashboard' : '/login'
+        console.log(`[Middleware] Modo mono: / → ${target}`)
         const redirectUrl = req.nextUrl.clone()
-        redirectUrl.pathname = '/login'
+        redirectUrl.pathname = target
+        return NextResponse.redirect(redirectUrl)
+      }
+
+      // Bloquear /pricing en modo mono
+      if (pathname === '/pricing' || pathname.startsWith('/pricing/')) {
+        const target = isAuthenticated ? '/dashboard' : '/login'
+        console.log(`[Middleware] Modo mono: bloqueando /pricing → ${target}`)
+        const redirectUrl = req.nextUrl.clone()
+        redirectUrl.pathname = target
         return NextResponse.redirect(redirectUrl)
       }
     }
@@ -55,10 +69,7 @@ export async function middleware(req: NextRequest) {
       return pathname === path || pathname.startsWith(path + '/')
     })
 
-    // Verificar si hay sesión válida
-    const isAuthenticated = !error && !!session
-
-    console.log(`[Middleware] Path: ${pathname}, Auth: ${isAuthenticated}, Public: ${isPublicRoute}`)
+    console.log(`[Middleware] Path: ${pathname}, Auth: ${isAuthenticated}, Public: ${isPublicRoute}, MultiEmpresa: ${multiempresa}`)
 
     // Usuario NO autenticado intentando acceder a ruta privada
     if (!isAuthenticated && !isPublicRoute) {
@@ -69,7 +80,8 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(redirectUrl)
     }
 
-    // Usuario autenticado intentando acceder a ruta pública (excepto home)
+    // Usuario autenticado intentando acceder a ruta pública (excepto home en modo multi)
+    // En modo monoempresa, el home ya fue manejado arriba
     if (isAuthenticated && isPublicRoute && pathname !== '/') {
       console.log(`[Middleware] Redirect autenticado: ${pathname} → /dashboard`)
       const redirectUrl = req.nextUrl.clone()
