@@ -68,17 +68,10 @@ export async function getCompanies(): Promise<ActionResult> {
       return { success: false, error: "Sin permisos" };
     }
 
-    // Obtener empresas con contadores
-    const { data: companies, error } = await supabaseAdmin
+    // Obtener todos los emisores
+    const { data: issuers, error } = await supabaseAdmin
       .from("redpresu_issuers")
-      .select(
-        `
-        *,
-        user_count:redpresu_users(count),
-        tariff_count:redpresu_tariffs(count),
-        budget_count:redpresu_budgets(count)
-      `
-      )
+      .select("*")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -86,13 +79,35 @@ export async function getCompanies(): Promise<ActionResult> {
       return { success: false, error: error.message };
     }
 
-    // Formatear contadores
-    const formattedCompanies = (companies || []).map((company) => ({
-      ...company,
-      user_count: company.user_count?.[0]?.count || 0,
-      tariff_count: company.tariff_count?.[0]?.count || 0,
-      budget_count: company.budget_count?.[0]?.count || 0,
-    }));
+    // Para cada emisor, contar usuarios, tarifas y presupuestos de su company_id
+    const formattedCompanies = await Promise.all(
+      (issuers || []).map(async (issuer) => {
+        // Contar usuarios de esta empresa
+        const { count: userCount } = await supabaseAdmin
+          .from("redpresu_users")
+          .select("*", { count: "exact", head: true })
+          .eq("company_id", issuer.company_id);
+
+        // Contar tarifas de esta empresa
+        const { count: tariffCount } = await supabaseAdmin
+          .from("redpresu_tariffs")
+          .select("*", { count: "exact", head: true })
+          .eq("company_id", issuer.company_id);
+
+        // Contar presupuestos de esta empresa
+        const { count: budgetCount } = await supabaseAdmin
+          .from("redpresu_budgets")
+          .select("*", { count: "exact", head: true })
+          .eq("company_id", issuer.company_id);
+
+        return {
+          ...issuer,
+          user_count: userCount || 0,
+          tariff_count: tariffCount || 0,
+          budget_count: budgetCount || 0,
+        };
+      })
+    );
 
     console.log("[getCompanies] Éxito:", formattedCompanies.length, "empresas");
 
