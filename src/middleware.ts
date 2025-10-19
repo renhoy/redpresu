@@ -90,6 +90,54 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(redirectUrl)
     }
 
+    // Verificar acceso a rutas restringidas por rol
+    if (isAuthenticated && session?.user) {
+      const userMetadata = session.user.user_metadata
+      const userRole = userMetadata?.role || 'vendedor'
+
+      // /companies - Solo superadmin puede acceder a la lista
+      if (pathname === '/companies' && userRole !== 'superadmin') {
+        console.log(`[Middleware] Acceso denegado a /companies (rol: ${userRole}) → /dashboard`)
+        const redirectUrl = req.nextUrl.clone()
+        redirectUrl.pathname = '/dashboard'
+        return NextResponse.redirect(redirectUrl)
+      }
+
+      // /companies/[id]/edit - Solo superadmin puede editar cualquier empresa
+      if (pathname.startsWith('/companies/') && pathname.includes('/edit') && pathname !== '/companies/edit') {
+        if (userRole !== 'superadmin') {
+          console.log(`[Middleware] Acceso denegado a ${pathname} (rol: ${userRole}) → /dashboard`)
+          const redirectUrl = req.nextUrl.clone()
+          redirectUrl.pathname = '/dashboard'
+          return NextResponse.redirect(redirectUrl)
+        }
+      }
+
+      // /companies/edit - Admin y superadmin pueden editar su propia empresa
+      if (pathname === '/companies/edit' && !['admin', 'superadmin'].includes(userRole)) {
+        console.log(`[Middleware] Acceso denegado a /companies/edit (rol: ${userRole}) → /dashboard`)
+        const redirectUrl = req.nextUrl.clone()
+        redirectUrl.pathname = '/dashboard'
+        return NextResponse.redirect(redirectUrl)
+      }
+
+      // /settings - Solo superadmin
+      if (pathname.startsWith('/settings') && userRole !== 'superadmin') {
+        console.log(`[Middleware] Acceso denegado a /settings (rol: ${userRole}) → /dashboard`)
+        const redirectUrl = req.nextUrl.clone()
+        redirectUrl.pathname = '/dashboard'
+        return NextResponse.redirect(redirectUrl)
+      }
+
+      // /users/create - Solo admin y superadmin
+      if (pathname === '/users/create' && !['admin', 'superadmin'].includes(userRole)) {
+        console.log(`[Middleware] Acceso denegado a /users/create (rol: ${userRole}) → /dashboard`)
+        const redirectUrl = req.nextUrl.clone()
+        redirectUrl.pathname = '/dashboard'
+        return NextResponse.redirect(redirectUrl)
+      }
+    }
+
     // CRÍTICO: Retornar siempre la response de Supabase para preservar cookies
     return res
 
