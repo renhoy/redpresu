@@ -223,11 +223,10 @@
 
 ### Bloque 12: Modo Monoempresa/Multiempresa (Post Fase 2 - Opcional)
 
-**Status:** ⏳ Pendiente (Post Fase 2)
+**Status:** ⏳ Activo
 
 ```
-✅ migrations/031_app_mode_config.sql (NUEVO)
-✅ src/lib/helpers/app-mode.ts (NUEVO)
+✅ src/lib/helpers/app-mode.ts (NUEVO - helpers isMultiEmpresa, getDefaultEmpresaId)
 ⚠️ src/middleware.ts (MODIFICAR - añadir condicionales modo)
 ⚠️ src/app/page.tsx (MODIFICAR - condicional home pública)
 ⚠️ src/components/layout/Header.tsx (MODIFICAR - navegación condicional)
@@ -237,6 +236,8 @@
 ⚠️ src/app/actions/auth.ts (EXTENDER - empresa fija)
 ⚠️ src/app/settings/page.tsx (MODIFICAR - mostrar modo)
 ```
+
+**NOTA:** Usa config existente 'multiempresa' (true/false) en BD, no crear nueva config.
 
 ---
 

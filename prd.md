@@ -3311,20 +3311,18 @@ Sistema de feature flag que permite cambiar el comportamiento de la aplicación 
 #### 12.1 Config y Helpers Centrales
 **Prioridad:** ALTA | **Estimación:** 0.5 días | **Estado:** ⏳ Pendiente
 
-- [ ] Config `app_mode` en BD (valores: "multiempresa" | "monoempresa")
+- [ ] Usar config `multiempresa` existente en BD (valores: true | false)
 - [ ] Helper `isMultiEmpresa()` async
-- [ ] Helper `isModoMonoempresa()` async
-- [ ] Helper `getDefaultEmpresaId()` para modo mono
+- [ ] Helper `getDefaultEmpresaId()` para modo mono (retorna empresa_id = 1)
 
 **Archivos nuevos:**
-- `migrations/031_app_mode_config.sql`
 - `src/lib/helpers/app-mode.ts`
 
-**Estructura config:**
+**Config existente:**
 ```sql
-INSERT INTO config (config_key, config_value, description) VALUES
-('app_mode', '"multiempresa"', 'Modo: multiempresa | monoempresa'),
-('monoempresa_id', '1', 'ID empresa fija en modo monoempresa');
+-- Ya existe en BD, solo leer
+SELECT config_value FROM config WHERE config_key = 'multiempresa';
+-- Retorna: true (modo multi) o false (modo mono)
 ```
 
 ---
@@ -3343,7 +3341,10 @@ INSERT INTO config (config_key, config_value, description) VALUES
 
 **Lógica:**
 ```typescript
-if (await isModoMonoempresa()) {
+const multiempresa = await isMultiEmpresa();
+
+if (!multiempresa) {
+  // Modo monoempresa
   if (pathname === '/') return NextResponse.redirect('/login');
   if (pathname === '/register') return NextResponse.redirect('/login');
   if (pathname.startsWith('/subscriptions')) return NextResponse.rewrite('/404');

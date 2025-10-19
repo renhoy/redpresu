@@ -1506,11 +1506,9 @@ Completado: 0/6 tareas (0%)
 #### 12.1 Config y Helpers
 **Prioridad:** ALTA | **Estimación:** 0.5 días | **Estado:** ⏳ Pendiente
 
-- [ ] Migration 031: config `app_mode` y `monoempresa_id`
 - [ ] Crear `src/lib/helpers/app-mode.ts`
-- [ ] Helper `isMultiEmpresa()` con cache
-- [ ] Helper `isModoMonoempresa()`
-- [ ] Helper `getDefaultEmpresaId()`
+- [ ] Helper `isMultiEmpresa()` (lee config 'multiempresa' de BD)
+- [ ] Helper `getDefaultEmpresaId()` (retorna 1 en modo mono)
 
 ---
 
