@@ -1472,15 +1472,15 @@ Completado: 0/6 tareas (0%)
 
 ## ESTADO GLOBAL FASE 2
 
-**Progreso:** 34% (20/59 tareas) - Multi-tenant + Config + Rich Editor + Import/Export completados
-**Bloques completados:** 5/11 (Usuarios ✅, Mejoras Tarifas ✅, Configuración ✅, IRPF y RE ✅, Versiones y Notas ✅)
+**Progreso:** 31% (20/64 tareas) - Multi-tenant + Config + Rich Editor + Import/Export completados
+**Bloques completados:** 5/12 (Usuarios ✅, Mejoras Tarifas ✅, Configuración ✅, IRPF y RE ✅, Versiones y Notas ✅)
 **Bloques parciales:** Rich Editor ✅, Import/Export ✅ (Bloques 7 y 8 completados)
-**Bloques pendientes:** Navegación Unificada, Responsive, Sistema de Ayuda, Suscripciones Stripe
+**Bloques pendientes:** Navegación Unificada, Responsive, Sistema de Ayuda, Suscripciones Stripe, Modo Monoempresa
 **Mejoras adicionales:** 9 correcciones críticas + mejoras UX implementadas (incluye duplicar tarifas/presupuestos)
-**Semanas transcurridas:** 7/13
-**Duración estimada:** 13 semanas (+ Bloque 11 opcional post-Fase 2)
+**Semanas transcurridas:** 11/17
+**Duración estimada:** 13 semanas (+ Bloques 11-12 opcionales post-Fase 2)
 
-**Última actualización:** 2025-01-18
+**Última actualización:** 2025-01-19
 - ✅ Funcionalidad duplicar tarifas (estado Inactiva, fecha actual)
 - ✅ Funcionalidad duplicar presupuestos (copia simple, estado borrador, sin PDF)
 - ✅ UI responsive: botones duplicar en desktop (Row/Table) y mobile (Card)
@@ -1495,10 +1495,72 @@ Completado: 0/6 tareas (0%)
 - Bloque 9: Responsive Mobile-First
 - Bloque 10: Sistema de Ayuda (Markdown + Driver.js)
 - Bloque 11: Suscripciones Stripe (Post Fase 2 - opcional)
+- Bloque 12: Modo Monoempresa/Multiempresa (Post Fase 2 - opcional)
+
+---
+
+## BLOQUE 12: MODO MONOEMPRESA/MULTIEMPRESA ⏳
+
+### Tareas Críticas:
+
+#### 12.1 Config y Helpers
+**Prioridad:** ALTA | **Estimación:** 0.5 días | **Estado:** ⏳ Pendiente
+
+- [ ] Migration 031: config `app_mode` y `monoempresa_id`
+- [ ] Crear `src/lib/helpers/app-mode.ts`
+- [ ] Helper `isMultiEmpresa()` con cache
+- [ ] Helper `isModoMonoempresa()`
+- [ ] Helper `getDefaultEmpresaId()`
+
+---
+
+#### 12.2 Routing y Middleware
+**Prioridad:** CRÍTICA | **Estimación:** 0.5 días | **Estado:** ⏳ Pendiente
+
+- [ ] Modificar `middleware.ts`: redirects condicionales
+- [ ] Bloquear `/register` en modo mono
+- [ ] Bloquear `/subscriptions` en modo mono
+- [ ] Landing `/` = `/login` en modo mono
+
+---
+
+#### 12.3 Header y Navegación
+**Prioridad:** ALTA | **Estimación:** 0.25 días | **Estado:** ⏳ Pendiente
+
+- [ ] Ocultar "Suscripciones" en Header
+- [ ] Badge modo en `/settings`
+- [ ] (Opcional) Simplificar "Usuarios"
+
+---
+
+#### 12.4 Server Actions
+**Prioridad:** ALTA | **Estimación:** 0.5 días | **Estado:** ⏳ Pendiente
+
+- [ ] `createTariff()`: skip límites en mono
+- [ ] `saveBudget()`: skip límites en mono
+- [ ] `createUser()`: skip límites en mono
+- [ ] `registerUser()`: empresa fija en mono
+
+---
+
+#### 12.5 UI Simplificada
+**Prioridad:** MEDIA | **Estimación:** 0.25 días | **Estado:** ⏳ Pendiente
+
+- [ ] Ocultar badge plan en Header
+- [ ] Ocultar warnings límites
+- [ ] Tests E2E ambos modos
+
+---
+
+## ✅ BLOQUE 12 RESUMEN
+Completado: 0/5 tareas (0%)
+**Estado:** ⏳ Pendiente
+**Duración:** 2 días
+**Siguiente paso:** 12.1 Config y Helpers
 
 ---
 
 **Documento:** Tareas Fase 2
-**Versión:** 1.3
-**Fecha:** 2025-01-18
+**Versión:** 1.4
+**Fecha:** 2025-01-19
 **Estado:** Activo

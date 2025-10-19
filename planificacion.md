@@ -454,9 +454,9 @@ Bloque 6 (Navegación) ──> Bloque 9 (Responsive)
 
 ### Global Fase 2:
 
-- **Progreso:** 34% (20/59 tareas completadas)
-- **Bloques completados:** 5 / 11
-- **Semanas consumidas:** 11 / 15
+- **Progreso:** 31% (20/64 tareas completadas)
+- **Bloques completados:** 5 / 12
+- **Semanas consumidas:** 11 / 17
 - **Calidad:** 0 bugs críticos pendientes
 
 ---
@@ -566,7 +566,7 @@ FASE 1 (COMPLETADA) ✅
 ├─ Semana 7: PDF Generation
 └─ Semana 8: Dashboard
 
-FASE 2 (EN CURSO) ⏳ - 34% Completado
+FASE 2 (EN CURSO) ⏳ - 31% Completado
 ├─ Semanas 1-2: Usuarios y Seguridad ✅ + Multi-Tenant ✅
 ├─ Semanas 3-4: Mejoras Tarifas ✅ + Config ✅
 ├─ Semanas 5-6: IRPF y RE ✅
@@ -574,7 +574,8 @@ FASE 2 (EN CURSO) ⏳ - 34% Completado
 ├─ Semanas 9-10: Navegación ⏳ + Rich Text ✅
 ├─ Semanas 11-12: Import/Export ✅ + Responsive ⏳
 ├─ Semana 13: Sistema de Ayuda ⏳
-└─ Semanas 14-15: Suscripciones Stripe ⏳ (Post Fase 2 - Opcional)
+├─ Semanas 14-15: Suscripciones Stripe ⏳ (Post Fase 2 - Opcional)
+└─ Semanas 16-17: Modo Monoempresa ⏳ (Post Fase 2 - Opcional)
 
 FASE 3 (PLANIFICADA) 📋
 ├─ Temas y Dark Mode
@@ -688,9 +689,36 @@ FASE 3 (PLANIFICADA) 📋
 
 ---
 
+## SEMANA 16-17: Modo Monoempresa (Opcional)
+
+### Objetivo: Feature flag para alternar comportamiento SaaS/On-premise
+
+**Bloque 12: Modo Monoempresa/Multiempresa**
+
+| Día | Tarea | Responsable | Estado |
+|-----|-------|-------------|--------|
+| 1 | Config + Helpers | Backend | ⏳ |
+| 2 | Middleware + Routing | Full-stack | ⏳ |
+| 3 | Server Actions sin límites | Backend | ⏳ |
+| 4 | UI simplificada + Testing | Frontend | ⏳ |
+
+**Entregables:**
+- ⏳ Config `app_mode` operativa
+- ⏳ Modo mono: landing = login
+- ⏳ Server actions respetan modo
+- ⏳ Tests E2E ambos modos
+
+**Criterio de completado:**
+- Toggle config alterna comportamiento sin código
+- Modo mono: sin registro, sin límites, sin suscripciones
+- Modo multi: comportamiento actual intacto
+- BD preservada al cambiar modo
+
+---
+
 **Documento:** Planificación Fase 2
-**Versión:** 1.4
-**Fecha:** 2025-01-18 (actualizado)
-**Última actualización:** Bloque 11 Suscripciones Stripe añadido (Post Fase 2 - Opcional)
+**Versión:** 1.5
+**Fecha:** 2025-01-19 (actualizado)
+**Última actualización:** Bloque 12 Modo Monoempresa añadido (Post Fase 2 - Opcional)
 **Estado:** Activo - 34% completado (5/11 bloques)
-**Próxima revisión:** Fin Semana 15
+**Próxima revisión:** Fin Semana 17

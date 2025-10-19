@@ -3288,8 +3288,169 @@ console.log('[createCheckoutSession] Price ID:', selectedPlan.stripe_price_id);
 
 ---
 
+## BLOQUE 12: MODO MONOEMPRESA/MULTIEMPRESA
+
+**Prioridad:** MEDIA
+**Complejidad:** MEDIA
+**Impacto:** Flexibilidad de deployment
+**Estado:** ⏳ Pendiente
+**Duración estimada:** 2 días
+
+### Descripción
+Sistema de feature flag que permite cambiar el comportamiento de la aplicación entre:
+- **multiempresa**: registro público, suscripciones Stripe, múltiples empresas aisladas
+- **monoempresa**: 1 empresa fija, sin registro, sin límites, sin suscripciones
+
+**Casos de uso:**
+- Instalación on-premise para cliente único
+- SaaS simplificado sin monetización
+- Demos/pruebas internas
+
+### Funcionalidades
+
+#### 12.1 Config y Helpers Centrales
+**Prioridad:** ALTA | **Estimación:** 0.5 días | **Estado:** ⏳ Pendiente
+
+- [ ] Config `app_mode` en BD (valores: "multiempresa" | "monoempresa")
+- [ ] Helper `isMultiEmpresa()` async
+- [ ] Helper `isModoMonoempresa()` async
+- [ ] Helper `getDefaultEmpresaId()` para modo mono
+
+**Archivos nuevos:**
+- `migrations/031_app_mode_config.sql`
+- `src/lib/helpers/app-mode.ts`
+
+**Estructura config:**
+```sql
+INSERT INTO config (config_key, config_value, description) VALUES
+('app_mode', '"multiempresa"', 'Modo: multiempresa | monoempresa'),
+('monoempresa_id', '1', 'ID empresa fija en modo monoempresa');
+```
+
+---
+
+#### 12.2 Routing y Middleware
+**Prioridad:** CRÍTICA | **Estimación:** 0.5 días | **Estado:** ⏳ Pendiente
+
+- [ ] Middleware: redirigir `/` → `/login` en modo mono
+- [ ] Middleware: bloquear `/register` en modo mono
+- [ ] Middleware: bloquear `/subscriptions` en modo mono
+- [ ] Página `/login` como landing en modo mono
+
+**Archivos modificados:**
+- `src/middleware.ts`
+- `src/app/page.tsx` (home pública - condicional)
+
+**Lógica:**
+```typescript
+if (await isModoMonoempresa()) {
+  if (pathname === '/') return NextResponse.redirect('/login');
+  if (pathname === '/register') return NextResponse.redirect('/login');
+  if (pathname.startsWith('/subscriptions')) return NextResponse.rewrite('/404');
+}
+```
+
+---
+
+#### 12.3 Header y Navegación
+**Prioridad:** ALTA | **Estimación:** 0.25 días | **Estado:** ⏳ Pendiente
+
+- [ ] Ocultar enlace "Suscripciones" en modo mono
+- [ ] Ocultar "Gestión Usuarios" si modo mono (opcional - decidir)
+- [ ] Badge modo actual en settings (visual feedback)
+
+**Archivos modificados:**
+- `src/components/layout/Header.tsx`
+- `src/app/settings/page.tsx` (mostrar modo activo)
+
+---
+
+#### 12.4 Server Actions sin Límites
+**Prioridad:** ALTA | **Estimación:** 0.5 días | **Estado:** ⏳ Pendiente
+
+- [ ] `createTariff()`: skip verificación límites en modo mono
+- [ ] `saveBudget()`: skip verificación límites en modo mono
+- [ ] `createUser()`: skip verificación límites en modo mono
+- [ ] `registerUser()`: empresa fija en modo mono (no crear nueva)
+
+**Archivos modificados:**
+- `src/app/actions/tariffs.ts`
+- `src/app/actions/budgets.ts`
+- `src/app/actions/users.ts`
+- `src/app/actions/auth.ts`
+
+**Patrón:**
+```typescript
+export async function createTariff(data) {
+  const multiempresa = await isMultiEmpresa();
+
+  if (multiempresa) {
+    const canCreate = await canCreateResource('tariffs');
+    if (!canCreate) return { error: 'Límite alcanzado' };
+  }
+
+  // ... crear tarifa normalmente
+}
+```
+
+---
+
+#### 12.5 UI Simplificada Modo Mono
+**Prioridad:** MEDIA | **Estimación:** 0.25 días | **Estado:** ⏳ Pendiente
+
+- [ ] Ocultar badge plan en Header
+- [ ] Ocultar warnings de límites
+- [ ] Simplificar gestión usuarios (1 empresa visible)
+
+**Archivos modificados:**
+- `src/components/subscriptions/PlanBadge.tsx` (condicional)
+- `src/components/subscriptions/LimitWarning.tsx` (condicional)
+- `src/app/users/page.tsx` (simplificar si necesario)
+
+---
+
+### Criterios de Aceptación
+
+#### Funcionales:
+- ✅ Cambio de config `app_mode` alterna comportamiento sin redeploy
+- ✅ Modo mono: landing = login, registro bloqueado
+- ✅ Modo mono: sin verificación límites en recursos
+- ✅ Modo multi: comportamiento actual sin cambios
+- ✅ BD intacta - datos preservados al cambiar modo
+
+#### No Funcionales:
+- ✅ Helpers cacheados para performance
+- ✅ Sin warnings ESLint por condicionales
+- ✅ Tests pasan en ambos modos
+- ✅ Documentación clara del flag
+
+#### Testing:
+- ✅ E2E: flujo completo modo multi
+- ✅ E2E: flujo completo modo mono
+- ✅ Integration: server actions respetan modo
+- ✅ Unit: helpers app-mode
+
+---
+
+### Limitaciones Conocidas
+
+- **Cambio de modo requiere refresh** (no hot-reload config)
+- **RLS policies multi-tenant activas** (no afectan en mono, pero siguen ahí)
+- **Tablas multiempresa** (estructura BD no cambia)
+- **Sin migración automática** (cambiar modo = decisión manual admin)
+
+### Beneficios
+
+- **Flexibilidad deployment** (SaaS o on-premise)
+- **1 solo codebase** (mantenimiento simplificado)
+- **Migraciones reversibles** (mono ↔ multi)
+- **Sin duplicación código** (feature flag vs fork)
+- **Rápido** (2 días vs 2 semanas de fork)
+
+---
+
 **Documento:** Fase 2 - Requisitos y Funcionalidades
-**Versión:** 1.3
-**Fecha:** 2025-01-18
+**Versión:** 1.4
+**Fecha:** 2025-01-19
 **Estado:** Aprobado
-**Última actualización:** Bloque 11 Suscripciones Stripe añadido (Post Fase 2 - Opcional)
+**Última actualización:** Bloque 12 Modo Monoempresa/Multiempresa añadido (Post Fase 2 - Opcional)

@@ -4,10 +4,10 @@
 
 **Fase Actual:** Fase 2 - Evolución Funcional
 **Progreso MVP:** 100% ✅
-**Progreso Fase 2:** 34% ✅ (20/59 tareas)
+**Progreso Fase 2:** 31% ✅ (20/64 tareas)
 
-**Última actualización:** 2025-01-18 - Añadido Bloque 11: Suscripciones Stripe (Post Fase 2 - Opcional)
-**Bloques completados:** 5/11 (Usuarios, Tarifas, Config, IRPF/RE, Versiones/Notas)
+**Última actualización:** 2025-01-19 - Añadido Bloque 12: Modo Monoempresa/Multiempresa (Post Fase 2 - Opcional)
+**Bloques completados:** 5/12 (Usuarios, Tarifas, Config, IRPF/RE, Versiones/Notas)
 **Siguiente objetivo:** Bloque 6 - Navegación Unificada (o saltar a Responsive)
 
 ---
@@ -221,6 +221,23 @@
 ⚠️ package.json (AÑADIR: stripe)
 ```
 
+### Bloque 12: Modo Monoempresa/Multiempresa (Post Fase 2 - Opcional)
+
+**Status:** ⏳ Pendiente (Post Fase 2)
+
+```
+✅ migrations/031_app_mode_config.sql (NUEVO)
+✅ src/lib/helpers/app-mode.ts (NUEVO)
+⚠️ src/middleware.ts (MODIFICAR - añadir condicionales modo)
+⚠️ src/app/page.tsx (MODIFICAR - condicional home pública)
+⚠️ src/components/layout/Header.tsx (MODIFICAR - navegación condicional)
+⚠️ src/app/actions/tariffs.ts (EXTENDER - skip límites)
+⚠️ src/app/actions/budgets.ts (EXTENDER - skip límites)
+⚠️ src/app/actions/users.ts (EXTENDER - skip límites)
+⚠️ src/app/actions/auth.ts (EXTENDER - empresa fija)
+⚠️ src/app/settings/page.tsx (MODIFICAR - mostrar modo)
+```
+
 ---
 
 ## 📋 REGLAS FASE 2
@@ -374,6 +391,7 @@ export async function getTariffs() {
 - `responsive`: Bloque 9
 - `help`: Bloque 10 (Sistema de Ayuda)
 - `subscriptions`: Bloque 11 (Suscripciones Stripe - Post Fase 2)
+- `app-mode`: Bloque 12 (Modo Monoempresa/Multiempresa - Post Fase 2)
 
 **Ejemplos:**
 
@@ -448,6 +466,10 @@ docs(users): actualizar README con flujo registro
 ### POST FASE 2 (Semanas 14-15 - Opcional): ⏳
 
 18. ⏳ Suscripciones Stripe (Free/Pro/Enterprise)
+
+### POST FASE 2 (Semanas 16-17 - Opcional): ⏳
+
+19. ⏳ Modo Monoempresa/Multiempresa (Feature Flag)
 
 ---
 
@@ -540,10 +562,10 @@ docs(users): actualizar README con flujo registro
 
 ### Global:
 
-- **Progreso:** 34% (20/59 tareas)
-- **Bloques completados:** 5/11 (Usuarios ✅, Tarifas ✅, Config ✅, IRPF/RE ✅, Versiones ✅)
+- **Progreso:** 31% (20/64 tareas)
+- **Bloques completados:** 5/12 (Usuarios ✅, Tarifas ✅, Config ✅, IRPF/RE ✅, Versiones ✅)
 - **Bloques parciales:** Rich Editor ✅ (Bloque 7), Import/Export ✅ (Bloque 8)
-- **Semanas consumidas:** 11/15
+- **Semanas consumidas:** 11/17
 - **Bugs críticos resueltos:** 1 (RLS tariffs - migración 030)
 - **Mejoras UX:** 8 implementadas
 
@@ -631,6 +653,10 @@ docs(users): actualizar README con flujo registro
 4. Actualizar tipos TypeScript si necesario
 5. No dejar console.logs de debug
 ```
+
+**IMPORTANTE - Gestión del Servidor de Desarrollo:**
+
+Cuando sea necesario iniciar/detener el servidor con `npm run dev`, **pídele al usuario que lo haga**. No ejecutes estos comandos automáticamente.
 
 ### 3. Antes de commit:
 
@@ -1028,8 +1054,8 @@ export function ComponentName({ prop1, onSuccess }: ComponentNameProps) {
 ---
 
 **Documento:** Claude Code Fase 2
-**Versión:** 1.3
-**Fecha:** 2025-01-18
+**Versión:** 1.4
+**Fecha:** 2025-01-19
 **Estado:** Activo
-**Última actualización:** Añadido Bloque 11 - Suscripciones Stripe (Post Fase 2 - Opcional)
-**Próxima revisión:** Fin Semana 15
+**Última actualización:** Añadido Bloque 12 - Modo Monoempresa/Multiempresa (Post Fase 2 - Opcional)
+**Próxima revisión:** Fin Semana 17
