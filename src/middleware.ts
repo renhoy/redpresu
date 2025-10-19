@@ -95,7 +95,7 @@ export async function middleware(req: NextRequest) {
     if (isAuthenticated && session?.user) {
       // Obtener rol desde la base de datos usando supabaseAdmin (bypasea RLS)
       const { data: userData, error: userError } = await supabaseAdmin
-        .from('usuarios')
+        .from('redpresu_users')
         .select('role')
         .eq('id', session.user.id)
         .single()
