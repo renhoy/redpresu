@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { requestPasswordReset } from "@/app/actions/auth";
-import { getAppName } from "@/lib/helpers/config-helpers";
+import { getAppNameAction } from "@/app/actions/config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,7 +39,11 @@ export default function ForgotPasswordPage() {
 
   // Cargar appName desde BD
   useEffect(() => {
-    getAppName().then(setAppName);
+    getAppNameAction().then((result) => {
+      if (result.success && result.data) {
+        setAppName(result.data);
+      }
+    });
   }, []);
 
   const validateForm = (): boolean => {

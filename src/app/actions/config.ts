@@ -530,6 +530,38 @@ export async function getDefaultEmpresaId(): Promise<number> {
 }
 
 /**
+ * Obtiene el nombre de la aplicación desde configuración
+ * Acción pública (no requiere autenticación)
+ */
+export async function getAppNameAction(): Promise<{
+  success: boolean
+  data?: string
+  error?: string
+}> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('redpresu_config')
+      .select('value')
+      .eq('key', 'app_name')
+      .single()
+
+    if (error || !data) {
+      // Devolver nombre por defecto si no existe en BD
+      return {
+        success: true,
+        data: 'Redpresu'
+      }
+    }
+
+    return { success: true, data: data.value as string }
+  } catch (error) {
+    console.error('[getAppNameAction] Error:', error)
+    // En caso de error, devolver default en lugar de fallar
+    return { success: true, data: 'Redpresu' }
+  }
+}
+
+/**
  * Interfaz para datos del issuer
  */
 export interface IssuerData {

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import PasswordResetForm from "@/components/auth/PasswordResetForm";
-import { getAppName } from "@/lib/helpers/config-helpers";
+import { getAppNameAction } from "@/app/actions/config";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,7 +24,11 @@ export default function ResetPasswordPage() {
 
   // Cargar appName desde BD
   useEffect(() => {
-    getAppName().then(setAppName);
+    getAppNameAction().then((result) => {
+      if (result.success && result.data) {
+        setAppName(result.data);
+      }
+    });
   }, []);
 
   useEffect(() => {
