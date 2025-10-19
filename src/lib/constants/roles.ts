@@ -6,64 +6,64 @@
  * Roles de usuario
  */
 export const USER_ROLES = {
-  SUPERADMIN: 'superadmin',
-  ADMIN: 'admin',
-  VENDOR: 'vendedor'
+  SUPERADMIN: "superadmin",
+  ADMIN: "admin",
+  VENDOR: "vendedor",
 } as const;
 
 /**
  * Tipo para roles de usuario
  */
-export type UserRole = typeof USER_ROLES[keyof typeof USER_ROLES];
+export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];
 
 /**
  * Permisos del sistema
  */
 export const PERMISSIONS = {
   // Permisos de tarifas
-  TARIFFS_READ: 'tariffs:read',
-  TARIFFS_WRITE: 'tariffs:write',
-  TARIFFS_DELETE: 'tariffs:delete',
-  TARIFFS_IMPORT: 'tariffs:import',
-  TARIFFS_EXPORT: 'tariffs:export',
+  TARIFFS_READ: "tariffs:read",
+  TARIFFS_WRITE: "tariffs:write",
+  TARIFFS_DELETE: "tariffs:delete",
+  TARIFFS_IMPORT: "tariffs:import",
+  TARIFFS_EXPORT: "tariffs:export",
 
   // Permisos de presupuestos
-  BUDGETS_READ: 'budgets:read',
-  BUDGETS_WRITE: 'budgets:write',
-  BUDGETS_DELETE: 'budgets:delete',
-  BUDGETS_SEND: 'budgets:send',
-  BUDGETS_APPROVE: 'budgets:approve',
-  BUDGETS_EXPORT_PDF: 'budgets:export:pdf',
+  BUDGETS_READ: "budgets:read",
+  BUDGETS_WRITE: "budgets:write",
+  BUDGETS_DELETE: "budgets:delete",
+  BUDGETS_SEND: "budgets:send",
+  BUDGETS_APPROVE: "budgets:approve",
+  BUDGETS_EXPORT_PDF: "budgets:export:pdf",
 
   // Permisos de clientes
-  CLIENTS_READ: 'clients:read',
-  CLIENTS_WRITE: 'clients:write',
-  CLIENTS_DELETE: 'clients:delete',
+  CLIENTS_READ: "clients:read",
+  CLIENTS_WRITE: "clients:write",
+  CLIENTS_DELETE: "clients:delete",
 
   // Permisos de usuarios
-  USERS_READ: 'users:read',
-  USERS_WRITE: 'users:write',
-  USERS_DELETE: 'users:delete',
-  USERS_INVITE: 'users:invite',
+  USERS_READ: "users:read",
+  USERS_WRITE: "users:write",
+  USERS_DELETE: "users:delete",
+  USERS_INVITE: "users:invite",
 
   // Permisos de empresa
-  COMPANY_READ: 'company:read',
-  COMPANY_WRITE: 'company:write',
-  COMPANY_SETTINGS: 'company:settings',
+  COMPANY_READ: "company:read",
+  COMPANY_WRITE: "company:write",
+  COMPANY_SETTINGS: "company:settings",
 
   // Permisos de sistema
-  SYSTEM_SETTINGS: 'system:settings',
-  SYSTEM_LOGS: 'system:logs',
-  SYSTEM_BACKUP: 'system:backup',
+  SYSTEM_SETTINGS: "system:settings",
+  SYSTEM_LOGS: "system:logs",
+  SYSTEM_BACKUP: "system:backup",
 
   // Permisos especiales
-  ALL: 'all'
+  ALL: "all",
 } as const;
 
 /**
  * Tipo para permisos
  */
-export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS];
+export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
 
 /**
  * Permisos por rol
@@ -99,7 +99,7 @@ export const ROLE_PERMISSIONS = {
     // Empresa
     PERMISSIONS.COMPANY_READ,
     PERMISSIONS.COMPANY_WRITE,
-    PERMISSIONS.COMPANY_SETTINGS
+    PERMISSIONS.COMPANY_SETTINGS,
   ],
   vendedor: [
     // Tarifas (solo lectura)
@@ -116,26 +116,26 @@ export const ROLE_PERMISSIONS = {
     PERMISSIONS.CLIENTS_WRITE,
 
     // Empresa (solo lectura)
-    PERMISSIONS.COMPANY_READ
-  ]
+    PERMISSIONS.COMPANY_READ,
+  ],
 } as const;
 
 /**
  * Nombres de visualización para roles
  */
 export const ROLE_DISPLAY_NAMES = {
-  superadmin: 'Superadministrador',
-  admin: 'Administrador',
-  vendedor: 'Vendedor'
+  superadmin: "Super Administrador",
+  admin: "Administrador",
+  vendedor: "Comercial",
 } as const;
 
 /**
  * Descripciones de roles
  */
 export const ROLE_DESCRIPTIONS = {
-  superadmin: 'Acceso completo a todo el sistema',
-  admin: 'Gestión completa de la empresa y usuarios',
-  vendedor: 'Creación y gestión de presupuestos'
+  superadmin: "Acceso completo a todo el sistema",
+  admin: "Gestión completa de la empresa y usuarios",
+  vendedor: "Creación y gestión de presupuestos",
 } as const;
 
 /**
@@ -144,39 +144,39 @@ export const ROLE_DESCRIPTIONS = {
 export const ROLE_HIERARCHY = {
   superadmin: 3,
   admin: 2,
-  vendedor: 1
+  vendedor: 1,
 } as const;
 
 /**
  * Tipos de cliente
  */
 export const CLIENT_TYPES = {
-  INDIVIDUAL: 'particular',
-  SELF_EMPLOYED: 'autonomo',
-  COMPANY: 'empresa'
+  INDIVIDUAL: "particular",
+  SELF_EMPLOYED: "autonomo",
+  COMPANY: "empresa",
 } as const;
 
 /**
  * Tipo para tipos de cliente
  */
-export type ClientType = typeof CLIENT_TYPES[keyof typeof CLIENT_TYPES];
+export type ClientType = (typeof CLIENT_TYPES)[keyof typeof CLIENT_TYPES];
 
 /**
  * Nombres de visualización para tipos de cliente
  */
 export const CLIENT_TYPE_DISPLAY_NAMES = {
-  particular: 'Particular',
-  autonomo: 'Autónomo',
-  empresa: 'Empresa'
+  particular: "Particular",
+  autonomo: "Autónomo",
+  empresa: "Empresa",
 } as const;
 
 /**
  * Configuración de campos requeridos por tipo de cliente
  */
 export const CLIENT_TYPE_REQUIRED_FIELDS = {
-  particular: ['name', 'email', 'phone'],
-  autonomo: ['name', 'email', 'phone', 'tax_id'],
-  empresa: ['name', 'email', 'phone', 'tax_id', 'company_name']
+  particular: ["name", "email", "phone"],
+  autonomo: ["name", "email", "phone", "tax_id"],
+  empresa: ["name", "email", "phone", "tax_id", "company_name"],
 } as const;
 
 /**
@@ -184,23 +184,23 @@ export const CLIENT_TYPE_REQUIRED_FIELDS = {
  */
 export const MODULE_PERMISSIONS = {
   // Módulo Dashboard
-  DASHBOARD_VIEW: 'dashboard:view',
-  DASHBOARD_STATS: 'dashboard:stats',
+  DASHBOARD_VIEW: "dashboard:view",
+  DASHBOARD_STATS: "dashboard:stats",
 
   // Módulo Tarifas
-  TARIFFS_MODULE: 'tariffs:module',
+  TARIFFS_MODULE: "tariffs:module",
 
   // Módulo Presupuestos
-  BUDGETS_MODULE: 'budgets:module',
+  BUDGETS_MODULE: "budgets:module",
 
   // Módulo Clientes
-  CLIENTS_MODULE: 'clients:module',
+  CLIENTS_MODULE: "clients:module",
 
   // Módulo Usuarios
-  USERS_MODULE: 'users:module',
+  USERS_MODULE: "users:module",
 
   // Módulo Configuración
-  SETTINGS_MODULE: 'settings:module'
+  SETTINGS_MODULE: "settings:module",
 } as const;
 
 /**
@@ -214,7 +214,7 @@ export const ROLE_MODULE_ACCESS = {
     MODULE_PERMISSIONS.BUDGETS_MODULE,
     MODULE_PERMISSIONS.CLIENTS_MODULE,
     MODULE_PERMISSIONS.USERS_MODULE,
-    MODULE_PERMISSIONS.SETTINGS_MODULE
+    MODULE_PERMISSIONS.SETTINGS_MODULE,
   ],
   admin: [
     MODULE_PERMISSIONS.DASHBOARD_VIEW,
@@ -223,22 +223,22 @@ export const ROLE_MODULE_ACCESS = {
     MODULE_PERMISSIONS.BUDGETS_MODULE,
     MODULE_PERMISSIONS.CLIENTS_MODULE,
     MODULE_PERMISSIONS.USERS_MODULE,
-    MODULE_PERMISSIONS.SETTINGS_MODULE
+    MODULE_PERMISSIONS.SETTINGS_MODULE,
   ],
   vendedor: [
     MODULE_PERMISSIONS.DASHBOARD_VIEW,
     MODULE_PERMISSIONS.BUDGETS_MODULE,
-    MODULE_PERMISSIONS.CLIENTS_MODULE
-  ]
+    MODULE_PERMISSIONS.CLIENTS_MODULE,
+  ],
 } as const;
 
 /**
  * Rutas protegidas por rol
  */
 export const PROTECTED_ROUTES = {
-  superadmin: ['/admin/*', '/system/*'],
-  admin: ['/admin/*', '/users/*', '/settings/*'],
-  vendedor: ['/budgets/*', '/clients/*']
+  superadmin: ["/admin/*", "/system/*"],
+  admin: ["/admin/*", "/users/*", "/settings/*"],
+  vendedor: ["/budgets/*", "/clients/*"],
 } as const;
 
 /**
@@ -249,20 +249,20 @@ export const ROLE_LIMITS = {
     maxCompanies: Infinity,
     maxUsers: Infinity,
     maxBudgets: Infinity,
-    maxClients: Infinity
+    maxClients: Infinity,
   },
   admin: {
     maxCompanies: 1,
     maxUsers: 50,
     maxBudgets: Infinity,
-    maxClients: 200
+    maxClients: 200,
   },
   vendedor: {
     maxCompanies: 1,
     maxUsers: 1,
     maxBudgets: 100,
-    maxClients: 50
-  }
+    maxClients: 50,
+  },
 } as const;
 
 /**
@@ -272,16 +272,16 @@ export const ROLE_SESSION_CONFIG = {
   superadmin: {
     maxSessions: 5,
     sessionTimeout: 24 * 60 * 60 * 1000, // 24 horas
-    requireMFA: true
+    requireMFA: true,
   },
   admin: {
     maxSessions: 3,
     sessionTimeout: 8 * 60 * 60 * 1000, // 8 horas
-    requireMFA: false
+    requireMFA: false,
   },
   vendedor: {
     maxSessions: 2,
     sessionTimeout: 4 * 60 * 60 * 1000, // 4 horas
-    requireMFA: false
-  }
+    requireMFA: false,
+  },
 } as const;

@@ -426,7 +426,13 @@ function formatItemNumbers(items: BudgetDataItem[]): BudgetDataItem[] {
  */
 export function buildPDFPayload(budget: Budget, tariff: Tariff): PDFPayload {
   // 1. Obtener datos del presupuesto
-  const budgetData = budget.json_budget_data as unknown as BudgetDataItem[]
+  // Manejar dos formatos posibles:
+  // - Formato simple: json_budget_data es directamente un array
+  // - Formato con recargo: json_budget_data = { items: [...], recargo: {...} }
+  const rawData = budget.json_budget_data as any
+  const budgetData: BudgetDataItem[] = Array.isArray(rawData)
+    ? rawData
+    : rawData?.items || []
 
   // 2. Filtrar elementos con amount > 0
   const filteredItems = filterNonZeroItems(budgetData)
@@ -482,7 +488,7 @@ export function buildPDFPayload(budget: Budget, tariff: Tariff): PDFPayload {
         validity: tariff.validity ? tariff.validity.toString().replace(/[^0-9]/g, '') : '0'
       },
       title: 'Resumen del Presupuesto',
-      note: tariff.legal_note || 'En cumplimiento del Reglamento General de Protección de Datos (RGPD), le informamos que sus datos serán tratados confidencialmente.',
+      note: tariff.summary_note || '',
       levels: summaryLevels,
       totals
     },
@@ -492,7 +498,7 @@ export function buildPDFPayload(budget: Budget, tariff: Tariff): PDFPayload {
     },
     conditions: {
       title: 'Condiciones del Presupuesto',
-      note: tariff.summary_note || tariff.conditions_note || 'Presupuesto válido según plazo indicado. Precios IVA incluido.'
+      note: tariff.conditions_note || ''
     },
     mode: 'produccion'
   }
