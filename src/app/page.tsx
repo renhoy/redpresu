@@ -3,11 +3,13 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { FileText, CheckCircle, Clock, Users } from "lucide-react";
 import { getServerUser } from '@/lib/auth/server'
+import { getAppName } from '@/lib/helpers/config-helpers'
 import { Header } from '@/components/layout/Header'
 
 export default async function Index() {
   // Verificar si el usuario ya está autenticado
   const user = await getServerUser()
+  const appName = await getAppName()
 
   if (user) {
     // Redirigir según rol
@@ -25,7 +27,7 @@ export default async function Index() {
   return (
     <div className="min-h-screen" style={{ background: '#f7fee7' }}>
       {/* Header */}
-      <Header isAuthenticated={false} />
+      <Header isAuthenticated={false} appName={appName} />
 
       {/* Hero Section */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -91,7 +93,7 @@ export default async function Index() {
             ¿Listo para crear tu primer presupuesto?
           </h2>
           <p className="text-lime-100 mb-8 text-lg">
-            Únete a miles de profesionales que ya confían en Redpresu
+            Únete a miles de profesionales que ya confían en {appName}
           </p>
           <Link href="/register">
             <Button size="lg" variant="secondary" className="text-lg px-8 py-3">
@@ -108,10 +110,10 @@ export default async function Index() {
             <div className="w-6 h-6 bg-lime-500 rounded flex items-center justify-center">
               <FileText className="h-4 w-4 text-white" />
             </div>
-            <span className="text-xl font-bold">Redpresu</span>
+            <span className="text-xl font-bold">{appName}</span>
           </div>
           <p className="text-center text-gray-400">
-            © 2024 Redpresu. Todos los derechos reservados.
+            © 2024 {appName}. Todos los derechos reservados.
           </p>
         </div>
       </footer>

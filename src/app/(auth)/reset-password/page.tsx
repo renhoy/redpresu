@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import PasswordResetForm from "@/components/auth/PasswordResetForm";
+import { getAppName } from "@/lib/helpers/config-helpers";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,12 +14,18 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, AlertCircle, ArrowLeft } from "lucide-react";
+import { FileText, Loader2, AlertCircle, ArrowLeft } from "lucide-react";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
   const [isValidToken, setIsValidToken] = useState<boolean | null>(null);
   const [isCheckingToken, setIsCheckingToken] = useState(true);
+  const [appName, setAppName] = useState("Redpresu");
+
+  // Cargar appName desde BD
+  useEffect(() => {
+    getAppName().then(setAppName);
+  }, []);
 
   useEffect(() => {
     // Verificar si hay un hash en la URL (token de Supabase)
@@ -81,10 +88,18 @@ export default function ResetPasswordPage() {
         <div className="w-full max-w-md space-y-8">
           {/* Header */}
           <div className="text-center">
-            <div className="mx-auto h-12 w-12 bg-orange-500 rounded-lg flex items-center justify-center mb-4">
-              <span className="text-white font-bold text-xl">J</span>
-            </div>
-            <h2 className="text-3xl font-bold text-gray-900">Redpresu</h2>
+            <Link
+              href="/"
+              className="inline-block hover:opacity-80 transition-opacity"
+            >
+              <div className="mx-auto h-12 w-12 bg-lime-500 rounded-lg flex items-center justify-center mb-4">
+                <FileText className="h-7 w-7 text-white" />
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900">{appName}</h2>
+            </Link>
+            <p className="mt-2 text-sm text-gray-600">
+              Sistema de gestión de presupuestos profesionales
+            </p>
           </div>
 
           <Card className="w-full">

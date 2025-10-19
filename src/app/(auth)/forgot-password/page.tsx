@@ -1,110 +1,131 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { requestPasswordReset } from '@/app/actions/auth'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, Mail, ArrowLeft, FileText } from 'lucide-react'
-import { forgotPasswordSchema } from '@/lib/validators/auth-schemas'
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { requestPasswordReset } from "@/app/actions/auth";
+import { getAppName } from "@/lib/helpers/config-helpers";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2, Mail, ArrowLeft, FileText } from "lucide-react";
+import { forgotPasswordSchema } from "@/lib/validators/auth-schemas";
 
 interface ForgotPasswordFormData {
-  email: string
+  email: string;
 }
 
 interface ForgotPasswordErrors {
-  email?: string
-  general?: string
+  email?: string;
+  general?: string;
 }
 
 export default function ForgotPasswordPage() {
   const [formData, setFormData] = useState<ForgotPasswordFormData>({
-    email: ''
-  })
-  const [errors, setErrors] = useState<ForgotPasswordErrors>({})
-  const [isLoading, setIsLoading] = useState(false)
-  const [emailSent, setEmailSent] = useState(false)
+    email: "",
+  });
+  const [errors, setErrors] = useState<ForgotPasswordErrors>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [appName, setAppName] = useState("Redpresu");
+
+  // Cargar appName desde BD
+  useEffect(() => {
+    getAppName().then(setAppName);
+  }, []);
 
   const validateForm = (): boolean => {
     try {
-      forgotPasswordSchema.parse(formData)
-      setErrors({})
-      return true
+      forgotPasswordSchema.parse(formData);
+      setErrors({});
+      return true;
     } catch (error: any) {
-      const newErrors: ForgotPasswordErrors = {}
+      const newErrors: ForgotPasswordErrors = {};
 
       if (error.errors) {
         error.errors.forEach((err: any) => {
-          const field = err.path[0]
-          newErrors[field as keyof ForgotPasswordErrors] = err.message
-        })
+          const field = err.path[0];
+          newErrors[field as keyof ForgotPasswordErrors] = err.message;
+        });
       }
 
-      setErrors(newErrors)
-      return false
+      setErrors(newErrors);
+      return false;
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     // Limpiar errores anteriores
-    setErrors({})
+    setErrors({});
 
     // Validar formulario
     if (!validateForm()) {
-      return
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
-      const result = await requestPasswordReset(formData.email)
+      const result = await requestPasswordReset(formData.email);
 
       if (!result.success) {
         setErrors({
-          general: result.error || 'Error desconocido al solicitar recuperación'
-        })
-        return
+          general:
+            result.error || "Error desconocido al solicitar recuperación",
+        });
+        return;
       }
 
       // Mostrar mensaje de éxito (incluso si el email no existe, por seguridad)
-      setEmailSent(true)
-
+      setEmailSent(true);
     } catch (error) {
       setErrors({
-        general: error instanceof Error ? error.message : 'Error inesperado al solicitar recuperación'
-      })
+        general:
+          error instanceof Error
+            ? error.message
+            : "Error inesperado al solicitar recuperación",
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ email: e.target.value })
+    setFormData({ email: e.target.value });
 
     if (errors.email) {
-      setErrors(prev => ({ ...prev, email: undefined }))
+      setErrors((prev) => ({ ...prev, email: undefined }));
     }
-  }
+  };
 
   // Si el email ya fue enviado, mostrar mensaje de confirmación
   if (emailSent) {
     return (
-      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8" style={{ background: '#f7fee7' }}>
+      <div
+        className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8"
+        style={{ background: "#f7fee7" }}
+      >
         <div className="w-full max-w-md space-y-8">
           {/* Header */}
           <div className="text-center">
-            <Link href="/" className="inline-block hover:opacity-80 transition-opacity">
+            <Link
+              href="/"
+              className="inline-block hover:opacity-80 transition-opacity"
+            >
               <div className="mx-auto h-12 w-12 bg-lime-500 rounded-lg flex items-center justify-center mb-4">
                 <FileText className="h-7 w-7 text-white" />
               </div>
-              <h2 className="text-3xl font-bold text-gray-900">
-                Redpresu
-              </h2>
+              <h2 className="text-3xl font-bold text-gray-900">{appName}</h2>
             </Link>
           </div>
 
@@ -124,8 +145,9 @@ export default function ForgotPasswordPage() {
             <CardContent className="space-y-4">
               <Alert className="border-lime-500 bg-lime-50">
                 <AlertDescription className="text-lime-800">
-                  Si el email <strong>{formData.email}</strong> está registrado en el sistema,
-                  recibirás un enlace para resetear tu contraseña.
+                  Si el email <strong>{formData.email}</strong> está registrado
+                  en el sistema, recibirás un enlace para resetear tu
+                  contraseña.
                 </AlertDescription>
               </Alert>
 
@@ -155,21 +177,25 @@ export default function ForgotPasswordPage() {
           </Card>
         </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8" style={{ background: '#f7fee7' }}>
+    <div
+      className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8"
+      style={{ background: "#f7fee7" }}
+    >
       <div className="w-full max-w-md space-y-8">
         {/* Header con logo/título */}
         <div className="text-center">
-          <Link href="/" className="inline-block hover:opacity-80 transition-opacity">
+          <Link
+            href="/"
+            className="inline-block hover:opacity-80 transition-opacity"
+          >
             <div className="mx-auto h-12 w-12 bg-lime-500 rounded-lg flex items-center justify-center mb-4">
               <FileText className="h-7 w-7 text-white" />
             </div>
-            <h2 className="text-3xl font-bold text-gray-900">
-              Redpresu
-            </h2>
+            <h2 className="text-3xl font-bold text-gray-900">Redpresu</h2>
           </Link>
           <p className="mt-2 text-sm text-gray-600">
             Recupera el acceso a tu cuenta
@@ -205,7 +231,7 @@ export default function ForgotPasswordPage() {
                   placeholder="tu@email.com"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className={errors.email ? 'border-red-500' : ''}
+                  className={errors.email ? "border-red-500" : ""}
                   disabled={isLoading}
                   autoComplete="email"
                   autoFocus
@@ -216,11 +242,7 @@ export default function ForgotPasswordPage() {
               </div>
 
               {/* Botón de envío */}
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isLoading}
-              >
+              <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -249,13 +271,16 @@ export default function ForgotPasswordPage() {
         {/* Footer */}
         <div className="text-center">
           <p className="text-xs text-gray-500">
-            ¿No tienes una cuenta?{' '}
-            <Link href="/register" className="text-lime-600 hover:text-lime-700 hover:underline">
+            ¿No tienes una cuenta?{" "}
+            <Link
+              href="/register"
+              className="text-lime-600 hover:text-lime-700 hover:underline"
+            >
               Regístrate aquí
             </Link>
           </p>
         </div>
       </div>
     </div>
-  )
+  );
 }

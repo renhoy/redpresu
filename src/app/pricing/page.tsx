@@ -4,18 +4,23 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { STRIPE_PLANS } from "@/lib/stripe";
 import { Header } from "@/components/layout/Header";
+import { getAppName } from "@/lib/helpers/config-helpers";
 
-export const metadata = {
-  title: "Precios - Redpresu",
-  description: "Elige el plan que mejor se adapte a tus necesidades",
-};
+export async function generateMetadata() {
+  const appName = await getAppName();
+  return {
+    title: `Precios - ${appName}`,
+    description: "Elige el plan que mejor se adapte a tus necesidades",
+  };
+}
 
-export default function PricingPage() {
+export default async function PricingPage() {
   const plans = Object.values(STRIPE_PLANS);
+  const appName = await getAppName();
 
   return (
     <div className="min-h-screen bg-background">
-      <Header isAuthenticated={false} />
+      <Header isAuthenticated={false} appName={appName} />
 
       <div className="container mx-auto px-4 py-16">
         {/* Header */}

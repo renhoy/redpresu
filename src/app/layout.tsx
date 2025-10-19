@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from 'sonner'
+import { getAppName } from "@/lib/helpers/config-helpers";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,10 +14,13 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Redpresu - Gestión de Presupuestos Profesionales",
-  description: "Sistema de gestión de presupuestos profesionales para empresas y autónomos",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const appName = await getAppName();
+  return {
+    title: `${appName} - Gestión de Presupuestos Profesionales`,
+    description: "Sistema de gestión de presupuestos profesionales para empresas y autónomos",
+  };
+}
 
 export default function RootLayout({
   children,
