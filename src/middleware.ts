@@ -2,6 +2,7 @@ import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { isMultiEmpresa } from '@/lib/helpers/app-mode'
+import { supabaseAdmin } from '@/lib/supabase/server'
 
 export async function middleware(req: NextRequest) {
   try {
@@ -92,16 +93,20 @@ export async function middleware(req: NextRequest) {
 
     // Verificar acceso a rutas restringidas por rol
     if (isAuthenticated && session?.user) {
-      // Obtener rol desde la base de datos (no desde user_metadata que puede estar desactualizado)
-      const { data: userData } = await supabase
+      // Obtener rol desde la base de datos usando supabaseAdmin (bypasea RLS)
+      const { data: userData, error: userError } = await supabaseAdmin
         .from('usuarios')
         .select('role')
         .eq('id', session.user.id)
         .single()
 
+      if (userError) {
+        console.error(`[Middleware] Error obteniendo rol:`, userError)
+      }
+
       const userRole = userData?.role || 'vendedor'
 
-      console.log(`[Middleware] Verificando permisos - Path: ${pathname}, Rol: ${userRole}, MultiEmpresa: ${multiempresa}`)
+      console.log(`[Middleware] Verificando permisos - Path: ${pathname}, Rol: ${userRole} (desde BD), MultiEmpresa: ${multiempresa}`)
 
       // /companies - Solo superadmin en modo multiempresa
       // En modo monoempresa, admin redirige a /companies/edit
