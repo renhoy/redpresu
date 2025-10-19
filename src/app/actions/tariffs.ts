@@ -281,6 +281,15 @@ export async function createTariff(data: TariffFormData): Promise<{
   try {
     console.log('[createTariff] Iniciando creación de tarifa...')
 
+    // Verificar límites del plan (si suscripciones están habilitadas)
+    const { canCreateTariff } = await import('@/lib/helpers/subscription-helpers')
+    const limitCheck = await canCreateTariff()
+
+    if (!limitCheck.canCreate) {
+      console.log('[createTariff] Límite alcanzado:', limitCheck.message)
+      return { success: false, error: limitCheck.message }
+    }
+
     // Validar NIF antes de continuar
     if (!isValidNIF(data.nif)) {
       console.error('[createTariff] NIF inválido:', data.nif)

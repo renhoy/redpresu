@@ -171,6 +171,15 @@ export async function createDraftBudget(data: {
   try {
     console.log('[createDraftBudget] Creando borrador...')
 
+    // Verificar límites del plan (si suscripciones están habilitadas)
+    const { canCreateBudget } = await import('@/lib/helpers/subscription-helpers')
+    const limitCheck = await canCreateBudget()
+
+    if (!limitCheck.canCreate) {
+      console.log('[createDraftBudget] Límite alcanzado:', limitCheck.message)
+      return { success: false, error: limitCheck.message }
+    }
+
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
 
@@ -1213,7 +1222,7 @@ export async function getBudgets(filters?: {
 
     // Filtrar según rol
     if (userData.role === 'vendedor') {
-      // Vendedor: solo sus presupuestos
+      // Comercial: solo sus presupuestos
       query = query.eq('user_id', user.id)
     } else if (userData.role === 'admin') {
       // Admin: presupuestos de su empresa
