@@ -52,7 +52,7 @@ export default function CompanyTable({ companies: initialCompanies }: CompanyTab
     const result = await deleteCompany(selectedCompany.id.toString());
 
     if (result.success) {
-      toast.success(`Empresa "${selectedCompany.nombre}" eliminada correctamente`);
+      toast.success(`Empresa "${selectedCompany.name}" eliminada correctamente`);
 
       // Actualizar lista local
       setCompanies((prev) => prev.filter((c) => c.id !== selectedCompany.id));
@@ -67,8 +67,8 @@ export default function CompanyTable({ companies: initialCompanies }: CompanyTab
     setSelectedCompany(null);
   };
 
-  const getTipoLabel = (tipo: string) => {
-    return tipo === "empresa" ? "Empresa" : "Autónomo";
+  const getTipoLabel = (type: string) => {
+    return type === "empresa" ? "Empresa" : "Autónomo";
   };
 
   const tipoColors = {
@@ -92,7 +92,7 @@ export default function CompanyTable({ companies: initialCompanies }: CompanyTab
             <TableRow className="hover:bg-transparent">
               <TableHead className="p-4">Empresa</TableHead>
               <TableHead className="p-4 text-center">Tipo</TableHead>
-              <TableHead className="p-4 text-center">CIF/NIF</TableHead>
+              <TableHead className="p-4 text-center">NIF/CIF</TableHead>
               <TableHead className="p-4 text-center">Contacto</TableHead>
               <TableHead className="p-4 text-center">Estadísticas</TableHead>
               <TableHead className="p-4 text-center">Creada</TableHead>
@@ -121,10 +121,10 @@ export default function CompanyTable({ companies: initialCompanies }: CompanyTab
                       <Building2 className="h-4 w-4 text-muted-foreground" />
                       <div>
                         <div className="font-medium" style={{ fontSize: "12px" }}>
-                          {company.nombre}
+                          {company.name}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {company.direccion}
+                          {company.address}
                         </div>
                       </div>
                     </div>
@@ -134,23 +134,23 @@ export default function CompanyTable({ companies: initialCompanies }: CompanyTab
                   <TableCell className="p-4 text-center">
                     <Badge
                       className={
-                        tipoColors[company.tipo as keyof typeof tipoColors] ||
+                        tipoColors[company.type as keyof typeof tipoColors] ||
                         "bg-gray-200 text-gray-700"
                       }
                     >
-                      {getTipoLabel(company.tipo)}
+                      {getTipoLabel(company.type)}
                     </Badge>
                   </TableCell>
 
-                  {/* Columna CIF/NIF */}
+                  {/* Columna NIF/CIF */}
                   <TableCell className="p-4 text-center">
-                    <span className="text-sm font-mono">{company.cif}</span>
+                    <span className="text-sm font-mono">{company.nif}</span>
                   </TableCell>
 
                   {/* Columna Contacto */}
                   <TableCell className="p-4">
                     <div className="space-y-0.5 text-center">
-                      <div className="text-sm">{company.telefono}</div>
+                      <div className="text-sm">{company.phone}</div>
                       <div className="text-xs text-muted-foreground">
                         {company.email}
                       </div>
@@ -269,7 +269,7 @@ export default function CompanyTable({ companies: initialCompanies }: CompanyTab
             <AlertDialogDescription className="space-y-3">
               <p>
                 ¿Estás seguro de que quieres eliminar la empresa{" "}
-                <strong className="text-foreground">{selectedCompany?.nombre}</strong>?
+                <strong className="text-foreground">{selectedCompany?.name}</strong>?
               </p>
 
               <div className="bg-red-50 border border-red-200 rounded-md p-3 space-y-2">

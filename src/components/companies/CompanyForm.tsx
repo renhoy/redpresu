@@ -31,22 +31,22 @@ interface CompanyFormProps {
 }
 
 interface FormData {
-  nombre: string;
-  tipo: "empresa" | "autonomo";
-  cif: string;
-  direccion: string;
-  telefono: string;
+  name: string;
+  type: "empresa" | "autonomo";
+  nif: string;
+  address: string;
+  phone: string;
   email: string;
 }
 
 export default function CompanyForm({ company, currentUserRole }: CompanyFormProps) {
   const [formData, setFormData] = useState<FormData>({
-    nombre: company.nombre,
-    tipo: company.tipo,
-    cif: company.cif,
-    direccion: company.direccion,
-    telefono: company.telefono,
-    email: company.email,
+    name: company.name,
+    type: company.type,
+    nif: company.nif,
+    address: company.address,
+    phone: company.phone || "",
+    email: company.email || "",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -69,28 +69,28 @@ export default function CompanyForm({ company, currentUserRole }: CompanyFormPro
   };
 
   const handleSelectChange = (value: "empresa" | "autonomo") => {
-    setFormData((prev) => ({ ...prev, tipo: value }));
+    setFormData((prev) => ({ ...prev, type: value }));
   };
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.nombre.trim()) {
-      newErrors.nombre = "El nombre es obligatorio";
+    if (!formData.name.trim()) {
+      newErrors.name = "El nombre es obligatorio";
     }
 
-    if (!formData.cif.trim()) {
-      newErrors.cif = "El CIF/NIF es obligatorio";
-    } else if (formData.cif.trim().length < 9) {
-      newErrors.cif = "El CIF/NIF debe tener al menos 9 caracteres";
+    if (!formData.nif.trim()) {
+      newErrors.nif = "El NIF/CIF es obligatorio";
+    } else if (formData.nif.trim().length < 9) {
+      newErrors.nif = "El NIF/CIF debe tener al menos 9 caracteres";
     }
 
-    if (!formData.direccion.trim()) {
-      newErrors.direccion = "La dirección es obligatoria";
+    if (!formData.address.trim()) {
+      newErrors.address = "La dirección es obligatoria";
     }
 
-    if (!formData.telefono.trim()) {
-      newErrors.telefono = "El teléfono es obligatorio";
+    if (!formData.phone.trim()) {
+      newErrors.phone = "El teléfono es obligatorio";
     }
 
     if (!formData.email.trim()) {
@@ -200,29 +200,29 @@ export default function CompanyForm({ company, currentUserRole }: CompanyFormPro
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Nombre */}
             <div className="space-y-2">
-              <Label htmlFor="nombre">
+              <Label htmlFor="name">
                 Nombre <span className="text-red-500">*</span>
               </Label>
               <Input
-                id="nombre"
-                name="nombre"
-                value={formData.nombre}
+                id="name"
+                name="name"
+                value={formData.name}
                 onChange={handleChange}
                 placeholder="Nombre de la empresa"
-                className={errors.nombre ? "border-red-500" : ""}
+                className={errors.name ? "border-red-500" : ""}
               />
-              {errors.nombre && (
-                <p className="text-sm text-red-500">{errors.nombre}</p>
+              {errors.name && (
+                <p className="text-sm text-red-500">{errors.name}</p>
               )}
             </div>
 
             {/* Tipo */}
             <div className="space-y-2">
-              <Label htmlFor="tipo">
+              <Label htmlFor="type">
                 Tipo <span className="text-red-500">*</span>
               </Label>
-              <Select value={formData.tipo} onValueChange={handleSelectChange}>
-                <SelectTrigger id="tipo">
+              <Select value={formData.type} onValueChange={handleSelectChange}>
+                <SelectTrigger id="type">
                   <SelectValue placeholder="Selecciona el tipo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -233,37 +233,37 @@ export default function CompanyForm({ company, currentUserRole }: CompanyFormPro
             </div>
           </div>
 
-          {/* CIF/NIF */}
+          {/* NIF/CIF */}
           <div className="space-y-2">
-            <Label htmlFor="cif">
-              CIF/NIF <span className="text-red-500">*</span>
+            <Label htmlFor="nif">
+              NIF/CIF <span className="text-red-500">*</span>
             </Label>
             <Input
-              id="cif"
-              name="cif"
-              value={formData.cif}
+              id="nif"
+              name="nif"
+              value={formData.nif}
               onChange={handleChange}
               placeholder="B12345678 o 12345678A"
-              className={errors.cif ? "border-red-500" : ""}
+              className={errors.nif ? "border-red-500" : ""}
             />
-            {errors.cif && <p className="text-sm text-red-500">{errors.cif}</p>}
+            {errors.nif && <p className="text-sm text-red-500">{errors.nif}</p>}
           </div>
 
           {/* Dirección */}
           <div className="space-y-2">
-            <Label htmlFor="direccion">
+            <Label htmlFor="address">
               Dirección <span className="text-red-500">*</span>
             </Label>
             <Input
-              id="direccion"
-              name="direccion"
-              value={formData.direccion}
+              id="address"
+              name="address"
+              value={formData.address}
               onChange={handleChange}
               placeholder="Calle, número, ciudad, código postal"
-              className={errors.direccion ? "border-red-500" : ""}
+              className={errors.address ? "border-red-500" : ""}
             />
-            {errors.direccion && (
-              <p className="text-sm text-red-500">{errors.direccion}</p>
+            {errors.address && (
+              <p className="text-sm text-red-500">{errors.address}</p>
             )}
           </div>
         </CardContent>
@@ -281,20 +281,20 @@ export default function CompanyForm({ company, currentUserRole }: CompanyFormPro
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Teléfono */}
             <div className="space-y-2">
-              <Label htmlFor="telefono">
+              <Label htmlFor="phone">
                 Teléfono <span className="text-red-500">*</span>
               </Label>
               <Input
-                id="telefono"
-                name="telefono"
+                id="phone"
+                name="phone"
                 type="tel"
-                value={formData.telefono}
+                value={formData.phone}
                 onChange={handleChange}
                 placeholder="+34 600 000 000"
-                className={errors.telefono ? "border-red-500" : ""}
+                className={errors.phone ? "border-red-500" : ""}
               />
-              {errors.telefono && (
-                <p className="text-sm text-red-500">{errors.telefono}</p>
+              {errors.phone && (
+                <p className="text-sm text-red-500">{errors.phone}</p>
               )}
             </div>
 
