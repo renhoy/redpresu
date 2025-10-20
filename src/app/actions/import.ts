@@ -14,6 +14,7 @@ import { getServerUser } from '@/lib/auth/server'
 import type { ActionResult } from '@/lib/types/database'
 import { revalidatePath } from 'next/cache'
 import { detectIVAsPresentes } from '@/lib/validators/csv-converter'
+import { requireValidCompanyId } from '@/lib/helpers/company-validation'
 import {
   ImportTariffsArraySchema,
   ImportBudgetsArraySchema,
@@ -42,6 +43,15 @@ export async function importTariffs(
     // 2. Autorización (solo admin/superadmin)
     if (user.role === 'vendedor') {
       return { success: false, error: 'Sin permisos para importar tarifas' }
+    }
+
+    // SECURITY: Validar company_id obligatorio
+    let empresaId: number
+    try {
+      empresaId = requireValidCompanyId(user, '[importTariffs]')
+    } catch (error) {
+      log.error('[importTariffs] company_id inválido', { error })
+      return { success: false, error: 'Usuario sin empresa asignada' }
     }
 
     // 3. SECURITY: Validar tamaño de archivo
@@ -119,8 +129,8 @@ export async function importTariffs(
       // Construir tarifa limpia
       return {
         ...tariffData,
-        // Asignar a usuario actual
-        company_id: user.company_id,
+        // SECURITY: Asignar company_id validado
+        company_id: empresaId,
         user_id: user.id,
         // Forzar valores para importación
         is_template: false,
@@ -172,6 +182,15 @@ export async function importBudgets(
     const user = await getServerUser()
     if (!user) {
       return { success: false, error: 'No autenticado' }
+    }
+
+    // SECURITY: Validar company_id obligatorio
+    let empresaId: number
+    try {
+      empresaId = requireValidCompanyId(user, '[importBudgets]')
+    } catch (error) {
+      log.error('[importBudgets] company_id inválido', { error })
+      return { success: false, error: 'Usuario sin empresa asignada' }
     }
 
     // 2. Autorización (todos los roles pueden importar presupuestos)
@@ -241,7 +260,7 @@ export async function importBudgets(
             .from('redpresu_tariffs')
             .select('id')
             .eq('id', tariffId)
-            .eq('company_id', user.company_id)
+            .eq('company_id', empresaId)  // SECURITY: Usar empresaId validado
             .single()
 
           if (!tariffExists) {
@@ -255,8 +274,8 @@ export async function importBudgets(
           ...budget,
           // Asignar tarifa (null si no existe)
           tariff_id: tariffId,
-          // Asignar a usuario actual
-          company_id: user.company_id,
+          // SECURITY: Asignar company_id validado
+          company_id: empresaId,
           user_id: user.id,
           // Resetear relaciones de versiones
           parent_budget_id: null,
