@@ -1,5 +1,6 @@
 'use server'
 import { log } from '@/lib/logger'
+import { requireValidCompanyId } from '@/lib/helpers/company-validation'
 
 import { cookies } from 'next/headers'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
@@ -77,7 +78,7 @@ export async function getActiveTariffs(): Promise<Tariff[]> {
     // Obtener company_id del usuario
     const { data: userData, error: userError } = await supabase
       .from('redpresu_users')
-      .select('company_id')
+      .select('company_id, role')
       .eq('id', user.id)
       .single()
 
@@ -86,15 +87,16 @@ export async function getActiveTariffs(): Promise<Tariff[]> {
       return []
     }
 
-    // Si el usuario no tiene company_id (superadmin), usar empresa por defecto
-    let empresaId = userData?.company_id
-    if (!empresaId) {
-      log.info('[getActiveTariffs] Usuario sin company_id, obteniendo empresa por defecto...')
-      empresaId = await getDefaultEmpresaId()
-      log.info('[getActiveTariffs] Empresa por defecto obtenida:', empresaId)
+    // SECURITY: Validar company_id obligatorio
+    let empresaId: number
+    try {
+      empresaId = requireValidCompanyId(userData, '[getActiveTariffs]')
+    } catch (error) {
+      log.error('[getActiveTariffs] company_id inválido', { error })
+      return []
     }
 
-    log.info('[getActiveTariffs] Empresa ID:', empresaId)
+    log.info('[getActiveTariffs] Empresa ID validado:', empresaId)
 
     // Obtener tarifas activas de la empresa
     const { data: tariffs, error: tariffsError } = await supabaseAdmin
@@ -194,7 +196,7 @@ export async function createDraftBudget(data: {
     // Obtener company_id del usuario
     const { data: userData, error: userError } = await supabase
       .from('redpresu_users')
-      .select('company_id')
+      .select('company_id, role')
       .eq('id', user.id)
       .single()
 
@@ -203,12 +205,13 @@ export async function createDraftBudget(data: {
       return { success: false, error: 'Error obteniendo datos del usuario' }
     }
 
-    // Si el usuario no tiene company_id (superadmin), usar empresa por defecto
-    let empresaId = userData?.company_id
-    if (!empresaId) {
-      log.info('[createDraftBudget] Usuario sin company_id, obteniendo empresa por defecto...')
-      empresaId = await getDefaultEmpresaId()
-      log.info('[createDraftBudget] Empresa por defecto obtenida:', empresaId)
+    // SECURITY: Validar company_id obligatorio
+    let empresaId: number
+    try {
+      empresaId = requireValidCompanyId(userData, '[createDraftBudget]')
+    } catch (error) {
+      log.error('[createDraftBudget] company_id inválido', { error })
+      return { success: false, error: 'Usuario sin empresa asignada' }
     }
 
     // Calcular IVA
