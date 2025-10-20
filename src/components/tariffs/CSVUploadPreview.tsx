@@ -19,6 +19,7 @@ import {
 import { HierarchyPreview } from "./HierarchyPreview";
 import { processCSV } from "@/app/actions/tariffs";
 import { CSV2JSONConverter } from "@/lib/validators/csv-converter";
+import { validateCSVFile } from "@/lib/helpers/file-validation";
 
 interface CSVUploadPreviewProps {
   data: unknown;
@@ -45,6 +46,14 @@ export function CSVUploadPreview({
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    // SECURITY (VULN-015): Validar tipo y tamaño de archivo
+    const validation = validateCSVFile(file);
+    if (!validation.valid) {
+      setProcessingErrors([{ message: validation.error }]);
+      event.target.value = "";
+      return;
+    }
 
     setIsProcessing(true);
     setProcessingErrors([]);

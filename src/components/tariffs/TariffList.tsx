@@ -35,6 +35,7 @@ import { importTariffs } from "@/app/actions/import";
 import { downloadFile } from "@/lib/helpers/export-helpers";
 import { Database } from "@/lib/types/database.types";
 import { toast } from "sonner";
+import { validateJSONFile } from "@/lib/helpers/file-validation";
 
 type Tariff = Database["public"]["Tables"]["tariffs"]["Row"];
 
@@ -187,15 +188,11 @@ export function TariffList({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validar extensión
-    if (!file.name.endsWith(".json")) {
-      toast.error("Solo se permiten archivos JSON");
-      return;
-    }
-
-    // Validar tamaño (máximo 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("El archivo es demasiado grande (máximo 5MB)");
+    // SECURITY (VULN-015): Validar tipo y tamaño de archivo
+    const validation = validateJSONFile(file);
+    if (!validation.valid) {
+      toast.error(validation.error || "Archivo no válido");
+      e.target.value = ""; // Limpiar input
       return;
     }
 
@@ -400,7 +397,7 @@ export function TariffList({
             </div>
           ) : (
             <table className="w-full">
-              <thead className="bg-muted">
+              <thead className="bg-muted bg-indigo-50">
                 <tr>
                   <th className="text-left p-4 font-medium w-12">
                     <Checkbox

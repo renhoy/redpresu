@@ -17,6 +17,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { uploadLogo } from '@/app/actions/tariffs'
+import { validateImageFile } from '@/lib/helpers/file-validation'
 
 interface LogoUploaderProps {
   value: string
@@ -118,17 +119,10 @@ export function LogoUploader({ value, onChange, error, disabled }: LogoUploaderP
   }
 
   const processFileUpload = async (file: File) => {
-    // Validar tipo de archivo
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml']
-    if (!validTypes.includes(file.type)) {
-      setUrlValidationMessage('❌ Tipo de archivo no válido. Solo se permiten JPG, PNG, SVG')
-      return
-    }
-
-    // Validar tamaño (2MB)
-    const maxSize = 2 * 1024 * 1024
-    if (file.size > maxSize) {
-      setUrlValidationMessage('❌ El archivo es demasiado grande. Máximo 2MB')
+    // SECURITY (VULN-015): Validar tipo y tamaño de archivo
+    const validation = validateImageFile(file)
+    if (!validation.valid) {
+      setUrlValidationMessage(`❌ ${validation.error}`)
       return
     }
 

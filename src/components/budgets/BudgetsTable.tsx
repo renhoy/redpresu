@@ -41,6 +41,7 @@ import {
   Upload,
   Plus,
   Eye,
+  Layers,
   FilePlus,
   Copy,
 } from "lucide-react";
@@ -57,6 +58,7 @@ import { importBudgets } from "@/app/actions/import";
 import { downloadFile } from "@/lib/helpers/export-helpers";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { validateJSONFile } from "@/lib/helpers/file-validation";
 import Link from "next/link";
 import { BudgetNotesIcon } from "./BudgetNotesIcon";
 import { BudgetCard } from "./BudgetCard";
@@ -336,15 +338,11 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validar extensión
-    if (!file.name.endsWith(".json")) {
-      toast.error("Solo se permiten archivos JSON");
-      return;
-    }
-
-    // Validar tamaño (máximo 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("El archivo es demasiado grande (máximo 5MB)");
+    // SECURITY (VULN-015): Validar tipo y tamaño de archivo
+    const validation = validateJSONFile(file);
+    if (!validation.valid) {
+      toast.error(validation.error || "Archivo no válido");
+      e.target.value = ""; // Limpiar input
       return;
     }
 
@@ -485,7 +483,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
               {/* Datos del cliente */}
               <div className="space-y-1 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-medium">
+                  <span className="font-medium text-xs">
                     {budget.client_name} ({budget.client_nif_nie || "N/A"})
                   </span>
                   <Badge variant="secondary" className="text-xs">
@@ -496,6 +494,8 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
                       v{budget.version_number}
                     </Badge>
                   )}
+                  {/* Icono de notas */}
+                  <BudgetNotesIcon budgetId={budget.id} />
                 </div>
                 {days && budget.start_date && budget.end_date && (
                   <div
@@ -511,9 +511,6 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
                   </div>
                 )}
               </div>
-
-              {/* Icono de notas */}
-              <BudgetNotesIcon budgetId={budget.id} />
             </div>
           </td>
 
@@ -523,7 +520,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
                 <TooltipTrigger asChild>
                   <Button variant="outline" size="icon" asChild>
                     <Link href={`/tariffs?tariff_id=${budget.tariff_id}`}>
-                      <FileText className="h-4 w-4" />
+                      <Layers className="h-4 w-4" />
                     </Link>
                   </Button>
                 </TooltipTrigger>
@@ -538,7 +535,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="cursor-help" style={{ fontSize: "14px" }}>
+                  <span className="cursor-help" style={{ fontSize: "12px" }}>
                     {formatCurrency(budget.total || 0)}
                   </span>
                 </TooltipTrigger>
@@ -638,11 +635,15 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
                           variant="outline"
                           size="icon"
                           onClick={async () => {
-                            const result = await getBudgetPDFSignedUrl(budget.id);
+                            const result = await getBudgetPDFSignedUrl(
+                              budget.id
+                            );
                             if (result.success && result.signedUrl) {
                               window.open(result.signedUrl, "_blank");
                             } else {
-                              toast.error(result.error || "Error obteniendo PDF");
+                              toast.error(
+                                result.error || "Error obteniendo PDF"
+                              );
                             }
                           }}
                         >
@@ -867,7 +868,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
       <div className="hidden lg:block border rounded-lg overflow-hidden bg-white">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-muted">
+            <thead className="bg-muted bg-lime-200">
               <tr>
                 <th className="text-left p-4 font-medium w-12">
                   <Checkbox
@@ -878,8 +879,12 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
                 <th className="text-left p-4 font-medium w-[40%]">Cliente</th>
                 <th className="text-center p-4 font-medium w-[60px]">Tarifa</th>
                 <th className="text-right p-4 font-medium w-[150px]">Total</th>
-                <th className="text-left p-4 font-medium w-[120px]">Estado</th>
-                <th className="text-left p-4 font-medium w-[120px]">Usuario</th>
+                <th className="text-center p-4 font-medium w-[120px]">
+                  Estado
+                </th>
+                <th className="text-center p-4 font-medium w-[120px]">
+                  Usuario
+                </th>
                 <th className="text-center p-4 font-medium w-[60px]">PDF</th>
                 <th className="text-right p-4 font-medium w-[120px]">
                   Acciones

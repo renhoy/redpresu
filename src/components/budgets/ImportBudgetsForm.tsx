@@ -21,6 +21,7 @@ import {
 import { importBudgets } from "@/app/actions/import";
 import { toast } from "sonner";
 import Link from "next/link";
+import { validateJSONFile } from "@/lib/helpers/file-validation";
 
 export function ImportBudgetsForm() {
   const router = useRouter();
@@ -37,16 +38,10 @@ export function ImportBudgetsForm() {
       return;
     }
 
-    // Validar tipo de archivo
-    if (!selectedFile.name.endsWith(".json")) {
-      setError("Solo se permiten archivos JSON");
-      setFile(null);
-      return;
-    }
-
-    // Validar tamaño (máximo 5MB)
-    if (selectedFile.size > 5 * 1024 * 1024) {
-      setError("El archivo es demasiado grande (máximo 5MB)");
+    // SECURITY (VULN-015): Validar tipo y tamaño de archivo
+    const validation = validateJSONFile(selectedFile);
+    if (!validation.valid) {
+      setError(validation.error || "Archivo no válido");
       setFile(null);
       return;
     }
