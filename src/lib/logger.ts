@@ -78,6 +78,7 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 const logLevel = process.env.LOG_LEVEL || (isDevelopment ? 'debug' : 'warn');
 
 // Logger con redacción automática
+// NOTA: No usar pino-pretty en Next.js serverless (causa crashes)
 export const logger = pino({
   level: logLevel,
 
@@ -89,22 +90,19 @@ export const logger = pino({
     err: (err: any) => redact(err),
   },
 
-  // Formateo pretty en desarrollo
-  transport: isDevelopment
-    ? {
-        target: 'pino-pretty',
-        options: {
-          colorize: true,
-          translateTime: 'SYS:standard',
-          ignore: 'pid,hostname',
-        },
-      }
-    : undefined,
-
   // Base para todos los logs
   base: {
     env: process.env.NODE_ENV,
   },
+
+  // Formateo simple en desarrollo (sin pino-pretty)
+  ...(isDevelopment && {
+    formatters: {
+      level: (label: string) => {
+        return { level: label };
+      },
+    },
+  }),
 });
 
 /**
