@@ -45,11 +45,11 @@ export default function CompanyTable({ companies: initialCompanies }: CompanyTab
   const router = useRouter();
 
   const handleDelete = async () => {
-    if (!selectedCompany) return;
+    if (!selectedCompany || !selectedCompany.uuid) return;
 
     setIsLoading(true);
 
-    const result = await deleteCompany(selectedCompany.id.toString());
+    const result = await deleteCompany(selectedCompany.uuid);
 
     if (result.success) {
       toast.success(`Empresa "${selectedCompany.name}" eliminada correctamente`);
@@ -119,9 +119,16 @@ export default function CompanyTable({ companies: initialCompanies }: CompanyTab
                   <TableCell className="p-4">
                     <div className="flex items-center gap-2">
                       <Building2 className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <div className="font-medium" style={{ fontSize: "12px" }}>
-                          {company.name}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <div className="font-medium" style={{ fontSize: "12px" }}>
+                            {company.name}
+                          </div>
+                          {company.id === 1 && (
+                            <Badge className="bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0">
+                              Por defecto
+                            </Badge>
+                          )}
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {company.address}
@@ -220,7 +227,7 @@ export default function CompanyTable({ companies: initialCompanies }: CompanyTab
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button variant="outline" size="icon" asChild>
-                              <Link href={`/companies/${company.id}/edit`}>
+                              <Link href={`/companies/${company.uuid}/edit`}>
                                 <Pencil className="h-4 w-4" />
                               </Link>
                             </Button>
@@ -240,13 +247,22 @@ export default function CompanyTable({ companies: initialCompanies }: CompanyTab
                                 setSelectedCompany(company);
                                 setIsDeleteDialogOpen(true);
                               }}
-                              className="border-red-500 text-red-600 hover:bg-red-50"
+                              disabled={company.id === 1}
+                              className={
+                                company.id === 1
+                                  ? "opacity-50 cursor-not-allowed"
+                                  : "border-red-500 text-red-600 hover:bg-red-50"
+                              }
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>Eliminar</p>
+                            <p>
+                              {company.id === 1
+                                ? "Empresa por defecto - No se puede eliminar"
+                                : "Eliminar"}
+                            </p>
                           </TooltipContent>
                         </Tooltip>
                       </div>

@@ -4,7 +4,8 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export interface Company {
-  id: string; // UUID en redpresu_issuers
+  id: number; // company_id (número, ej: 1, 2, 3...)
+  uuid?: string; // UUID del emisor en redpresu_issuers (opcional)
   user_id: string;
   company_id: number;
   type: "empresa" | "autonomo";
@@ -103,6 +104,8 @@ export async function getCompanies(): Promise<ActionResult> {
 
         return {
           ...issuer,
+          id: issuer.company_id, // Usar company_id como id principal
+          uuid: issuer.id, // Guardar UUID del emisor
           user_count: userCount || 0,
           tariff_count: tariffCount || 0,
           budget_count: budgetCount || 0,
@@ -260,6 +263,15 @@ export async function deleteCompany(companyId: string): Promise<ActionResult> {
     if (companyError || !company) {
       console.error("[deleteCompany] Empresa no encontrada:", companyError);
       return { success: false, error: "Empresa no encontrada" };
+    }
+
+    // PROTECCIÓN: No permitir eliminar la empresa por defecto (company_id = 1)
+    if (company.company_id === 1) {
+      console.error("[deleteCompany] Intento de eliminar empresa por defecto");
+      return {
+        success: false,
+        error: "No se puede eliminar la empresa por defecto del sistema",
+      };
     }
 
     console.log(
