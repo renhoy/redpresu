@@ -7,7 +7,12 @@
  * - customer.subscription.deleted: Cancelación
  * - invoice.payment_failed: Pago fallido
  *
- * SECURITY: Rate limiting implementado para prevenir DoS
+ * SECURITY (VULN-011):
+ * - Rate limiting para prevenir DoS
+ * - Validación estricta de metadata (company_id, plan_id)
+ * - Verificación de existencia de empresa en BD
+ * - Validación de ownership antes de actualizar suscripciones
+ * - Prevención de inyección SQL via metadata maliciosa
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -16,6 +21,13 @@ import { getStripeClient } from '@/lib/stripe';
 import { createClient } from '@supabase/supabase-js';
 import type Stripe from 'stripe';
 import { log } from '@/lib/logger';
+import {
+  validateCheckoutMetadata,
+  validateSubscriptionMetadata,
+  validateCompanyExists,
+  validateSubscriptionOwnership,
+  type AllowedPlan
+} from '@/lib/helpers/stripe-validation';
 
 // Cliente Supabase con service_role para bypass RLS
 const supabaseAdmin = createClient(
@@ -190,12 +202,26 @@ export async function POST(req: NextRequest) {
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   log.info('[handleCheckoutCompleted] Processing session', { sessionId: session.id });
 
-  const companyId = session.metadata?.company_id;
-  const planId = session.metadata?.plan_id;
+  // SECURITY: Validar metadata (VULN-011)
+  const metadataValidation = validateCheckoutMetadata(session.metadata);
+  if (!metadataValidation.valid) {
+    log.error('[handleCheckoutCompleted] Invalid metadata', {
+      error: metadataValidation.error,
+      metadata: session.metadata
+    });
+    throw new Error(metadataValidation.error);
+  }
 
-  if (!companyId || !planId) {
-    log.error('[handleCheckoutCompleted] Missing metadata');
-    return;
+  const { companyId, planId } = metadataValidation.data!;
+
+  // SECURITY: Verificar que la empresa existe (VULN-011)
+  const companyExists = await validateCompanyExists(supabaseAdmin, companyId);
+  if (!companyExists.valid) {
+    log.error('[handleCheckoutCompleted] Company validation failed', {
+      error: companyExists.error,
+      companyId
+    });
+    throw new Error(companyExists.error);
   }
 
   const subscriptionId = session.subscription as string;
@@ -204,8 +230,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const { error } = await supabaseAdmin
     .from('redpresu_subscriptions')
     .upsert({
-      company_id: parseInt(companyId),
-      plan: planId,
+      company_id: companyId,
+      plan: planId as AllowedPlan,
       stripe_customer_id: session.customer as string,
       stripe_subscription_id: subscriptionId,
       status: 'active',
@@ -217,7 +243,11 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     throw error;
   }
 
-  log.info('[handleCheckoutCompleted] Subscription created', { subscriptionId });
+  log.info('[handleCheckoutCompleted] Subscription created', {
+    subscriptionId,
+    companyId,
+    plan: planId
+  });
 }
 
 /**
@@ -226,11 +256,31 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   log.info('[handleSubscriptionUpdated] Processing subscription', { subscriptionId: subscription.id });
 
-  const companyId = subscription.metadata?.company_id;
+  // SECURITY: Validar metadata (VULN-011)
+  const metadataValidation = validateSubscriptionMetadata(subscription.metadata);
+  if (!metadataValidation.valid) {
+    log.error('[handleSubscriptionUpdated] Invalid metadata', {
+      error: metadataValidation.error,
+      metadata: subscription.metadata
+    });
+    throw new Error(metadataValidation.error);
+  }
 
-  if (!companyId) {
-    log.error('[handleSubscriptionUpdated] Missing company_id');
-    return;
+  const { companyId } = metadataValidation.data!;
+
+  // SECURITY: Verificar ownership de la suscripción (VULN-011)
+  const ownershipValidation = await validateSubscriptionOwnership(
+    supabaseAdmin,
+    subscription.id,
+    companyId
+  );
+  if (!ownershipValidation.valid) {
+    log.error('[handleSubscriptionUpdated] Ownership validation failed', {
+      error: ownershipValidation.error,
+      subscriptionId: subscription.id,
+      companyId
+    });
+    throw new Error(ownershipValidation.error);
   }
 
   // Mapear status de Stripe a nuestro status
@@ -267,7 +317,11 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     throw error;
   }
 
-  log.info('[handleSubscriptionUpdated] Status updated', { status });
+  log.info('[handleSubscriptionUpdated] Status updated', {
+    status,
+    companyId,
+    subscriptionId: subscription.id
+  });
 }
 
 /**
@@ -275,6 +329,33 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
  */
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   log.info('[handleSubscriptionDeleted] Processing deletion', { subscriptionId: subscription.id });
+
+  // SECURITY: Validar metadata (VULN-011)
+  const metadataValidation = validateSubscriptionMetadata(subscription.metadata);
+  if (!metadataValidation.valid) {
+    log.error('[handleSubscriptionDeleted] Invalid metadata', {
+      error: metadataValidation.error,
+      metadata: subscription.metadata
+    });
+    throw new Error(metadataValidation.error);
+  }
+
+  const { companyId } = metadataValidation.data!;
+
+  // SECURITY: Verificar ownership de la suscripción (VULN-011)
+  const ownershipValidation = await validateSubscriptionOwnership(
+    supabaseAdmin,
+    subscription.id,
+    companyId
+  );
+  if (!ownershipValidation.valid) {
+    log.error('[handleSubscriptionDeleted] Ownership validation failed', {
+      error: ownershipValidation.error,
+      subscriptionId: subscription.id,
+      companyId
+    });
+    throw new Error(ownershipValidation.error);
+  }
 
   // Revertir a plan free
   const { error } = await supabaseAdmin
@@ -295,7 +376,10 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     throw error;
   }
 
-  log.info('[handleSubscriptionDeleted] Reverted to free plan');
+  log.info('[handleSubscriptionDeleted] Reverted to free plan', {
+    companyId,
+    subscriptionId: subscription.id
+  });
 }
 
 /**
@@ -309,6 +393,51 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
   if (!subscriptionId) {
     log.info('[handlePaymentFailed] No subscription found');
     return;
+  }
+
+  // SECURITY: Obtener suscripción de Stripe para validar metadata (VULN-011)
+  const stripe = getStripeClient();
+  if (!stripe) {
+    log.error('[handlePaymentFailed] Stripe not configured');
+    throw new Error('Stripe not configured');
+  }
+
+  let subscription: Stripe.Subscription;
+  try {
+    subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  } catch (error) {
+    log.error('[handlePaymentFailed] Failed to retrieve subscription from Stripe', {
+      subscriptionId,
+      error
+    });
+    throw error;
+  }
+
+  // SECURITY: Validar metadata (VULN-011)
+  const metadataValidation = validateSubscriptionMetadata(subscription.metadata);
+  if (!metadataValidation.valid) {
+    log.error('[handlePaymentFailed] Invalid metadata', {
+      error: metadataValidation.error,
+      metadata: subscription.metadata
+    });
+    throw new Error(metadataValidation.error);
+  }
+
+  const { companyId } = metadataValidation.data!;
+
+  // SECURITY: Verificar ownership (VULN-011)
+  const ownershipValidation = await validateSubscriptionOwnership(
+    supabaseAdmin,
+    subscriptionId,
+    companyId
+  );
+  if (!ownershipValidation.valid) {
+    log.error('[handlePaymentFailed] Ownership validation failed', {
+      error: ownershipValidation.error,
+      subscriptionId,
+      companyId
+    });
+    throw new Error(ownershipValidation.error);
   }
 
   // Marcar como past_due
@@ -325,7 +454,10 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
     throw error;
   }
 
-  log.warn('[handlePaymentFailed] Marked as past_due');
+  log.warn('[handlePaymentFailed] Marked as past_due', {
+    subscriptionId,
+    companyId
+  });
 
   // TODO: Enviar email notificación al usuario
 }
