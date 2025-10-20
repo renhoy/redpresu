@@ -6,11 +6,11 @@ import { HelpIndex } from "@/components/help/HelpIndex";
 import { BookOpen, HelpCircle } from "lucide-react";
 import { getServerUser } from "@/lib/auth/server";
 import { redirect } from "next/navigation";
+import { generatePageMetadata } from "@/lib/helpers/metadata-helpers";
 
-export const metadata = {
-  title: "Ayuda - Respresu",
-  description: "Centro de ayuda y documentación de la aplicación",
-};
+export async function generateMetadata() {
+  return generatePageMetadata("Ayuda", "Centro de ayuda y documentación de la aplicación");
+}
 
 export default async function HelpPage() {
   // Obtener usuario autenticado

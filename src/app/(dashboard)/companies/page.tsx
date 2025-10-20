@@ -3,11 +3,11 @@ import { getServerUser } from "@/lib/auth/server";
 import { getCompanies } from "@/app/actions/companies";
 import { Building2 } from "lucide-react";
 import CompanyTable from "@/components/companies/CompanyTable";
+import { generatePageMetadata } from "@/lib/helpers/metadata-helpers";
 
-export const metadata = {
-  title: "Gestión de Empresas - Respresu",
-  description: "Administrar empresas del sistema",
-};
+export async function generateMetadata() {
+  return generatePageMetadata("Gestión de Empresas", "Administrar empresas del sistema");
+}
 
 export default async function CompaniesPage() {
   const user = await getServerUser();

@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
 import { getServerUser } from "@/lib/auth/server";
 import UserForm from "@/components/users/UserForm";
+import { generatePageMetadata } from "@/lib/helpers/metadata-helpers";
 
-export const metadata = {
-  title: "Crear Usuario - Respresu",
-  description: "Invitar nuevo usuario a la empresa",
-};
+export async function generateMetadata() {
+  return generatePageMetadata("Crear Usuario", "Invitar nuevo usuario a la empresa");
+}
 
 export default async function CreateUserPage() {
   const user = await getServerUser();

@@ -3,11 +3,11 @@ import { getServerUser } from "@/lib/auth/server";
 import { getCurrentSubscription } from "@/app/actions/subscriptions";
 import { isSubscriptionsEnabled } from "@/lib/stripe";
 import { SubscriptionsClient } from "@/components/subscriptions/SubscriptionsClient";
+import { generatePageMetadata } from "@/lib/helpers/metadata-helpers";
 
-export const metadata = {
-  title: "Suscripciones - Respresu",
-  description: "Gestiona tu plan de suscripción",
-};
+export async function generateMetadata() {
+  return generatePageMetadata("Suscripciones", "Gestiona tu plan de suscripción");
+}
 
 export default async function SubscriptionsPage() {
   const user = await getServerUser();

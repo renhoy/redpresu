@@ -5,11 +5,11 @@ import { getUsers } from "@/app/actions/users";
 import { Button } from "@/components/ui/button";
 import { Plus, Users } from "lucide-react";
 import UserTable from "@/components/users/UserTable";
+import { generatePageMetadata } from "@/lib/helpers/metadata-helpers";
 
-export const metadata = {
-  title: "Gestión de Usuarios - Respresu",
-  description: "Administrar usuarios de la empresa",
-};
+export async function generateMetadata() {
+  return generatePageMetadata("Gestión de Usuarios", "Administrar usuarios de la empresa");
+}
 
 export default async function UsersPage() {
   const user = await getServerUser();

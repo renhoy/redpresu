@@ -2,11 +2,11 @@ import { redirect } from "next/navigation";
 import { getServerUser } from "@/lib/auth/server";
 import { getCompanyById } from "@/app/actions/companies";
 import CompanyForm from "@/components/companies/CompanyForm";
+import { generatePageMetadata } from "@/lib/helpers/metadata-helpers";
 
-export const metadata = {
-  title: "Editar Empresa - Respresu",
-  description: "Modificar datos de la empresa",
-};
+export async function generateMetadata() {
+  return generatePageMetadata("Editar Empresa", "Modificar datos de la empresa");
+}
 
 export default async function EditCompanyPage() {
   const user = await getServerUser();

@@ -3,11 +3,11 @@ import { getServerUser } from "@/lib/auth/server";
 import { getAllConfig } from "@/app/actions/config";
 import { ConfigTable } from "@/components/settings/ConfigTable";
 import { Settings } from "lucide-react";
+import { generatePageMetadata } from "@/lib/helpers/metadata-helpers";
 
-export const metadata = {
-  title: "Configuración del Sistema - Respresu",
-  description: "Configuración global del sistema (solo superadmin)",
-};
+export async function generateMetadata() {
+  return generatePageMetadata("Configuración del Sistema", "Configuración global del sistema (solo superadmin)");
+}
 
 export default async function SettingsPage() {
   // Verificar autenticación y rol

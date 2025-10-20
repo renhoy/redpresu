@@ -2,11 +2,11 @@ import { redirect, notFound } from "next/navigation";
 import { getServerUser } from "@/lib/auth/server";
 import { getUserById } from "@/app/actions/users";
 import UserForm from "@/components/users/UserForm";
+import { generatePageMetadata } from "@/lib/helpers/metadata-helpers";
 
-export const metadata = {
-  title: "Editar Usuario - Respresu",
-  description: "Modificar datos del usuario",
-};
+export async function generateMetadata() {
+  return generatePageMetadata("Editar Usuario", "Modificar datos del usuario");
+}
 
 interface EditUserPageProps {
   params: Promise<{
