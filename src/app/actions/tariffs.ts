@@ -325,19 +325,22 @@ export async function createTariff(data: TariffFormData): Promise<{
     log.info('[createTariff] Obteniendo datos del usuario...')
     const { data: userData, error: userError } = await supabase
       .from('redpresu_users')
-      .select('company_id')
+      .select('company_id, role')
       .eq('id', user.id)
       .single()
 
-    log.info('[createTariff] User data:', {
-      hasUserData: !!userData,
-      companyId: userData?.company_id,
-      userError: userError?.message
-    })
-
-    if (userError || !userData?.company_id) {
+    if (userError) {
       log.error('[createTariff] User data error:', userError)
       return { success: false, error: 'No se pudo obtener la empresa del usuario' }
+    }
+
+    // SECURITY: Validar company_id obligatorio
+    let companyId: number
+    try {
+      companyId = requireValidCompanyId(userData, '[createTariff]')
+    } catch (error) {
+      log.error('[createTariff] company_id inválido', { error })
+      return { success: false, error: 'Usuario sin empresa asignada' }
     }
 
     // Detectar IVAs presentes en los datos de la tarifa
@@ -364,7 +367,7 @@ export async function createTariff(data: TariffFormData): Promise<{
     const { error } = await supabase
       .from('redpresu_tariffs')
       .insert({
-        company_id: userData.company_id,
+        company_id: companyId,
         user_id: user.id, // Añadir trazabilidad de creación
         title: data.title,
         description: data.description,
@@ -529,12 +532,21 @@ export async function setTariffAsTemplate(tariffId: string): Promise<{
       return { success: false, error: 'No tienes permisos para establecer plantillas' }
     }
 
+    // SECURITY: Validar company_id obligatorio
+    let companyId: number
+    try {
+      companyId = requireValidCompanyId(userData, '[setTariffAsTemplate]')
+    } catch (error) {
+      log.error('[setTariffAsTemplate] company_id inválido', { error })
+      return { success: false, error: 'Usuario sin empresa asignada' }
+    }
+
     // Marcar como plantilla (el trigger se encargará de desmarcar las demás)
     const { error } = await supabase
       .from('redpresu_tariffs')
       .update({ is_template: true })
       .eq('id', tariffId)
-      .eq('company_id', userData.company_id) // Seguridad: solo su empresa
+      .eq('company_id', companyId) // Seguridad: solo su empresa
 
     if (error) {
       log.error('[setTariffAsTemplate] Error:', error)
@@ -582,12 +594,21 @@ export async function unsetTariffAsTemplate(tariffId: string): Promise<{
       return { success: false, error: 'No tienes permisos para modificar plantillas' }
     }
 
+    // SECURITY: Validar company_id obligatorio
+    let companyId: number
+    try {
+      companyId = requireValidCompanyId(userData, '[unsetTariffAsTemplate]')
+    } catch (error) {
+      log.error('[unsetTariffAsTemplate] company_id inválido', { error })
+      return { success: false, error: 'Usuario sin empresa asignada' }
+    }
+
     // Desmarcar como plantilla
     const { error } = await supabase
       .from('redpresu_tariffs')
       .update({ is_template: false })
       .eq('id', tariffId)
-      .eq('company_id', userData.company_id) // Seguridad: solo su empresa
+      .eq('company_id', companyId) // Seguridad: solo su empresa
 
     if (error) {
       log.error('[unsetTariffAsTemplate] Error:', error)
@@ -917,13 +938,22 @@ export async function duplicateTariff(tariffId: string): Promise<{
     // Obtener company_id del usuario
     const { data: userData, error: userError } = await supabase
       .from('redpresu_users')
-      .select('company_id')
+      .select('company_id, role')
       .eq('id', user.id)
       .single()
 
-    if (userError || !userData?.company_id) {
+    if (userError) {
       log.error('[duplicateTariff] Error obteniendo usuario:', userError)
       return { success: false, error: 'No se pudo obtener la empresa del usuario' }
+    }
+
+    // SECURITY: Validar company_id obligatorio
+    let companyId: number
+    try {
+      companyId = requireValidCompanyId(userData, '[duplicateTariff]')
+    } catch (error) {
+      log.error('[duplicateTariff] company_id inválido', { error })
+      return { success: false, error: 'Usuario sin empresa asignada' }
     }
 
     // Obtener tarifa original
@@ -939,7 +969,7 @@ export async function duplicateTariff(tariffId: string): Promise<{
     }
 
     // Verificar que la tarifa pertenece a la empresa del usuario
-    if (originalTariff.company_id !== userData.company_id) {
+    if (originalTariff.company_id !== companyId) {
       log.error('[duplicateTariff] Tarifa no pertenece a la empresa del usuario')
       return { success: false, error: 'No tienes permisos para duplicar esta tarifa' }
     }
