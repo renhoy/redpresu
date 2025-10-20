@@ -1,6 +1,7 @@
 'use server'
 import { log } from '@/lib/logger'
 import { requireValidCompanyId } from '@/lib/helpers/company-validation'
+import { sanitizeError } from '@/lib/helpers/error-helpers'
 
 import { cookies } from 'next/headers'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
@@ -660,8 +661,13 @@ export async function saveBudget(
     return { success: true, had_pdf: hadPdf }
 
   } catch (error) {
-    log.error('[saveBudget] Error crítico:', error)
-    return { success: false, error: 'Error interno del servidor' }
+    // SECURITY (VULN-013): Sanitizar error para producción
+    const sanitized = sanitizeError(error, {
+      context: 'saveBudget',
+      category: 'database',
+      metadata: { budgetId }
+    })
+    return { success: false, error: sanitized.userMessage }
   }
 }
 
@@ -703,6 +709,18 @@ export async function duplicateBudget(
       return { success: false, error: 'No autenticado' }
     }
 
+    // SECURITY: Obtener datos del usuario actual (VULN-010)
+    const { data: userData, error: userError } = await supabase
+      .from('redpresu_users')
+      .select('company_id, role')
+      .eq('id', user.id)
+      .single()
+
+    if (userError || !userData) {
+      log.error('[duplicateBudget] Error obteniendo usuario:', userError)
+      return { success: false, error: 'Usuario no encontrado' }
+    }
+
     // Obtener budget original para copiar datos base
     const { data: originalBudget, error: budgetError } = await supabaseAdmin
       .from('redpresu_budgets')
@@ -713,6 +731,22 @@ export async function duplicateBudget(
     if (budgetError || !originalBudget) {
       log.error('[duplicateBudget] Budget original no encontrado:', budgetError)
       return { success: false, error: 'Presupuesto original no encontrado' }
+    }
+
+    // SECURITY: Validar ownership del presupuesto original (VULN-010)
+    if (originalBudget.user_id !== user.id) {
+      log.error('[duplicateBudget] Usuario no autorizado para duplicar este presupuesto')
+      return { success: false, error: 'No autorizado' }
+    }
+
+    // SECURITY: Validar company_id (defensa en profundidad)
+    if (originalBudget.company_id !== userData.company_id) {
+      log.error('[duplicateBudget] Intento de acceso cross-company:', {
+        userId: user.id,
+        userCompany: userData.company_id,
+        budgetCompany: originalBudget.company_id
+      })
+      return { success: false, error: 'No autorizado' }
     }
 
     // Calcular IVA
@@ -1000,7 +1034,19 @@ export async function getBudgetById(
       return null
     }
 
-    // Obtener budget (RLS se encargará de verificar permisos)
+    // SECURITY: Obtener datos del usuario actual (VULN-010)
+    const { data: userData, error: userError } = await supabase
+      .from('redpresu_users')
+      .select('company_id, role')
+      .eq('id', user.id)
+      .single()
+
+    if (userError || !userData) {
+      log.error('[getBudgetById] Error obteniendo usuario:', userError)
+      return null
+    }
+
+    // Obtener budget (RLS se encargará de verificar permisos, pero añadimos defensa en profundidad)
     const { data: budget, error: budgetError } = await supabase
       .from('redpresu_budgets')
       .select('*')
@@ -1009,6 +1055,17 @@ export async function getBudgetById(
 
     if (budgetError || !budget) {
       log.error('[getBudgetById] Budget no encontrado:', budgetError)
+      return null
+    }
+
+    // SECURITY: Validar ownership/company_id (defensa en profundidad sobre RLS) - VULN-010
+    if (budget.user_id !== user.id && budget.company_id !== userData.company_id) {
+      log.error('[getBudgetById] Usuario no autorizado:', {
+        userId: user.id,
+        budgetUserId: budget.user_id,
+        userCompany: userData.company_id,
+        budgetCompany: budget.company_id
+      })
       return null
     }
 
@@ -1060,6 +1117,18 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
       return { success: false, error: 'No autenticado' }
     }
 
+    // SECURITY: Obtener datos del usuario actual (VULN-010)
+    const { data: userData, error: userError } = await supabase
+      .from('redpresu_users')
+      .select('company_id, role')
+      .eq('id', user.id)
+      .single()
+
+    if (userError || !userData) {
+      log.error('[generateBudgetPDF] Error obteniendo usuario:', userError)
+      return { success: false, error: 'Usuario no encontrado' }
+    }
+
     // Obtener budget con join a tariff
     const { data: budget, error: budgetError } = await supabase
       .from('redpresu_budgets')
@@ -1073,6 +1142,22 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
     if (budgetError || !budget) {
       log.error('[generateBudgetPDF] Budget no encontrado:', budgetError)
       return { success: false, error: 'Presupuesto no encontrado' }
+    }
+
+    // SECURITY: Validar ownership (VULN-010)
+    if (budget.user_id !== user.id) {
+      log.error('[generateBudgetPDF] Usuario no autorizado')
+      return { success: false, error: 'No autorizado' }
+    }
+
+    // SECURITY: Validar company_id (defensa en profundidad)
+    if (budget.company_id !== userData.company_id) {
+      log.error('[generateBudgetPDF] Intento de acceso cross-company:', {
+        userId: user.id,
+        userCompany: userData.company_id,
+        budgetCompany: budget.company_id
+      })
+      return { success: false, error: 'No autorizado' }
     }
 
     // Validar que exista tariff
@@ -1258,8 +1343,13 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
     }
 
   } catch (error) {
-    log.error('[generateBudgetPDF] Error crítico:', error)
-    return { success: false, error: 'Error generando PDF' }
+    // SECURITY (VULN-013): Sanitizar error para producción
+    const sanitized = sanitizeError(error, {
+      context: 'generateBudgetPDF',
+      category: 'network',
+      metadata: { budgetId }
+    })
+    return { success: false, error: sanitized.userMessage }
   }
 }
 
@@ -1463,8 +1553,13 @@ export async function deleteBudget(budgetId: string): Promise<{
     return { success: true }
 
   } catch (error) {
-    log.error('[deleteBudget] Error crítico:', error)
-    return { success: false, error: 'Error interno del servidor' }
+    // SECURITY (VULN-013): Sanitizar error para producción
+    const sanitized = sanitizeError(error, {
+      context: 'deleteBudget',
+      category: 'database',
+      metadata: { budgetId }
+    })
+    return { success: false, error: sanitized.userMessage }
   }
 }
 

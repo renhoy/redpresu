@@ -1,5 +1,6 @@
 'use server'
 import { log } from '@/lib/logger'
+import { sanitizeError } from '@/lib/helpers/error-helpers'
 
 import { cookies } from 'next/headers'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
@@ -69,16 +70,21 @@ export async function signInAction(email: string, password: string): Promise<Sig
     }
 
   } catch (error) {
-    log.error('[Server Action] Error crítico:', error)
-
     // Si es un redirect, Next.js lo maneja automáticamente
     if (error && typeof error === 'object' && 'digest' in error) {
       throw error
     }
 
+    // SECURITY (VULN-013): Sanitizar error para producción
+    const sanitized = sanitizeError(error, {
+      context: 'signInAction',
+      category: 'authentication',
+      metadata: { email }
+    })
+
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Error desconocido durante el login'
+      error: sanitized.userMessage
     }
   }
 }
