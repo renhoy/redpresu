@@ -1,5 +1,7 @@
 "use client";
 
+import DOMPurify from 'isomorphic-dompurify';
+
 interface MarkdownReaderProps {
   htmlContent: string;
   className?: string;
@@ -8,11 +10,46 @@ interface MarkdownReaderProps {
 /**
  * Componente para renderizar contenido HTML generado desde Markdown
  * Aplica estilos de Tailwind Typography para formato apropiado
+ *
+ * SECURITY: El HTML es sanitizado con DOMPurify para prevenir XSS
  */
 export function MarkdownReader({
   htmlContent,
   className = "",
 }: MarkdownReaderProps) {
+  // Sanitizar HTML con configuración restrictiva
+  // Solo permitir tags seguros para contenido markdown
+  const cleanHtml = DOMPurify.sanitize(htmlContent, {
+    ALLOWED_TAGS: [
+      // Headings
+      'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      // Text formatting
+      'p', 'strong', 'em', 'b', 'i', 'u', 'mark', 'small', 'del', 'ins', 'sub', 'sup',
+      // Lists
+      'ul', 'ol', 'li',
+      // Links
+      'a',
+      // Code
+      'code', 'pre',
+      // Quotes
+      'blockquote',
+      // Tables
+      'table', 'thead', 'tbody', 'tr', 'th', 'td',
+      // Other
+      'br', 'hr', 'div', 'span'
+    ],
+    ALLOWED_ATTR: [
+      'href',
+      'class',
+      'id',
+      'target',
+      'rel'
+    ],
+    ALLOW_DATA_ATTR: false,
+    FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input'],
+    FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur']
+  });
+
   return (
     <article
       className={`
@@ -34,7 +71,7 @@ export function MarkdownReader({
         prose-blockquote:border-l-4 prose-blockquote:border-lime-500 prose-blockquote:pl-4 prose-blockquote:italic
         ${className}
       `}
-      dangerouslySetInnerHTML={{ __html: htmlContent }}
+      dangerouslySetInnerHTML={{ __html: cleanHtml }}
     />
   );
 }
