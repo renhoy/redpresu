@@ -5,6 +5,7 @@ import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { getServerUser } from '@/lib/auth/server'
 import { BudgetVersion } from '@/lib/types/database'
+import { requireValidCompanyId } from '@/lib/helpers/company-validation'
 
 interface ActionResult<T = unknown> {
   success: boolean
@@ -32,6 +33,15 @@ export async function createBudgetVersion(
       return { success: false, error: 'No autenticado' }
     }
 
+    // SECURITY: Validar company_id obligatorio
+    let empresaId: number
+    try {
+      empresaId = requireValidCompanyId(user, '[createBudgetVersion]')
+    } catch (error) {
+      log.error('[createBudgetVersion] company_id inválido', { error })
+      return { success: false, error: 'Usuario sin empresa asignada' }
+    }
+
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
 
@@ -47,18 +57,20 @@ export async function createBudgetVersion(
       return { success: false, error: 'Presupuesto no encontrado' }
     }
 
-    // 3. Verificar permisos (debe ser el creador o admin de la misma empresa)
-    const { data: budgetUser } = await supabase
-      .from('redpresu_users')
-      .select('company_id')
-      .eq('id', budget.user_id)
-      .single()
+    // SECURITY: Verificar que el budget pertenece a la empresa del usuario
+    if (budget.company_id !== empresaId) {
+      log.error('[createBudgetVersion] Intento de acceso a budget de otra empresa', {
+        budgetCompanyId: budget.company_id,
+        userCompanyId: empresaId
+      })
+      return { success: false, error: 'No tienes acceso a este presupuesto' }
+    }
 
+    // 3. Verificar permisos (debe ser el creador o admin de la misma empresa)
     if (
       budget.user_id !== user.id &&
       user.role !== 'admin' &&
-      user.role !== 'superadmin' ||
-      (budgetUser && budgetUser.company_id !== user.company_id)
+      user.role !== 'superadmin'
     ) {
       return { success: false, error: 'Sin permisos para crear versión' }
     }
@@ -148,8 +160,37 @@ export async function getBudgetVersions(
       return { success: false, error: 'No autenticado' }
     }
 
+    // SECURITY: Validar company_id obligatorio
+    let empresaId: number
+    try {
+      empresaId = requireValidCompanyId(user, '[getBudgetVersions]')
+    } catch (error) {
+      log.error('[getBudgetVersions] company_id inválido', { error })
+      return { success: false, error: 'Usuario sin empresa asignada' }
+    }
+
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+    // SECURITY: Verificar que el budget pertenece a la empresa del usuario
+    const { data: budgetData, error: budgetError } = await supabase
+      .from('redpresu_budgets')
+      .select('company_id')
+      .eq('id', budgetId)
+      .single()
+
+    if (budgetError || !budgetData) {
+      log.error('[getBudgetVersions] Budget no encontrado:', budgetError)
+      return { success: false, error: 'Presupuesto no encontrado' }
+    }
+
+    if (budgetData.company_id !== empresaId) {
+      log.error('[getBudgetVersions] Intento de acceso a budget de otra empresa', {
+        budgetCompanyId: budgetData.company_id,
+        userCompanyId: empresaId
+      })
+      return { success: false, error: 'No tienes acceso a este presupuesto' }
+    }
 
     // 2. Obtener versiones (RLS policy se encarga de filtrar por empresa)
     const { data: versions, error } = await supabase
