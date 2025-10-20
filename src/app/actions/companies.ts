@@ -26,6 +26,7 @@ export interface Company {
   note: string | null;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null; // VULN-007: Soft-delete timestamp
   user_count?: number; // Número de usuarios asociados
   tariff_count?: number; // Número de tarifas
   budget_count?: number; // Número de presupuestos
@@ -53,7 +54,9 @@ export interface ActionResult {
 }
 
 /**
- * Obtener todas las empresas (solo superadmin)
+ * Obtener todas las empresas activas (solo superadmin)
+ * NOTA: Solo retorna empresas NO eliminadas (deleted_at IS NULL)
+ * Para ver empresas eliminadas, usar getDeletedCompanies()
  */
 export async function getCompanies(): Promise<ActionResult> {
   try {
@@ -72,10 +75,11 @@ export async function getCompanies(): Promise<ActionResult> {
       return { success: false, error: "Sin permisos" };
     }
 
-    // Obtener todos los emisores
+    // Obtener todos los emisores ACTIVOS (no eliminados)
     const { data: issuers, error } = await supabaseAdmin
       .from("redpresu_issuers")
       .select("*")
+      .is("deleted_at", null) // Solo empresas activas
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -156,6 +160,7 @@ export async function getCompanyById(companyId: string): Promise<ActionResult> {
       .from("redpresu_issuers")
       .select("*")
       .eq("id", companyId)
+      .is("deleted_at", null) // Solo empresas activas
       .single();
 
     if (error) {
@@ -222,6 +227,7 @@ export async function updateCompany(
       .from("redpresu_issuers")
       .select("company_id")
       .eq("id", companyId)
+      .is("deleted_at", null) // Solo empresas activas
       .single();
 
     if (fetchError || !existingCompany) {
@@ -279,17 +285,16 @@ export async function updateCompany(
 }
 
 /**
- * Eliminar empresa y todo su contenido (solo superadmin)
- * ADVERTENCIA: Esto eliminará:
- * - Todos los usuarios de la empresa
- * - Todas las tarifas
- * - Todos los presupuestos
- * - Todos los PDFs generados
- * Esta acción NO es reversible
+ * Eliminar empresa (soft-delete) - Solo superadmin
+ * NOTA: Usa soft-delete (marca deleted_at) para permitir recuperación
+ * Los datos relacionados (usuarios, tarifas, presupuestos) NO se eliminan
+ * pero quedan inaccesibles vía RLS policies
+ *
+ * Para eliminación física permanente, ver hardDeleteCompany()
  */
 export async function deleteCompany(companyId: string): Promise<ActionResult> {
   try {
-    log.info("[deleteCompany] Iniciando...", companyId);
+    log.info("[deleteCompany] Iniciando soft-delete...", companyId);
 
     // Obtener usuario actual
     const { getServerUser } = await import("@/lib/auth/server");
@@ -317,10 +322,11 @@ export async function deleteCompany(companyId: string): Promise<ActionResult> {
       .from("redpresu_issuers")
       .select("*")
       .eq("id", companyId)
+      .is("deleted_at", null) // Solo empresas activas
       .single();
 
     if (companyError || !company) {
-      log.error("[deleteCompany] Empresa no encontrada:", companyError);
+      log.error("[deleteCompany] Empresa no encontrada o ya eliminada:", companyError);
       return { success: false, error: "Empresa no encontrada" };
     }
 
@@ -334,32 +340,29 @@ export async function deleteCompany(companyId: string): Promise<ActionResult> {
     }
 
     log.info(
-      "[deleteCompany] Eliminando empresa:",
+      "[deleteCompany] Soft-delete empresa:",
       company.name,
       "(ID:",
       company.id,
       ")"
     );
 
-    // IMPORTANTE: Las eliminaciones en cascada están configuradas en la BD
-    // Al eliminar el emisor, automáticamente se eliminan:
-    // - usuarios (ON DELETE CASCADE)
-    // - tarifas (ON DELETE CASCADE)
-    // - presupuestos (ON DELETE CASCADE)
-    // - versiones de presupuestos (ON DELETE CASCADE)
-    // - notas de presupuestos (ON DELETE CASCADE)
-
+    // SOFT DELETE: Marcar como eliminada en lugar de borrar físicamente
+    // Ventajas:
+    // - Permite recuperación si fue error
+    // - Mantiene integridad referencial
+    // - Auditoría completa de eliminaciones
     const { error: deleteError } = await supabaseAdmin
       .from("redpresu_issuers")
-      .delete()
+      .update({ deleted_at: new Date().toISOString() })
       .eq("id", companyId);
 
     if (deleteError) {
-      log.error("[deleteCompany] Error al eliminar:", deleteError);
+      log.error("[deleteCompany] Error al soft-delete:", deleteError);
       return { success: false, error: deleteError.message };
     }
 
-    log.info("[deleteCompany] Empresa eliminada exitosamente:", company.nombre);
+    log.info("[deleteCompany] Empresa marcada como eliminada exitosamente:", company.name);
 
     // Revalidar
     revalidatePath("/companies");
@@ -370,6 +373,155 @@ export async function deleteCompany(companyId: string): Promise<ActionResult> {
     };
   } catch (error) {
     log.error("[deleteCompany] Error inesperado:", error);
+    return { success: false, error: "Error inesperado" };
+  }
+}
+
+/**
+ * Restaurar empresa eliminada (revertir soft-delete) - Solo superadmin
+ * Permite recuperar una empresa marcada como eliminada
+ */
+export async function restoreCompany(companyId: string): Promise<ActionResult> {
+  try {
+    log.info("[restoreCompany] Iniciando restauración...", companyId);
+
+    // Obtener usuario actual
+    const { getServerUser } = await import("@/lib/auth/server");
+    const user = await getServerUser();
+
+    if (!user) {
+      return { success: false, error: "No autenticado" };
+    }
+
+    // SECURITY: Validar company_id obligatorio
+    try {
+      requireValidCompanyId(user, '[restoreCompany]');
+    } catch (error) {
+      log.error('[restoreCompany] company_id inválido', { error });
+      return { success: false, error: "Usuario sin empresa asignada" };
+    }
+
+    // Solo superadmin puede restaurar empresas
+    if (user.role !== "superadmin") {
+      return { success: false, error: "Sin permisos" };
+    }
+
+    // Obtener información de la empresa eliminada
+    const { data: company, error: companyError } = await supabaseAdmin
+      .from("redpresu_issuers")
+      .select("*")
+      .eq("id", companyId)
+      .not("deleted_at", "is", null) // Solo empresas eliminadas
+      .single();
+
+    if (companyError || !company) {
+      log.error("[restoreCompany] Empresa no encontrada o no está eliminada:", companyError);
+      return { success: false, error: "Empresa no encontrada o ya activa" };
+    }
+
+    log.info(
+      "[restoreCompany] Restaurando empresa:",
+      company.name,
+      "(ID:",
+      company.id,
+      ")"
+    );
+
+    // Restaurar: quitar marca de eliminación
+    const { data: restoredCompany, error: restoreError } = await supabaseAdmin
+      .from("redpresu_issuers")
+      .update({ deleted_at: null })
+      .eq("id", companyId)
+      .select()
+      .single();
+
+    if (restoreError) {
+      log.error("[restoreCompany] Error al restaurar:", restoreError);
+      return { success: false, error: restoreError.message };
+    }
+
+    log.info("[restoreCompany] Empresa restaurada exitosamente:", restoredCompany.name);
+
+    // Revalidar
+    revalidatePath("/companies");
+
+    return {
+      success: true,
+      data: restoredCompany,
+    };
+  } catch (error) {
+    log.error("[restoreCompany] Error inesperado:", error);
+    return { success: false, error: "Error inesperado" };
+  }
+}
+
+/**
+ * Listar empresas eliminadas (soft-deleted) - Solo superadmin
+ * Útil para ver qué empresas pueden ser restauradas
+ */
+export async function getDeletedCompanies(): Promise<ActionResult> {
+  try {
+    log.info("[getDeletedCompanies] Obteniendo empresas eliminadas...");
+
+    // Obtener usuario actual
+    const { getServerUser } = await import("@/lib/auth/server");
+    const user = await getServerUser();
+
+    if (!user) {
+      return { success: false, error: "No autenticado" };
+    }
+
+    // Solo superadmin puede ver empresas eliminadas
+    if (user.role !== "superadmin") {
+      return { success: false, error: "Sin permisos" };
+    }
+
+    // Obtener empresas eliminadas
+    const { data: deletedCompanies, error } = await supabaseAdmin
+      .from("redpresu_issuers")
+      .select("*")
+      .not("deleted_at", "is", null)
+      .order("deleted_at", { ascending: false });
+
+    if (error) {
+      log.error("[getDeletedCompanies] Error DB:", error);
+      return { success: false, error: error.message };
+    }
+
+    // Contar datos asociados a cada empresa eliminada
+    const companiesWithCounts = await Promise.all(
+      (deletedCompanies || []).map(async (company) => {
+        const { count: userCount } = await supabaseAdmin
+          .from("redpresu_users")
+          .select("*", { count: "exact", head: true })
+          .eq("company_id", company.company_id);
+
+        const { count: tariffCount } = await supabaseAdmin
+          .from("redpresu_tariffs")
+          .select("*", { count: "exact", head: true })
+          .eq("company_id", company.company_id);
+
+        const { count: budgetCount } = await supabaseAdmin
+          .from("redpresu_budgets")
+          .select("*", { count: "exact", head: true })
+          .eq("company_id", company.company_id);
+
+        return {
+          ...company,
+          id: company.company_id,
+          uuid: company.id,
+          user_count: userCount || 0,
+          tariff_count: tariffCount || 0,
+          budget_count: budgetCount || 0,
+        };
+      })
+    );
+
+    log.info("[getDeletedCompanies] Éxito:", companiesWithCounts.length, "empresas eliminadas");
+
+    return { success: true, data: companiesWithCounts };
+  } catch (error) {
+    log.error("[getDeletedCompanies] Error inesperado:", error);
     return { success: false, error: "Error inesperado" };
   }
 }
