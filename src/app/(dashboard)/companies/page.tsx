@@ -34,7 +34,7 @@ export default async function CompaniesPage() {
     );
   }
 
-  const companies = result.data || [];
+  const companies = Array.isArray(result.data) ? result.data : [];
 
   return (
     <div className="min-h-screen bg-lime-50">
@@ -42,13 +42,11 @@ export default async function CompaniesPage() {
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-cyan-600 flex items-center gap-2">
+            <h1 className="text-3xl font-bold flex items-center gap-2">
               <Building2 className="h-6 w-6" />
               Empresas
             </h1>
-            <p className="text-sm text-cyan-600">
-              Gestiona todas las empresas del sistema
-            </p>
+            <p className="text-sm">Gestiona todas las empresas del sistema</p>
           </div>
         </div>
 
@@ -65,13 +63,13 @@ export default async function CompaniesPage() {
               Empresas (tipo empresa)
             </div>
             <div className="text-2xl font-bold text-blue-600">
-              {companies.filter((c) => c.tipo === "empresa").length}
+              {companies.filter((c) => c.type === "empresa").length}
             </div>
           </div>
           <div className="bg-white rounded-lg border p-4">
             <div className="text-sm text-muted-foreground">Autónomos</div>
             <div className="text-2xl font-bold text-purple-600">
-              {companies.filter((c) => c.tipo === "autonomo").length}
+              {companies.filter((c) => c.type === "autonomo").length}
             </div>
           </div>
         </div>

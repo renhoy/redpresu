@@ -50,11 +50,11 @@ export default async function SettingsPage() {
       <div className="container mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-lime-700 flex items-center gap-2">
+          <h1 className="text-3xl font-bold flex items-center gap-2">
             <Settings className="h-6 w-6" />
             Configuración del Sistema
           </h1>
-          <p className="text-sm text-lime-600">
+          <p className="text-sm">
             Gestión de configuración global (solo superadmin)
           </p>
         </div>

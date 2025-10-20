@@ -3,6 +3,7 @@
 import { cookies } from 'next/headers'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { redirect } from 'next/navigation'
+import { supabaseAdmin } from '@/lib/supabase/server'
 
 export interface SignInResult {
   success: boolean
@@ -716,15 +717,15 @@ export async function getUserProfile(): Promise<ProfileResult> {
       }
     }
 
-    // Obtener datos del issuer
-    const { data: issuerData, error: issuerError } = await supabase
+    // Obtener datos del issuer usando supabaseAdmin para bypass RLS
+    const { data: issuerData, error: issuerError } = await supabaseAdmin
       .from('redpresu_issuers')
       .select('*')
       .eq('user_id', user.id)
       .single()
 
     if (issuerError) {
-      console.error('[getUserProfile] Error al obtener issuer:', issuerError)
+      console.log('[getUserProfile] No se encontró issuer para el usuario (puede ser normal para usuarios antiguos)')
       // No es crítico si no existe issuer (usuarios antiguos pueden no tenerlo)
     }
 

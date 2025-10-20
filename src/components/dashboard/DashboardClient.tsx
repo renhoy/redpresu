@@ -110,12 +110,10 @@ export function DashboardClient({
         {/* Header con filtro de período */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-lime-700 flex items-center gap-2">
+            <h1 className="text-3xl font-bold flex items-center gap-2">
               <Home className="h-6 w-6" /> Panel de control
             </h1>
-            <p className="text-sm text-lime-600">
-              Información, resumen y estadísticas
-            </p>
+            <p className="text-sm">Información, resumen y estadísticas</p>
           </div>
 
           <div className="flex items-center gap-2">

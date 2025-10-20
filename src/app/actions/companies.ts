@@ -36,10 +36,11 @@ export interface UpdateCompanyData {
   postal_code?: string;
   locality?: string;
   province?: string;
+  country?: string;
   phone?: string;
   email?: string;
   web?: string;
-  irpf_percentage?: number;
+  irpf_percentage?: number | null;
 }
 
 export interface ActionResult {

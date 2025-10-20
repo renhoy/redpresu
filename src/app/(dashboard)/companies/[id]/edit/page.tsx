@@ -34,10 +34,12 @@ export default async function EditCompanyPage({ params }: EditCompanyPageProps) 
     notFound();
   }
 
+  const company = Array.isArray(result.data) ? result.data[0] : result.data;
+
   return (
     <div className="min-h-screen bg-lime-50">
       <div className="container mx-auto px-4 py-6">
-        <CompanyForm company={result.data} currentUserRole={user.role} />
+        <CompanyForm company={company} currentUserRole={user.role} />
       </div>
     </div>
   );

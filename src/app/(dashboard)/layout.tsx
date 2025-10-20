@@ -26,8 +26,7 @@ export default async function DashboardLayout({
   const currentPlan = subscriptionResult.data?.plan || "free";
 
   // Obtener nombre de empresa/autónomo del emisor
-  const cookieStore = await cookies();
-  const supabase = createServerActionClient({ cookies: () => cookieStore });
+  const supabase = createServerActionClient({ cookies });
 
   const { data: issuer } = await supabase
     .from("redpresu_issuers")

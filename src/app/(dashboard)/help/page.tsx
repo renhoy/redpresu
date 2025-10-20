@@ -31,11 +31,11 @@ export default async function HelpPage() {
       <div className="container mx-auto px-4 py-6">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-lime-600 flex items-center gap-2">
+            <h1 className="text-3xl font-bold flex items-center gap-2">
               <HelpCircle className="h-6 w-6" />
               Centro de Ayuda
             </h1>
-            <p className="text-sm text-lime-600">
+            <p className="text-sm">
               Encuentra toda la ayduda en información para aprovechar al máximo
               la aplicación
             </p>

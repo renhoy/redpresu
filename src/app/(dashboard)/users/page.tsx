@@ -42,11 +42,11 @@ export default async function UsersPage() {
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-cyan-600 flex items-center gap-2">
+            <h1 className="text-3xl font-bold flex items-center gap-2">
               <Users className="h-6 w-6" />
               Usuarios
             </h1>
-            <p className="text-sm text-cyan-600">Gestiona tus usuarios de la empresa</p>
+            <p className="text-sm">Gestiona tus usuarios de la empresa</p>
           </div>
 
           {canCreateUsers && (

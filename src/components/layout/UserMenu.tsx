@@ -10,6 +10,7 @@ import {
   LogOut,
   ChevronDown,
   Building2,
+  UserCircle,
 } from "lucide-react";
 import LogoutButton from "@/components/auth/LogoutButton";
 import {
@@ -138,6 +139,13 @@ export function UserMenu({
           <DropdownMenuItem className="cursor-pointer">
             <Users className="mr-2 h-4 w-4" />
             <span>Usuarios</span>
+          </DropdownMenuItem>
+        </Link>
+
+        <Link href="/profile">
+          <DropdownMenuItem className="cursor-pointer">
+            <UserCircle className="mr-2 h-4 w-4" />
+            <span>Mi Perfil</span>
           </DropdownMenuItem>
         </Link>
 

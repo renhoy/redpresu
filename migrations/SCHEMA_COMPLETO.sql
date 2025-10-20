@@ -813,7 +813,7 @@ CREATE TABLE public.redpresu_config (
 -- Name: TABLE redpresu_config; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.redpresu_config IS 'Configuración global del sistema';
+COMMENT ON TABLE public.redpresu_config IS 'Configuración global del sistema editable por superadmin';
 
 
 --

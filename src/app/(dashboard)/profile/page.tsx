@@ -30,17 +30,11 @@ export default async function ProfilePage() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-4xl">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Mi Perfil</h1>
-        <p className="text-muted-foreground mt-2">
-          Administra tu información personal y configuración de cuenta
-        </p>
+    <div className="min-h-screen bg-lime-50">
+      <div className="container mx-auto px-4 py-6">
+        {/* Formulario de perfil */}
+        <ProfileForm profile={profileResult.data} />
       </div>
-
-      {/* Formulario de perfil */}
-      <ProfileForm profile={profileResult.data} />
     </div>
   )
 }
