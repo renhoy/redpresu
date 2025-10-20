@@ -525,6 +525,297 @@ export async function restoreCompany(companyId: string): Promise<ActionResult> {
 }
 
 /**
+ * Eliminar empresa de forma PERMANENTE - Solo superadmin
+ * PELIGRO: Esta operación NO se puede deshacer
+ *
+ * Proceso:
+ * 1. Verificar que la empresa esté soft-deleted (deleted_at NOT NULL)
+ * 2. Crear backup completo en redpresu_company_deletion_log
+ * 3. Eliminar FÍSICAMENTE todos los datos relacionados:
+ *    - Usuarios (redpresu_users)
+ *    - Tarifas (redpresu_tariffs)
+ *    - Presupuestos (redpresu_budgets)
+ *    - Emisor (redpresu_issuers)
+ *    - Entrada company (redpresu_companies)
+ *
+ * NOTA: Solo se pueden eliminar permanentemente empresas ya soft-deleted
+ *
+ * @param companyId - UUID del emisor en redpresu_issuers
+ * @param confirmationText - El usuario debe escribir el nombre de la empresa para confirmar
+ * @returns ActionResult con información de datos eliminados
+ */
+export async function permanentlyDeleteCompany(
+  companyId: string,
+  confirmationText: string
+): Promise<ActionResult> {
+  try {
+    log.info("[permanentlyDeleteCompany] INICIANDO ELIMINACIÓN PERMANENTE...", companyId);
+
+    // ============================================
+    // 1. AUTENTICACIÓN Y AUTORIZACIÓN
+    // ============================================
+
+    const { getServerUser } = await import("@/lib/auth/server");
+    const user = await getServerUser();
+
+    if (!user) {
+      return { success: false, error: "No autenticado" };
+    }
+
+    // SECURITY: Validar company_id obligatorio
+    try {
+      requireValidCompanyId(user, '[permanentlyDeleteCompany]');
+    } catch (error) {
+      log.error('[permanentlyDeleteCompany] company_id inválido', { error });
+      return { success: false, error: "Usuario sin empresa asignada" };
+    }
+
+    // Solo superadmin puede eliminar permanentemente
+    if (user.role !== "superadmin") {
+      log.error("[permanentlyDeleteCompany] Intento sin permisos por usuario:", user.id);
+      return { success: false, error: "Solo superadmin puede eliminar empresas permanentemente" };
+    }
+
+    // ============================================
+    // 2. OBTENER Y VALIDAR EMPRESA
+    // ============================================
+
+    // La empresa DEBE estar soft-deleted para poder eliminarla permanentemente
+    const { data: company, error: companyError } = await supabaseAdmin
+      .from("redpresu_issuers")
+      .select("*")
+      .eq("id", companyId)
+      .not("deleted_at", "is", null) // Solo empresas YA eliminadas (soft-delete)
+      .single();
+
+    if (companyError || !company) {
+      log.error("[permanentlyDeleteCompany] Empresa no encontrada o no está soft-deleted:", companyError);
+      return {
+        success: false,
+        error: "Empresa no encontrada o no está marcada como eliminada. Primero debes eliminarla (soft-delete).",
+      };
+    }
+
+    // PROTECCIÓN: No permitir eliminar la empresa por defecto
+    if (company.company_id === 1) {
+      log.error("[permanentlyDeleteCompany] Intento de eliminar empresa por defecto");
+      return {
+        success: false,
+        error: "No se puede eliminar la empresa por defecto del sistema",
+      };
+    }
+
+    // ============================================
+    // 3. VERIFICAR CONFIRMACIÓN
+    // ============================================
+
+    // El usuario DEBE escribir el nombre exacto de la empresa
+    if (confirmationText.trim() !== company.name.trim()) {
+      log.error("[permanentlyDeleteCompany] Confirmación incorrecta:", {
+        expected: company.name,
+        received: confirmationText,
+      });
+      return {
+        success: false,
+        error: `Debes escribir exactamente "${company.name}" para confirmar la eliminación permanente`,
+      };
+    }
+
+    log.warn("[permanentlyDeleteCompany] CONFIRMACIÓN VALIDADA - Procediendo con eliminación permanente de:", company.name);
+
+    // ============================================
+    // 4. CREAR BACKUP COMPLETO (CRÍTICO)
+    // ============================================
+
+    log.info("[permanentlyDeleteCompany] Creando backup completo...");
+
+    // Obtener company data
+    const { data: companyData } = await supabaseAdmin
+      .from("redpresu_companies")
+      .select("*")
+      .eq("id", company.company_id)
+      .single();
+
+    // Obtener TODOS los usuarios de esta empresa
+    const { data: allUsers } = await supabaseAdmin
+      .from("redpresu_users")
+      .select("*")
+      .eq("company_id", company.company_id);
+
+    // Obtener TODAS las tarifas de esta empresa
+    const { data: allTariffs } = await supabaseAdmin
+      .from("redpresu_tariffs")
+      .select("*")
+      .eq("company_id", company.company_id);
+
+    // Obtener TODOS los presupuestos de esta empresa
+    const { data: allBudgets } = await supabaseAdmin
+      .from("redpresu_budgets")
+      .select("*")
+      .eq("company_id", company.company_id);
+
+    // SECURITY (VULN-007): Registrar backup ANTES de eliminar (crítico)
+    const { error: backupError } = await supabaseAdmin
+      .from("redpresu_company_deletion_log")
+      .insert({
+        company_id: company.company_id,
+        issuer_id: company.id,
+        deleted_by: user.id,
+        deletion_type: "permanent_delete",
+        company_snapshot: companyData || {},
+        issuer_snapshot: company,
+        users_count: allUsers?.length || 0,
+        tariffs_count: allTariffs?.length || 0,
+        budgets_count: allBudgets?.length || 0,
+        deletion_reason: `Eliminación permanente confirmada por superadmin ${user.email}`,
+        // Guardar snapshot completo de TODOS los datos para recuperación de emergencia
+        full_backup: {
+          users: allUsers || [],
+          tariffs: allTariffs || [],
+          budgets: allBudgets || [],
+          company: companyData,
+          issuer: company,
+          deleted_at: new Date().toISOString(),
+          deleted_by: user.id,
+          deleted_by_email: user.email,
+        },
+      });
+
+    if (backupError) {
+      log.error("[permanentlyDeleteCompany] ERROR CRÍTICO creando backup:", backupError);
+      return {
+        success: false,
+        error: "Error crítico creando backup. Operación cancelada por seguridad.",
+      };
+    }
+
+    log.info("[permanentlyDeleteCompany] Backup creado exitosamente");
+
+    // ============================================
+    // 5. ELIMINACIÓN FÍSICA EN CASCADA
+    // ============================================
+
+    log.warn("[permanentlyDeleteCompany] INICIANDO eliminación física de datos...");
+
+    const deletionStats = {
+      users: 0,
+      tariffs: 0,
+      budgets: 0,
+      issuer: false,
+      company: false,
+    };
+
+    // 5.1. Eliminar presupuestos
+    const { error: budgetsDeleteError, count: budgetsDeleted } = await supabaseAdmin
+      .from("redpresu_budgets")
+      .delete({ count: "exact" })
+      .eq("company_id", company.company_id);
+
+    if (budgetsDeleteError) {
+      log.error("[permanentlyDeleteCompany] Error eliminando presupuestos:", budgetsDeleteError);
+      return {
+        success: false,
+        error: `Error eliminando presupuestos: ${budgetsDeleteError.message}. Backup guardado.`,
+      };
+    }
+    deletionStats.budgets = budgetsDeleted || 0;
+    log.info("[permanentlyDeleteCompany] Presupuestos eliminados:", deletionStats.budgets);
+
+    // 5.2. Eliminar tarifas
+    const { error: tariffsDeleteError, count: tariffsDeleted } = await supabaseAdmin
+      .from("redpresu_tariffs")
+      .delete({ count: "exact" })
+      .eq("company_id", company.company_id);
+
+    if (tariffsDeleteError) {
+      log.error("[permanentlyDeleteCompany] Error eliminando tarifas:", tariffsDeleteError);
+      return {
+        success: false,
+        error: `Error eliminando tarifas: ${tariffsDeleteError.message}. Backup guardado.`,
+      };
+    }
+    deletionStats.tariffs = tariffsDeleted || 0;
+    log.info("[permanentlyDeleteCompany] Tarifas eliminadas:", deletionStats.tariffs);
+
+    // 5.3. Eliminar usuarios
+    const { error: usersDeleteError, count: usersDeleted } = await supabaseAdmin
+      .from("redpresu_users")
+      .delete({ count: "exact" })
+      .eq("company_id", company.company_id);
+
+    if (usersDeleteError) {
+      log.error("[permanentlyDeleteCompany] Error eliminando usuarios:", usersDeleteError);
+      return {
+        success: false,
+        error: `Error eliminando usuarios: ${usersDeleteError.message}. Backup guardado.`,
+      };
+    }
+    deletionStats.users = usersDeleted || 0;
+    log.info("[permanentlyDeleteCompany] Usuarios eliminados:", deletionStats.users);
+
+    // 5.4. Eliminar emisor
+    const { error: issuerDeleteError } = await supabaseAdmin
+      .from("redpresu_issuers")
+      .delete()
+      .eq("id", companyId);
+
+    if (issuerDeleteError) {
+      log.error("[permanentlyDeleteCompany] Error eliminando emisor:", issuerDeleteError);
+      return {
+        success: false,
+        error: `Error eliminando emisor: ${issuerDeleteError.message}. Backup guardado.`,
+      };
+    }
+    deletionStats.issuer = true;
+    log.info("[permanentlyDeleteCompany] Emisor eliminado");
+
+    // 5.5. Eliminar company
+    const { error: companyDeleteError } = await supabaseAdmin
+      .from("redpresu_companies")
+      .delete()
+      .eq("id", company.company_id);
+
+    if (companyDeleteError) {
+      log.error("[permanentlyDeleteCompany] Error eliminando company:", companyDeleteError);
+      return {
+        success: false,
+        error: `Error eliminando company: ${companyDeleteError.message}. Backup guardado.`,
+      };
+    }
+    deletionStats.company = true;
+    log.info("[permanentlyDeleteCompany] Company eliminada");
+
+    // ============================================
+    // 6. CONFIRMACIÓN FINAL
+    // ============================================
+
+    log.warn("[permanentlyDeleteCompany] ✅ ELIMINACIÓN PERMANENTE COMPLETADA:", {
+      companyName: company.name,
+      companyId: company.company_id,
+      stats: deletionStats,
+    });
+
+    // Revalidar
+    revalidatePath("/companies");
+
+    return {
+      success: true,
+      data: {
+        message: `Empresa "${company.name}" eliminada permanentemente`,
+        stats: deletionStats,
+        backupCreated: true,
+      } as any,
+    };
+  } catch (error) {
+    log.error("[permanentlyDeleteCompany] Error inesperado:", error);
+    return {
+      success: false,
+      error: "Error inesperado durante la eliminación permanente. Verifica el backup en logs.",
+    };
+  }
+}
+
+/**
  * Listar empresas eliminadas (soft-deleted) - Solo superadmin
  * Útil para ver qué empresas pueden ser restauradas
  */
