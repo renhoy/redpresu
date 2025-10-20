@@ -9,6 +9,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { z } from "zod";
 import { getServerUser } from "@/lib/auth/server";
 import { log } from "@/lib/logger";
+import { requireValidCompanyId } from "@/lib/helpers/company-validation";
 
 // ============================================
 // TIPOS
@@ -256,15 +257,27 @@ export async function createUser(data: CreateUserData) {
   // Validar permisos
   const { allowed, currentUser } = await checkAdminPermission();
 
-  if (!allowed) {
+  if (!allowed || !currentUser) {
     return {
       success: false,
       error: "No tienes permisos para crear usuarios",
     };
   }
 
+  // SECURITY: Validar company_id obligatorio
+  let companyId: number;
+  try {
+    companyId = requireValidCompanyId(currentUser, '[createUser]');
+  } catch (error) {
+    log.error('[createUser] company_id inválido', { error });
+    return {
+      success: false,
+      error: "Usuario sin empresa asignada"
+    };
+  }
+
   // Validar que sea de la misma empresa
-  if (data.company_id !== currentUser.company_id) {
+  if (data.company_id !== companyId) {
     return {
       success: false,
       error: "No puedes crear usuarios de otra empresa",
@@ -363,10 +376,22 @@ export async function updateUser(userId: string, data: UpdateUserData) {
   // Validar permisos
   const { allowed, currentUser } = await checkAdminPermission();
 
-  if (!allowed) {
+  if (!allowed || !currentUser) {
     return {
       success: false,
       error: "No tienes permisos para actualizar usuarios",
+    };
+  }
+
+  // SECURITY: Validar company_id obligatorio
+  let companyId: number;
+  try {
+    companyId = requireValidCompanyId(currentUser, '[updateUser]');
+  } catch (error) {
+    log.error('[updateUser] company_id inválido', { error });
+    return {
+      success: false,
+      error: "Usuario sin empresa asignada"
     };
   }
 
@@ -395,7 +420,7 @@ export async function updateUser(userId: string, data: UpdateUserData) {
     };
   }
 
-  if (targetUser.company_id !== currentUser.company_id) {
+  if (targetUser.company_id !== companyId) {
     return {
       success: false,
       error: "No puedes actualizar usuarios de otra empresa",
@@ -455,10 +480,22 @@ export async function toggleUserStatus(
 export async function deleteUser(userId: string) {
   const { allowed, currentUser } = await checkAdminPermission();
 
-  if (!allowed || currentUser.role !== "superadmin") {
+  if (!allowed || !currentUser || currentUser.role !== "superadmin") {
     return {
       success: false,
       error: "Solo superadmin puede eliminar usuarios permanentemente",
+    };
+  }
+
+  // SECURITY: Validar company_id obligatorio
+  let companyId: number;
+  try {
+    companyId = requireValidCompanyId(currentUser, '[deleteUser]');
+  } catch (error) {
+    log.error('[deleteUser] company_id inválido', { error });
+    return {
+      success: false,
+      error: "Usuario sin empresa asignada"
     };
   }
 
@@ -477,7 +514,7 @@ export async function deleteUser(userId: string) {
     .eq("id", userId)
     .single();
 
-  if (!targetUser || targetUser.company_id !== currentUser.company_id) {
+  if (!targetUser || targetUser.company_id !== companyId) {
     return {
       success: false,
       error: "Usuario no encontrado",
