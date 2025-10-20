@@ -10,6 +10,7 @@ import { z } from "zod";
 import { getServerUser } from "@/lib/auth/server";
 import { log } from "@/lib/logger";
 import { requireValidCompanyId } from "@/lib/helpers/company-validation";
+import { generateSecurePassword } from "@/lib/helpers/crypto-helpers";
 
 // ============================================
 // TIPOS
@@ -115,14 +116,10 @@ async function checkUserAccess(): Promise<{
 
 /**
  * Genera password temporal segura
+ * SECURITY (VULN-018): Usa crypto.getRandomValues() en lugar de Math.random()
  */
 function generateTemporaryPassword(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%";
-  let password = "";
-  for (let i = 0; i < 12; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return password;
+  return generateSecurePassword(12, true);
 }
 
 // ============================================

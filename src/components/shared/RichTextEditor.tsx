@@ -7,6 +7,7 @@ import Link from '@tiptap/extension-link'
 import { Bold, Italic, List, ListOrdered, Link as LinkIcon, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
+import { generateTimestampId } from '@/lib/helpers/crypto-helpers'
 
 interface RichTextEditorProps {
   value: string
@@ -32,8 +33,8 @@ export function RichTextEditor({
   const [hoveredLink, setHoveredLink] = useState<{ href: string; text: string; x: number; y: number; element: HTMLAnchorElement; position: { from: number; to: number } } | null>(null)
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null)
 
-  // Función para generar ID único
-  const generateLinkId = () => `link-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+  // SECURITY (VULN-018): Generar ID único usando crypto seguro
+  const generateLinkId = () => generateTimestampId('link')
 
   const editor = useEditor({
     immediatelyRender: false, // Fix SSR hydration mismatch

@@ -38,6 +38,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Copy, Check, Search, Filter } from "lucide-react";
 import { toast } from "sonner";
+import { generateSecurePassword } from "@/lib/helpers/crypto-helpers";
+import { validateEmail } from "@/lib/helpers/email-validation";
 
 interface UserFormProps {
   mode: "create" | "edit";
@@ -86,15 +88,9 @@ export default function UserForm({
 
   const router = useRouter();
 
-  // Generar password temporal segura
+  // SECURITY (VULN-018): Generar password temporal usando crypto seguro
   const generateTemporaryPassword = (): string => {
-    const chars =
-      "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%";
-    let password = "";
-    for (let i = 0; i < 12; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return password;
+    return generateSecurePassword(12, true);
   };
 
   // Cargar emisores si el usuario es superadmin
@@ -147,7 +143,19 @@ export default function UserForm({
         [field]: value,
       }));
 
-      // Limpiar error del campo
+      // SECURITY (VULN-019): Validar email en tiempo real
+      if (field === "email" && value.trim()) {
+        const validation = validateEmail(value);
+        if (!validation.valid) {
+          setErrors((prev) => ({
+            ...prev,
+            email: validation.error || "Email no válido",
+          }));
+          return;
+        }
+      }
+
+      // Limpiar error del campo si es válido
       if (errors[field]) {
         setErrors((prev) => {
           const newErrors = { ...prev };
