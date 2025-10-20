@@ -11,6 +11,7 @@ import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { getServerUser } from '@/lib/auth/server'
 import type { ActionResult } from '@/lib/types/database'
+import { requireValidCompanyId } from '@/lib/helpers/company-validation'
 import {
   convertTariffsToCSV,
   convertTariffsToJSON,
@@ -90,7 +91,16 @@ export async function exportTariffs(
       return { success: false, error: 'No autenticado' }
     }
 
-    // 3. Obtener tarifas
+    // SECURITY: Validar company_id obligatorio
+    let empresaId: number
+    try {
+      empresaId = requireValidCompanyId(user, '[exportTariffs]')
+    } catch (error) {
+      log.error('[exportTariffs] company_id inválido', { error })
+      return { success: false, error: 'Usuario sin empresa asignada' }
+    }
+
+    // 3. Obtener tarifas (RLS filtra por empresa automáticamente)
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
 
@@ -98,6 +108,7 @@ export async function exportTariffs(
       .from('redpresu_tariffs')
       .select('*')
       .in('id', ids)
+      .eq('company_id', empresaId)  // SECURITY: Filtro explícito
       .order('name', { ascending: true })
 
     if (error) {
@@ -216,7 +227,16 @@ export async function exportBudgets(
       return { success: false, error: 'No autenticado' }
     }
 
-    // 3. Obtener presupuestos
+    // SECURITY: Validar company_id obligatorio
+    let empresaId: number
+    try {
+      empresaId = requireValidCompanyId(user, '[exportBudgets]')
+    } catch (error) {
+      log.error('[exportBudgets] company_id inválido', { error })
+      return { success: false, error: 'Usuario sin empresa asignada' }
+    }
+
+    // 3. Obtener presupuestos (RLS filtra por empresa automáticamente)
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
 
@@ -224,6 +244,7 @@ export async function exportBudgets(
       .from('redpresu_budgets')
       .select('*')
       .in('id', ids)
+      .eq('company_id', empresaId)  // SECURITY: Filtro explícito
       .order('client_name', { ascending: true })
 
     if (error) {
