@@ -15,6 +15,7 @@ import { headers } from 'next/headers';
 import { getStripeClient } from '@/lib/stripe';
 import { createClient } from '@supabase/supabase-js';
 import type Stripe from 'stripe';
+import { log } from '@/lib/logger';
 
 // Cliente Supabase con service_role para bypass RLS
 const supabaseAdmin = createClient(
@@ -64,7 +65,7 @@ function checkRateLimit(ip: string): boolean {
 
   // Verificar si excede el límite
   if (entry.timestamps.length >= RATE_LIMIT_MAX_REQUESTS) {
-    console.warn('[Rate Limiter] IP blocked:', ip, 'requests:', entry.timestamps.length);
+    log.warn('[Rate Limiter] IP blocked', { ip, requests: entry.timestamps.length });
     return false;
   }
 
@@ -105,7 +106,7 @@ export async function POST(req: NextRequest) {
   const ip = forwarded ? forwarded.split(',')[0].trim() : req.ip || 'unknown';
 
   if (!checkRateLimit(ip)) {
-    console.warn('[Stripe Webhook] Rate limit exceeded for IP:', ip);
+    log.warn('[Stripe Webhook] Rate limit exceeded', { ip });
     return NextResponse.json(
       { error: 'Too many requests. Please try again later.' },
       {
@@ -117,11 +118,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  console.log('[Stripe Webhook] Received event from IP:', ip);
+  log.info('[Stripe Webhook] Received event', { ip });
 
   const stripe = getStripeClient();
   if (!stripe) {
-    console.error('[Stripe Webhook] Stripe not configured');
+    log.error('[Stripe Webhook] Stripe not configured');
     return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 });
   }
 
@@ -129,13 +130,13 @@ export async function POST(req: NextRequest) {
   const signature = (await headers()).get('stripe-signature');
 
   if (!signature) {
-    console.error('[Stripe Webhook] Missing signature');
+    log.error('[Stripe Webhook] Missing signature');
     return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
   }
 
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!webhookSecret) {
-    console.error('[Stripe Webhook] Webhook secret not configured');
+    log.error('[Stripe Webhook] Webhook secret not configured');
     return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
   }
 
@@ -144,11 +145,11 @@ export async function POST(req: NextRequest) {
   try {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
   } catch (err) {
-    console.error('[Stripe Webhook] Invalid signature:', err);
+    log.error('[Stripe Webhook] Invalid signature', err);
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
-  console.log('[Stripe Webhook] Event type:', event.type);
+  log.info('[Stripe Webhook] Event received', { eventType: event.type });
 
   try {
     switch (event.type) {
@@ -169,12 +170,12 @@ export async function POST(req: NextRequest) {
         break;
 
       default:
-        console.log('[Stripe Webhook] Unhandled event type:', event.type);
+        log.info('[Stripe Webhook] Unhandled event type', { eventType: event.type });
     }
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error('[Stripe Webhook] Error processing event:', error);
+    log.error('[Stripe Webhook] Error processing event', error);
     return NextResponse.json({ error: 'Webhook handler failed' }, { status: 500 });
   }
 }
@@ -187,13 +188,13 @@ export async function POST(req: NextRequest) {
  * Checkout completado - Nueva suscripción
  */
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
-  console.log('[handleCheckoutCompleted] Session:', session.id);
+  log.info('[handleCheckoutCompleted] Processing session', { sessionId: session.id });
 
   const companyId = session.metadata?.company_id;
   const planId = session.metadata?.plan_id;
 
   if (!companyId || !planId) {
-    console.error('[handleCheckoutCompleted] Missing metadata');
+    log.error('[handleCheckoutCompleted] Missing metadata');
     return;
   }
 
@@ -212,23 +213,23 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     });
 
   if (error) {
-    console.error('[handleCheckoutCompleted] Error DB:', error);
+    log.error('[handleCheckoutCompleted] Database error', error);
     throw error;
   }
 
-  console.log('[handleCheckoutCompleted] Subscription created:', subscriptionId);
+  log.info('[handleCheckoutCompleted] Subscription created', { subscriptionId });
 }
 
 /**
  * Suscripción actualizada
  */
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
-  console.log('[handleSubscriptionUpdated] Subscription:', subscription.id);
+  log.info('[handleSubscriptionUpdated] Processing subscription', { subscriptionId: subscription.id });
 
   const companyId = subscription.metadata?.company_id;
 
   if (!companyId) {
-    console.error('[handleSubscriptionUpdated] Missing company_id');
+    log.error('[handleSubscriptionUpdated] Missing company_id');
     return;
   }
 
@@ -262,18 +263,18 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     .eq('stripe_subscription_id', subscription.id);
 
   if (error) {
-    console.error('[handleSubscriptionUpdated] Error DB:', error);
+    log.error('[handleSubscriptionUpdated] Database error', error);
     throw error;
   }
 
-  console.log('[handleSubscriptionUpdated] Status updated:', status);
+  log.info('[handleSubscriptionUpdated] Status updated', { status });
 }
 
 /**
  * Suscripción cancelada
  */
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
-  console.log('[handleSubscriptionDeleted] Subscription:', subscription.id);
+  log.info('[handleSubscriptionDeleted] Processing deletion', { subscriptionId: subscription.id });
 
   // Revertir a plan free
   const { error } = await supabaseAdmin
@@ -290,23 +291,23 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     .eq('stripe_subscription_id', subscription.id);
 
   if (error) {
-    console.error('[handleSubscriptionDeleted] Error DB:', error);
+    log.error('[handleSubscriptionDeleted] Database error', error);
     throw error;
   }
 
-  console.log('[handleSubscriptionDeleted] Reverted to free plan');
+  log.info('[handleSubscriptionDeleted] Reverted to free plan');
 }
 
 /**
  * Pago fallido
  */
 async function handlePaymentFailed(invoice: Stripe.Invoice) {
-  console.log('[handlePaymentFailed] Invoice:', invoice.id);
+  log.warn('[handlePaymentFailed] Payment failed', { invoiceId: invoice.id });
 
   const subscriptionId = invoice.subscription as string;
 
   if (!subscriptionId) {
-    console.log('[handlePaymentFailed] No subscription');
+    log.info('[handlePaymentFailed] No subscription found');
     return;
   }
 
@@ -320,11 +321,11 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
     .eq('stripe_subscription_id', subscriptionId);
 
   if (error) {
-    console.error('[handlePaymentFailed] Error DB:', error);
+    log.error('[handlePaymentFailed] Database error', error);
     throw error;
   }
 
-  console.log('[handlePaymentFailed] Marked as past_due');
+  log.warn('[handlePaymentFailed] Marked as past_due');
 
   // TODO: Enviar email notificación al usuario
 }
