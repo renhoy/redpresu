@@ -330,10 +330,22 @@ export async function updateBudgetDraft(
       return { success: false, error: 'No autenticado' }
     }
 
-    // Verificar que el usuario es owner del budget
+    // SECURITY: Obtener datos del usuario actual (VULN-010)
+    const { data: userData, error: userError } = await supabase
+      .from('redpresu_users')
+      .select('company_id, role')
+      .eq('id', user.id)
+      .single()
+
+    if (userError || !userData) {
+      log.error('[updateBudgetDraft] Error obteniendo usuario:', userError)
+      return { success: false, error: 'Usuario no encontrado' }
+    }
+
+    // SECURITY: Verificar que el usuario es owner del budget (VULN-010)
     const { data: existingBudget, error: budgetError } = await supabaseAdmin
       .from('redpresu_budgets')
-      .select('user_id, status')
+      .select('user_id, status, company_id')
       .eq('id', budgetId)
       .single()
 
@@ -342,8 +354,19 @@ export async function updateBudgetDraft(
       return { success: false, error: 'Presupuesto no encontrado' }
     }
 
+    // Validar ownership
     if (existingBudget.user_id !== user.id) {
       log.error('[updateBudgetDraft] Usuario no autorizado')
+      return { success: false, error: 'No autorizado' }
+    }
+
+    // Validar company_id (defensa en profundidad)
+    if (existingBudget.company_id !== userData.company_id) {
+      log.error('[updateBudgetDraft] Intento de acceso cross-company:', {
+        userId: user.id,
+        userCompany: userData.company_id,
+        budgetCompany: existingBudget.company_id
+      })
       return { success: false, error: 'No autorizado' }
     }
 
@@ -438,7 +461,19 @@ export async function saveBudget(
       return { success: false, error: 'No autenticado' }
     }
 
-    // Obtener budget
+    // SECURITY: Obtener datos del usuario actual (VULN-010)
+    const { data: userData, error: userError } = await supabase
+      .from('redpresu_users')
+      .select('company_id, role')
+      .eq('id', user.id)
+      .single()
+
+    if (userError || !userData) {
+      log.error('[saveBudget] Error obteniendo usuario:', userError)
+      return { success: false, error: 'Usuario no encontrado' }
+    }
+
+    // SECURITY: Obtener budget y validar ownership (VULN-010)
     const { data: budget, error: budgetError } = await supabaseAdmin
       .from('redpresu_budgets')
       .select('*')
@@ -450,8 +485,19 @@ export async function saveBudget(
       return { success: false, error: 'Presupuesto no encontrado' }
     }
 
+    // Validar ownership
     if (budget.user_id !== user.id) {
       log.error('[saveBudget] Usuario no autorizado')
+      return { success: false, error: 'No autorizado' }
+    }
+
+    // Validar company_id (defensa en profundidad)
+    if (budget.company_id !== userData.company_id) {
+      log.error('[saveBudget] Intento de acceso cross-company:', {
+        userId: user.id,
+        userCompany: userData.company_id,
+        budgetCompany: budget.company_id
+      })
       return { success: false, error: 'No autorizado' }
     }
 
@@ -852,7 +898,19 @@ export async function updateBudgetStatus(
       return { success: false, error: 'No autenticado' }
     }
 
-    // Obtener budget
+    // SECURITY: Obtener datos del usuario actual (VULN-010)
+    const { data: userData, error: userError } = await supabase
+      .from('redpresu_users')
+      .select('company_id, role')
+      .eq('id', user.id)
+      .single()
+
+    if (userError || !userData) {
+      log.error('[updateBudgetStatus] Error obteniendo usuario:', userError)
+      return { success: false, error: 'Usuario no encontrado' }
+    }
+
+    // SECURITY: Obtener budget y validar ownership (VULN-010)
     const { data: budget, error: budgetError } = await supabaseAdmin
       .from('redpresu_budgets')
       .select('*')
@@ -864,8 +922,19 @@ export async function updateBudgetStatus(
       return { success: false, error: 'Presupuesto no encontrado' }
     }
 
+    // Validar ownership
     if (budget.user_id !== user.id) {
       log.error('[updateBudgetStatus] Usuario no autorizado')
+      return { success: false, error: 'No autorizado' }
+    }
+
+    // Validar company_id (defensa en profundidad)
+    if (budget.company_id !== userData.company_id) {
+      log.error('[updateBudgetStatus] Intento de acceso cross-company:', {
+        userId: user.id,
+        userCompany: userData.company_id,
+        budgetCompany: budget.company_id
+      })
       return { success: false, error: 'No autorizado' }
     }
 

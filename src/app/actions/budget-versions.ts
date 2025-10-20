@@ -223,14 +223,21 @@ export async function restoreBudgetVersion(
       return { success: false, error: 'Presupuesto no encontrado' }
     }
 
-    // 4. Verificar permisos
+    // 4. SECURITY: Verificar permisos (VULN-010)
     const budgetUser = Array.isArray(budget.users) ? budget.users[0] : budget.users
-    if (
-      budget.user_id !== user.id &&
-      user.role !== 'admin' &&
-      user.role !== 'superadmin' ||
-      (budgetUser && budgetUser.company_id !== user.company_id)
-    ) {
+    const isOwner = budget.user_id === user.id
+    const isAdminOrSuper = user.role === 'admin' || user.role === 'superadmin'
+    const sameCompany = budgetUser && budgetUser.company_id === user.company_id
+
+    // Denegar si NO es owner Y (NO es admin/superadmin O empresa diferente)
+    if (!isOwner && (!isAdminOrSuper || !sameCompany)) {
+      log.error('[restoreBudgetVersion] Permisos denegados:', {
+        userId: user.id,
+        budgetUserId: budget.user_id,
+        userRole: user.role,
+        userCompany: user.company_id,
+        budgetCompany: budgetUser?.company_id
+      })
       return { success: false, error: 'Sin permisos para restaurar versión' }
     }
 
