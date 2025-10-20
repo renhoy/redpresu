@@ -22,6 +22,7 @@ import {
   registerSchema,
   type RegisterFormData,
 } from "@/lib/validators/auth-schemas";
+import { validateEmail } from "@/lib/helpers/email-validation";
 
 interface RegisterFormErrors {
   nombre?: string;
@@ -190,6 +191,18 @@ export default function RegisterForm() {
         ...prev,
         [field]: value,
       }));
+
+      // SECURITY (VULN-019): Validar emails en tiempo real
+      if ((field === "email" || field === "emailContacto") && typeof value === "string" && value.trim()) {
+        const validation = validateEmail(value);
+        if (!validation.valid) {
+          setErrors((prev) => ({
+            ...prev,
+            [field]: validation.error || "Email no válido",
+          }));
+          return;
+        }
+      }
 
       // Limpiar error del campo cuando el usuario empieza a escribir
       if (errors[field as keyof RegisterFormErrors]) {

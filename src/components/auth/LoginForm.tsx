@@ -16,6 +16,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
+import { validateEmail as validateEmailHelper } from "@/lib/helpers/email-validation";
 
 interface LoginFormData {
   email: string;
@@ -36,19 +37,13 @@ export default function LoginForm() {
   const [errors, setErrors] = useState<LoginFormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
 
-  const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
   const validateForm = (): boolean => {
     const newErrors: LoginFormErrors = {};
 
-    // Validar email
-    if (!formData.email.trim()) {
-      newErrors.email = "El email es requerido";
-    } else if (!validateEmail(formData.email.trim())) {
-      newErrors.email = "Por favor ingresa un email válido";
+    // SECURITY (VULN-019): Validar email con helper seguro
+    const emailValidation = validateEmailHelper(formData.email);
+    if (!emailValidation.valid) {
+      newErrors.email = emailValidation.error || "Email no válido";
     }
 
     // Validar password
