@@ -55,7 +55,7 @@ export interface ActionResult {
  */
 export async function getCompanies(): Promise<ActionResult> {
   try {
-    console.log("[getCompanies] Iniciando...");
+    log.info("[getCompanies] Iniciando...");
 
     // Obtener usuario actual
     const { getServerUser } = await import("@/lib/auth/server");
@@ -77,7 +77,7 @@ export async function getCompanies(): Promise<ActionResult> {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("[getCompanies] Error DB:", error);
+      log.error("[getCompanies] Error DB:", error);
       return { success: false, error: error.message };
     }
 
@@ -113,11 +113,11 @@ export async function getCompanies(): Promise<ActionResult> {
       })
     );
 
-    console.log("[getCompanies] Éxito:", formattedCompanies.length, "empresas");
+    log.info("[getCompanies] Éxito:", formattedCompanies.length, "empresas");
 
     return { success: true, data: formattedCompanies };
   } catch (error) {
-    console.error("[getCompanies] Error inesperado:", error);
+    log.error("[getCompanies] Error inesperado:", error);
     return { success: false, error: "Error inesperado" };
   }
 }
@@ -127,7 +127,7 @@ export async function getCompanies(): Promise<ActionResult> {
  */
 export async function getCompanyById(companyId: string): Promise<ActionResult> {
   try {
-    console.log("[getCompanyById] Iniciando...", companyId);
+    log.info("[getCompanyById] Iniciando...", companyId);
 
     // Obtener usuario actual
     const { getServerUser } = await import("@/lib/auth/server");
@@ -148,7 +148,7 @@ export async function getCompanyById(companyId: string): Promise<ActionResult> {
       .single();
 
     if (error) {
-      console.error("[getCompanyById] Error DB:", error);
+      log.error("[getCompanyById] Error DB:", error);
       return { success: false, error: error.message };
     }
 
@@ -156,11 +156,11 @@ export async function getCompanyById(companyId: string): Promise<ActionResult> {
       return { success: false, error: "Empresa no encontrada" };
     }
 
-    console.log("[getCompanyById] Éxito:", company.id);
+    log.info("[getCompanyById] Éxito:", company.id);
 
     return { success: true, data: company };
   } catch (error) {
-    console.error("[getCompanyById] Error inesperado:", error);
+    log.error("[getCompanyById] Error inesperado:", error);
     return { success: false, error: "Error inesperado" };
   }
 }
@@ -173,7 +173,7 @@ export async function updateCompany(
   data: UpdateCompanyData
 ): Promise<ActionResult> {
   try {
-    console.log("[updateCompany] Iniciando...", companyId, data);
+    log.info("[updateCompany] Iniciando...", companyId, data);
 
     // Obtener usuario actual
     const { getServerUser } = await import("@/lib/auth/server");
@@ -209,11 +209,11 @@ export async function updateCompany(
       .single();
 
     if (error) {
-      console.error("[updateCompany] Error DB:", error);
+      log.error("[updateCompany] Error DB:", error);
       return { success: false, error: error.message };
     }
 
-    console.log("[updateCompany] Éxito:", updatedCompany.id);
+    log.info("[updateCompany] Éxito:", updatedCompany.id);
 
     // Revalidar rutas
     revalidatePath("/companies");
@@ -222,7 +222,7 @@ export async function updateCompany(
 
     return { success: true, data: updatedCompany };
   } catch (error) {
-    console.error("[updateCompany] Error inesperado:", error);
+    log.error("[updateCompany] Error inesperado:", error);
     return { success: false, error: "Error inesperado" };
   }
 }
@@ -238,7 +238,7 @@ export async function updateCompany(
  */
 export async function deleteCompany(companyId: string): Promise<ActionResult> {
   try {
-    console.log("[deleteCompany] Iniciando...", companyId);
+    log.info("[deleteCompany] Iniciando...", companyId);
 
     // Obtener usuario actual
     const { getServerUser } = await import("@/lib/auth/server");
@@ -261,20 +261,20 @@ export async function deleteCompany(companyId: string): Promise<ActionResult> {
       .single();
 
     if (companyError || !company) {
-      console.error("[deleteCompany] Empresa no encontrada:", companyError);
+      log.error("[deleteCompany] Empresa no encontrada:", companyError);
       return { success: false, error: "Empresa no encontrada" };
     }
 
     // PROTECCIÓN: No permitir eliminar la empresa por defecto (company_id = 1)
     if (company.company_id === 1) {
-      console.error("[deleteCompany] Intento de eliminar empresa por defecto");
+      log.error("[deleteCompany] Intento de eliminar empresa por defecto");
       return {
         success: false,
         error: "No se puede eliminar la empresa por defecto del sistema",
       };
     }
 
-    console.log(
+    log.info(
       "[deleteCompany] Eliminando empresa:",
       company.name,
       "(ID:",
@@ -296,11 +296,11 @@ export async function deleteCompany(companyId: string): Promise<ActionResult> {
       .eq("id", companyId);
 
     if (deleteError) {
-      console.error("[deleteCompany] Error al eliminar:", deleteError);
+      log.error("[deleteCompany] Error al eliminar:", deleteError);
       return { success: false, error: deleteError.message };
     }
 
-    console.log("[deleteCompany] Empresa eliminada exitosamente:", company.nombre);
+    log.info("[deleteCompany] Empresa eliminada exitosamente:", company.nombre);
 
     // Revalidar
     revalidatePath("/companies");
@@ -310,7 +310,7 @@ export async function deleteCompany(companyId: string): Promise<ActionResult> {
       data: company,
     };
   } catch (error) {
-    console.error("[deleteCompany] Error inesperado:", error);
+    log.error("[deleteCompany] Error inesperado:", error);
     return { success: false, error: "Error inesperado" };
   }
 }

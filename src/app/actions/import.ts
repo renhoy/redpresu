@@ -5,6 +5,7 @@
  */
 
 'use server'
+import { log } from '@/lib/logger'
 
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
@@ -21,7 +22,7 @@ export async function importTariffs(
   content: string
 ): Promise<ActionResult<{ count: number }>> {
   try {
-    console.log('[importTariffs] Iniciando...')
+    log.info('[importTariffs] Iniciando...')
 
     // 1. Autenticación
     const user = await getServerUser()
@@ -39,7 +40,7 @@ export async function importTariffs(
     try {
       tariffs = JSON.parse(content)
     } catch (e) {
-      console.error('[importTariffs] Error parsing JSON:', e)
+      log.error('[importTariffs] Error parsing JSON:', e)
       return {
         success: false,
         error: 'El archivo JSON de tarifa importado no es válido. Puedes exportar una tarifa existente para obtener un ejemplo del formato correcto.\n\nExporta tus tarifas para tener una copia de seguridad fuera de Redpresu. Si deseas generar nuevas tarifas hazlo desde Redpresu para evitar errores.'
@@ -81,7 +82,7 @@ export async function importTariffs(
           ivasPresentes = detectIVAsPresentes(tariffData)
         }
       } catch (e) {
-        console.error(`[importTariffs] Error calculando IVAs presentes para tarifa ${i + 1}:`, e)
+        log.error(`[importTariffs] Error calculando IVAs presentes para tarifa ${i + 1}:`, e)
         // Continuar sin IVAs presentes si hay error
       }
 
@@ -104,7 +105,7 @@ export async function importTariffs(
     }
 
     if (errors.length > 0) {
-      console.error('[importTariffs] Errores de validación:', errors)
+      log.error('[importTariffs] Errores de validación:', errors)
       return { success: false, error: `Errores de validación: ${errors.join(', ')}` }
     }
 
@@ -118,21 +119,21 @@ export async function importTariffs(
       .select()
 
     if (error) {
-      console.error('[importTariffs] Error BD:', error)
+      log.error('[importTariffs] Error BD:', error)
       return { success: false, error: error.message }
     }
 
     // 6. Revalidar página
     revalidatePath('/tariffs')
 
-    console.log('[importTariffs] Éxito:', data?.length, 'tarifas importadas')
+    log.info('[importTariffs] Éxito:', data?.length, 'tarifas importadas')
 
     return {
       success: true,
       data: { count: data?.length || 0 }
     }
   } catch (error) {
-    console.error('[importTariffs] Error inesperado:', error)
+    log.error('[importTariffs] Error inesperado:', error)
     return { success: false, error: 'Error al importar tarifas' }
   }
 }
@@ -145,7 +146,7 @@ export async function importBudgets(
   content: string
 ): Promise<ActionResult<{ count: number }>> {
   try {
-    console.log('[importBudgets] Iniciando...')
+    log.info('[importBudgets] Iniciando...')
 
     // 1. Autenticación
     const user = await getServerUser()
@@ -160,7 +161,7 @@ export async function importBudgets(
     try {
       budgets = JSON.parse(content)
     } catch (e) {
-      console.error('[importBudgets] Error parsing JSON:', e)
+      log.error('[importBudgets] Error parsing JSON:', e)
       return {
         success: false,
         error: 'El archivo JSON de presupuesto importado no es válido. Puedes exportar un presupuesto existente para obtener un ejemplo del formato correcto.\n\nExporta tus presupuestos para tener una copia de seguridad fuera de Redpresu. Si deseas generar nuevos presupuestos hazlo desde Redpresu para evitar errores.'
@@ -205,7 +206,7 @@ export async function importBudgets(
           .single()
 
         if (!tariffExists) {
-          console.log(`[importBudgets] Presupuesto ${i + 1}: tariff_id no existe, se establecerá como null`)
+          log.info(`[importBudgets] Presupuesto ${i + 1}: tariff_id no existe, se establecerá como null`)
           tariffId = null
         }
       }
@@ -232,7 +233,7 @@ export async function importBudgets(
     }
 
     if (errors.length > 0) {
-      console.error('[importBudgets] Errores de validación:', errors)
+      log.error('[importBudgets] Errores de validación:', errors)
       return { success: false, error: `Errores de validación: ${errors.join(', ')}` }
     }
 
@@ -243,21 +244,21 @@ export async function importBudgets(
       .select()
 
     if (error) {
-      console.error('[importBudgets] Error BD:', error)
+      log.error('[importBudgets] Error BD:', error)
       return { success: false, error: error.message }
     }
 
     // 6. Revalidar página
     revalidatePath('/budgets')
 
-    console.log('[importBudgets] Éxito:', data?.length, 'presupuestos importados')
+    log.info('[importBudgets] Éxito:', data?.length, 'presupuestos importados')
 
     return {
       success: true,
       data: { count: data?.length || 0 }
     }
   } catch (error) {
-    console.error('[importBudgets] Error inesperado:', error)
+    log.error('[importBudgets] Error inesperado:', error)
     return { success: false, error: 'Error al importar presupuestos' }
   }
 }

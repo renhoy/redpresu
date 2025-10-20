@@ -32,7 +32,7 @@ export interface ActionResult<T = unknown> {
  */
 export async function getCurrentSubscription(): Promise<ActionResult<Subscription>> {
   try {
-    console.log('[getCurrentSubscription] Obteniendo suscripción...');
+    log.info('[getCurrentSubscription] Obteniendo suscripción...');
 
     const user = await getServerUser();
     if (!user) {
@@ -50,7 +50,7 @@ export async function getCurrentSubscription(): Promise<ActionResult<Subscriptio
       .single();
 
     if (error) {
-      console.error('[getCurrentSubscription] Error DB:', error);
+      log.error('[getCurrentSubscription] Error DB:', error);
 
       // Si no existe, retornar plan free por defecto
       if (error.code === 'PGRST116') {
@@ -75,10 +75,10 @@ export async function getCurrentSubscription(): Promise<ActionResult<Subscriptio
       return { success: false, error: error.message };
     }
 
-    console.log('[getCurrentSubscription] Suscripción encontrada:', data.plan);
+    log.info('[getCurrentSubscription] Suscripción encontrada:', data.plan);
     return { success: true, data };
   } catch (error) {
-    console.error('[getCurrentSubscription] Error inesperado:', error);
+    log.error('[getCurrentSubscription] Error inesperado:', error);
     return { success: false, error: 'Error al obtener suscripción' };
   }
 }
@@ -100,7 +100,7 @@ export async function createCheckoutSession(
   params: CreateCheckoutSessionParams
 ): Promise<ActionResult<{ url: string }>> {
   try {
-    console.log('[createCheckoutSession] Creando sesión...', params.planId);
+    log.info('[createCheckoutSession] Creando sesión...', params.planId);
 
     // Verificar feature flag
     if (!isSubscriptionsEnabled()) {
@@ -180,10 +180,10 @@ export async function createCheckoutSession(
       },
     });
 
-    console.log('[createCheckoutSession] Sesión creada:', session.id);
+    log.info('[createCheckoutSession] Sesión creada:', session.id);
     return { success: true, data: { url: session.url! } };
   } catch (error) {
-    console.error('[createCheckoutSession] Error:', error);
+    log.error('[createCheckoutSession] Error:', error);
     return { success: false, error: 'Error al crear sesión de pago' };
   }
 }
@@ -204,7 +204,7 @@ export async function createPortalSession(
   params: CreatePortalSessionParams
 ): Promise<ActionResult<{ url: string }>> {
   try {
-    console.log('[createPortalSession] Creando sesión portal...');
+    log.info('[createPortalSession] Creando sesión portal...');
 
     if (!isSubscriptionsEnabled()) {
       return { success: false, error: 'Suscripciones deshabilitadas' };
@@ -242,10 +242,10 @@ export async function createPortalSession(
       return_url: params.returnUrl,
     });
 
-    console.log('[createPortalSession] Sesión portal creada');
+    log.info('[createPortalSession] Sesión portal creada');
     return { success: true, data: { url: session.url } };
   } catch (error) {
-    console.error('[createPortalSession] Error:', error);
+    log.error('[createPortalSession] Error:', error);
     return { success: false, error: 'Error al crear portal' };
   }
 }
@@ -265,7 +265,7 @@ export async function checkPlanLimit(
   params: CheckPlanLimitParams
 ): Promise<ActionResult<{ canCreate: boolean; limit: number; current: number; plan: string }>> {
   try {
-    console.log('[checkPlanLimit] Verificando límite:', params.resourceType);
+    log.info('[checkPlanLimit] Verificando límite:', params.resourceType);
 
     const user = await getServerUser();
     if (!user) {
@@ -282,7 +282,7 @@ export async function checkPlanLimit(
     });
 
     if (error) {
-      console.error('[checkPlanLimit] Error DB:', error);
+      log.error('[checkPlanLimit] Error DB:', error);
       // Si falla, permitir por defecto (fail open)
       return {
         success: true,
@@ -306,14 +306,14 @@ export async function checkPlanLimit(
     const current = count || 0;
     const canCreate = data === true;
 
-    console.log('[checkPlanLimit] Resultado:', { canCreate, limit, current, plan });
+    log.info('[checkPlanLimit] Resultado:', { canCreate, limit, current, plan });
 
     return {
       success: true,
       data: { canCreate, limit, current, plan },
     };
   } catch (error) {
-    console.error('[checkPlanLimit] Error inesperado:', error);
+    log.error('[checkPlanLimit] Error inesperado:', error);
     // Fail open: permitir en caso de error
     return {
       success: true,

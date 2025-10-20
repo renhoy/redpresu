@@ -1,4 +1,5 @@
 'use server'
+import { log } from '@/lib/logger'
 
 import { cookies } from 'next/headers'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
@@ -122,7 +123,7 @@ export async function getTariffs(
     const { data: tariffs, error: tariffsError } = await query
 
     if (tariffsError) {
-      console.error('Error fetching tariffs (base query):', tariffsError)
+      log.error('Error fetching tariffs (base query):', tariffsError)
       throw new Error('Error al obtener las tarifas: ' + JSON.stringify(tariffsError))
     }
 
@@ -144,7 +145,7 @@ export async function getTariffs(
       .in('id', userIds)
 
     if (usersError) {
-      console.error('Error fetching users:', usersError)
+      log.error('Error fetching users:', usersError)
       // Retornar tarifas sin información de creador si falla
       return tariffs.map(t => ({ ...t, creator: null })) as Tariff[]
     }
@@ -160,7 +161,7 @@ export async function getTariffs(
       .in('tariff_id', tariffIds)
 
     if (budgetCountsError) {
-      console.error('Error fetching budget counts:', budgetCountsError)
+      log.error('Error fetching budget counts:', budgetCountsError)
     }
 
     // Contar presupuestos por tarifa
@@ -177,7 +178,7 @@ export async function getTariffs(
     })) as Tariff[]
 
   } catch (error) {
-    console.error('Unexpected error in getTariffs:', error)
+    log.error('Unexpected error in getTariffs:', error)
     throw error
   }
 }
@@ -199,7 +200,7 @@ export async function toggleTariffStatus(
     .eq('id', tariffId)
 
   if (error) {
-    console.error('Error toggling tariff status:', error)
+    log.error('Error toggling tariff status:', error)
     return {
       success: false,
       error: 'Error al cambiar el estado de la tarifa'
@@ -223,7 +224,7 @@ export async function deleteTariff(
     .limit(1)
 
   if (budgetError) {
-    console.error('Error checking associated budgets:', budgetError)
+    log.error('Error checking associated budgets:', budgetError)
     return {
       success: false,
       error: 'Error al verificar presupuestos asociados'
@@ -243,7 +244,7 @@ export async function deleteTariff(
     .eq('id', tariffId)
 
   if (error) {
-    console.error('Error deleting tariff:', error)
+    log.error('Error deleting tariff:', error)
     return {
       success: false,
       error: 'Error al eliminar la tarifa'
@@ -266,7 +267,7 @@ export async function getTariffById(
     .single()
 
   if (error) {
-    console.error('Error fetching tariff:', error)
+    log.error('Error fetching tariff:', error)
     return null
   }
 
@@ -279,25 +280,25 @@ export async function createTariff(data: TariffFormData): Promise<{
   error?: string
 }> {
   try {
-    console.log('[createTariff] Iniciando creación de tarifa...')
+    log.info('[createTariff] Iniciando creación de tarifa...')
 
     // Verificar límites del plan (si suscripciones están habilitadas)
     const { canCreateTariff } = await import('@/lib/helpers/subscription-helpers')
     const limitCheck = await canCreateTariff()
 
     if (!limitCheck.canCreate) {
-      console.log('[createTariff] Límite alcanzado:', limitCheck.message)
+      log.info('[createTariff] Límite alcanzado:', limitCheck.message)
       return { success: false, error: limitCheck.message }
     }
 
     // Validar NIF antes de continuar
     if (!isValidNIF(data.nif)) {
-      console.error('[createTariff] NIF inválido:', data.nif)
+      log.error('[createTariff] NIF inválido:', data.nif)
       return { success: false, error: getNIFErrorMessage(data.nif) }
     }
 
     const cookieStore = await cookies()
-    console.log('[createTariff] Cookies obtenidas:', { hasCookieStore: !!cookieStore })
+    log.info('[createTariff] Cookies obtenidas:', { hasCookieStore: !!cookieStore })
 
     // CRÍTICO: Pasar función que retorna cookieStore
     const supabase = createServerActionClient({
@@ -307,7 +308,7 @@ export async function createTariff(data: TariffFormData): Promise<{
     // Usar getUser() NO getSession()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    console.log('[createTariff] User check:', {
+    log.info('[createTariff] User check:', {
       hasUser: !!user,
       userId: user?.id,
       userEmail: user?.email,
@@ -315,31 +316,31 @@ export async function createTariff(data: TariffFormData): Promise<{
     })
 
     if (authError || !user) {
-      console.error('[createTariff] Auth error:', authError)
+      log.error('[createTariff] Auth error:', authError)
       return { success: false, error: 'Usuario no autenticado' }
     }
 
     // Obtener company_id del usuario actual
-    console.log('[createTariff] Obteniendo datos del usuario...')
+    log.info('[createTariff] Obteniendo datos del usuario...')
     const { data: userData, error: userError } = await supabase
       .from('redpresu_users')
       .select('company_id')
       .eq('id', user.id)
       .single()
 
-    console.log('[createTariff] User data:', {
+    log.info('[createTariff] User data:', {
       hasUserData: !!userData,
       companyId: userData?.company_id,
       userError: userError?.message
     })
 
     if (userError || !userData?.company_id) {
-      console.error('[createTariff] User data error:', userError)
+      log.error('[createTariff] User data error:', userError)
       return { success: false, error: 'No se pudo obtener la empresa del usuario' }
     }
 
     // Detectar IVAs presentes en los datos de la tarifa
-    console.log('[createTariff] Detectando IVAs presentes...')
+    log.info('[createTariff] Detectando IVAs presentes...')
     let ivasPresentes: number[] = []
     try {
       // Parsear json_tariff_data si es string, o usar directamente si es objeto
@@ -350,15 +351,15 @@ export async function createTariff(data: TariffFormData): Promise<{
       // Detectar IVAs si tariffData es un array válido
       if (Array.isArray(tariffData)) {
         ivasPresentes = detectIVAsPresentes(tariffData)
-        console.log('[createTariff] IVAs detectados:', ivasPresentes)
+        log.info('[createTariff] IVAs detectados:', ivasPresentes)
       }
     } catch (parseError) {
-      console.warn('[createTariff] No se pudieron detectar IVAs:', parseError)
+      log.warn('[createTariff] No se pudieron detectar IVAs:', parseError)
       // Continuar sin IVAs si falla la detección
     }
 
     // Crear tarifa
-    console.log('[createTariff] Insertando tarifa en BD...')
+    log.info('[createTariff] Insertando tarifa en BD...')
     const { error } = await supabase
       .from('redpresu_tariffs')
       .insert({
@@ -384,16 +385,16 @@ export async function createTariff(data: TariffFormData): Promise<{
       })
 
     if (error) {
-      console.error('[createTariff] Insert error:', error)
+      log.error('[createTariff] Insert error:', error)
       return { success: false, error: 'Error al crear la tarifa' }
     }
 
-    console.log('[createTariff] Tarifa creada exitosamente')
+    log.info('[createTariff] Tarifa creada exitosamente')
     revalidatePath('/tariffs')
     return { success: true }
 
   } catch (error) {
-    console.error('[createTariff] Critical error:', error)
+    log.error('[createTariff] Critical error:', error)
     return { success: false, error: 'Error crítico al crear tarifa' }
   }
 }
@@ -403,16 +404,16 @@ export async function updateTariff(id: string, data: TariffFormData): Promise<{
   error?: string
 }> {
   try {
-    console.log('[updateTariff] Iniciando actualización de tarifa:', { id })
+    log.info('[updateTariff] Iniciando actualización de tarifa:', { id })
 
     // Validar NIF antes de continuar
     if (!isValidNIF(data.nif)) {
-      console.error('[updateTariff] NIF inválido:', data.nif)
+      log.error('[updateTariff] NIF inválido:', data.nif)
       return { success: false, error: getNIFErrorMessage(data.nif) }
     }
 
     const cookieStore = await cookies()
-    console.log('[updateTariff] Cookies obtenidas:', { hasCookieStore: !!cookieStore })
+    log.info('[updateTariff] Cookies obtenidas:', { hasCookieStore: !!cookieStore })
 
     // CRÍTICO: Pasar función que retorna cookieStore
     const supabase = createServerActionClient({
@@ -422,7 +423,7 @@ export async function updateTariff(id: string, data: TariffFormData): Promise<{
     // Usar getUser() NO getSession()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    console.log('[updateTariff] User check:', {
+    log.info('[updateTariff] User check:', {
       hasUser: !!user,
       userId: user?.id,
       userEmail: user?.email,
@@ -430,12 +431,12 @@ export async function updateTariff(id: string, data: TariffFormData): Promise<{
     })
 
     if (authError || !user) {
-      console.error('[updateTariff] Auth error:', authError)
+      log.error('[updateTariff] Auth error:', authError)
       return { success: false, error: 'Usuario no autenticado' }
     }
 
     // Detectar IVAs presentes en los datos de la tarifa
-    console.log('[updateTariff] Detectando IVAs presentes...')
+    log.info('[updateTariff] Detectando IVAs presentes...')
     let ivasPresentes: number[] = []
     try {
       // Parsear json_tariff_data si es string, o usar directamente si es objeto
@@ -446,15 +447,15 @@ export async function updateTariff(id: string, data: TariffFormData): Promise<{
       // Detectar IVAs si tariffData es un array válido
       if (Array.isArray(tariffData)) {
         ivasPresentes = detectIVAsPresentes(tariffData)
-        console.log('[updateTariff] IVAs detectados:', ivasPresentes)
+        log.info('[updateTariff] IVAs detectados:', ivasPresentes)
       }
     } catch (parseError) {
-      console.warn('[updateTariff] No se pudieron detectar IVAs:', parseError)
+      log.warn('[updateTariff] No se pudieron detectar IVAs:', parseError)
       // Continuar sin IVAs si falla la detección
     }
 
     // Actualizar tarifa
-    console.log('[updateTariff] Actualizando tarifa en BD...')
+    log.info('[updateTariff] Actualizando tarifa en BD...')
     const { error } = await supabase
       .from('redpresu_tariffs')
       .update({
@@ -480,17 +481,17 @@ export async function updateTariff(id: string, data: TariffFormData): Promise<{
       .eq('id', id)
 
     if (error) {
-      console.error('[updateTariff] Update error:', error)
+      log.error('[updateTariff] Update error:', error)
       return { success: false, error: 'Error al actualizar la tarifa' }
     }
 
-    console.log('[updateTariff] Tarifa actualizada exitosamente')
+    log.info('[updateTariff] Tarifa actualizada exitosamente')
     revalidatePath('/tariffs')
     revalidatePath(`/tariffs/edit/${id}`)
     return { success: true }
 
   } catch (error) {
-    console.error('[updateTariff] Critical error:', error)
+    log.error('[updateTariff] Critical error:', error)
     return { success: false, error: 'Error crítico al actualizar tarifa' }
   }
 }
@@ -503,7 +504,7 @@ export async function setTariffAsTemplate(tariffId: string): Promise<{
   error?: string
 }> {
   try {
-    console.log('[setTariffAsTemplate] Marcando tarifa como plantilla:', tariffId)
+    log.info('[setTariffAsTemplate] Marcando tarifa como plantilla:', tariffId)
 
     const cookieStore = await cookies()
     const supabase = createServerActionClient({
@@ -535,7 +536,7 @@ export async function setTariffAsTemplate(tariffId: string): Promise<{
       .eq('company_id', userData.company_id) // Seguridad: solo su empresa
 
     if (error) {
-      console.error('[setTariffAsTemplate] Error:', error)
+      log.error('[setTariffAsTemplate] Error:', error)
       return { success: false, error: 'Error al establecer plantilla' }
     }
 
@@ -543,7 +544,7 @@ export async function setTariffAsTemplate(tariffId: string): Promise<{
     return { success: true }
 
   } catch (error) {
-    console.error('[setTariffAsTemplate] Critical error:', error)
+    log.error('[setTariffAsTemplate] Critical error:', error)
     return { success: false, error: 'Error crítico al establecer plantilla' }
   }
 }
@@ -556,7 +557,7 @@ export async function unsetTariffAsTemplate(tariffId: string): Promise<{
   error?: string
 }> {
   try {
-    console.log('[unsetTariffAsTemplate] Desmarcando tarifa como plantilla:', tariffId)
+    log.info('[unsetTariffAsTemplate] Desmarcando tarifa como plantilla:', tariffId)
 
     const cookieStore = await cookies()
     const supabase = createServerActionClient({
@@ -588,7 +589,7 @@ export async function unsetTariffAsTemplate(tariffId: string): Promise<{
       .eq('company_id', userData.company_id) // Seguridad: solo su empresa
 
     if (error) {
-      console.error('[unsetTariffAsTemplate] Error:', error)
+      log.error('[unsetTariffAsTemplate] Error:', error)
       return { success: false, error: 'Error al desmarcar plantilla' }
     }
 
@@ -596,7 +597,7 @@ export async function unsetTariffAsTemplate(tariffId: string): Promise<{
     return { success: true }
 
   } catch (error) {
-    console.error('[unsetTariffAsTemplate] Critical error:', error)
+    log.error('[unsetTariffAsTemplate] Critical error:', error)
     return { success: false, error: 'Error crítico al desmarcar plantilla' }
   }
 }
@@ -610,7 +611,7 @@ export async function getTemplateTariff(empresaId: number): Promise<{
   error?: string
 }> {
   try {
-    console.log('[getTemplateTariff] Obteniendo plantilla para empresa:', empresaId)
+    log.info('[getTemplateTariff] Obteniendo plantilla para empresa:', empresaId)
 
     const { data, error } = await supabaseAdmin
       .from('redpresu_tariffs')
@@ -622,17 +623,17 @@ export async function getTemplateTariff(empresaId: number): Promise<{
     if (error) {
       // Si no hay plantilla, no es un error crítico
       if (error.code === 'PGRST116') {
-        console.log('[getTemplateTariff] No hay plantilla definida')
+        log.info('[getTemplateTariff] No hay plantilla definida')
         return { success: true, data: undefined }
       }
-      console.error('[getTemplateTariff] Error:', error)
+      log.error('[getTemplateTariff] Error:', error)
       return { success: false, error: 'Error al obtener plantilla' }
     }
 
     return { success: true, data }
 
   } catch (error) {
-    console.error('[getTemplateTariff] Critical error:', error)
+    log.error('[getTemplateTariff] Critical error:', error)
     return { success: false, error: 'Error crítico al obtener plantilla' }
   }
 }
@@ -676,7 +677,7 @@ export async function uploadLogo(formData: FormData): Promise<{
     return { success: true, url: publicUrl }
 
   } catch (error) {
-    console.error('Error uploading logo:', error)
+    log.error('Error uploading logo:', error)
     return { success: false, error: 'Error al subir el archivo' }
   }
 }
@@ -769,7 +770,7 @@ export async function processCSV(formData: FormData): Promise<{
 
     // Validación final: verificar que el post-procesamiento funcionó
     if (!restoredData || !Array.isArray(restoredData)) {
-      console.error('[processCSV] Error en post-procesamiento:', { hasData: !!result.data, restoredData })
+      log.error('[processCSV] Error en post-procesamiento:', { hasData: !!result.data, restoredData })
       return {
         success: false,
         errors: [{
@@ -787,9 +788,9 @@ export async function processCSV(formData: FormData): Promise<{
 
   } catch (error) {
     // Logging detallado para debugging
-    console.error('[processCSV] Error inesperado:', error)
-    console.error('[processCSV] Stack:', error instanceof Error ? error.stack : 'No stack available')
-    console.error('[processCSV] Error type:', error instanceof Error ? error.constructor.name : typeof error)
+    log.error('[processCSV] Error inesperado:', error)
+    log.error('[processCSV] Stack:', error instanceof Error ? error.stack : 'No stack available')
+    log.error('[processCSV] Error type:', error instanceof Error ? error.constructor.name : typeof error)
 
     // Distinguir entre errores controlados y no controlados
     const errorMessage = error instanceof Error ? error.message : String(error)
@@ -843,12 +844,12 @@ export async function getUserIssuerData(userId: string): Promise<{
 
     // Si no existe issuer para el usuario, retornar éxito sin datos
     if (error && error.code !== 'PGRST116') {
-      console.error('[getUserIssuerData] Error obteniendo issuer:', error)
+      log.error('[getUserIssuerData] Error obteniendo issuer:', error)
       return { success: false, error: 'No se pudo obtener los datos del emisor' }
     }
 
     if (!data) {
-      console.log('[getUserIssuerData] No existe issuer para el usuario:', userId)
+      log.info('[getUserIssuerData] No existe issuer para el usuario:', userId)
       return { success: true, data: undefined }
     }
 
@@ -871,7 +872,7 @@ export async function getUserIssuerData(userId: string): Promise<{
 
     const contact = contactParts.join(' - ')
 
-    console.log('[getUserIssuerData] Issuer encontrado:', data.name)
+    log.info('[getUserIssuerData] Issuer encontrado:', data.name)
 
     return {
       success: true,
@@ -883,7 +884,7 @@ export async function getUserIssuerData(userId: string): Promise<{
       }
     }
   } catch (error) {
-    console.error('[getUserIssuerData] Error crítico:', error)
+    log.error('[getUserIssuerData] Error crítico:', error)
     return { success: false, error: 'Error al obtener datos del emisor' }
   }
 }
@@ -897,7 +898,7 @@ export async function duplicateTariff(tariffId: string): Promise<{
   error?: string
 }> {
   try {
-    console.log('[duplicateTariff] Duplicando tarifa:', tariffId)
+    log.info('[duplicateTariff] Duplicando tarifa:', tariffId)
 
     const cookieStore = await cookies()
     const supabase = createServerActionClient({
@@ -908,7 +909,7 @@ export async function duplicateTariff(tariffId: string): Promise<{
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
-      console.error('[duplicateTariff] Error de autenticación:', authError)
+      log.error('[duplicateTariff] Error de autenticación:', authError)
       return { success: false, error: 'No autenticado' }
     }
 
@@ -920,7 +921,7 @@ export async function duplicateTariff(tariffId: string): Promise<{
       .single()
 
     if (userError || !userData?.company_id) {
-      console.error('[duplicateTariff] Error obteniendo usuario:', userError)
+      log.error('[duplicateTariff] Error obteniendo usuario:', userError)
       return { success: false, error: 'No se pudo obtener la empresa del usuario' }
     }
 
@@ -932,13 +933,13 @@ export async function duplicateTariff(tariffId: string): Promise<{
       .single()
 
     if (tariffError || !originalTariff) {
-      console.error('[duplicateTariff] Tarifa no encontrada:', tariffError)
+      log.error('[duplicateTariff] Tarifa no encontrada:', tariffError)
       return { success: false, error: 'Tarifa no encontrada' }
     }
 
     // Verificar que la tarifa pertenece a la empresa del usuario
     if (originalTariff.company_id !== userData.company_id) {
-      console.error('[duplicateTariff] Tarifa no pertenece a la empresa del usuario')
+      log.error('[duplicateTariff] Tarifa no pertenece a la empresa del usuario')
       return { success: false, error: 'No tienes permisos para duplicar esta tarifa' }
     }
 
@@ -972,17 +973,17 @@ export async function duplicateTariff(tariffId: string): Promise<{
       .single()
 
     if (insertError || !newTariff) {
-      console.error('[duplicateTariff] Error creando copia:', insertError)
+      log.error('[duplicateTariff] Error creando copia:', insertError)
       return { success: false, error: 'Error al duplicar tarifa' }
     }
 
-    console.log('[duplicateTariff] Tarifa duplicada exitosamente:', newTariff.id)
+    log.info('[duplicateTariff] Tarifa duplicada exitosamente:', newTariff.id)
     revalidatePath('/tariffs')
 
     return { success: true, newTariffId: newTariff.id }
 
   } catch (error) {
-    console.error('[duplicateTariff] Error crítico:', error)
+    log.error('[duplicateTariff] Error crítico:', error)
     return { success: false, error: 'Error crítico al duplicar tarifa' }
   }
 }

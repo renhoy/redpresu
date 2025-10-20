@@ -166,7 +166,7 @@ export async function getUsers() {
   });
 
   if (error) {
-    console.error("Error fetching users:", error);
+    log.error("Error fetching users:", error);
     return {
       success: false,
       error: "Error al obtener usuarios",
@@ -227,7 +227,7 @@ export async function getUserById(userId: string) {
     .single();
 
   if (error) {
-    console.error("Error fetching user:", error);
+    log.error("Error fetching user:", error);
     return {
       success: false,
       error: "Usuario no encontrado",
@@ -294,7 +294,7 @@ export async function createUser(data: CreateUserData) {
       });
 
     if (authError) {
-      console.error("Error creating auth user:", authError);
+      log.error("Error creating auth user:", authError);
       return {
         success: false,
         error:
@@ -331,7 +331,7 @@ export async function createUser(data: CreateUserData) {
       // Rollback: eliminar usuario de auth
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
 
-      console.error("Error creating user record:", userError);
+      log.error("Error creating user record:", userError);
       return {
         success: false,
         error: "Error al crear registro de usuario",
@@ -347,7 +347,7 @@ export async function createUser(data: CreateUserData) {
       temporaryPassword, // Retornar para mostrar al admin
     };
   } catch (error) {
-    console.error("Unexpected error creating user:", error);
+    log.error("Unexpected error creating user:", error);
     return {
       success: false,
       error: "Error inesperado al crear usuario",
@@ -425,7 +425,7 @@ export async function updateUser(userId: string, data: UpdateUserData) {
     .single();
 
   if (updateError) {
-    console.error("Error updating user:", updateError);
+    log.error("Error updating user:", updateError);
     return {
       success: false,
       error: "Error al actualizar usuario",
@@ -489,7 +489,7 @@ export async function deleteUser(userId: string) {
   );
 
   if (authError) {
-    console.error("Error deleting user:", authError);
+    log.error("Error deleting user:", authError);
     return {
       success: false,
       error: "Error al eliminar usuario",

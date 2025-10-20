@@ -1,4 +1,5 @@
 'use server'
+import { log } from '@/lib/logger'
 
 import { cookies } from 'next/headers'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
@@ -21,7 +22,7 @@ export async function signInAction(email: string, password: string): Promise<Sig
     })
 
     if (error) {
-      console.error('[Server Action] Login error:', error)
+      log.error('[Server Action] Login error:', error)
 
       // Mapear errores comunes a mensajes en español
       let errorMessage = error.message
@@ -49,7 +50,7 @@ export async function signInAction(email: string, password: string): Promise<Sig
       .single()
 
     if (userError) {
-      console.error('[Server Action] User data error:', userError)
+      log.error('[Server Action] User data error:', userError)
       return { success: false, error: 'Error al obtener datos del usuario' }
     }
 
@@ -57,7 +58,7 @@ export async function signInAction(email: string, password: string): Promise<Sig
       return { success: false, error: 'Usuario no encontrado en la base de datos' }
     }
 
-    console.log(`[Server Action] Login exitoso: ${data.user.email}, Rol: ${userData.role}`)
+    log.info(`[Server Action] Login exitoso: ${data.user.email}, Rol: ${userData.role}`)
 
     // Redirect según rol usando Next.js redirect
     if (userData.role === 'vendedor') {
@@ -68,7 +69,7 @@ export async function signInAction(email: string, password: string): Promise<Sig
     }
 
   } catch (error) {
-    console.error('[Server Action] Error crítico:', error)
+    log.error('[Server Action] Error crítico:', error)
 
     // Si es un redirect, Next.js lo maneja automáticamente
     if (error && typeof error === 'object' && 'digest' in error) {
@@ -91,12 +92,12 @@ export async function signOutAction(): Promise<SignInResult> {
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
     if (sessionError) {
-      console.error('[Server Action] Session check error:', sessionError)
+      log.error('[Server Action] Session check error:', sessionError)
       // Aún así intentar cerrar sesión por si acaso
     }
 
     if (!session) {
-      console.log('[Server Action] No hay sesión activa, redirigiendo a inicio')
+      log.info('[Server Action] No hay sesión activa, redirigiendo a inicio')
       redirect('/')
       return { success: true }
     }
@@ -104,15 +105,15 @@ export async function signOutAction(): Promise<SignInResult> {
     const { error } = await supabase.auth.signOut()
 
     if (error) {
-      console.error('[Server Action] Logout error:', error)
+      log.error('[Server Action] Logout error:', error)
       return { success: false, error: `Error al cerrar sesión: ${error.message}` }
     }
 
-    console.log('[Server Action] Logout exitoso')
+    log.info('[Server Action] Logout exitoso')
     redirect('/')
 
   } catch (error) {
-    console.error('[Server Action] Error crítico en logout:', error)
+    log.error('[Server Action] Error crítico en logout:', error)
 
     // Si es un redirect, Next.js lo maneja automáticamente
     if (error && typeof error === 'object' && 'digest' in error) {
@@ -170,7 +171,7 @@ export interface RegisterResult {
  */
 export async function registerUser(data: RegisterData): Promise<RegisterResult> {
   try {
-    console.log('[registerUser] Iniciando registro...', {
+    log.info('[registerUser] Iniciando registro...', {
       email: data.email,
       tipo: data.tipo,
       hasIssuerId: !!data.issuer_id
@@ -200,7 +201,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
     // CASO 1: Superadmin asigna usuario a emisor existente
     // ==========================================
     if (data.issuer_id) {
-      console.log('[registerUser] Asignando a emisor existente:', data.issuer_id)
+      log.info('[registerUser] Asignando a emisor existente:', data.issuer_id)
 
       // Verificar que el usuario actual es superadmin
       const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -233,7 +234,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
         .single()
 
       if (issuerError || !issuerData) {
-        console.error('[registerUser] Error al obtener emisor:', issuerError)
+        log.error('[registerUser] Error al obtener emisor:', issuerError)
         return {
           success: false,
           error: 'Emisor no encontrado'
@@ -242,7 +243,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
 
       empresaId = issuerData.company_id
       emisorId = issuerData.id
-      console.log('[registerUser] Usando empresa existente:', empresaId)
+      log.info('[registerUser] Usando empresa existente:', empresaId)
 
     // ==========================================
     // CASO 2: Registro normal (crear nueva empresa y emisor)
@@ -256,7 +257,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
         .maybeSingle()
 
       if (existingIssuer) {
-        console.error('[registerUser] NIF ya registrado:', data.nif)
+        log.error('[registerUser] NIF ya registrado:', data.nif)
         return {
           success: false,
           error: 'El NIF/CIF ya está registrado en el sistema'
@@ -274,7 +275,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
         .single()
 
       if (empresaError || !empresaData) {
-        console.error('[registerUser] Error al crear empresa:', empresaError)
+        log.error('[registerUser] Error al crear empresa:', empresaError)
         return {
           success: false,
           error: 'Error al crear la empresa'
@@ -282,7 +283,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
       }
 
       empresaId = empresaData.id
-      console.log('[registerUser] Empresa creada:', empresaId)
+      log.info('[registerUser] Empresa creada:', empresaId)
     }
 
     // 4. Crear usuario en auth.users usando admin API para evitar confirmación de email
@@ -297,7 +298,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
     })
 
     if (authError) {
-      console.error('[registerUser] Error en signUp:', authError)
+      log.error('[registerUser] Error en signUp:', authError)
 
       let errorMessage = authError.message
 
@@ -313,13 +314,13 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
     }
 
     if (!authData.user) {
-      console.error('[registerUser] No se obtuvo el usuario creado')
+      log.error('[registerUser] No se obtuvo el usuario creado')
       return { success: false, error: 'Error al crear el usuario' }
     }
 
     const userId = authData.user.id
 
-    console.log('[registerUser] Usuario auth creado:', userId)
+    log.info('[registerUser] Usuario auth creado:', userId)
 
     // Determinar el rol del usuario
     // - Si se proporciona role explícitamente (superadmin), usar ese
@@ -342,7 +343,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
       })
 
     if (userError) {
-      console.error('[registerUser] Error al crear registro en users:', userError)
+      log.error('[registerUser] Error al crear registro en users:', userError)
 
       // Intentar eliminar el usuario de auth y la empresa si falla la creación en public.users
       await supabaseAdmin.auth.admin.deleteUser(userId)
@@ -357,7 +358,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
       }
     }
 
-    console.log('[registerUser] Registro en users creado con rol:', userRole)
+    log.info('[registerUser] Registro en users creado con rol:', userRole)
 
     // 6. Crear registro en public.issuers SOLO si no se proporcionó issuer_id
     if (!data.issuer_id) {
@@ -383,7 +384,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
         .single()
 
       if (issuerError) {
-        console.error('[registerUser] Error al crear issuer:', issuerError)
+        log.error('[registerUser] Error al crear issuer:', issuerError)
 
         // Intentar rollback: eliminar usuario, auth y empresa
         await supabaseAdmin.from('redpresu_users').delete().eq('id', userId)
@@ -397,7 +398,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
       }
 
       if (!issuerData) {
-        console.error('[registerUser] No se obtuvo el issuer creado')
+        log.error('[registerUser] No se obtuvo el issuer creado')
 
         // Rollback: eliminar usuario, auth y empresa
         await supabaseAdmin.from('redpresu_users').delete().eq('id', userId)
@@ -411,10 +412,10 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
       }
 
       emisorId = issuerData.id
-      console.log('[registerUser] Issuer creado:', issuerData.id)
+      log.info('[registerUser] Issuer creado:', issuerData.id)
     }
 
-    console.log('[registerUser] Registro completado exitosamente')
+    log.info('[registerUser] Registro completado exitosamente')
 
     // 7. Iniciar sesión automáticamente (solo si no es superadmin creando usuario)
     if (!data.issuer_id) {
@@ -424,7 +425,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
       })
 
       if (signInError) {
-        console.error('[registerUser] Error al iniciar sesión automática:', signInError)
+        log.error('[registerUser] Error al iniciar sesión automática:', signInError)
         // No es crítico, el usuario puede hacer login manual
       }
 
@@ -442,7 +443,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
     }
 
   } catch (error) {
-    console.error('[registerUser] Error crítico:', error)
+    log.error('[registerUser] Error crítico:', error)
 
     // Si es un redirect, Next.js lo maneja automáticamente
     if (error && typeof error === 'object' && 'digest' in error) {
@@ -475,7 +476,7 @@ export interface PasswordResetResult {
  */
 export async function requestPasswordReset(email: string): Promise<PasswordResetResult> {
   try {
-    console.log('[requestPasswordReset] Iniciando...', { email })
+    log.info('[requestPasswordReset] Iniciando...', { email })
 
     // Validar email
     if (!email || !email.trim()) {
@@ -503,7 +504,7 @@ export async function requestPasswordReset(email: string): Promise<PasswordReset
     })
 
     if (error) {
-      console.error('[requestPasswordReset] Error al enviar email:', error)
+      log.error('[requestPasswordReset] Error al enviar email:', error)
 
       let errorMessage = error.message
 
@@ -522,14 +523,14 @@ export async function requestPasswordReset(email: string): Promise<PasswordReset
       }
     }
 
-    console.log('[requestPasswordReset] Email enviado exitosamente')
+    log.info('[requestPasswordReset] Email enviado exitosamente')
 
     return {
       success: true,
       message: 'Si el email está registrado, recibirás un enlace de recuperación'
     }
   } catch (error) {
-    console.error('[requestPasswordReset] Error crítico:', error)
+    log.error('[requestPasswordReset] Error crítico:', error)
 
     return {
       success: false,
@@ -546,7 +547,7 @@ export async function requestPasswordReset(email: string): Promise<PasswordReset
  */
 export async function resetPassword(newPassword: string): Promise<PasswordResetResult> {
   try {
-    console.log('[resetPassword] Iniciando...')
+    log.info('[resetPassword] Iniciando...')
 
     // Validar contraseña
     if (!newPassword || newPassword.length < 8) {
@@ -572,7 +573,7 @@ export async function resetPassword(newPassword: string): Promise<PasswordResetR
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
     if (sessionError || !session) {
-      console.error('[resetPassword] No hay sesión activa:', sessionError)
+      log.error('[resetPassword] No hay sesión activa:', sessionError)
       return {
         success: false,
         error: 'Token de recuperación inválido o expirado. Solicita un nuevo enlace de recuperación.'
@@ -585,7 +586,7 @@ export async function resetPassword(newPassword: string): Promise<PasswordResetR
     })
 
     if (updateError) {
-      console.error('[resetPassword] Error al actualizar contraseña:', updateError)
+      log.error('[resetPassword] Error al actualizar contraseña:', updateError)
 
       let errorMessage = updateError.message
 
@@ -599,7 +600,7 @@ export async function resetPassword(newPassword: string): Promise<PasswordResetR
       }
     }
 
-    console.log('[resetPassword] Contraseña actualizada exitosamente')
+    log.info('[resetPassword] Contraseña actualizada exitosamente')
 
     // Cerrar sesión después de resetear (usuario deberá hacer login con nueva contraseña)
     await supabase.auth.signOut()
@@ -609,7 +610,7 @@ export async function resetPassword(newPassword: string): Promise<PasswordResetR
       message: 'Contraseña actualizada exitosamente. Ya puedes iniciar sesión con tu nueva contraseña.'
     }
   } catch (error) {
-    console.error('[resetPassword] Error crítico:', error)
+    log.error('[resetPassword] Error crítico:', error)
 
     return {
       success: false,
@@ -686,7 +687,7 @@ export interface ProfileResult {
  */
 export async function getUserProfile(): Promise<ProfileResult> {
   try {
-    console.log('[getUserProfile] Iniciando...')
+    log.info('[getUserProfile] Iniciando...')
 
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
@@ -695,7 +696,7 @@ export async function getUserProfile(): Promise<ProfileResult> {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
-      console.error('[getUserProfile] No autenticado:', authError)
+      log.error('[getUserProfile] No autenticado:', authError)
       return {
         success: false,
         error: 'No estás autenticado'
@@ -710,7 +711,7 @@ export async function getUserProfile(): Promise<ProfileResult> {
       .single()
 
     if (userError || !userData) {
-      console.error('[getUserProfile] Error al obtener usuario:', userError)
+      log.error('[getUserProfile] Error al obtener usuario:', userError)
       return {
         success: false,
         error: 'Error al obtener datos del usuario'
@@ -725,7 +726,7 @@ export async function getUserProfile(): Promise<ProfileResult> {
       .single()
 
     if (issuerError) {
-      console.log('[getUserProfile] No se encontró issuer para el usuario (puede ser normal para usuarios antiguos)')
+      log.info('[getUserProfile] No se encontró issuer para el usuario (puede ser normal para usuarios antiguos)')
       // No es crítico si no existe issuer (usuarios antiguos pueden no tenerlo)
     }
 
@@ -749,14 +750,14 @@ export async function getUserProfile(): Promise<ProfileResult> {
       } : undefined
     }
 
-    console.log('[getUserProfile] Perfil obtenido exitosamente')
+    log.info('[getUserProfile] Perfil obtenido exitosamente')
 
     return {
       success: true,
       data: profile
     }
   } catch (error) {
-    console.error('[getUserProfile] Error crítico:', error)
+    log.error('[getUserProfile] Error crítico:', error)
 
     return {
       success: false,
@@ -773,7 +774,7 @@ export async function getUserProfile(): Promise<ProfileResult> {
  */
 export async function updateUserProfile(data: UpdateProfileData): Promise<ProfileResult> {
   try {
-    console.log('[updateUserProfile] Iniciando...', { hasPasswordChange: !!data.currentPassword })
+    log.info('[updateUserProfile] Iniciando...', { hasPasswordChange: !!data.currentPassword })
 
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
@@ -782,7 +783,7 @@ export async function updateUserProfile(data: UpdateProfileData): Promise<Profil
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
-      console.error('[updateUserProfile] No autenticado:', authError)
+      log.error('[updateUserProfile] No autenticado:', authError)
       return {
         success: false,
         error: 'No estás autenticado'
@@ -791,7 +792,7 @@ export async function updateUserProfile(data: UpdateProfileData): Promise<Profil
 
     // Si hay cambio de contraseña, validar y actualizar
     if (data.currentPassword && data.newPassword) {
-      console.log('[updateUserProfile] Cambiando contraseña...')
+      log.info('[updateUserProfile] Cambiando contraseña...')
 
       // Validar contraseña nueva
       if (data.newPassword.length < 8) {
@@ -816,7 +817,7 @@ export async function updateUserProfile(data: UpdateProfileData): Promise<Profil
       })
 
       if (signInError) {
-        console.error('[updateUserProfile] Contraseña actual incorrecta:', signInError)
+        log.error('[updateUserProfile] Contraseña actual incorrecta:', signInError)
         return {
           success: false,
           error: 'La contraseña actual es incorrecta'
@@ -829,14 +830,14 @@ export async function updateUserProfile(data: UpdateProfileData): Promise<Profil
       })
 
       if (updatePasswordError) {
-        console.error('[updateUserProfile] Error al actualizar contraseña:', updatePasswordError)
+        log.error('[updateUserProfile] Error al actualizar contraseña:', updatePasswordError)
         return {
           success: false,
           error: 'Error al actualizar la contraseña'
         }
       }
 
-      console.log('[updateUserProfile] Contraseña actualizada exitosamente')
+      log.info('[updateUserProfile] Contraseña actualizada exitosamente')
     }
 
     // Actualizar datos del emisor si se proporcionaron
@@ -846,7 +847,7 @@ export async function updateUserProfile(data: UpdateProfileData): Promise<Profil
                           data.irpf_percentage !== undefined
 
     if (hasEmisorData) {
-      console.log('[updateUserProfile] Actualizando datos emisor...')
+      log.info('[updateUserProfile] Actualizando datos emisor...')
 
       // Construir objeto de actualización solo con campos proporcionados
       const updateData: any = {}
@@ -873,14 +874,14 @@ export async function updateUserProfile(data: UpdateProfileData): Promise<Profil
         .eq('user_id', user.id)
 
       if (issuerError) {
-        console.error('[updateUserProfile] Error al actualizar issuer:', issuerError)
+        log.error('[updateUserProfile] Error al actualizar issuer:', issuerError)
         return {
           success: false,
           error: 'Error al actualizar los datos del emisor'
         }
       }
 
-      console.log('[updateUserProfile] Datos issuer actualizados exitosamente')
+      log.info('[updateUserProfile] Datos issuer actualizados exitosamente')
     }
 
     // Obtener perfil actualizado
@@ -893,14 +894,14 @@ export async function updateUserProfile(data: UpdateProfileData): Promise<Profil
       }
     }
 
-    console.log('[updateUserProfile] Perfil actualizado exitosamente')
+    log.info('[updateUserProfile] Perfil actualizado exitosamente')
 
     return {
       success: true,
       data: profileResult.data
     }
   } catch (error) {
-    console.error('[updateUserProfile] Error crítico:', error)
+    log.error('[updateUserProfile] Error crítico:', error)
 
     return {
       success: false,
@@ -938,7 +939,7 @@ export async function getIssuers(): Promise<{
   error?: string
 }> {
   try {
-    console.log('[getIssuers] Obteniendo lista de emisores...')
+    log.info('[getIssuers] Obteniendo lista de emisores...')
 
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
@@ -973,14 +974,14 @@ export async function getIssuers(): Promise<{
       .order('name')
 
     if (issuersError) {
-      console.error('[getIssuers] Error obteniendo emisores:', issuersError)
+      log.error('[getIssuers] Error obteniendo emisores:', issuersError)
       return {
         success: false,
         error: 'Error al obtener lista de emisores'
       }
     }
 
-    console.log('[getIssuers] Emisores obtenidos:', issuers?.length || 0)
+    log.info('[getIssuers] Emisores obtenidos:', issuers?.length || 0)
 
     return {
       success: true,
@@ -988,7 +989,7 @@ export async function getIssuers(): Promise<{
     }
 
   } catch (error) {
-    console.error('[getIssuers] Error crítico:', error)
+    log.error('[getIssuers] Error crítico:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Error inesperado al obtener emisores'

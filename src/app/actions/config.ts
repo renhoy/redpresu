@@ -4,6 +4,7 @@
  */
 
 'use server'
+import { log } from '@/lib/logger'
 
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { getServerUser } from '@/lib/auth/server'
@@ -50,13 +51,13 @@ export async function getAllConfig(): Promise<{
       .order('category, key')
 
     if (error) {
-      console.error('[getAllConfig] Error:', error)
+      log.error('[getAllConfig] Error:', error)
       return { success: false, error: 'Error al obtener configuración' }
     }
 
     return { success: true, data: data || [] }
   } catch (error) {
-    console.error('[getAllConfig] Unexpected error:', error)
+    log.error('[getAllConfig] Unexpected error:', error)
     return { success: false, error: 'Error inesperado' }
   }
 }
@@ -83,13 +84,13 @@ export async function getConfigByCategory(category: string): Promise<{
       .order('key')
 
     if (error) {
-      console.error('[getConfigByCategory] Error:', error)
+      log.error('[getConfigByCategory] Error:', error)
       return { success: false, error: 'Error al obtener configuración' }
     }
 
     return { success: true, data: data || [] }
   } catch (error) {
-    console.error('[getConfigByCategory] Unexpected error:', error)
+    log.error('[getConfigByCategory] Unexpected error:', error)
     return { success: false, error: 'Error inesperado' }
   }
 }
@@ -136,7 +137,7 @@ export async function updateConfigValue(
       .eq('key', key)
 
     if (error) {
-      console.error('[updateConfigValue] Error:', error)
+      log.error('[updateConfigValue] Error:', error)
       return { success: false, error: 'Error al actualizar configuración' }
     }
 
@@ -162,7 +163,7 @@ export async function updateConfigValue(
 
     return { success: true }
   } catch (error) {
-    console.error('[updateConfigValue] Unexpected error:', error)
+    log.error('[updateConfigValue] Unexpected error:', error)
     return { success: false, error: 'Error inesperado' }
   }
 }
@@ -198,14 +199,14 @@ export async function createConfigValue(
       })
 
     if (error) {
-      console.error('[createConfigValue] Error:', error)
+      log.error('[createConfigValue] Error:', error)
       return { success: false, error: 'Error al crear configuración' }
     }
 
     revalidatePath('/settings')
     return { success: true }
   } catch (error) {
-    console.error('[createConfigValue] Unexpected error:', error)
+    log.error('[createConfigValue] Unexpected error:', error)
     return { success: false, error: 'Error inesperado' }
   }
 }
@@ -230,14 +231,14 @@ export async function deleteConfigValue(key: string): Promise<{
       .eq('key', key)
 
     if (error) {
-      console.error('[deleteConfigValue] Error:', error)
+      log.error('[deleteConfigValue] Error:', error)
       return { success: false, error: 'Error al eliminar configuración' }
     }
 
     revalidatePath('/settings')
     return { success: true }
   } catch (error) {
-    console.error('[deleteConfigValue] Unexpected error:', error)
+    log.error('[deleteConfigValue] Unexpected error:', error)
     return { success: false, error: 'Error inesperado' }
   }
 }
@@ -272,7 +273,7 @@ export async function getIVAtoREEquivalencesAction(): Promise<{
 
     return { success: true, data: data.value as Record<string, number> }
   } catch (error) {
-    console.error('[getIVAtoREEquivalencesAction] Error:', error)
+    log.error('[getIVAtoREEquivalencesAction] Error:', error)
     return { success: false, error: 'Error obteniendo equivalencias RE' }
   }
 }
@@ -329,7 +330,7 @@ export async function getPDFTemplatesAction(): Promise<{
 
     return { success: true, data: data.value as PDFTemplate[] }
   } catch (error) {
-    console.error('[getPDFTemplatesAction] Error:', error)
+    log.error('[getPDFTemplatesAction] Error:', error)
     return { success: false, error: 'Error obteniendo plantillas PDF' }
   }
 }
@@ -383,14 +384,14 @@ export async function getTariffDefaultsAction(empresaId?: number): Promise<{
 
     // Si se especifica empresa, buscar solo de esa empresa
     if (empresaId) {
-      console.log('[getTariffDefaultsAction] Buscando plantilla de empresa:', empresaId)
+      log.info('[getTariffDefaultsAction] Buscando plantilla de empresa:', empresaId)
       query = query.eq('company_id', empresaId)
     }
 
     const { data: templateTariff } = await query.maybeSingle()
 
     if (templateTariff) {
-      console.log('[getTariffDefaultsAction] Usando tarifa plantilla:', templateTariff.id)
+      log.info('[getTariffDefaultsAction] Usando tarifa plantilla:', templateTariff.id)
       return {
         success: true,
         data: {
@@ -420,7 +421,7 @@ export async function getTariffDefaultsAction(empresaId?: number): Promise<{
 
     if (!configError && configData) {
       const defaultTariff = configData.value as any
-      console.log('[getTariffDefaultsAction] Usando default_tariff de config')
+      log.info('[getTariffDefaultsAction] Usando default_tariff de config')
 
       // Buscar plantilla con default: true en pdf_templates
       const { data: templatesData } = await supabaseAdmin
@@ -459,7 +460,7 @@ export async function getTariffDefaultsAction(empresaId?: number): Promise<{
     }
 
     // Paso 3: Fallback hardcodeado
-    console.log('[getTariffDefaultsAction] Usando valores fallback hardcodeados')
+    log.info('[getTariffDefaultsAction] Usando valores fallback hardcodeados')
     return {
       success: true,
       data: {
@@ -479,7 +480,7 @@ export async function getTariffDefaultsAction(empresaId?: number): Promise<{
       }
     }
   } catch (error) {
-    console.error('[getTariffDefaultsAction] Error inesperado:', error)
+    log.error('[getTariffDefaultsAction] Error inesperado:', error)
     return {
       success: true,
       data: {
@@ -515,16 +516,16 @@ export async function getDefaultEmpresaId(): Promise<number> {
       .single()
 
     if (error || !data) {
-      console.log('[getDefaultEmpresaId] No existe default_empresa_id, usando fallback: 1')
+      log.info('[getDefaultEmpresaId] No existe default_empresa_id, usando fallback: 1')
       return 1 // Fallback hardcodeado
     }
 
     const empresaId = typeof data.value === 'number' ? data.value : parseInt(String(data.value))
-    console.log('[getDefaultEmpresaId] Usando empresa por defecto:', empresaId)
+    log.info('[getDefaultEmpresaId] Usando empresa por defecto:', empresaId)
     return empresaId
 
   } catch (error) {
-    console.error('[getDefaultEmpresaId] Error inesperado:', error)
+    log.error('[getDefaultEmpresaId] Error inesperado:', error)
     return 1 // Fallback hardcodeado
   }
 }
@@ -555,7 +556,7 @@ export async function getAppNameAction(): Promise<{
 
     return { success: true, data: data.value as string }
   } catch (error) {
-    console.error('[getAppNameAction] Error:', error)
+    log.error('[getAppNameAction] Error:', error)
     // En caso de error, devolver default en lugar de fallar
     return { success: true, data: 'Redpresu' }
   }
@@ -601,13 +602,13 @@ export async function getIssuerByEmpresaId(empresaId: number): Promise<{
       .single()
 
     if (error || !data) {
-      console.error('[getIssuerByEmpresaId] Error:', error)
+      log.error('[getIssuerByEmpresaId] Error:', error)
       return { success: false, error: 'No se encontró issuer para esta empresa' }
     }
 
     return { success: true, data: data as IssuerData }
   } catch (error) {
-    console.error('[getIssuerByEmpresaId] Error inesperado:', error)
+    log.error('[getIssuerByEmpresaId] Error inesperado:', error)
     return { success: false, error: 'Error inesperado al obtener issuer' }
   }
 }

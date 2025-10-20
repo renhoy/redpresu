@@ -5,6 +5,7 @@
  */
 
 'use server'
+import { log } from '@/lib/logger'
 
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
@@ -72,7 +73,7 @@ export async function exportTariffs(
   | { files: Array<{ content: string; filename: string; mimeType: string }> }
 >> {
   try {
-    console.log('[exportTariffs] Iniciando...', { ids, format })
+    log.info('[exportTariffs] Iniciando...', { ids, format })
 
     // 1. Validación entrada
     if (!ids || ids.length === 0) {
@@ -100,7 +101,7 @@ export async function exportTariffs(
       .order('name', { ascending: true })
 
     if (error) {
-      console.error('[exportTariffs] Error BD:', error)
+      log.error('[exportTariffs] Error BD:', error)
       return { success: false, error: error.message }
     }
 
@@ -116,7 +117,7 @@ export async function exportTariffs(
       if (tariffs.length === 1) {
         const content = convertTariffsToJSON(tariffs)
         const filename = generateJSONFilename(tariffs[0].name, 0, date)
-        console.log('[exportTariffs] Éxito:', { count: 1, format, filename })
+        log.info('[exportTariffs] Éxito:', { count: 1, format, filename })
         return {
           success: true,
           data: {
@@ -132,7 +133,7 @@ export async function exportTariffs(
           filename: generateJSONFilename(tariff.name, index, date),
           mimeType: 'application/json'
         }))
-        console.log('[exportTariffs] Éxito:', { count: files.length, format, filesCount: files.length })
+        log.info('[exportTariffs] Éxito:', { count: files.length, format, filesCount: files.length })
         return {
           success: true,
           data: { files }
@@ -143,7 +144,7 @@ export async function exportTariffs(
       if (tariffs.length === 1) {
         const content = convertTariffToPriceStructureCSV(tariffs[0])
         const filename = generatePriceStructureFilename(tariffs[0].name, 0, 1, date)
-        console.log('[exportTariffs] Éxito:', { count: 1, format, filename })
+        log.info('[exportTariffs] Éxito:', { count: 1, format, filename })
         return {
           success: true,
           data: {
@@ -159,7 +160,7 @@ export async function exportTariffs(
           filename: generatePriceStructureFilename(tariff.name, index, tariffs.length, date),
           mimeType: 'text/csv;charset=utf-8;'
         }))
-        console.log('[exportTariffs] Éxito:', { count: files.length, format, filesCount: files.length })
+        log.info('[exportTariffs] Éxito:', { count: files.length, format, filesCount: files.length })
         return {
           success: true,
           data: { files }
@@ -169,7 +170,7 @@ export async function exportTariffs(
       // CSV completo: siempre un único archivo
       const content = convertTariffsToCSV(tariffs)
       const filename = `tarifas_export_${date}.csv`
-      console.log('[exportTariffs] Éxito:', { count: tariffs.length, format, filename })
+      log.info('[exportTariffs] Éxito:', { count: tariffs.length, format, filename })
       return {
         success: true,
         data: {
@@ -180,7 +181,7 @@ export async function exportTariffs(
       }
     }
   } catch (error) {
-    console.error('[exportTariffs] Error inesperado:', error)
+    log.error('[exportTariffs] Error inesperado:', error)
     return { success: false, error: 'Error al exportar tarifas' }
   }
 }
@@ -198,7 +199,7 @@ export async function exportBudgets(
   | { files: Array<{ content: string; filename: string; mimeType: string }> }
 >> {
   try {
-    console.log('[exportBudgets] Iniciando...', { ids, format })
+    log.info('[exportBudgets] Iniciando...', { ids, format })
 
     // 1. Validación entrada
     if (!ids || ids.length === 0) {
@@ -226,7 +227,7 @@ export async function exportBudgets(
       .order('client_name', { ascending: true })
 
     if (error) {
-      console.error('[exportBudgets] Error BD:', error)
+      log.error('[exportBudgets] Error BD:', error)
       return { success: false, error: error.message }
     }
 
@@ -241,7 +242,7 @@ export async function exportBudgets(
     if (budgets.length === 1) {
       const content = convertBudgetsToJSON(budgets)
       const filename = generateBudgetFilename(budgets[0].client_name, 0, date)
-      console.log('[exportBudgets] Éxito:', { count: 1, format, filename })
+      log.info('[exportBudgets] Éxito:', { count: 1, format, filename })
       return {
         success: true,
         data: {
@@ -257,14 +258,14 @@ export async function exportBudgets(
         filename: generateBudgetFilename(budget.client_name, index, date),
         mimeType: 'application/json'
       }))
-      console.log('[exportBudgets] Éxito:', { count: files.length, format, filesCount: files.length })
+      log.info('[exportBudgets] Éxito:', { count: files.length, format, filesCount: files.length })
       return {
         success: true,
         data: { files }
       }
     }
   } catch (error) {
-    console.error('[exportBudgets] Error inesperado:', error)
+    log.error('[exportBudgets] Error inesperado:', error)
     return { success: false, error: 'Error al exportar presupuestos' }
   }
 }

@@ -1,4 +1,5 @@
 'use server'
+import { log } from '@/lib/logger'
 
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
@@ -23,7 +24,7 @@ export async function createBudgetVersion(
   notes?: string
 ): Promise<ActionResult<BudgetVersion>> {
   try {
-    console.log('[createBudgetVersion] Iniciando:', { budgetId, versionName })
+    log.info('[createBudgetVersion] Iniciando:', { budgetId, versionName })
 
     // 1. Autenticación
     const user = await getServerUser()
@@ -42,7 +43,7 @@ export async function createBudgetVersion(
       .single()
 
     if (budgetError || !budget) {
-      console.error('[createBudgetVersion] Error obteniendo presupuesto:', budgetError)
+      log.error('[createBudgetVersion] Error obteniendo presupuesto:', budgetError)
       return { success: false, error: 'Presupuesto no encontrado' }
     }
 
@@ -67,7 +68,7 @@ export async function createBudgetVersion(
       .rpc('get_next_version_number', { p_budget_id: budgetId })
 
     if (versionError) {
-      console.error('[createBudgetVersion] Error obteniendo número versión:', versionError)
+      log.error('[createBudgetVersion] Error obteniendo número versión:', versionError)
       return { success: false, error: 'Error obteniendo número de versión' }
     }
 
@@ -118,15 +119,15 @@ export async function createBudgetVersion(
       .single()
 
     if (insertError || !version) {
-      console.error('[createBudgetVersion] Error insertando versión:', insertError)
+      log.error('[createBudgetVersion] Error insertando versión:', insertError)
       return { success: false, error: insertError?.message || 'Error creando versión' }
     }
 
-    console.log('[createBudgetVersion] Versión creada:', version.id, `#${versionNumber}`)
+    log.info('[createBudgetVersion] Versión creada:', version.id, `#${versionNumber}`)
 
     return { success: true, data: version as BudgetVersion }
   } catch (error) {
-    console.error('[createBudgetVersion] Error inesperado:', error)
+    log.error('[createBudgetVersion] Error inesperado:', error)
     return { success: false, error: 'Error inesperado' }
   }
 }
@@ -139,7 +140,7 @@ export async function getBudgetVersions(
   budgetId: string
 ): Promise<ActionResult<BudgetVersion[]>> {
   try {
-    console.log('[getBudgetVersions] Obteniendo versiones para:', budgetId)
+    log.info('[getBudgetVersions] Obteniendo versiones para:', budgetId)
 
     // 1. Autenticación
     const user = await getServerUser()
@@ -164,15 +165,15 @@ export async function getBudgetVersions(
       .order('version_number', { ascending: false })
 
     if (error) {
-      console.error('[getBudgetVersions] Error obteniendo versiones:', error)
+      log.error('[getBudgetVersions] Error obteniendo versiones:', error)
       return { success: false, error: error.message }
     }
 
-    console.log('[getBudgetVersions] Versiones encontradas:', versions?.length || 0)
+    log.info('[getBudgetVersions] Versiones encontradas:', versions?.length || 0)
 
     return { success: true, data: (versions || []) as BudgetVersion[] }
   } catch (error) {
-    console.error('[getBudgetVersions] Error inesperado:', error)
+    log.error('[getBudgetVersions] Error inesperado:', error)
     return { success: false, error: 'Error inesperado' }
   }
 }
@@ -187,7 +188,7 @@ export async function restoreBudgetVersion(
   createNewVersion = true
 ): Promise<ActionResult<{ budget_id: string }>> {
   try {
-    console.log('[restoreBudgetVersion] Restaurando versión:', versionId)
+    log.info('[restoreBudgetVersion] Restaurando versión:', versionId)
 
     // 1. Autenticación
     const user = await getServerUser()
@@ -206,7 +207,7 @@ export async function restoreBudgetVersion(
       .single()
 
     if (versionError || !version) {
-      console.error('[restoreBudgetVersion] Error obteniendo versión:', versionError)
+      log.error('[restoreBudgetVersion] Error obteniendo versión:', versionError)
       return { success: false, error: 'Versión no encontrada' }
     }
 
@@ -218,7 +219,7 @@ export async function restoreBudgetVersion(
       .single()
 
     if (budgetError || !budget) {
-      console.error('[restoreBudgetVersion] Error obteniendo presupuesto:', budgetError)
+      log.error('[restoreBudgetVersion] Error obteniendo presupuesto:', budgetError)
       return { success: false, error: 'Presupuesto no encontrado' }
     }
 
@@ -242,7 +243,7 @@ export async function restoreBudgetVersion(
       )
 
       if (!createResult.success) {
-        console.error('[restoreBudgetVersion] Error creando versión backup')
+        log.error('[restoreBudgetVersion] Error creando versión backup')
         // No retornar error, continuar con la restauración
       }
     }
@@ -277,15 +278,15 @@ export async function restoreBudgetVersion(
       .eq('id', version.budget_id)
 
     if (updateError) {
-      console.error('[restoreBudgetVersion] Error restaurando presupuesto:', updateError)
+      log.error('[restoreBudgetVersion] Error restaurando presupuesto:', updateError)
       return { success: false, error: updateError.message }
     }
 
-    console.log('[restoreBudgetVersion] Presupuesto restaurado:', version.budget_id)
+    log.info('[restoreBudgetVersion] Presupuesto restaurado:', version.budget_id)
 
     return { success: true, data: { budget_id: version.budget_id } }
   } catch (error) {
-    console.error('[restoreBudgetVersion] Error inesperado:', error)
+    log.error('[restoreBudgetVersion] Error inesperado:', error)
     return { success: false, error: 'Error inesperado' }
   }
 }
@@ -298,7 +299,7 @@ export async function deleteBudgetVersion(
   versionId: string
 ): Promise<ActionResult> {
   try {
-    console.log('[deleteBudgetVersion] Eliminando versión:', versionId)
+    log.info('[deleteBudgetVersion] Eliminando versión:', versionId)
 
     // 1. Autenticación y autorización
     const user = await getServerUser()
@@ -320,15 +321,15 @@ export async function deleteBudgetVersion(
       .eq('id', versionId)
 
     if (error) {
-      console.error('[deleteBudgetVersion] Error eliminando versión:', error)
+      log.error('[deleteBudgetVersion] Error eliminando versión:', error)
       return { success: false, error: error.message }
     }
 
-    console.log('[deleteBudgetVersion] Versión eliminada:', versionId)
+    log.info('[deleteBudgetVersion] Versión eliminada:', versionId)
 
     return { success: true }
   } catch (error) {
-    console.error('[deleteBudgetVersion] Error inesperado:', error)
+    log.error('[deleteBudgetVersion] Error inesperado:', error)
     return { success: false, error: 'Error inesperado' }
   }
 }

@@ -1,4 +1,5 @@
 'use server'
+import { log } from '@/lib/logger'
 
 import { cookies } from 'next/headers'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
@@ -45,13 +46,13 @@ async function getUserIssuer(userId: string): Promise<{
       .single()
 
     if (error || !data) {
-      console.error('[getUserIssuer] Error obteniendo issuer:', error)
+      log.error('[getUserIssuer] Error obteniendo issuer:', error)
       return null
     }
 
     return data
   } catch (error) {
-    console.error('[getUserIssuer] Error crítico:', error)
+    log.error('[getUserIssuer] Error crítico:', error)
     return null
   }
 }
@@ -61,7 +62,7 @@ async function getUserIssuer(userId: string): Promise<{
  */
 export async function getActiveTariffs(): Promise<Tariff[]> {
   try {
-    console.log('[getActiveTariffs] Obteniendo tarifas activas...')
+    log.info('[getActiveTariffs] Obteniendo tarifas activas...')
 
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
@@ -69,7 +70,7 @@ export async function getActiveTariffs(): Promise<Tariff[]> {
     // Obtener usuario actual
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      console.error('[getActiveTariffs] Error de autenticación:', authError)
+      log.error('[getActiveTariffs] Error de autenticación:', authError)
       return []
     }
 
@@ -81,19 +82,19 @@ export async function getActiveTariffs(): Promise<Tariff[]> {
       .single()
 
     if (userError) {
-      console.error('[getActiveTariffs] Error obteniendo usuario:', userError)
+      log.error('[getActiveTariffs] Error obteniendo usuario:', userError)
       return []
     }
 
     // Si el usuario no tiene company_id (superadmin), usar empresa por defecto
     let empresaId = userData?.company_id
     if (!empresaId) {
-      console.log('[getActiveTariffs] Usuario sin company_id, obteniendo empresa por defecto...')
+      log.info('[getActiveTariffs] Usuario sin company_id, obteniendo empresa por defecto...')
       empresaId = await getDefaultEmpresaId()
-      console.log('[getActiveTariffs] Empresa por defecto obtenida:', empresaId)
+      log.info('[getActiveTariffs] Empresa por defecto obtenida:', empresaId)
     }
 
-    console.log('[getActiveTariffs] Empresa ID:', empresaId)
+    log.info('[getActiveTariffs] Empresa ID:', empresaId)
 
     // Obtener tarifas activas de la empresa
     const { data: tariffs, error: tariffsError } = await supabaseAdmin
@@ -104,15 +105,15 @@ export async function getActiveTariffs(): Promise<Tariff[]> {
       .order('title')
 
     if (tariffsError) {
-      console.error('[getActiveTariffs] Error obteniendo tarifas:', tariffsError)
+      log.error('[getActiveTariffs] Error obteniendo tarifas:', tariffsError)
       return []
     }
 
-    console.log('[getActiveTariffs] Tarifas encontradas:', tariffs?.length || 0)
+    log.info('[getActiveTariffs] Tarifas encontradas:', tariffs?.length || 0)
     return tariffs || []
 
   } catch (error) {
-    console.error('[getActiveTariffs] Error crítico:', error)
+    log.error('[getActiveTariffs] Error crítico:', error)
     return []
   }
 }
@@ -169,14 +170,14 @@ export async function createDraftBudget(data: {
   totals: { base: number; total: number }
 }): Promise<{ success: boolean; budgetId?: string; error?: string }> {
   try {
-    console.log('[createDraftBudget] Creando borrador...')
+    log.info('[createDraftBudget] Creando borrador...')
 
     // Verificar límites del plan (si suscripciones están habilitadas)
     const { canCreateBudget } = await import('@/lib/helpers/subscription-helpers')
     const limitCheck = await canCreateBudget()
 
     if (!limitCheck.canCreate) {
-      console.log('[createDraftBudget] Límite alcanzado:', limitCheck.message)
+      log.info('[createDraftBudget] Límite alcanzado:', limitCheck.message)
       return { success: false, error: limitCheck.message }
     }
 
@@ -186,7 +187,7 @@ export async function createDraftBudget(data: {
     // Obtener usuario actual
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      console.error('[createDraftBudget] Error de autenticación:', authError)
+      log.error('[createDraftBudget] Error de autenticación:', authError)
       return { success: false, error: 'No autenticado' }
     }
 
@@ -198,16 +199,16 @@ export async function createDraftBudget(data: {
       .single()
 
     if (userError) {
-      console.error('[createDraftBudget] Error obteniendo usuario:', userError)
+      log.error('[createDraftBudget] Error obteniendo usuario:', userError)
       return { success: false, error: 'Error obteniendo datos del usuario' }
     }
 
     // Si el usuario no tiene company_id (superadmin), usar empresa por defecto
     let empresaId = userData?.company_id
     if (!empresaId) {
-      console.log('[createDraftBudget] Usuario sin company_id, obteniendo empresa por defecto...')
+      log.info('[createDraftBudget] Usuario sin company_id, obteniendo empresa por defecto...')
       empresaId = await getDefaultEmpresaId()
-      console.log('[createDraftBudget] Empresa por defecto obtenida:', empresaId)
+      log.info('[createDraftBudget] Empresa por defecto obtenida:', empresaId)
     }
 
     // Calcular IVA
@@ -287,17 +288,17 @@ export async function createDraftBudget(data: {
       .single()
 
     if (insertError || !budget) {
-      console.error('[createDraftBudget] Error creando borrador:', insertError)
+      log.error('[createDraftBudget] Error creando borrador:', insertError)
       return { success: false, error: 'Error al crear borrador' }
     }
 
-    console.log('[createDraftBudget] Borrador creado:', budget.id)
+    log.info('[createDraftBudget] Borrador creado:', budget.id)
     revalidatePath('/budgets')
 
     return { success: true, budgetId: budget.id }
 
   } catch (error) {
-    console.error('[createDraftBudget] Error crítico:', error)
+    log.error('[createDraftBudget] Error crítico:', error)
     return { success: false, error: 'Error interno del servidor' }
   }
 }
@@ -314,7 +315,7 @@ export async function updateBudgetDraft(
   }
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    console.log('[updateBudgetDraft] Actualizando borrador:', budgetId)
+    log.info('[updateBudgetDraft] Actualizando borrador:', budgetId)
 
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
@@ -322,7 +323,7 @@ export async function updateBudgetDraft(
     // Obtener usuario actual
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      console.error('[updateBudgetDraft] Error de autenticación:', authError)
+      log.error('[updateBudgetDraft] Error de autenticación:', authError)
       return { success: false, error: 'No autenticado' }
     }
 
@@ -334,18 +335,18 @@ export async function updateBudgetDraft(
       .single()
 
     if (budgetError || !existingBudget) {
-      console.error('[updateBudgetDraft] Budget no encontrado:', budgetError)
+      log.error('[updateBudgetDraft] Budget no encontrado:', budgetError)
       return { success: false, error: 'Presupuesto no encontrado' }
     }
 
     if (existingBudget.user_id !== user.id) {
-      console.error('[updateBudgetDraft] Usuario no autorizado')
+      log.error('[updateBudgetDraft] Usuario no autorizado')
       return { success: false, error: 'No autorizado' }
     }
 
     // Solo permitir actualizar borradores
     if (existingBudget.status !== BudgetStatus.BORRADOR) {
-      console.error('[updateBudgetDraft] Solo se pueden actualizar borradores')
+      log.error('[updateBudgetDraft] Solo se pueden actualizar borradores')
       return { success: false, error: 'Solo se pueden actualizar borradores' }
     }
 
@@ -385,15 +386,15 @@ export async function updateBudgetDraft(
       .eq('id', budgetId)
 
     if (updateError) {
-      console.error('[updateBudgetDraft] Error actualizando:', updateError)
+      log.error('[updateBudgetDraft] Error actualizando:', updateError)
       return { success: false, error: 'Error al actualizar' }
     }
 
-    console.log('[updateBudgetDraft] Borrador actualizado exitosamente')
+    log.info('[updateBudgetDraft] Borrador actualizado exitosamente')
     return { success: true }
 
   } catch (error) {
-    console.error('[updateBudgetDraft] Error crítico:', error)
+    log.error('[updateBudgetDraft] Error crítico:', error)
     return { success: false, error: 'Error interno del servidor' }
   }
 }
@@ -430,7 +431,7 @@ export async function saveBudget(
     // Obtener usuario actual
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      console.error('[saveBudget] Error de autenticación:', authError)
+      log.error('[saveBudget] Error de autenticación:', authError)
       return { success: false, error: 'No autenticado' }
     }
 
@@ -442,12 +443,12 @@ export async function saveBudget(
       .single()
 
     if (budgetError || !budget) {
-      console.error('[saveBudget] Budget no encontrado:', budgetError)
+      log.error('[saveBudget] Budget no encontrado:', budgetError)
       return { success: false, error: 'Presupuesto no encontrado' }
     }
 
     if (budget.user_id !== user.id) {
-      console.error('[saveBudget] Usuario no autorizado')
+      log.error('[saveBudget] Usuario no autorizado')
       return { success: false, error: 'No autorizado' }
     }
 
@@ -485,7 +486,7 @@ export async function saveBudget(
       if (aplicaIRPF && issuer.irpf_percentage) {
         irpfPercentage = issuer.irpf_percentage
         irpfAmount = calculateIRPF(totals.base, irpfPercentage)
-        console.log('[saveBudget] IRPF aplicable:', {
+        log.info('[saveBudget] IRPF aplicable:', {
           emisorTipo: issuer.type,
           clienteTipo: clientType,
           porcentaje: irpfPercentage,
@@ -493,13 +494,13 @@ export async function saveBudget(
           irpfAmount
         })
       } else {
-        console.log('[saveBudget] IRPF NO aplica:', {
+        log.info('[saveBudget] IRPF NO aplica:', {
           emisorTipo: issuer.type,
           clienteTipo: clientType
         })
       }
     } else {
-      console.warn('[saveBudget] No se pudo obtener datos del emisor, IRPF = 0')
+      log.warn('[saveBudget] No se pudo obtener datos del emisor, IRPF = 0')
     }
 
     // Calcular Recargo de Equivalencia si aplica
@@ -507,10 +508,10 @@ export async function saveBudget(
     let totalRE = 0
 
     if (recargoData?.aplica && Object.keys(recargoData.recargos).length > 0) {
-      console.log('[saveBudget] Calculando RE:', recargoData.recargos)
+      log.info('[saveBudget] Calculando RE:', recargoData.recargos)
       reByIVA = calculateRecargo(budgetData as FiscalBudgetItem[], recargoData.recargos)
       totalRE = getTotalRecargo(reByIVA)
-      console.log('[saveBudget] RE calculado:', { reByIVA, totalRE })
+      log.info('[saveBudget] RE calculado:', { reByIVA, totalRE })
     }
 
     // Calcular total a pagar (total con IVA - IRPF + RE)
@@ -585,10 +586,10 @@ export async function saveBudget(
         const filePath = path.join(process.cwd(), 'public', budget.pdf_url)
         if (fs.existsSync(filePath)) {
           fs.unlinkSync(filePath)
-          console.log('[saveBudget] PDF físico eliminado:', filePath)
+          log.info('[saveBudget] PDF físico eliminado:', filePath)
         }
       } catch (fsError) {
-        console.error('[saveBudget] Error eliminando PDF físico:', fsError)
+        log.error('[saveBudget] Error eliminando PDF físico:', fsError)
         // No fallar el guardado por error de eliminación de archivo
       }
     }
@@ -600,17 +601,17 @@ export async function saveBudget(
       .eq('id', budgetId)
 
     if (updateError) {
-      console.error('[saveBudget] Error actualizando:', updateError)
+      log.error('[saveBudget] Error actualizando:', updateError)
       return { success: false, error: 'Error al guardar presupuesto' }
     }
 
-    console.log('[saveBudget] Presupuesto guardado como borrador')
+    log.info('[saveBudget] Presupuesto guardado como borrador')
     revalidatePath('/budgets')
 
     return { success: true, had_pdf: hadPdf }
 
   } catch (error) {
-    console.error('[saveBudget] Error crítico:', error)
+    log.error('[saveBudget] Error crítico:', error)
     return { success: false, error: 'Error interno del servidor' }
   }
 }
@@ -641,7 +642,7 @@ export async function duplicateBudget(
   }
 ): Promise<{ success: boolean; newBudgetId?: string; budgetId?: string; error?: string }> {
   try {
-    console.log('[duplicateBudget] Duplicando presupuesto:', originalBudgetId)
+    log.info('[duplicateBudget] Duplicando presupuesto:', originalBudgetId)
 
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
@@ -649,7 +650,7 @@ export async function duplicateBudget(
     // Obtener usuario actual
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      console.error('[duplicateBudget] Error de autenticación:', authError)
+      log.error('[duplicateBudget] Error de autenticación:', authError)
       return { success: false, error: 'No autenticado' }
     }
 
@@ -661,7 +662,7 @@ export async function duplicateBudget(
       .single()
 
     if (budgetError || !originalBudget) {
-      console.error('[duplicateBudget] Budget original no encontrado:', budgetError)
+      log.error('[duplicateBudget] Budget original no encontrado:', budgetError)
       return { success: false, error: 'Presupuesto original no encontrado' }
     }
 
@@ -675,7 +676,7 @@ export async function duplicateBudget(
       endDate.setDate(endDate.getDate() + originalBudget.validity_days)
     }
 
-    console.log('[duplicateBudget] Fechas calculadas:', {
+    log.info('[duplicateBudget] Fechas calculadas:', {
       validity_days: originalBudget.validity_days,
       start_date: startDate.toISOString(),
       end_date: originalBudget.validity_days ? endDate.toISOString() : null
@@ -693,12 +694,12 @@ export async function duplicateBudget(
         .rpc('get_next_budget_version_number', { p_parent_budget_id: originalBudgetId })
 
       if (versionError) {
-        console.error('[duplicateBudget] Error obteniendo version_number:', versionError)
+        log.error('[duplicateBudget] Error obteniendo version_number:', versionError)
       } else {
         versionNumber = nextVersionData as number
       }
 
-      console.log('[duplicateBudget] Creando como versión hijo:', {
+      log.info('[duplicateBudget] Creando como versión hijo:', {
         parent_budget_id: parentBudgetId,
         version_number: versionNumber
       })
@@ -708,7 +709,7 @@ export async function duplicateBudget(
     const issuer = await getUserIssuer(user.id)
 
     if (!issuer) {
-      console.warn('[duplicateBudget] Usuario sin issuer:', user.id, '- usando valores por defecto')
+      log.warn('[duplicateBudget] Usuario sin issuer:', user.id, '- usando valores por defecto')
     }
 
     const issuerType = issuer?.type || 'empresa'
@@ -724,7 +725,7 @@ export async function duplicateBudget(
       irpf = calculateIRPF(newData.totals.base, irpfPercentage)
       totalPagar -= irpf
       hasFiscalChanges = true
-      console.log('[duplicateBudget] IRPF aplicado:', { irpfPercentage, irpf, base: newData.totals.base })
+      log.info('[duplicateBudget] IRPF aplicado:', { irpfPercentage, irpf, base: newData.totals.base })
     }
 
     // Calcular RE si aplica y hay datos
@@ -815,17 +816,17 @@ export async function duplicateBudget(
       .single()
 
     if (insertError || !newBudget) {
-      console.error('[duplicateBudget] Error creando nuevo presupuesto:', insertError)
+      log.error('[duplicateBudget] Error creando nuevo presupuesto:', insertError)
       return { success: false, error: 'Error al duplicar presupuesto' }
     }
 
-    console.log('[duplicateBudget] Nuevo presupuesto creado:', newBudget.id)
+    log.info('[duplicateBudget] Nuevo presupuesto creado:', newBudget.id)
     revalidatePath('/budgets')
 
     return { success: true, budgetId: newBudget.id, newBudgetId: newBudget.id }
 
   } catch (error) {
-    console.error('[duplicateBudget] Error crítico:', error)
+    log.error('[duplicateBudget] Error crítico:', error)
     return { success: false, error: 'Error interno del servidor' }
   }
 }
@@ -844,7 +845,7 @@ export async function updateBudgetStatus(
     // Obtener usuario actual
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      console.error('[updateBudgetStatus] Error de autenticación:', authError)
+      log.error('[updateBudgetStatus] Error de autenticación:', authError)
       return { success: false, error: 'No autenticado' }
     }
 
@@ -856,12 +857,12 @@ export async function updateBudgetStatus(
       .single()
 
     if (budgetError || !budget) {
-      console.error('[updateBudgetStatus] Budget no encontrado:', budgetError)
+      log.error('[updateBudgetStatus] Budget no encontrado:', budgetError)
       return { success: false, error: 'Presupuesto no encontrado' }
     }
 
     if (budget.user_id !== user.id) {
-      console.error('[updateBudgetStatus] Usuario no autorizado')
+      log.error('[updateBudgetStatus] Usuario no autorizado')
       return { success: false, error: 'No autorizado' }
     }
 
@@ -893,17 +894,17 @@ export async function updateBudgetStatus(
       .eq('id', budgetId)
 
     if (updateError) {
-      console.error('[updateBudgetStatus] Error actualizando:', updateError)
+      log.error('[updateBudgetStatus] Error actualizando:', updateError)
       return { success: false, error: 'Error al actualizar estado' }
     }
 
-    console.log('[updateBudgetStatus] Estado actualizado:', currentStatus, '→', newStatus)
+    log.info('[updateBudgetStatus] Estado actualizado:', currentStatus, '→', newStatus)
     revalidatePath('/budgets')
 
     return { success: true }
 
   } catch (error) {
-    console.error('[updateBudgetStatus] Error crítico:', error)
+    log.error('[updateBudgetStatus] Error crítico:', error)
     return { success: false, error: 'Error interno del servidor' }
   }
 }
@@ -915,7 +916,7 @@ export async function getBudgetById(
   budgetId: string
 ): Promise<Budget | null> {
   try {
-    console.log('[getBudgetById] Obteniendo budget:', budgetId)
+    log.info('[getBudgetById] Obteniendo budget:', budgetId)
 
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
@@ -923,7 +924,7 @@ export async function getBudgetById(
     // Obtener usuario actual
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      console.error('[getBudgetById] Error de autenticación:', authError)
+      log.error('[getBudgetById] Error de autenticación:', authError)
       return null
     }
 
@@ -935,15 +936,15 @@ export async function getBudgetById(
       .single()
 
     if (budgetError || !budget) {
-      console.error('[getBudgetById] Budget no encontrado:', budgetError)
+      log.error('[getBudgetById] Budget no encontrado:', budgetError)
       return null
     }
 
-    console.log('[getBudgetById] Budget encontrado:', budget.id)
+    log.info('[getBudgetById] Budget encontrado:', budget.id)
     return budget as Budget
 
   } catch (error) {
-    console.error('[getBudgetById] Error crítico:', error)
+    log.error('[getBudgetById] Error crítico:', error)
     return null
   }
 }
@@ -975,7 +976,7 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
   const path = require('path')
 
   try {
-    console.log('[generateBudgetPDF] Iniciando generación PDF para budget:', budgetId)
+    log.info('[generateBudgetPDF] Iniciando generación PDF para budget:', budgetId)
 
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
@@ -983,7 +984,7 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
     // Obtener usuario actual
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      console.error('[generateBudgetPDF] Error de autenticación:', authError)
+      log.error('[generateBudgetPDF] Error de autenticación:', authError)
       return { success: false, error: 'No autenticado' }
     }
 
@@ -998,13 +999,13 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
       .single()
 
     if (budgetError || !budget) {
-      console.error('[generateBudgetPDF] Budget no encontrado:', budgetError)
+      log.error('[generateBudgetPDF] Budget no encontrado:', budgetError)
       return { success: false, error: 'Presupuesto no encontrado' }
     }
 
     // Validar que exista tariff
     if (!budget.tariff) {
-      console.error('[generateBudgetPDF] Tarifa no encontrada para budget:', budgetId)
+      log.error('[generateBudgetPDF] Tarifa no encontrada para budget:', budgetId)
       return { success: false, error: 'Tarifa no encontrada' }
     }
 
@@ -1012,7 +1013,7 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
     const tariffTyped = budget.tariff as Tariff
 
     // 1. Construir payload
-    console.log('[generateBudgetPDF] Construyendo payload...')
+    log.info('[generateBudgetPDF] Construyendo payload...')
     const payload = buildPDFPayload(budgetTyped, tariffTyped)
 
     // Obtener modo de aplicación para logs
@@ -1021,8 +1022,8 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
 
     // MODO DEBUG: Solo mostrar payload, no llamar API (activar con RAPID_PDF_DEBUG_ONLY=true)
     if (process.env.RAPID_PDF_DEBUG_ONLY === 'true') {
-      console.log('[generateBudgetPDF] Modo debug: payload construido, no se llama a Rapid-PDF')
-      console.log('[generateBudgetPDF] Payload:', JSON.stringify(payload, null, 2))
+      log.info('[generateBudgetPDF] Modo debug: payload construido, no se llama a Rapid-PDF')
+      log.info('[generateBudgetPDF] Payload:', JSON.stringify(payload, null, 2))
 
       return {
         success: true,
@@ -1033,11 +1034,11 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
 
     // En modo desarrollo, imprimir payload en consola antes de enviar a Rapid-PDF
     if (isDev) {
-      console.log('\n' + '='.repeat(80))
-      console.log('[generateBudgetPDF] 🔍 DEVELOPMENT MODE - PAYLOAD COMPLETO:')
-      console.log('='.repeat(80))
-      console.log(JSON.stringify(payload, null, 2))
-      console.log('='.repeat(80) + '\n')
+      log.info('\n' + '='.repeat(80))
+      log.info('[generateBudgetPDF] 🔍 DEVELOPMENT MODE - PAYLOAD COMPLETO:')
+      log.info('='.repeat(80))
+      log.info(JSON.stringify(payload, null, 2))
+      log.info('='.repeat(80) + '\n')
     }
 
     // FLUJO COMPLETO (desarrollo y producción)
@@ -1046,12 +1047,12 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
     const RAPID_PDF_API_KEY = process.env.RAPID_PDF_API_KEY
 
     if (!RAPID_PDF_URL || !RAPID_PDF_API_KEY) {
-      console.error('[generateBudgetPDF] Variables de entorno Rapid-PDF no configuradas')
+      log.error('[generateBudgetPDF] Variables de entorno Rapid-PDF no configuradas')
       return { success: false, error: 'Servicio PDF no configurado' }
     }
 
     // 3. Llamar a Rapid-PDF API con timeout 60s
-    console.log('[generateBudgetPDF] Llamando a Rapid-PDF API...')
+    log.info('[generateBudgetPDF] Llamando a Rapid-PDF API...')
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 60000) // 60 segundos
 
@@ -1071,7 +1072,7 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
 
       if (!rapidPdfResponse.ok) {
         const errorText = await rapidPdfResponse.text()
-        console.error('[generateBudgetPDF] Error Rapid-PDF:', rapidPdfResponse.status, errorText)
+        log.error('[generateBudgetPDF] Error Rapid-PDF:', rapidPdfResponse.status, errorText)
         return {
           success: false,
           error: `Error del servicio PDF (${rapidPdfResponse.status})`
@@ -1082,24 +1083,24 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
       clearTimeout(timeoutId)
 
       if (fetchError.name === 'AbortError') {
-        console.error('[generateBudgetPDF] Timeout > 60s')
+        log.error('[generateBudgetPDF] Timeout > 60s')
         return { success: false, error: 'Timeout: generación PDF excedió 60 segundos' }
       }
 
-      console.error('[generateBudgetPDF] Error de conexión Rapid-PDF:', fetchError)
+      log.error('[generateBudgetPDF] Error de conexión Rapid-PDF:', fetchError)
       return { success: false, error: 'Servicio PDF no disponible' }
     }
 
     const rapidPdfData = await rapidPdfResponse.json()
-    console.log('[generateBudgetPDF] Respuesta Rapid-PDF:', rapidPdfData)
+    log.info('[generateBudgetPDF] Respuesta Rapid-PDF:', rapidPdfData)
 
     if (!rapidPdfData.url) {
-      console.error('[generateBudgetPDF] Respuesta sin URL:', rapidPdfData)
+      log.error('[generateBudgetPDF] Respuesta sin URL:', rapidPdfData)
       return { success: false, error: 'Respuesta inválida del servicio PDF' }
     }
 
     // 4. Descargar PDF desde la URL retornada
-    console.log('[generateBudgetPDF] Descargando PDF desde:', rapidPdfData.url)
+    log.info('[generateBudgetPDF] Descargando PDF desde:', rapidPdfData.url)
 
     let pdfBuffer: Buffer
     for (let attempt = 1; attempt <= 2; attempt++) {
@@ -1113,11 +1114,11 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
 
         const arrayBuffer = await downloadResponse.arrayBuffer()
         pdfBuffer = Buffer.from(arrayBuffer)
-        console.log('[generateBudgetPDF] PDF descargado exitosamente:', pdfBuffer.length, 'bytes')
+        log.info('[generateBudgetPDF] PDF descargado exitosamente:', pdfBuffer.length, 'bytes')
         break
 
       } catch (downloadError) {
-        console.error(`[generateBudgetPDF] Intento ${attempt}/2 descarga falló:`, downloadError)
+        log.error(`[generateBudgetPDF] Intento ${attempt}/2 descarga falló:`, downloadError)
 
         if (attempt === 2) {
           return { success: false, error: 'Error descargando PDF generado' }
@@ -1142,7 +1143,7 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
     // SECURITY: Path incluye company_id para RLS policies
     const storagePath = `${budgetTyped.company_id}/${filename}`
 
-    console.log('[generateBudgetPDF] Subiendo a Storage:', storagePath)
+    log.info('[generateBudgetPDF] Subiendo a Storage:', storagePath)
 
     const { error: uploadError } = await supabaseAdmin.storage
       .from('budget-pdfs')
@@ -1152,11 +1153,11 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
       })
 
     if (uploadError) {
-      console.error('[generateBudgetPDF] Error subiendo a Storage:', uploadError)
+      log.error('[generateBudgetPDF] Error subiendo a Storage:', uploadError)
       return { success: false, error: 'Error guardando PDF en Storage' }
     }
 
-    console.log('[generateBudgetPDF] PDF subido exitosamente a Storage')
+    log.info('[generateBudgetPDF] PDF subido exitosamente a Storage')
 
     // 6. Actualizar pdf_url en budgets (guardar storage path, no URL pública)
     const { error: updateError } = await supabaseAdmin
@@ -1165,13 +1166,13 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
       .eq('id', budgetId)
 
     if (updateError) {
-      console.error('[generateBudgetPDF] Error actualizando pdf_url:', updateError)
+      log.error('[generateBudgetPDF] Error actualizando pdf_url:', updateError)
       // Intentar limpiar archivo de Storage
       await supabaseAdmin.storage.from('budget-pdfs').remove([storagePath])
       return { success: false, error: 'Error actualizando presupuesto' }
     }
 
-    console.log('[generateBudgetPDF] ✅ PDF generado y guardado exitosamente:', storagePath)
+    log.info('[generateBudgetPDF] ✅ PDF generado y guardado exitosamente:', storagePath)
     revalidatePath('/budgets')
 
     // Generar signed URL para retornar al cliente
@@ -1185,7 +1186,7 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
     }
 
   } catch (error) {
-    console.error('[generateBudgetPDF] Error crítico:', error)
+    log.error('[generateBudgetPDF] Error crítico:', error)
     return { success: false, error: 'Error generando PDF' }
   }
 }
@@ -1198,18 +1199,18 @@ export async function getBudgets(filters?: {
   search?: string
 }): Promise<Budget[]> {
   try {
-    console.log('[getBudgets] Obteniendo presupuestos con filtros:', filters)
+    log.info('[getBudgets] Obteniendo presupuestos con filtros:', filters)
 
     // Usar getServerUser() para evitar problemas con cookies en Server Components
     const { getServerUser } = await import('@/lib/auth/server')
     const userData = await getServerUser()
 
     if (!userData) {
-      console.error('[getBudgets] Error de autenticación: usuario no encontrado')
+      log.error('[getBudgets] Error de autenticación: usuario no encontrado')
       return []
     }
 
-    console.log('[getBudgets] Usuario:', userData.role, 'Empresa:', userData.company_id)
+    log.info('[getBudgets] Usuario:', userData.role, 'Empresa:', userData.company_id)
 
     // Construir query base con JOIN a tariffs usando supabaseAdmin
     // Nota: users se obtiene por separado ya que la relación puede no estar definida
@@ -1249,12 +1250,12 @@ export async function getBudgets(filters?: {
     const { data: budgets, error: budgetsError } = await query
 
     if (budgetsError) {
-      console.error('[getBudgets] Error obteniendo presupuestos:', budgetsError)
-      console.error('[getBudgets] Error details:', JSON.stringify(budgetsError, null, 2))
+      log.error('[getBudgets] Error obteniendo presupuestos:', budgetsError)
+      log.error('[getBudgets] Error details:', JSON.stringify(budgetsError, null, 2))
       return []
     }
 
-    console.log('[getBudgets] Presupuestos encontrados:', budgets?.length || 0)
+    log.info('[getBudgets] Presupuestos encontrados:', budgets?.length || 0)
 
     // Obtener nombres y roles de usuarios por separado
     if (budgets && budgets.length > 0) {
@@ -1307,7 +1308,7 @@ export async function getBudgets(filters?: {
     return (budgets || []) as Budget[]
 
   } catch (error) {
-    console.error('[getBudgets] Error crítico:', error)
+    log.error('[getBudgets] Error crítico:', error)
     return []
   }
 }
@@ -1320,7 +1321,7 @@ export async function deleteBudget(budgetId: string): Promise<{
   error?: string
 }> {
   try {
-    console.log('[deleteBudget] Eliminando presupuesto:', budgetId)
+    log.info('[deleteBudget] Eliminando presupuesto:', budgetId)
 
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
@@ -1328,7 +1329,7 @@ export async function deleteBudget(budgetId: string): Promise<{
     // Obtener usuario actual
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      console.error('[deleteBudget] Error de autenticación:', authError)
+      log.error('[deleteBudget] Error de autenticación:', authError)
       return { success: false, error: 'No autenticado' }
     }
 
@@ -1340,7 +1341,7 @@ export async function deleteBudget(budgetId: string): Promise<{
       .single()
 
     if (budgetError || !budget) {
-      console.error('[deleteBudget] Presupuesto no encontrado:', budgetError)
+      log.error('[deleteBudget] Presupuesto no encontrado:', budgetError)
       return { success: false, error: 'Presupuesto no encontrado' }
     }
 
@@ -1352,7 +1353,7 @@ export async function deleteBudget(budgetId: string): Promise<{
       .single()
 
     if (userError || !userData) {
-      console.error('[deleteBudget] Error obteniendo usuario:', userError)
+      log.error('[deleteBudget] Error obteniendo usuario:', userError)
       return { success: false, error: 'Usuario no encontrado' }
     }
 
@@ -1363,14 +1364,14 @@ export async function deleteBudget(budgetId: string): Promise<{
       userData.role === 'superadmin' // Superadmin
 
     if (!canDelete) {
-      console.error('[deleteBudget] Usuario no autorizado')
+      log.error('[deleteBudget] Usuario no autorizado')
       return { success: false, error: 'No tiene permisos para eliminar este presupuesto' }
     }
 
     // TODO: Si tiene PDF, eliminar archivo físico del sistema
     // Esto se implementará cuando tengamos el módulo PDF Generation
     if (budget.pdf_url) {
-      console.log('[deleteBudget] TODO: Eliminar PDF físico:', budget.pdf_url)
+      log.info('[deleteBudget] TODO: Eliminar PDF físico:', budget.pdf_url)
     }
 
     // Eliminar presupuesto
@@ -1380,17 +1381,17 @@ export async function deleteBudget(budgetId: string): Promise<{
       .eq('id', budgetId)
 
     if (deleteError) {
-      console.error('[deleteBudget] Error eliminando:', deleteError)
+      log.error('[deleteBudget] Error eliminando:', deleteError)
       return { success: false, error: 'Error al eliminar presupuesto' }
     }
 
-    console.log('[deleteBudget] Presupuesto eliminado exitosamente')
+    log.info('[deleteBudget] Presupuesto eliminado exitosamente')
     revalidatePath('/budgets')
 
     return { success: true }
 
   } catch (error) {
-    console.error('[deleteBudget] Error crítico:', error)
+    log.error('[deleteBudget] Error crítico:', error)
     return { success: false, error: 'Error interno del servidor' }
   }
 }
@@ -1406,7 +1407,7 @@ export async function deleteBudgetPDF(budgetId: string): Promise<{
   const path = require('path')
 
   try {
-    console.log('[deleteBudgetPDF] Eliminando PDF del presupuesto:', budgetId)
+    log.info('[deleteBudgetPDF] Eliminando PDF del presupuesto:', budgetId)
 
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
@@ -1414,7 +1415,7 @@ export async function deleteBudgetPDF(budgetId: string): Promise<{
     // Obtener usuario actual
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      console.error('[deleteBudgetPDF] Error de autenticación:', authError)
+      log.error('[deleteBudgetPDF] Error de autenticación:', authError)
       return { success: false, error: 'No autenticado' }
     }
 
@@ -1426,7 +1427,7 @@ export async function deleteBudgetPDF(budgetId: string): Promise<{
       .single()
 
     if (budgetError || !budget) {
-      console.error('[deleteBudgetPDF] Presupuesto no encontrado:', budgetError)
+      log.error('[deleteBudgetPDF] Presupuesto no encontrado:', budgetError)
       return { success: false, error: 'Presupuesto no encontrado' }
     }
 
@@ -1438,7 +1439,7 @@ export async function deleteBudgetPDF(budgetId: string): Promise<{
       .single()
 
     if (userError || !userData) {
-      console.error('[deleteBudgetPDF] Error obteniendo usuario:', userError)
+      log.error('[deleteBudgetPDF] Error obteniendo usuario:', userError)
       return { success: false, error: 'Usuario no encontrado' }
     }
 
@@ -1449,7 +1450,7 @@ export async function deleteBudgetPDF(budgetId: string): Promise<{
       userData.role === 'superadmin' // Superadmin
 
     if (!canDelete) {
-      console.error('[deleteBudgetPDF] Usuario no autorizado')
+      log.error('[deleteBudgetPDF] Usuario no autorizado')
       return { success: false, error: 'No tiene permisos para eliminar el PDF' }
     }
 
@@ -1465,13 +1466,13 @@ export async function deleteBudgetPDF(budgetId: string): Promise<{
         .remove([budget.pdf_url])
 
       if (storageError) {
-        console.error('[deleteBudgetPDF] Error eliminando de Storage:', storageError)
+        log.error('[deleteBudgetPDF] Error eliminando de Storage:', storageError)
         // Continuar para actualizar BD aunque falle la eliminación del storage
       } else {
-        console.log('[deleteBudgetPDF] PDF eliminado de Storage:', budget.pdf_url)
+        log.info('[deleteBudgetPDF] PDF eliminado de Storage:', budget.pdf_url)
       }
     } catch (storageError) {
-      console.error('[deleteBudgetPDF] Error eliminando archivo de Storage:', storageError)
+      log.error('[deleteBudgetPDF] Error eliminando archivo de Storage:', storageError)
       // Continuar para actualizar BD aunque falle la eliminación del storage
     }
 
@@ -1482,17 +1483,17 @@ export async function deleteBudgetPDF(budgetId: string): Promise<{
       .eq('id', budgetId)
 
     if (updateError) {
-      console.error('[deleteBudgetPDF] Error actualizando BD:', updateError)
+      log.error('[deleteBudgetPDF] Error actualizando BD:', updateError)
       return { success: false, error: 'Error al actualizar presupuesto' }
     }
 
-    console.log('[deleteBudgetPDF] PDF eliminado exitosamente')
+    log.info('[deleteBudgetPDF] PDF eliminado exitosamente')
     revalidatePath('/budgets')
 
     return { success: true }
 
   } catch (error) {
-    console.error('[deleteBudgetPDF] Error crítico:', error)
+    log.error('[deleteBudgetPDF] Error crítico:', error)
     return { success: false, error: 'Error interno del servidor' }
   }
 }
@@ -1510,7 +1511,7 @@ export async function getBudgetPDFSignedUrl(budgetId: string): Promise<{
   error?: string
 }> {
   try {
-    console.log('[getBudgetPDFSignedUrl] Obteniendo URL firmada para budget:', budgetId)
+    log.info('[getBudgetPDFSignedUrl] Obteniendo URL firmada para budget:', budgetId)
 
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
@@ -1518,7 +1519,7 @@ export async function getBudgetPDFSignedUrl(budgetId: string): Promise<{
     // Autenticación
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      console.error('[getBudgetPDFSignedUrl] No autenticado:', authError)
+      log.error('[getBudgetPDFSignedUrl] No autenticado:', authError)
       return { success: false, error: 'No autenticado' }
     }
 
@@ -1530,7 +1531,7 @@ export async function getBudgetPDFSignedUrl(budgetId: string): Promise<{
       .single()
 
     if (budgetError || !budget) {
-      console.error('[getBudgetPDFSignedUrl] Presupuesto no encontrado:', budgetError)
+      log.error('[getBudgetPDFSignedUrl] Presupuesto no encontrado:', budgetError)
       return { success: false, error: 'Presupuesto no encontrado' }
     }
 
@@ -1546,7 +1547,7 @@ export async function getBudgetPDFSignedUrl(budgetId: string): Promise<{
       .single()
 
     if (userError || !userData) {
-      console.error('[getBudgetPDFSignedUrl] Error obteniendo usuario:', userError)
+      log.error('[getBudgetPDFSignedUrl] Error obteniendo usuario:', userError)
       return { success: false, error: 'Usuario no encontrado' }
     }
 
@@ -1556,7 +1557,7 @@ export async function getBudgetPDFSignedUrl(budgetId: string): Promise<{
       userData.role === 'superadmin'
 
     if (!isAuthorized) {
-      console.error('[getBudgetPDFSignedUrl] Usuario no autorizado')
+      log.error('[getBudgetPDFSignedUrl] Usuario no autorizado')
       return { success: false, error: 'No tiene permisos para ver este PDF' }
     }
 
@@ -1567,23 +1568,23 @@ export async function getBudgetPDFSignedUrl(budgetId: string): Promise<{
       .createSignedUrl(budget.pdf_url, 3600) // 3600s = 1 hora
 
     if (storageError) {
-      console.error('[getBudgetPDFSignedUrl] Error generando signed URL:', storageError)
+      log.error('[getBudgetPDFSignedUrl] Error generando signed URL:', storageError)
       return { success: false, error: 'Error generando URL de descarga' }
     }
 
     if (!signedUrlData?.signedUrl) {
-      console.error('[getBudgetPDFSignedUrl] URL firmada vacía')
+      log.error('[getBudgetPDFSignedUrl] URL firmada vacía')
       return { success: false, error: 'URL de descarga no disponible' }
     }
 
-    console.log('[getBudgetPDFSignedUrl] URL firmada generada exitosamente')
+    log.info('[getBudgetPDFSignedUrl] URL firmada generada exitosamente')
     return {
       success: true,
       signedUrl: signedUrlData.signedUrl
     }
 
   } catch (error) {
-    console.error('[getBudgetPDFSignedUrl] Error crítico:', error)
+    log.error('[getBudgetPDFSignedUrl] Error crítico:', error)
     return { success: false, error: 'Error interno del servidor' }
   }
 }
@@ -1610,14 +1611,14 @@ export async function userHasBudgets(): Promise<boolean> {
       .limit(1)
 
     if (error) {
-      console.error('[userHasBudgets] Error:', error)
+      log.error('[userHasBudgets] Error:', error)
       return false
     }
 
     return (count || 0) > 0
 
   } catch (error) {
-    console.error('[userHasBudgets] Error crítico:', error)
+    log.error('[userHasBudgets] Error crítico:', error)
     return false
   }
 }
@@ -1632,7 +1633,7 @@ export async function duplicateBudgetCopy(budgetId: string): Promise<{
   error?: string
 }> {
   try {
-    console.log('[duplicateBudgetCopy] Duplicando presupuesto:', budgetId)
+    log.info('[duplicateBudgetCopy] Duplicando presupuesto:', budgetId)
 
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
@@ -1640,7 +1641,7 @@ export async function duplicateBudgetCopy(budgetId: string): Promise<{
     // Obtener usuario actual
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      console.error('[duplicateBudgetCopy] Error de autenticación:', authError)
+      log.error('[duplicateBudgetCopy] Error de autenticación:', authError)
       return { success: false, error: 'No autenticado' }
     }
 
@@ -1652,7 +1653,7 @@ export async function duplicateBudgetCopy(budgetId: string): Promise<{
       .single()
 
     if (userError || !userData?.company_id) {
-      console.error('[duplicateBudgetCopy] Error obteniendo usuario:', userError)
+      log.error('[duplicateBudgetCopy] Error obteniendo usuario:', userError)
       return { success: false, error: 'No se pudo obtener la empresa del usuario' }
     }
 
@@ -1664,13 +1665,13 @@ export async function duplicateBudgetCopy(budgetId: string): Promise<{
       .single()
 
     if (budgetError || !originalBudget) {
-      console.error('[duplicateBudgetCopy] Presupuesto no encontrado:', budgetError)
+      log.error('[duplicateBudgetCopy] Presupuesto no encontrado:', budgetError)
       return { success: false, error: 'Presupuesto no encontrado' }
     }
 
     // Verificar que el presupuesto pertenece a la empresa del usuario
     if (originalBudget.company_id !== userData.company_id) {
-      console.error('[duplicateBudgetCopy] Presupuesto no pertenece a la empresa del usuario')
+      log.error('[duplicateBudgetCopy] Presupuesto no pertenece a la empresa del usuario')
       return { success: false, error: 'No tienes permisos para duplicar este presupuesto' }
     }
 
@@ -1729,17 +1730,17 @@ export async function duplicateBudgetCopy(budgetId: string): Promise<{
       .single()
 
     if (insertError || !newBudget) {
-      console.error('[duplicateBudgetCopy] Error creando copia:', insertError)
+      log.error('[duplicateBudgetCopy] Error creando copia:', insertError)
       return { success: false, error: 'Error al duplicar presupuesto' }
     }
 
-    console.log('[duplicateBudgetCopy] Presupuesto duplicado exitosamente:', newBudget.id)
+    log.info('[duplicateBudgetCopy] Presupuesto duplicado exitosamente:', newBudget.id)
     revalidatePath('/budgets')
 
     return { success: true, newBudgetId: newBudget.id }
 
   } catch (error) {
-    console.error('[duplicateBudgetCopy] Error crítico:', error)
+    log.error('[duplicateBudgetCopy] Error crítico:', error)
     return { success: false, error: 'Error crítico al duplicar presupuesto' }
   }
 }

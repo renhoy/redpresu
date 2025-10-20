@@ -33,7 +33,7 @@ export async function getDashboardStats(
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      console.error("[getDashboardStats] Error de autenticación:", authError);
+      log.error("[getDashboardStats] Error de autenticación:", authError);
       return null;
     }
 
@@ -45,7 +45,7 @@ export async function getDashboardStats(
       .single();
 
     if (userError || !userData) {
-      console.error("[getDashboardStats] Error obteniendo usuario:", userError);
+      log.error("[getDashboardStats] Error obteniendo usuario:", userError);
       return null;
     }
 
@@ -85,7 +85,7 @@ export async function getDashboardStats(
     const { data: budgets, error: budgetsError } = await query;
 
     if (budgetsError) {
-      console.error(
+      log.error(
         "[getDashboardStats] Error obteniendo presupuestos:",
         budgetsError
       );
@@ -198,7 +198,7 @@ export async function getDashboardStats(
       totalValue: formatCurrency(totalValue),
     };
   } catch (error) {
-    console.error("[getDashboardStats] Error crítico:", error);
+    log.error("[getDashboardStats] Error crítico:", error);
     return null;
   }
 }
