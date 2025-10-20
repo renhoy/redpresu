@@ -33,14 +33,14 @@ USING (
     auth.uid() IN (
       SELECT u.id
       FROM auth.users u
-      JOIN public.redpresu_emisores e ON e.user_id = u.id
-      WHERE CAST(e.company_id AS TEXT) = SPLIT_PART(storage.objects.name, '/', 1)
+      JOIN public.redpresu_users ru ON ru.id = u.id
+      WHERE CAST(ru.company_id AS TEXT) = SPLIT_PART(storage.objects.name, '/', 1)
     )
     OR
     -- Superadmin puede ver todos
     EXISTS (
-      SELECT 1 FROM public.get_user_role(auth.uid())
-      WHERE get_user_role = 'superadmin'
+      SELECT 1 FROM public.redpresu_users
+      WHERE id = auth.uid() AND role = 'superadmin'
     )
   )
 );
@@ -55,8 +55,8 @@ WITH CHECK (
     auth.uid() IN (
       SELECT u.id
       FROM auth.users u
-      JOIN public.redpresu_emisores e ON e.user_id = u.id
-      WHERE CAST(e.company_id AS TEXT) = SPLIT_PART(storage.objects.name, '/', 1)
+      JOIN public.redpresu_users ru ON ru.id = u.id
+      WHERE CAST(ru.company_id AS TEXT) = SPLIT_PART(storage.objects.name, '/', 1)
     )
   )
 );
@@ -70,8 +70,8 @@ USING (
     auth.uid() IN (
       SELECT u.id
       FROM auth.users u
-      JOIN public.redpresu_emisores e ON e.user_id = u.id
-      WHERE CAST(e.company_id AS TEXT) = SPLIT_PART(storage.objects.name, '/', 1)
+      JOIN public.redpresu_users ru ON ru.id = u.id
+      WHERE CAST(ru.company_id AS TEXT) = SPLIT_PART(storage.objects.name, '/', 1)
     )
   )
 );
@@ -85,17 +85,17 @@ USING (
     auth.uid() IN (
       SELECT u.id
       FROM auth.users u
-      JOIN public.redpresu_emisores e ON e.user_id = u.id
-      WHERE CAST(e.company_id AS TEXT) = SPLIT_PART(storage.objects.name, '/', 1)
-        AND e.role IN ('superadmin', 'admin')
+      JOIN public.redpresu_users ru ON ru.id = u.id
+      WHERE CAST(ru.company_id AS TEXT) = SPLIT_PART(storage.objects.name, '/', 1)
+        AND ru.role IN ('superadmin', 'admin')
     )
   )
 );
 
 -- 3. Índice para mejorar performance de las queries
 -- (Las policies de storage usan joins, esto optimiza)
-CREATE INDEX IF NOT EXISTS idx_emisores_user_company
-ON public.redpresu_emisores(user_id, company_id);
+CREATE INDEX IF NOT EXISTS idx_users_company
+ON public.redpresu_users(company_id);
 
 COMMIT;
 
@@ -107,7 +107,7 @@ COMMIT;
 -- DROP POLICY IF EXISTS "budget_pdfs_insert_policy" ON storage.objects;
 -- DROP POLICY IF EXISTS "budget_pdfs_update_policy" ON storage.objects;
 -- DROP POLICY IF EXISTS "budget_pdfs_delete_policy" ON storage.objects;
--- DROP INDEX IF EXISTS public.idx_emisores_user_company;
+-- DROP INDEX IF EXISTS public.idx_users_company;
 
 -- Manual: Supabase Dashboard > Storage > Delete Bucket 'budget-pdfs'
 
