@@ -1,5 +1,6 @@
 'use server'
 import { log } from '@/lib/logger'
+import { requireValidCompanyId, validateUserCompanyId } from '@/lib/helpers/company-validation'
 
 import { cookies } from 'next/headers'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
