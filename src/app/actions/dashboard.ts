@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import { createServerActionClient } from "@supabase/auth-helpers-nextjs";
 import { Budget, Database } from "@/lib/types/database";
+import { log } from "@/lib/logger";
 
 interface DashboardStats {
   countsByStatus: Record<string, number>;

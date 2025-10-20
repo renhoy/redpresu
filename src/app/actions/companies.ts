@@ -2,6 +2,7 @@
 
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { log } from "@/lib/logger";
 
 export interface Company {
   id: number; // company_id (número, ej: 1, 2, 3...)

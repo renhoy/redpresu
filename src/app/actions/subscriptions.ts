@@ -16,6 +16,7 @@ import { cookies } from "next/headers";
 import { getServerUser } from "@/lib/auth/server";
 import { getStripeClient, isSubscriptionsEnabled, getStripePlan, type PlanType } from "@/lib/stripe";
 import type { Subscription } from "@/lib/types/database";
+import { log } from "@/lib/logger";
 
 export interface ActionResult<T = unknown> {
   success: boolean;

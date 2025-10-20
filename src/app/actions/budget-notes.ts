@@ -3,6 +3,7 @@
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { getServerUser } from '@/lib/auth/server'
+import { log } from '@/lib/logger'
 
 export interface BudgetNote {
   id: string

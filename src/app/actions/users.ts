@@ -8,6 +8,7 @@
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { z } from "zod";
 import { getServerUser } from "@/lib/auth/server";
+import { log } from "@/lib/logger";
 
 // ============================================
 // TIPOS
