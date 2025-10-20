@@ -4,6 +4,7 @@ import { Header } from "@/components/layout/Header";
 import { TourDetector } from "@/components/help/TourDetector";
 import { getCurrentSubscription } from "@/app/actions/subscriptions";
 import { isMultiEmpresa } from "@/lib/helpers/app-mode";
+import { getAppName } from "@/lib/helpers/config-helpers";
 import { createServerActionClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 
@@ -35,6 +36,9 @@ export default async function DashboardLayout({
   const subscriptionResult = await getCurrentSubscription();
   const currentPlan = subscriptionResult.data?.plan || "free";
 
+  // Obtener nombre de la aplicación desde config
+  const appName = await getAppName();
+
   // Obtener nombre de empresa/autónomo del emisor
   const cookieStore = await cookies();
   const supabase = createServerActionClient({ cookies: () => cookieStore });
@@ -54,6 +58,7 @@ export default async function DashboardLayout({
       <Header
         userRole={user.role}
         userName={user.name}
+        appName={appName}
         companyName={companyName}
         issuerType={issuerType}
         currentPlan={currentPlan}

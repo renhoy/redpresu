@@ -22,6 +22,9 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+// Forzar revalidación de metadata cuando cambie app_name en BD
+export const dynamic = 'force-dynamic';
+
 export default function RootLayout({
   children,
 }: Readonly<{
