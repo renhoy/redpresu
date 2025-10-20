@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog'
 import { RichTextEditor } from './RichTextEditor'
 import { toast } from 'sonner'
+import { sanitizeTiptapHTML } from '@/lib/helpers/html-sanitizer'
 
 interface RichTextEditorDialogProps {
   value: string
@@ -187,7 +188,9 @@ export function RichTextEditorDialog({
       >
         <div
           className="prose prose-sm max-w-none"
-          dangerouslySetInnerHTML={{ __html: value || '<p class="text-gray-400">Sin contenido</p>' }}
+          dangerouslySetInnerHTML={{
+            __html: sanitizeTiptapHTML(value) || '<p class="text-gray-400">Sin contenido</p>'
+          }}
         />
       </div>
 

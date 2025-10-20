@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Tariff, Budget } from "@/lib/types/database";
 import { Button } from "@/components/ui/button";
+import { sanitizeRichTextHTML } from "@/lib/helpers/html-sanitizer";
 import {
   Card,
   CardContent,
@@ -1433,7 +1434,9 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                 <div className="pt-4 border-t">
                   <div
                     className="text-xs text-muted-foreground leading-relaxed prose prose-xs max-w-none"
-                    dangerouslySetInnerHTML={{ __html: tariff.legal_note }}
+                    dangerouslySetInnerHTML={{
+                      __html: sanitizeRichTextHTML(tariff.legal_note)
+                    }}
                   />
                 </div>
               )}
