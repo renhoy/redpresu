@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, FileText, Download, Upload } from "lucide-react";
+import { Plus, Layers, Download, Upload } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -232,7 +232,7 @@ export function TariffList({
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold text-cyan-600 flex items-center gap-2">
-            <FileText className="h-6 w-6" />
+            <Layers className="h-6 w-6" />
             Tarifas
           </h1>
           <p className="text-sm text-cyan-600">
@@ -381,7 +381,7 @@ export function TariffList({
         <div className="overflow-x-auto">
           {filteredTariffs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center bg-white">
-              <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+              <Layers className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-2">No hay tarifas</h3>
               <p className="text-muted-foreground mb-4">
                 {filters.status !== "all" || filters.search?.trim()
@@ -441,7 +441,7 @@ export function TariffList({
       <div className="lg:hidden">
         {filteredTariffs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+            <Layers className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium mb-2">No hay tarifas</h3>
             <p className="text-muted-foreground mb-4">
               {filters.status !== "all" || filters.search?.trim()

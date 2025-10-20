@@ -8,7 +8,7 @@ import {
   LogOut,
   Home,
   FileText,
-  Receipt,
+  Layers,
   Users,
   Settings,
   CircleUser,
@@ -105,8 +105,8 @@ export function Header({
 
   const navigation = [
     { name: "Panel", href: "/dashboard", icon: Home, show: true },
-    { name: "Tarifas", href: "/tariffs", icon: FileText, show: true },
-    { name: "Presupuestos", href: "/budgets", icon: Receipt, show: true },
+    { name: "Tarifas", href: "/tariffs", icon: Layers, show: true },
+    { name: "Presupuestos", href: "/budgets", icon: FileText, show: true },
     { name: "Ayuda", href: "/help", icon: HelpCircle, show: true }, // Centro de ayuda
   ].filter((item) => item.show);
 

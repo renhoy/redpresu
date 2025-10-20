@@ -31,7 +31,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Receipt,
   Pencil,
   Trash2,
   FileStack,
@@ -752,7 +751,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-lime-700 flex items-center gap-2">
-            <Receipt className="h-6 w-6" />
+            <FileText className="h-6 w-6" />
             Presupuestos
           </h1>
           <p className="text-sm text-lime-600">
