@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/select";
 import { BudgetNotesIcon } from "./BudgetNotesIcon";
 import Link from "next/link";
+import { getBudgetPDFSignedUrl } from "@/app/actions/budgets";
+import { toast } from "sonner";
 
 interface BudgetCardProps {
   budget: Budget;
@@ -208,7 +210,14 @@ export function BudgetCard({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => window.open(budget.pdf_url!, "_blank")}
+                      onClick={async () => {
+                        const result = await getBudgetPDFSignedUrl(budget.id);
+                        if (result.success && result.signedUrl) {
+                          window.open(result.signedUrl, "_blank");
+                        } else {
+                          toast.error(result.error || "Error obteniendo PDF");
+                        }
+                      }}
                       className="h-7 px-2"
                       title="Ver PDF"
                     >

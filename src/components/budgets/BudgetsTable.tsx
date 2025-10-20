@@ -50,6 +50,7 @@ import {
   updateBudgetStatus,
   generateBudgetPDF,
   duplicateBudgetCopy,
+  getBudgetPDFSignedUrl,
 } from "@/app/actions/budgets";
 import { exportBudgets } from "@/app/actions/export";
 import { importBudgets } from "@/app/actions/import";
@@ -636,7 +637,14 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
                         <Button
                           variant="outline"
                           size="icon"
-                          onClick={() => window.open(budget.pdf_url!, "_blank")}
+                          onClick={async () => {
+                            const result = await getBudgetPDFSignedUrl(budget.id);
+                            if (result.success && result.signedUrl) {
+                              window.open(result.signedUrl, "_blank");
+                            } else {
+                              toast.error(result.error || "Error obteniendo PDF");
+                            }
+                          }}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
