@@ -114,7 +114,7 @@ export function Header({
   const getRoleLabel = (role?: string) => {
     switch (role) {
       case "superadmin":
-        return "Super";
+        return "Super Admin";
       case "admin":
         return "Admin";
       case "vendedor":

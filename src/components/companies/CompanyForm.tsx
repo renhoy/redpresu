@@ -45,7 +45,10 @@ interface FormData {
   irpf_percentage: number | null;
 }
 
-export default function CompanyForm({ company, currentUserRole }: CompanyFormProps) {
+export default function CompanyForm({
+  company,
+  currentUserRole,
+}: CompanyFormProps) {
   const [formData, setFormData] = useState<FormData>({
     name: company.name,
     type: company.type,
@@ -71,9 +74,8 @@ export default function CompanyForm({ company, currentUserRole }: CompanyFormPro
     const { name, value } = e.target;
 
     // Handle number inputs specially (irpf_percentage)
-    const processedValue = name === "irpf_percentage"
-      ? value ? parseFloat(value) : null
-      : value;
+    const processedValue =
+      name === "irpf_percentage" ? (value ? parseFloat(value) : null) : value;
 
     setFormData((prev) => ({ ...prev, [name]: processedValue }));
 
@@ -92,7 +94,7 @@ export default function CompanyForm({ company, currentUserRole }: CompanyFormPro
       ...prev,
       type: value,
       // Si cambia a autónomo y no tiene IRPF, poner 15 por defecto
-      irpf_percentage: value === "autonomo" ? (prev.irpf_percentage ?? 15) : null,
+      irpf_percentage: value === "autonomo" ? prev.irpf_percentage ?? 15 : null,
     }));
 
     if (errors.type) {
@@ -133,11 +135,19 @@ export default function CompanyForm({ company, currentUserRole }: CompanyFormPro
       newErrors.province = "La provincia es obligatoria";
     }
 
-    if (formData.phone && formData.phone.trim() && formData.phone.trim().length < 9) {
+    if (
+      formData.phone &&
+      formData.phone.trim() &&
+      formData.phone.trim().length < 9
+    ) {
       newErrors.phone = "El teléfono debe tener al menos 9 caracteres";
     }
 
-    if (formData.email && formData.email.trim() && !formData.email.includes("@")) {
+    if (
+      formData.email &&
+      formData.email.trim() &&
+      !formData.email.includes("@")
+    ) {
       newErrors.email = "Email inválido";
     }
 
@@ -193,13 +203,11 @@ export default function CompanyForm({ company, currentUserRole }: CompanyFormPro
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-cyan-600 flex items-center gap-2">
+            <h1 className="text-3xl font-bold flex items-center gap-2">
               <Building2 className="h-6 w-6" />
               Editar Empresa
             </h1>
-            <p className="text-sm text-cyan-600">
-              Modifica los datos de tu empresa
-            </p>
+            <p className="text-sm">Modifica los datos de tu empresa</p>
           </div>
 
           <div className="flex gap-2">
@@ -232,8 +240,8 @@ export default function CompanyForm({ company, currentUserRole }: CompanyFormPro
         {currentUserRole === "admin" && (
           <Alert>
             <AlertDescription>
-              Estás editando los datos de tu empresa. Estos cambios se reflejarán en
-              todos los presupuestos que generes.
+              Estás editando los datos de tu empresa. Estos cambios se
+              reflejarán en todos los presupuestos que generes.
             </AlertDescription>
           </Alert>
         )}
@@ -242,9 +250,7 @@ export default function CompanyForm({ company, currentUserRole }: CompanyFormPro
         <Card>
           <CardHeader>
             <CardTitle>Datos Fiscales</CardTitle>
-            <CardDescription>
-              Información fiscal de la empresa
-            </CardDescription>
+            <CardDescription>Información fiscal de la empresa</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Tipo - Tabs */}
@@ -383,7 +389,9 @@ export default function CompanyForm({ company, currentUserRole }: CompanyFormPro
                         placeholder="% IRPF *"
                         value={formData.irpf_percentage ?? ""}
                         onChange={handleChange}
-                        className={errors.irpf_percentage ? "border-red-500" : ""}
+                        className={
+                          errors.irpf_percentage ? "border-red-500" : ""
+                        }
                         disabled={isLoading}
                       />
                     </TooltipTrigger>
@@ -445,7 +453,9 @@ export default function CompanyForm({ company, currentUserRole }: CompanyFormPro
                   </TooltipContent>
                 </Tooltip>
                 {errors.postal_code && (
-                  <p className="text-sm text-red-500 mt-1">{errors.postal_code}</p>
+                  <p className="text-sm text-red-500 mt-1">
+                    {errors.postal_code}
+                  </p>
                 )}
               </div>
             </div>

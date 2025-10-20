@@ -9,6 +9,7 @@ import {
   type UpdateUserData,
   type User,
 } from "@/app/actions/users";
+import { Users } from "lucide-react";
 import {
   getIssuers,
   registerUser,
@@ -411,10 +412,11 @@ export default function UserForm({
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-cyan-600">
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <Users className="h-6 w-6" />
             {mode === "create" ? "Crear Usuario" : "Editar Usuario"}
           </h1>
-          <p className="text-sm text-cyan-600">
+          <p className="text-sm">
             {mode === "create"
               ? "Invita a un nuevo usuario a tu empresa"
               : "Modifica los datos del usuario"}
@@ -445,289 +447,284 @@ export default function UserForm({
         </div>
       </div>
 
-          {/* Error general */}
-          {errors.general && (
-            <Alert variant="destructive">
-              <AlertDescription>{errors.general}</AlertDescription>
-            </Alert>
+      {/* Error general */}
+      {errors.general && (
+        <Alert variant="destructive">
+          <AlertDescription>{errors.general}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Card con formulario */}
+      <Card>
+        <CardContent className="pt-6 space-y-6">
+          {/* Línea 1: Email + Rol (25%) */}
+          <div className="flex gap-4">
+            <div className="flex-1 space-y-2">
+              {mode === "create" ? (
+                <>
+                  <Label htmlFor="email">Email *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="usuario@empresa.com"
+                    value={formData.email}
+                    onChange={handleInputChange("email")}
+                    className={errors.email ? "border-red-500" : ""}
+                    disabled={isLoading}
+                    required
+                  />
+                  {errors.email && (
+                    <p className="text-sm text-red-600">{errors.email}</p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Label>Email</Label>
+                  <div className="p-3 bg-muted rounded-md text-muted-foreground">
+                    {formData.email}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    El email no se puede modificar
+                  </p>
+                </>
+              )}
+            </div>
+
+            <div className="w-1/4 space-y-2">
+              <Label htmlFor="role">Rol *</Label>
+              {mode === "edit" && currentUserRole === "vendedor" ? (
+                <div className="p-3 bg-muted rounded-md text-muted-foreground text-sm">
+                  {availableRoles.find((r) => r.value === formData.role)
+                    ?.label || formData.role}
+                </div>
+              ) : (
+                <Select
+                  value={formData.role}
+                  onValueChange={handleSelectChange("role")}
+                  disabled={isLoading || loadingIssuers}
+                >
+                  <SelectTrigger
+                    className={errors.role ? "border-red-500" : ""}
+                  >
+                    <SelectValue placeholder="Rol" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableRoles.map((role) => (
+                      <SelectItem key={role.value} value={role.value}>
+                        {role.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {errors.role && (
+                <p className="text-sm text-red-600">{errors.role}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Línea 2: Nombre (50%) + Apellidos (50%) */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nombre *</Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="Juan"
+                value={formData.nombre}
+                onChange={handleInputChange("name")}
+                className={errors.nombre ? "border-red-500" : ""}
+                disabled={isLoading}
+                required
+              />
+              {errors.nombre && (
+                <p className="text-sm text-red-600">{errors.nombre}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="last_name">Apellidos *</Label>
+              <Input
+                id="last_name"
+                type="text"
+                placeholder="García López"
+                value={formData.apellidos}
+                onChange={handleInputChange("last_name")}
+                className={errors.apellidos ? "border-red-500" : ""}
+                disabled={isLoading}
+                required
+              />
+              {errors.apellidos && (
+                <p className="text-sm text-red-600">{errors.apellidos}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Línea 3: Descripción de roles */}
+          <div className="p-4 bg-lime-50 border border-lime-200 rounded-lg">
+            <p className="text-sm text-gray-700">
+              <strong>Superadmin:</strong> Acceso total al sistema.{" "}
+              <strong>Admin:</strong> Gestión completa empresa y usuarios Admin
+              y Comercial. <strong>Comercial:</strong> Solo crear/editar
+              presupuestos.
+            </p>
+          </div>
+
+          {/* Status (solo en edición y solo admin/superadmin) */}
+          {mode === "edit" && currentUserRole !== "vendedor" && (
+            <div className="space-y-2">
+              <Label htmlFor="status">Estado</Label>
+              <Select
+                value={formData.status}
+                onValueChange={handleSelectChange("status")}
+                disabled={isLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Activo</SelectItem>
+                  <SelectItem value="inactive">Inactivo</SelectItem>
+                  <SelectItem value="pending">Pendiente</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Los usuarios inactivos no pueden acceder al sistema
+              </p>
+            </div>
           )}
 
-          {/* Card con formulario */}
-          <Card>
-            <CardContent className="pt-6 space-y-6">
-              {/* Línea 1: Email + Rol (25%) */}
-              <div className="flex gap-4">
-                <div className="flex-1 space-y-2">
-                  {mode === "create" ? (
-                    <>
-                      <Label htmlFor="email">Email *</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="usuario@empresa.com"
-                        value={formData.email}
-                        onChange={handleInputChange("email")}
-                        className={errors.email ? "border-red-500" : ""}
-                        disabled={isLoading}
-                        required
-                      />
-                      {errors.email && (
-                        <p className="text-sm text-red-600">{errors.email}</p>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <Label>Email</Label>
-                      <div className="p-3 bg-muted rounded-md text-muted-foreground">
-                        {formData.email}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        El email no se puede modificar
-                      </p>
-                    </>
-                  )}
-                </div>
+          {/* Selección de Empresa (solo para superadmin creando) */}
+          {mode === "create" && currentUserRole === "superadmin" && (
+            <>
+              {/* Línea 5: Título y Filtros */}
+              <div className="pt-4 border-t space-y-4">
+                <h3 className="text-lg font-semibold">Empresa / Autónomo</h3>
 
-                <div className="w-1/4 space-y-2">
-                  <Label htmlFor="role">Rol *</Label>
-                  {mode === "edit" && currentUserRole === "vendedor" ? (
-                    <div className="p-3 bg-muted rounded-md text-muted-foreground text-sm">
-                      {availableRoles.find((r) => r.value === formData.role)
-                        ?.label || formData.role}
-                    </div>
-                  ) : (
-                    <Select
-                      value={formData.role}
-                      onValueChange={handleSelectChange("role")}
-                      disabled={isLoading || loadingIssuers}
-                    >
-                      <SelectTrigger
-                        className={errors.role ? "border-red-500" : ""}
-                      >
-                        <SelectValue placeholder="Rol" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableRoles.map((role) => (
-                          <SelectItem key={role.value} value={role.value}>
-                            {role.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  {errors.role && (
-                    <p className="text-sm text-red-600">{errors.role}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Línea 2: Nombre (50%) + Apellidos (50%) */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nombre *</Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    placeholder="Juan"
-                    value={formData.nombre}
-                    onChange={handleInputChange("name")}
-                    className={errors.nombre ? "border-red-500" : ""}
-                    disabled={isLoading}
-                    required
-                  />
-                  {errors.nombre && (
-                    <p className="text-sm text-red-600">{errors.nombre}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="last_name">Apellidos *</Label>
-                  <Input
-                    id="last_name"
-                    type="text"
-                    placeholder="García López"
-                    value={formData.apellidos}
-                    onChange={handleInputChange("last_name")}
-                    className={errors.apellidos ? "border-red-500" : ""}
-                    disabled={isLoading}
-                    required
-                  />
-                  {errors.apellidos && (
-                    <p className="text-sm text-red-600">{errors.apellidos}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Línea 3: Descripción de roles */}
-              <div className="p-4 bg-lime-50 border border-lime-200 rounded-lg">
-                <p className="text-sm text-gray-700">
-                  <strong>Superadmin:</strong> Acceso total al sistema.{" "}
-                  <strong>Admin:</strong> Gestión completa empresa y usuarios
-                  Admin y Comercial. <strong>Comercial:</strong> Solo
-                  crear/editar presupuestos.
-                </p>
-              </div>
-
-              {/* Status (solo en edición y solo admin/superadmin) */}
-              {mode === "edit" && currentUserRole !== "vendedor" && (
-                <div className="space-y-2">
-                  <Label htmlFor="status">Estado</Label>
+                {/* Filtros de búsqueda */}
+                <div className="flex gap-4">
+                  <div className="flex-1 relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Buscar por nombre, NIF, dirección..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
                   <Select
-                    value={formData.status}
-                    onValueChange={handleSelectChange("status")}
-                    disabled={isLoading}
+                    value={filterType}
+                    onValueChange={(value: any) => setFilterType(value)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-[200px]">
+                      <Filter className="mr-2 h-4 w-4" />
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="active">Activo</SelectItem>
-                      <SelectItem value="inactive">Inactivo</SelectItem>
-                      <SelectItem value="pending">Pendiente</SelectItem>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="empresa">Solo Empresas</SelectItem>
+                      <SelectItem value="autonomo">Solo Autónomos</SelectItem>
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Los usuarios inactivos no pueden acceder al sistema
-                  </p>
                 </div>
-              )}
 
-              {/* Selección de Empresa (solo para superadmin creando) */}
-              {mode === "create" && currentUserRole === "superadmin" && (
-                <>
-                  {/* Línea 5: Título y Filtros */}
-                  <div className="pt-4 border-t space-y-4">
-                    <h3 className="text-lg font-semibold">
-                      Empresa / Autónomo
-                    </h3>
+                {/* Contador de resultados */}
+                {!loadingIssuers && issuers.length > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    Mostrando {filteredIssuers.length} de {issuers.length}{" "}
+                    {issuers.length === 1 ? "empresa" : "empresas"}
+                  </p>
+                )}
+              </div>
 
-                    {/* Filtros de búsqueda */}
-                    <div className="flex gap-4">
-                      <div className="flex-1 relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input
-                          placeholder="Buscar por nombre, NIF, dirección..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-10"
+              {/* Línea 6: Listado Empresa / Autónomo */}
+              <div className="space-y-3">
+                {loadingIssuers ? (
+                  <div className="p-8 bg-white rounded-lg border flex items-center justify-center gap-2">
+                    <Loader2 className="h-5 w-5 animate-spin text-lime-600" />
+                    <span className="text-muted-foreground">
+                      Cargando empresas...
+                    </span>
+                  </div>
+                ) : issuers.length === 0 ? (
+                  <Alert>
+                    <AlertDescription>
+                      No hay empresas registradas en el sistema. Por favor,
+                      registra una empresa primero.
+                    </AlertDescription>
+                  </Alert>
+                ) : filteredIssuers.length === 0 ? (
+                  <Alert>
+                    <AlertDescription>
+                      No se encontraron empresas que coincidan con los filtros
+                      aplicados.
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <RadioGroup
+                    value={formData.issuer_id || ""}
+                    onValueChange={handleIssuerChange}
+                    disabled={isLoading}
+                    className="space-y-3"
+                  >
+                    {filteredIssuers.map((issuer) => (
+                      <div
+                        key={issuer.id}
+                        className={`relative flex items-start space-x-3 p-4 rounded-lg border-2 transition-colors ${
+                          formData.issuer_id === issuer.id
+                            ? "border-lime-500 bg-lime-50"
+                            : "border-gray-200 bg-white hover:border-gray-300"
+                        }`}
+                      >
+                        <RadioGroupItem
+                          value={issuer.id}
+                          id={issuer.id}
+                          className="mt-1"
                         />
-                      </div>
-                      <Select
-                        value={filterType}
-                        onValueChange={(value: any) => setFilterType(value)}
-                      >
-                        <SelectTrigger className="w-[200px]">
-                          <Filter className="mr-2 h-4 w-4" />
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Todos</SelectItem>
-                          <SelectItem value="empresa">Solo Empresas</SelectItem>
-                          <SelectItem value="autonomo">
-                            Solo Autónomos
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                        <Label
+                          htmlFor={issuer.id}
+                          className="flex-1 cursor-pointer"
+                        >
+                          <div className="space-y-1">
+                            {/* Nombre (NIF) (Tipo) */}
+                            <p className="font-semibold text-base">
+                              {issuer.name} ({issuer.nif})
+                              <span className="ml-1 text-xs font-normal text-gray-500">
+                                (
+                                {issuer.type === "empresa"
+                                  ? "Empresa"
+                                  : "Autónomo"}
+                                )
+                              </span>
+                            </p>
 
-                    {/* Contador de resultados */}
-                    {!loadingIssuers && issuers.length > 0 && (
-                      <p className="text-sm text-muted-foreground">
-                        Mostrando {filteredIssuers.length} de {issuers.length}{" "}
-                        {issuers.length === 1 ? "empresa" : "empresas"}
-                      </p>
-                    )}
-                  </div>
+                            {/* Datos de Dirección */}
+                            <p className="text-sm text-gray-600">
+                              {issuer.address}
+                              {issuer.postal_code && `, ${issuer.postal_code}`}
+                              {issuer.locality && `, ${issuer.locality}`}
+                              {issuer.province && ` (${issuer.province})`}
+                            </p>
 
-                  {/* Línea 6: Listado Empresa / Autónomo */}
-                  <div className="space-y-3">
-                    {loadingIssuers ? (
-                      <div className="p-8 bg-white rounded-lg border flex items-center justify-center gap-2">
-                        <Loader2 className="h-5 w-5 animate-spin text-lime-600" />
-                        <span className="text-muted-foreground">
-                          Cargando empresas...
-                        </span>
-                      </div>
-                    ) : issuers.length === 0 ? (
-                      <Alert>
-                        <AlertDescription>
-                          No hay empresas registradas en el sistema. Por favor,
-                          registra una empresa primero.
-                        </AlertDescription>
-                      </Alert>
-                    ) : filteredIssuers.length === 0 ? (
-                      <Alert>
-                        <AlertDescription>
-                          No se encontraron empresas que coincidan con los
-                          filtros aplicados.
-                        </AlertDescription>
-                      </Alert>
-                    ) : (
-                      <RadioGroup
-                        value={formData.issuer_id || ""}
-                        onValueChange={handleIssuerChange}
-                        disabled={isLoading}
-                        className="space-y-3"
-                      >
-                        {filteredIssuers.map((issuer) => (
-                          <div
-                            key={issuer.id}
-                            className={`relative flex items-start space-x-3 p-4 rounded-lg border-2 transition-colors ${
-                              formData.issuer_id === issuer.id
-                                ? "border-lime-500 bg-lime-50"
-                                : "border-gray-200 bg-white hover:border-gray-300"
-                            }`}
-                          >
-                            <RadioGroupItem
-                              value={issuer.id}
-                              id={issuer.id}
-                              className="mt-1"
-                            />
-                            <Label
-                              htmlFor={issuer.id}
-                              className="flex-1 cursor-pointer"
-                            >
-                              <div className="space-y-1">
-                                {/* Nombre (NIF) (Tipo) */}
-                                <p className="font-semibold text-base">
-                                  {issuer.name} ({issuer.nif})
-                                  <span className="ml-1 text-xs font-normal text-gray-500">
-                                    (
-                                    {issuer.type === "empresa"
-                                      ? "Empresa"
-                                      : "Autónomo"}
-                                    )
-                                  </span>
-                                </p>
-
-                                {/* Datos de Dirección */}
-                                <p className="text-sm text-gray-600">
-                                  {issuer.address}
-                                  {issuer.postal_code &&
-                                    `, ${issuer.postal_code}`}
-                                  {issuer.locality && `, ${issuer.locality}`}
-                                  {issuer.province && ` (${issuer.province})`}
-                                </p>
-
-                                {/* Datos de Contacto */}
-                                <p className="text-sm text-gray-500">
-                                  {issuer.phone || "-"} • {issuer.email || "-"}{" "}
-                                  • {issuer.web || "-"}
-                                </p>
-                              </div>
-                            </Label>
+                            {/* Datos de Contacto */}
+                            <p className="text-sm text-gray-500">
+                              {issuer.phone || "-"} • {issuer.email || "-"} •{" "}
+                              {issuer.web || "-"}
+                            </p>
                           </div>
-                        ))}
-                      </RadioGroup>
-                    )}
-                    {errors.issuer_id && (
-                      <p className="text-sm text-red-600">{errors.issuer_id}</p>
-                    )}
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
+                        </Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                )}
+                {errors.issuer_id && (
+                  <p className="text-sm text-red-600">{errors.issuer_id}</p>
+                )}
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
     </form>
   );
 }

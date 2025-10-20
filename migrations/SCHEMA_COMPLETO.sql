@@ -1620,6 +1620,13 @@ CREATE INDEX idx_tariffs_user_id ON public.redpresu_tariffs USING btree (user_id
 
 
 --
+-- Name: idx_users_company; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_users_company ON public.redpresu_users USING btree (company_id);
+
+
+--
 -- Name: idx_users_empresa_id; Type: INDEX; Schema: public; Owner: -
 --
 

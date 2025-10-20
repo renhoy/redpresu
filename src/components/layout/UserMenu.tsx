@@ -48,7 +48,7 @@ export function UserMenu({
   const getRoleLabel = (role: string) => {
     switch (role) {
       case "superadmin":
-        return "Super";
+        return "Super Admin";
       case "admin":
         return "Admin";
       case "vendedor":
@@ -127,7 +127,9 @@ export function UserMenu({
         {/* Opciones del menú */}
         {/* Empresas - Superadmin ve lista, Admin ve edición de su empresa */}
         {(userRole === "superadmin" || userRole === "admin") && (
-          <Link href={userRole === "superadmin" ? "/companies" : "/companies/edit"}>
+          <Link
+            href={userRole === "superadmin" ? "/companies" : "/companies/edit"}
+          >
             <DropdownMenuItem className="cursor-pointer">
               <Building2 className="mr-2 h-4 w-4" />
               <span>{userRole === "superadmin" ? "Empresas" : "Empresa"}</span>
