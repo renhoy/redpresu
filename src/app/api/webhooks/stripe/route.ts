@@ -6,6 +6,8 @@
  * - customer.subscription.updated: Cambio de suscripción
  * - customer.subscription.deleted: Cancelación
  * - invoice.payment_failed: Pago fallido
+ *
+ * SECURITY: Rate limiting implementado para prevenir DoS
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -26,8 +28,96 @@ const supabaseAdmin = createClient(
   }
 );
 
+// ============================================
+// SECURITY: Rate Limiter In-Memory
+// ============================================
+
+interface RateLimitEntry {
+  timestamps: number[];
+}
+
+const rateLimitStore = new Map<string, RateLimitEntry>();
+
+// Configuración: 10 requests por 10 segundos
+const RATE_LIMIT_MAX_REQUESTS = 10;
+const RATE_LIMIT_WINDOW_MS = 10000; // 10 segundos
+
+/**
+ * Verifica si la IP ha excedido el rate limit
+ * @param ip - IP del cliente
+ * @returns true si permite la request, false si excede límite
+ */
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitStore.get(ip);
+
+  if (!entry) {
+    // Primera request de esta IP
+    rateLimitStore.set(ip, { timestamps: [now] });
+    return true;
+  }
+
+  // Filtrar timestamps fuera de la ventana (sliding window)
+  entry.timestamps = entry.timestamps.filter(
+    timestamp => now - timestamp < RATE_LIMIT_WINDOW_MS
+  );
+
+  // Verificar si excede el límite
+  if (entry.timestamps.length >= RATE_LIMIT_MAX_REQUESTS) {
+    console.warn('[Rate Limiter] IP blocked:', ip, 'requests:', entry.timestamps.length);
+    return false;
+  }
+
+  // Añadir timestamp actual
+  entry.timestamps.push(now);
+  rateLimitStore.set(ip, entry);
+
+  return true;
+}
+
+/**
+ * Limpia entradas antiguas del store (ejecutar periódicamente)
+ */
+function cleanupRateLimitStore() {
+  const now = Date.now();
+  for (const [ip, entry] of rateLimitStore.entries()) {
+    entry.timestamps = entry.timestamps.filter(
+      timestamp => now - timestamp < RATE_LIMIT_WINDOW_MS
+    );
+
+    // Eliminar entrada si no hay timestamps recientes
+    if (entry.timestamps.length === 0) {
+      rateLimitStore.delete(ip);
+    }
+  }
+}
+
+// Cleanup cada minuto
+setInterval(cleanupRateLimitStore, 60000);
+
+// ============================================
+// Webhook Handler
+// ============================================
+
 export async function POST(req: NextRequest) {
-  console.log('[Stripe Webhook] Received event');
+  // SECURITY: Rate limiting por IP
+  const forwarded = req.headers.get('x-forwarded-for');
+  const ip = forwarded ? forwarded.split(',')[0].trim() : req.ip || 'unknown';
+
+  if (!checkRateLimit(ip)) {
+    console.warn('[Stripe Webhook] Rate limit exceeded for IP:', ip);
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': '10', // Reintentar después de 10 segundos
+        }
+      }
+    );
+  }
+
+  console.log('[Stripe Webhook] Received event from IP:', ip);
 
   const stripe = getStripeClient();
   if (!stripe) {
