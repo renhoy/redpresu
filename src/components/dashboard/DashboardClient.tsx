@@ -20,18 +20,19 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import {
-  Home,
-  FileText,
-  Receipt,
-  PlusCircle,
-  TrendingUp,
-  Calendar,
-  Euro,
   AlertCircle,
+  BookOpen,
+  Calendar,
   CheckCircle,
   Clock,
+  Euro,
+  FileText,
+  Home,
+  Layers,
+  PlusCircle,
+  TrendingUp,
   XCircle,
-  BookOpen,
+  Zap,
 } from "lucide-react";
 import { getDashboardStats } from "@/app/actions/dashboard";
 import { Budget } from "@/lib/types/database";
@@ -136,14 +137,14 @@ export function DashboardClient({
         </div>
 
         {/* Estadísticas principales - Grid 2x2 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Total presupuestos */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-medium">
                 Total Presupuestos
               </CardTitle>
-              <Receipt className="h-4 w-4 text-muted-foreground" />
+              <FileText className="h-6 w-6 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -161,24 +162,26 @@ export function DashboardClient({
 
           {/* Valor total */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-medium">Valor Total</CardTitle>
-              <Euro className="h-4 w-4 text-muted-foreground" />
+              <Euro className="h-6 w-6 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               {loading ? (
                 <Skeleton className="h-6 w-24" />
               ) : (
-                <div className="text-xl font-bold">{stats.totalValue}</div>
+                <div className="text-xl font-bold">
+                  {formatCurrency(stats.totalValue)}
+                </div>
               )}
             </CardContent>
           </Card>
 
           {/* Presupuestos del mes */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-medium">Mes Actual</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <Calendar className="h-6 w-6 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -191,11 +194,11 @@ export function DashboardClient({
 
           {/* Tasa de conversión */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-medium">
                 Tasa de Conversión
               </CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <TrendingUp className="h-6 w-6 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -210,7 +213,11 @@ export function DashboardClient({
         {/* Accesos rápidos */}
         <Card>
           <CardHeader>
-            <CardTitle>Accesos Rápidos</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5" />
+              Accesos Rápidos
+            </CardTitle>
+
             <CardDescription>Acciones frecuentes</CardDescription>
           </CardHeader>
           <CardContent>
@@ -230,7 +237,7 @@ export function DashboardClient({
                   className="w-full h-16 flex items-center gap-2 justify-center"
                   variant="outline"
                 >
-                  <FileText className="w-5 h-5" />
+                  <Layers className="w-5 h-5" />
                   <span>Ver Tarifas</span>
                 </Button>
               </Link>
@@ -241,7 +248,7 @@ export function DashboardClient({
                     className="w-full h-16 flex items-center gap-2 justify-center"
                     variant="outline"
                   >
-                    <Receipt className="w-5 h-5" />
+                    <FileText className="w-5 h-5" />
                     <span>Ver Presupuestos</span>
                   </Button>
                 </Link>
@@ -252,7 +259,7 @@ export function DashboardClient({
                   disabled
                   title="No tienes presupuestos creados"
                 >
-                  <Receipt className="w-5 h-5" />
+                  <FileText className="w-5 h-5" />
                   <span>Ver Presupuestos</span>
                 </Button>
               )}
@@ -265,7 +272,7 @@ export function DashboardClient({
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-lime-600" />
+                <BookOpen className="w-5 h-5" />
                 Primeros Pasos
               </CardTitle>
               <CardDescription>
@@ -277,7 +284,7 @@ export function DashboardClient({
                 {helpArticles.map((article) => (
                   <Link key={article.id} href={`/help/${article.id}`}>
                     <Button
-                      className="w-full h-16 flex items-center gap-2 justify-center bg-gray-600 hover:bg-gray-800 text-white border-gray-600"
+                      className="w-full h-16 flex items-center gap-2 justify-center bg-gray-600 hover:bg-gray-800 text-white hover:text-white"
                       variant="outline"
                     >
                       <BookOpen className="w-5 h-5" />

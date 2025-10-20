@@ -1,21 +1,21 @@
-import { redirect } from 'next/navigation'
-import { getServerUser } from '@/lib/auth/server'
-import UserForm from '@/components/users/UserForm'
+import { redirect } from "next/navigation";
+import { getServerUser } from "@/lib/auth/server";
+import UserForm from "@/components/users/UserForm";
 
 export const metadata = {
-  title: 'Crear Usuario | JEYCA Presupuestos',
-  description: 'Invitar nuevo usuario a la empresa'
-}
+  title: "Crear Usuario - Respresu",
+  description: "Invitar nuevo usuario a la empresa",
+};
 
 export default async function CreateUserPage() {
-  const user = await getServerUser()
+  const user = await getServerUser();
 
   if (!user) {
-    redirect('/login')
+    redirect("/login");
   }
 
-  if (!['admin', 'superadmin'].includes(user.role)) {
-    redirect('/dashboard')
+  if (!["admin", "superadmin"].includes(user.role)) {
+    redirect("/dashboard");
   }
 
   return (
@@ -28,5 +28,5 @@ export default async function CreateUserPage() {
         />
       </div>
     </div>
-  )
+  );
 }

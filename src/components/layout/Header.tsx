@@ -5,14 +5,14 @@ import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import {
   Building2,
-  LogOut,
-  Home,
-  FileText,
-  Layers,
-  Users,
-  Settings,
   CircleUser,
+  FileText,
   HelpCircle,
+  Home,
+  Layers,
+  LogOut,
+  Settings,
+  Users,
 } from "lucide-react";
 import LogoutButton from "@/components/auth/LogoutButton";
 import { UserMenu } from "@/components/layout/UserMenu";
@@ -265,8 +265,8 @@ export function Header({
 
           {/* User Menu Dropdown */}
           <UserMenu
-            userName={userName || "Usuario"}
-            userRole={userRole || "vendedor"}
+            userName={userName}
+            userRole={userRole}
             companyName={companyName}
             issuerType={issuerType}
             currentPlan={currentPlan}

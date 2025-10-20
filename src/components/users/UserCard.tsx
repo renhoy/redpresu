@@ -4,7 +4,7 @@ import { UserWithInviter } from "@/app/actions/users";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, Mail, UserCheck, UserX } from "lucide-react";
+import { Pencil, Trash2, Mail, UserCheck } from "lucide-react";
 import Link from "next/link";
 
 interface UserCardProps {
@@ -142,7 +142,7 @@ export function UserCard({
                     }`}
                   >
                     {user.status === "active" ? (
-                      <UserX className="h-3 w-3" />
+                      <Trash2 className="h-3 w-3" />
                     ) : (
                       <UserCheck className="h-3 w-3" />
                     )}

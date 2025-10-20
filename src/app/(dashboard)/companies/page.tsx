@@ -5,7 +5,7 @@ import { Building2 } from "lucide-react";
 import CompanyTable from "@/components/companies/CompanyTable";
 
 export const metadata = {
-  title: "Gestión de Empresas | JEYCA Presupuestos",
+  title: "Gestión de Empresas - Respresu",
   description: "Administrar empresas del sistema",
 };
 
@@ -58,16 +58,14 @@ export default async function CompaniesPage() {
               {companies.length}
             </div>
           </div>
-          <div className="bg-white rounded-lg border p-4">
-            <div className="text-sm text-muted-foreground">
-              Empresas (tipo empresa)
-            </div>
+          <div className="bg-blue-50 rounded-lg border p-4">
+            <div className="text-sm text-muted-foreground">Tipo Empresas</div>
             <div className="text-2xl font-bold text-blue-600">
               {companies.filter((c) => c.type === "empresa").length}
             </div>
           </div>
-          <div className="bg-white rounded-lg border p-4">
-            <div className="text-sm text-muted-foreground">Autónomos</div>
+          <div className="bg-purple-50 rounded-lg border p-4">
+            <div className="text-sm text-muted-foreground">Tipo Autónomos</div>
             <div className="text-2xl font-bold text-purple-600">
               {companies.filter((c) => c.type === "autonomo").length}
             </div>

@@ -60,19 +60,28 @@ export default function UserTable({
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleStatusChange = async (userId: string, newStatus: "active" | "inactive" | "pending") => {
+  const handleStatusChange = async (
+    userId: string,
+    newStatus: "active" | "inactive" | "pending"
+  ) => {
     setIsLoading(true);
 
     const result = await toggleUserStatus(userId, newStatus);
 
     if (result.success) {
-      toast.success(`Estado actualizado a ${newStatus === "active" ? "Activo" : newStatus === "inactive" ? "Inactivo" : "Pendiente"}`);
+      toast.success(
+        `Estado actualizado a ${
+          newStatus === "active"
+            ? "Activo"
+            : newStatus === "inactive"
+            ? "Inactivo"
+            : "Pendiente"
+        }`
+      );
 
       // Actualizar lista local
       setUsers((prev) =>
-        prev.map((u) =>
-          u.id === userId ? { ...u, status: newStatus } : u
-        )
+        prev.map((u) => (u.id === userId ? { ...u, status: newStatus } : u))
       );
 
       router.refresh();
@@ -157,7 +166,7 @@ export default function UserTable({
   return (
     <>
       {/* Vista Desktop - Tabla */}
-      <div className="hidden lg:block rounded-md border bg-white">
+      <div className="hidden lg:block rounded-md border bg-gray-100">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
@@ -174,7 +183,7 @@ export default function UserTable({
               <TableRow>
                 <TableCell
                   colSpan={6}
-                  className="text-center text-muted-foreground py-8"
+                  className="text-center text-muted-foreground py-4"
                 >
                   No hay usuarios registrados
                 </TableCell>
@@ -189,7 +198,10 @@ export default function UserTable({
                   <TableCell className="p-4">
                     <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium" style={{ fontSize: "12px" }}>
+                      <span
+                        className="font-medium"
+                        style={{ fontSize: "12px" }}
+                      >
                         {user.email}
                       </span>
                     </div>
@@ -198,7 +210,7 @@ export default function UserTable({
                   {/* Columna Usuario (Nombre + Rol) */}
                   <TableCell className="p-4 text-center">
                     <div className="space-y-0.5">
-                      <div className="text-sm font-medium">
+                      <div className="text-xs font-medium">
                         {user.name} {user.apellidos}
                       </div>
                       <div className="text-xs text-muted-foreground capitalize">
@@ -212,29 +224,47 @@ export default function UserTable({
                     <div className="flex justify-center">
                       <Select
                         value={user.status}
-                        onValueChange={(value) => handleStatusChange(user.id, value as "active" | "inactive" | "pending")}
-                        disabled={currentUserRole === "vendedor" && user.id !== currentUserId}
+                        onValueChange={(value) =>
+                          handleStatusChange(
+                            user.id,
+                            value as "active" | "inactive" | "pending"
+                          )
+                        }
+                        disabled={
+                          currentUserRole === "vendedor" &&
+                          user.id !== currentUserId
+                        }
                       >
                         <SelectTrigger className="w-[140px] bg-white">
                           <SelectValue>
                             <Badge
                               className={
-                                statusColors[user.status as keyof typeof statusColors] || "bg-gray-200 text-gray-700"
+                                statusColors[
+                                  user.status as keyof typeof statusColors
+                                ] || "bg-gray-200 text-gray-700"
                               }
                             >
-                              {statusLabels[user.status as keyof typeof statusLabels] || user.status}
+                              {statusLabels[
+                                user.status as keyof typeof statusLabels
+                              ] || user.status}
                             </Badge>
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent className="bg-white">
                           <SelectItem value="active">
-                            <Badge className="bg-green-100 text-green-800">Activo</Badge>
+                            <Badge className="bg-green-100 text-green-800">
+                              Activo
+                            </Badge>
                           </SelectItem>
                           <SelectItem value="inactive">
-                            <Badge className="bg-gray-200 text-gray-700">Inactivo</Badge>
+                            <Badge className="bg-gray-200 text-gray-700">
+                              Inactivo
+                            </Badge>
                           </SelectItem>
                           <SelectItem value="pending">
-                            <Badge className="bg-orange-100 text-orange-800">Pendiente</Badge>
+                            <Badge className="bg-orange-100 text-orange-800">
+                              Pendiente
+                            </Badge>
                           </SelectItem>
                         </SelectContent>
                       </Select>
@@ -245,7 +275,9 @@ export default function UserTable({
                   <TableCell className="p-4 text-center">
                     {user.inviter_name ? (
                       <div className="space-y-0.5">
-                        <div className="text-sm font-medium">{user.inviter_name}</div>
+                        <div className="text-xs font-medium">
+                          {user.inviter_name}
+                        </div>
                         <div className="text-xs text-muted-foreground">
                           {user.inviter_email}
                         </div>
@@ -256,7 +288,10 @@ export default function UserTable({
                   </TableCell>
 
                   {/* Columna Último acceso */}
-                  <TableCell className="p-4 text-center text-muted-foreground" style={{ fontSize: "12px" }}>
+                  <TableCell
+                    className="p-4 text-center text-muted-foreground"
+                    style={{ fontSize: "12px" }}
+                  >
                     {formatDate(user.last_login)}
                   </TableCell>
 

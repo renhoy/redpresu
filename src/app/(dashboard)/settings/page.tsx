@@ -5,7 +5,7 @@ import { ConfigTable } from "@/components/settings/ConfigTable";
 import { Settings } from "lucide-react";
 
 export const metadata = {
-  title: "Configuración del Sistema | JEYCA Presupuestos",
+  title: "Configuración del Sistema - Respresu",
   description: "Configuración global del sistema (solo superadmin)",
 };
 

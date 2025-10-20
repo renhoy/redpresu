@@ -5,7 +5,7 @@ import { isSubscriptionsEnabled } from "@/lib/stripe";
 import { SubscriptionsClient } from "@/components/subscriptions/SubscriptionsClient";
 
 export const metadata = {
-  title: "Suscripciones - jeyca-presu",
+  title: "Suscripciones - Respresu",
   description: "Gestiona tu plan de suscripción",
 };
 

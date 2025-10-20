@@ -12,6 +12,7 @@ import { cookies } from 'next/headers'
 import { getServerUser } from '@/lib/auth/server'
 import type { ActionResult } from '@/lib/types/database'
 import { requireValidCompanyId } from '@/lib/helpers/company-validation'
+import { SUPABASE_TIMEOUTS, withTimeout } from '@/lib/supabase/server'
 import {
   convertTariffsToCSV,
   convertTariffsToJSON,
@@ -104,12 +105,17 @@ export async function exportTariffs(
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
 
-    const { data: tariffs, error } = await supabase
-      .from('redpresu_tariffs')
-      .select('*')
-      .in('id', ids)
-      .eq('company_id', empresaId)  // SECURITY: Filtro explícito
-      .order('name', { ascending: true })
+    // SECURITY (VULN-014): Timeout para query pesada de export
+    const { data: tariffs, error } = await withTimeout(
+      () => supabase
+        .from('redpresu_tariffs')
+        .select('*')
+        .in('id', ids)
+        .eq('company_id', empresaId)  // SECURITY: Filtro explícito
+        .order('name', { ascending: true }),
+      SUPABASE_TIMEOUTS.HEAVY_QUERY,
+      'exportTariffs'
+    )
 
     if (error) {
       log.error('[exportTariffs] Error BD:', error)
@@ -240,12 +246,17 @@ export async function exportBudgets(
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
 
-    const { data: budgets, error } = await supabase
-      .from('redpresu_budgets')
-      .select('*')
-      .in('id', ids)
-      .eq('company_id', empresaId)  // SECURITY: Filtro explícito
-      .order('client_name', { ascending: true })
+    // SECURITY (VULN-014): Timeout para query pesada de export
+    const { data: budgets, error } = await withTimeout(
+      () => supabase
+        .from('redpresu_budgets')
+        .select('*')
+        .in('id', ids)
+        .eq('company_id', empresaId)  // SECURITY: Filtro explícito
+        .order('client_name', { ascending: true }),
+      SUPABASE_TIMEOUTS.HEAVY_QUERY,
+      'exportBudgets'
+    )
 
     if (error) {
       log.error('[exportBudgets] Error BD:', error)

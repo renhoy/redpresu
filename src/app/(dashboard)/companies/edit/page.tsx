@@ -4,7 +4,7 @@ import { getCompanyById } from "@/app/actions/companies";
 import CompanyForm from "@/components/companies/CompanyForm";
 
 export const metadata = {
-  title: "Editar Empresa | JEYCA Presupuestos",
+  title: "Editar Empresa - Respresu",
   description: "Modificar datos de la empresa",
 };
 

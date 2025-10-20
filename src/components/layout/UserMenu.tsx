@@ -94,20 +94,23 @@ export function UserMenu({
       <DropdownMenuContent align="end" className="w-44">
         {/* Header del menú */}
         <DropdownMenuLabel>
-          <div className="flex flex-col space-y-1">
+          <div className="py-1.5 flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{userName}</p>
             <p className="text-xs leading-none text-muted-foreground">
               {getRoleLabel(userRole)}
             </p>
-            <p className="text-sm font-medium leading-none mt-2">
+          </div>
+          <DropdownMenuSeparator />
+          <div className="py-1.5 flex flex-col space-y-1">
+            <p className="text-xs font-medium leading-none mt-2">
               {companyName || userName}
             </p>
             {issuerType && (
               <Badge
                 className={
                   issuerType === "Empresa"
-                    ? "bg-blue-100 text-blue-800 text-[10px] px-1.5 py-0 w-fit"
-                    : "bg-purple-100 text-purple-800 text-[10px] px-1.5 py-0 w-fit"
+                    ? "bg-blue-50 text-blue-800 text-[10px] px-1.5 py-0 w-fit"
+                    : "bg-purple-50 text-purple-800 text-[10px] px-1.5 py-0 w-fit"
                 }
               >
                 {issuerType}
@@ -133,6 +136,14 @@ export function UserMenu({
         )}
 
         {/* Opciones del menú */}
+
+        <Link href="/profile">
+          <DropdownMenuItem className="cursor-pointer">
+            <UserCircle className="mr-2 h-4 w-4" />
+            <span>Mi Perfil</span>
+          </DropdownMenuItem>
+        </Link>
+
         {/* Empresas - Superadmin ve lista, Admin ve edición de su empresa */}
         {(userRole === "superadmin" || userRole === "admin") && (
           <Link
@@ -149,13 +160,6 @@ export function UserMenu({
           <DropdownMenuItem className="cursor-pointer">
             <Users className="mr-2 h-4 w-4" />
             <span>Usuarios</span>
-          </DropdownMenuItem>
-        </Link>
-
-        <Link href="/profile">
-          <DropdownMenuItem className="cursor-pointer">
-            <UserCircle className="mr-2 h-4 w-4" />
-            <span>Mi Perfil</span>
           </DropdownMenuItem>
         </Link>
 

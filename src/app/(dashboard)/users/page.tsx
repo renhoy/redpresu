@@ -7,7 +7,7 @@ import { Plus, Users } from "lucide-react";
 import UserTable from "@/components/users/UserTable";
 
 export const metadata = {
-  title: "Gestión de Usuarios | JEYCA Presupuestos",
+  title: "Gestión de Usuarios - Respresu",
   description: "Administrar usuarios de la empresa",
 };
 

@@ -304,7 +304,7 @@ export function TariffRow({
         <TableCell className="p-4 text-center">
           {tariff.creator ? (
             <div className="space-y-0.5">
-              <div className="text-sm font-medium">{tariff.creator.name}</div>
+              <div className="text-xs font-medium">{tariff.creator.name}</div>
               <div className="text-xs text-muted-foreground capitalize">
                 {tariff.creator.role}
               </div>

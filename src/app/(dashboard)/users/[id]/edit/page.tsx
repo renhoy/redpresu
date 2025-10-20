@@ -4,7 +4,7 @@ import { getUserById } from "@/app/actions/users";
 import UserForm from "@/components/users/UserForm";
 
 export const metadata = {
-  title: "Editar Usuario | JEYCA Presupuestos",
+  title: "Editar Usuario - Respresu",
   description: "Modificar datos del usuario",
 };
 

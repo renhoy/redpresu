@@ -30,12 +30,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  Pencil,
-  Trash2,
   Building2,
   FileText,
-  Users,
   Layers,
+  Pencil,
+  Trash2,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -83,8 +83,8 @@ export default function CompanyTable({
   };
 
   const tipoColors = {
-    empresa: "bg-blue-100 text-blue-800",
-    autonomo: "bg-purple-100 text-purple-800",
+    empresa: "bg-blue-50 text-blue-800",
+    autonomo: "bg-purple-50 text-purple-800",
   };
 
   const formatDate = (dateString: string) => {
@@ -165,13 +165,13 @@ export default function CompanyTable({
 
                   {/* Columna NIF/CIF */}
                   <TableCell className="p-4 text-center">
-                    <span className="text-sm font-mono">{company.nif}</span>
+                    <span className="text-xs">{company.nif}</span>
                   </TableCell>
 
                   {/* Columna Contacto */}
                   <TableCell className="p-4">
                     <div className="space-y-0.5 text-center">
-                      <div className="text-sm">{company.phone}</div>
+                      <div className="text-xs">{company.phone}</div>
                       <div className="text-xs text-muted-foreground">
                         {company.email}
                       </div>
@@ -331,7 +331,10 @@ export default function CompanyTable({
 
               <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
                 <p className="text-sm text-blue-800">
-                  ℹ️ <strong>Nota:</strong> Los datos se marcarán como eliminados pero podrán ser recuperados por un superadmin si fue un error. Para eliminar permanentemente, contacta con soporte técnico.
+                  ℹ️ <strong>Nota:</strong> Los datos se marcarán como
+                  eliminados pero podrán ser recuperados por un superadmin si
+                  fue un error. Para eliminar permanentemente, contacta con
+                  soporte técnico.
                 </p>
               </div>
             </AlertDialogDescription>

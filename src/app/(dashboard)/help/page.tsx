@@ -8,7 +8,7 @@ import { getServerUser } from "@/lib/auth/server";
 import { redirect } from "next/navigation";
 
 export const metadata = {
-  title: "Ayuda - jeyca-presu",
+  title: "Ayuda - Respresu",
   description: "Centro de ayuda y documentación de la aplicación",
 };
 
