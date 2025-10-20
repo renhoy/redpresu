@@ -347,6 +347,28 @@ export async function deleteCompany(companyId: string): Promise<ActionResult> {
       ")"
     );
 
+    // SECURITY (VULN-007): Obtener estadísticas antes de eliminar para auditoría
+    const { data: companyData } = await supabaseAdmin
+      .from("redpresu_companies")
+      .select("*")
+      .eq("id", company.company_id)
+      .single();
+
+    const { count: usersCount } = await supabaseAdmin
+      .from("redpresu_users")
+      .select("*", { count: "exact", head: true })
+      .eq("company_id", company.company_id);
+
+    const { count: tariffsCount } = await supabaseAdmin
+      .from("redpresu_tariffs")
+      .select("*", { count: "exact", head: true })
+      .eq("company_id", company.company_id);
+
+    const { count: budgetsCount } = await supabaseAdmin
+      .from("redpresu_budgets")
+      .select("*", { count: "exact", head: true })
+      .eq("company_id", company.company_id);
+
     // SOFT DELETE: Marcar como eliminada en lugar de borrar físicamente
     // Ventajas:
     // - Permite recuperación si fue error
@@ -360,6 +382,26 @@ export async function deleteCompany(companyId: string): Promise<ActionResult> {
     if (deleteError) {
       log.error("[deleteCompany] Error al soft-delete:", deleteError);
       return { success: false, error: deleteError.message };
+    }
+
+    // SECURITY (VULN-007): Registrar en log de auditoría
+    const { error: auditError } = await supabaseAdmin
+      .from("redpresu_company_deletion_log")
+      .insert({
+        company_id: company.company_id,
+        issuer_id: company.id,
+        deleted_by: user.id,
+        deletion_type: "soft_delete",
+        company_snapshot: companyData || {},
+        issuer_snapshot: company,
+        users_count: usersCount || 0,
+        tariffs_count: tariffsCount || 0,
+        budgets_count: budgetsCount || 0,
+      });
+
+    if (auditError) {
+      log.warn("[deleteCompany] Error registrando auditoría (no crítico):", auditError);
+      // No fallar la operación si falla el audit log
     }
 
     log.info("[deleteCompany] Empresa marcada como eliminada exitosamente:", company.name);
@@ -427,6 +469,13 @@ export async function restoreCompany(companyId: string): Promise<ActionResult> {
       ")"
     );
 
+    // SECURITY (VULN-007): Obtener estadísticas para auditoría
+    const { data: companyData } = await supabaseAdmin
+      .from("redpresu_companies")
+      .select("*")
+      .eq("id", company.company_id)
+      .single();
+
     // Restaurar: quitar marca de eliminación
     const { data: restoredCompany, error: restoreError } = await supabaseAdmin
       .from("redpresu_issuers")
@@ -438,6 +487,26 @@ export async function restoreCompany(companyId: string): Promise<ActionResult> {
     if (restoreError) {
       log.error("[restoreCompany] Error al restaurar:", restoreError);
       return { success: false, error: restoreError.message };
+    }
+
+    // SECURITY (VULN-007): Registrar restauración en log de auditoría
+    const { error: auditError } = await supabaseAdmin
+      .from("redpresu_company_deletion_log")
+      .insert({
+        company_id: company.company_id,
+        issuer_id: company.id,
+        deleted_by: user.id,
+        deletion_type: "restore",
+        company_snapshot: companyData || {},
+        issuer_snapshot: restoredCompany,
+        users_count: 0,
+        tariffs_count: 0,
+        budgets_count: 0,
+        deletion_reason: "Restauración manual por superadmin",
+      });
+
+    if (auditError) {
+      log.warn("[restoreCompany] Error registrando auditoría (no crítico):", auditError);
     }
 
     log.info("[restoreCompany] Empresa restaurada exitosamente:", restoredCompany.name);

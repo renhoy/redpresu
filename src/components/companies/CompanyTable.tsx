@@ -29,7 +29,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Pencil, Trash2, Building2, FileText, Users, Layers } from "lucide-react";
+import {
+  Pencil,
+  Trash2,
+  Building2,
+  FileText,
+  Users,
+  Layers,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -37,7 +44,9 @@ interface CompanyTableProps {
   companies: Company[];
 }
 
-export default function CompanyTable({ companies: initialCompanies }: CompanyTableProps) {
+export default function CompanyTable({
+  companies: initialCompanies,
+}: CompanyTableProps) {
   const [companies, setCompanies] = useState(initialCompanies);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -52,7 +61,9 @@ export default function CompanyTable({ companies: initialCompanies }: CompanyTab
     const result = await deleteCompany(selectedCompany.uuid);
 
     if (result.success) {
-      toast.success(`Empresa "${selectedCompany.name}" eliminada correctamente`);
+      toast.success(
+        `Empresa "${selectedCompany.name}" eliminada correctamente`
+      );
 
       // Actualizar lista local
       setCompanies((prev) => prev.filter((c) => c.id !== selectedCompany.id));
@@ -86,7 +97,7 @@ export default function CompanyTable({ companies: initialCompanies }: CompanyTab
 
   return (
     <>
-      <div className="rounded-md border bg-white">
+      <div className="rounded-md border bg-lime-100">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
@@ -113,7 +124,7 @@ export default function CompanyTable({ companies: initialCompanies }: CompanyTab
               companies.map((company) => (
                 <TableRow
                   key={company.id}
-                  className="bg-white border-t hover:bg-lime-50/50"
+                  className="bg-white border-t hover:bg-lime-100/100"
                 >
                   {/* Columna Empresa */}
                   <TableCell className="p-4">
@@ -121,7 +132,10 @@ export default function CompanyTable({ companies: initialCompanies }: CompanyTab
                       <Building2 className="h-4 w-4 text-muted-foreground" />
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <div className="font-medium" style={{ fontSize: "12px" }}>
+                          <div
+                            className="font-medium"
+                            style={{ fontSize: "12px" }}
+                          >
                             {company.name}
                           </div>
                           {company.id === 1 && (
@@ -276,40 +290,50 @@ export default function CompanyTable({ companies: initialCompanies }: CompanyTab
       </div>
 
       {/* Dialog confirmar eliminación */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="text-red-600">
-              ⚠️ Eliminar empresa y todo su contenido
+              ⚠️ Marcar empresa como eliminada
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-3">
               <p>
                 ¿Estás seguro de que quieres eliminar la empresa{" "}
-                <strong className="text-foreground">{selectedCompany?.name}</strong>?
+                <strong className="text-foreground">
+                  {selectedCompany?.name}
+                </strong>
+                ?
               </p>
 
               <div className="bg-red-50 border border-red-200 rounded-md p-3 space-y-2">
                 <p className="font-semibold text-red-800">
-                  Esta acción eliminará PERMANENTEMENTE:
+                  Esta acción ocultará la empresa y su contenido:
                 </p>
                 <ul className="text-sm text-red-700 space-y-1 list-disc list-inside">
                   <li>
                     <strong>{selectedCompany?.user_count || 0}</strong> usuarios
                   </li>
                   <li>
-                    <strong>{selectedCompany?.tariff_count || 0}</strong> tarifas
+                    <strong>{selectedCompany?.tariff_count || 0}</strong>{" "}
+                    tarifas
                   </li>
                   <li>
-                    <strong>{selectedCompany?.budget_count || 0}</strong> presupuestos
+                    <strong>{selectedCompany?.budget_count || 0}</strong>{" "}
+                    presupuestos
                   </li>
                   <li>Todos los PDFs generados</li>
                   <li>Todas las versiones y notas</li>
                 </ul>
               </div>
 
-              <p className="font-bold text-destructive">
-                ⚠️ Esta acción NO se puede deshacer. Los datos no podrán recuperarse.
-              </p>
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                <p className="text-sm text-blue-800">
+                  ℹ️ <strong>Nota:</strong> Los datos se marcarán como eliminados pero podrán ser recuperados por un superadmin si fue un error. Para eliminar permanentemente, contacta con soporte técnico.
+                </p>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -319,7 +343,7 @@ export default function CompanyTable({ companies: initialCompanies }: CompanyTab
               disabled={isLoading}
               className="bg-red-600 hover:bg-red-700"
             >
-              {isLoading ? "Eliminando..." : "Sí, eliminar todo"}
+              {isLoading ? "Eliminando..." : "Sí, marcar como eliminada"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
