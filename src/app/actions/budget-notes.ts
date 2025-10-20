@@ -4,6 +4,7 @@ import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { getServerUser } from '@/lib/auth/server'
 import { log } from '@/lib/logger'
+import { requireValidCompanyId } from '@/lib/helpers/company-validation'
 
 export interface BudgetNote {
   id: string
@@ -36,8 +37,37 @@ export async function getBudgetNotes(budgetId: string): Promise<ActionResult> {
       return { success: false, error: 'No autenticado' }
     }
 
+    // SECURITY: Validar company_id obligatorio
+    let empresaId: number
+    try {
+      empresaId = requireValidCompanyId(user, '[getBudgetNotes]')
+    } catch (error) {
+      log.error('[getBudgetNotes] company_id inválido', { error })
+      return { success: false, error: 'Usuario sin empresa asignada' }
+    }
+
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+    // SECURITY: Verificar que el budget pertenece a la empresa del usuario
+    const { data: budgetData, error: budgetError } = await supabase
+      .from('redpresu_budgets')
+      .select('company_id')
+      .eq('id', budgetId)
+      .single()
+
+    if (budgetError || !budgetData) {
+      log.error('[getBudgetNotes] Budget no encontrado:', budgetError)
+      return { success: false, error: 'Presupuesto no encontrado' }
+    }
+
+    if (budgetData.company_id !== empresaId) {
+      log.error('[getBudgetNotes] Intento de acceso a budget de otra empresa', {
+        budgetCompanyId: budgetData.company_id,
+        userCompanyId: empresaId
+      })
+      return { success: false, error: 'No tienes acceso a este presupuesto' }
+    }
 
     // Obtener notas
     const { data: notesData, error: notesError } = await supabase
@@ -99,8 +129,37 @@ export async function addBudgetNote(budgetId: string, content: string): Promise<
       return { success: false, error: 'No autenticado' }
     }
 
+    // SECURITY: Validar company_id obligatorio
+    let empresaId: number
+    try {
+      empresaId = requireValidCompanyId(user, '[addBudgetNote]')
+    } catch (error) {
+      log.error('[addBudgetNote] company_id inválido', { error })
+      return { success: false, error: 'Usuario sin empresa asignada' }
+    }
+
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+    // SECURITY: Verificar que el budget pertenece a la empresa del usuario
+    const { data: budgetData, error: budgetError } = await supabase
+      .from('redpresu_budgets')
+      .select('company_id')
+      .eq('id', budgetId)
+      .single()
+
+    if (budgetError || !budgetData) {
+      log.error('[addBudgetNote] Budget no encontrado:', budgetError)
+      return { success: false, error: 'Presupuesto no encontrado' }
+    }
+
+    if (budgetData.company_id !== empresaId) {
+      log.error('[addBudgetNote] Intento de acceso a budget de otra empresa', {
+        budgetCompanyId: budgetData.company_id,
+        userCompanyId: empresaId
+      })
+      return { success: false, error: 'No tienes acceso a este presupuesto' }
+    }
 
     // Insertar nota
     const { data: noteData, error: noteError } = await supabase
