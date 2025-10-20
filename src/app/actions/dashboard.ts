@@ -50,6 +50,15 @@ export async function getDashboardStats(
       return null;
     }
 
+    // SECURITY: Validar company_id obligatorio
+    let companyId: number
+    try {
+      companyId = requireValidCompanyId(userData, '[getDashboardStats]')
+    } catch (error) {
+      log.error('[getDashboardStats] company_id inválido', { error })
+      return null
+    }
+
     // Calcular fecha de inicio según período
     const now = new Date();
     const startDate = new Date();
@@ -73,7 +82,7 @@ export async function getDashboardStats(
     let query = supabase
       .from("redpresu_budgets")
       .select("*")
-      .eq("company_id", userData.company_id);
+      .eq("company_id", companyId);
 
     // Comercial: solo sus presupuestos
     if (userData.role === "vendedor") {
