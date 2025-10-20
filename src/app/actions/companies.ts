@@ -3,6 +3,7 @@
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { log } from "@/lib/logger";
+import { requireValidCompanyId } from "@/lib/helpers/company-validation";
 
 export interface Company {
   id: number; // company_id (número, ej: 1, 2, 3...)
@@ -138,6 +139,15 @@ export async function getCompanyById(companyId: string): Promise<ActionResult> {
       return { success: false, error: "No autenticado" };
     }
 
+    // SECURITY: Validar company_id obligatorio
+    let userCompanyId: number;
+    try {
+      userCompanyId = requireValidCompanyId(user, '[getCompanyById]');
+    } catch (error) {
+      log.error('[getCompanyById] company_id inválido', { error });
+      return { success: false, error: "Usuario sin empresa asignada" };
+    }
+
     // company_id es UUID en redpresu_issuers
     // Verificar permisos:
     // - Superadmin puede ver cualquier empresa
@@ -155,6 +165,16 @@ export async function getCompanyById(companyId: string): Promise<ActionResult> {
 
     if (!company) {
       return { success: false, error: "Empresa no encontrada" };
+    }
+
+    // Admin solo puede ver su propia empresa
+    if (user.role !== "superadmin" && company.company_id !== userCompanyId) {
+      log.error("[getCompanyById] Intento de acceso cross-company", {
+        userId: user.id,
+        userCompanyId,
+        targetCompanyId: company.company_id
+      });
+      return { success: false, error: "Sin permisos para ver esta empresa" };
     }
 
     log.info("[getCompanyById] Éxito:", company.id);
@@ -184,10 +204,40 @@ export async function updateCompany(
       return { success: false, error: "No autenticado" };
     }
 
+    // SECURITY: Validar company_id obligatorio
+    let userCompanyId: number;
+    try {
+      userCompanyId = requireValidCompanyId(user, '[updateCompany]');
+    } catch (error) {
+      log.error('[updateCompany] company_id inválido', { error });
+      return { success: false, error: "Usuario sin empresa asignada" };
+    }
+
     // Verificar permisos:
     // - Superadmin puede editar cualquier emisor
     // - Admin puede editar emisor de su empresa
-    // (La verificación se hace obteniendo el emisor primero)
+
+    // Primero obtener el emisor para verificar permisos
+    const { data: existingCompany, error: fetchError } = await supabaseAdmin
+      .from("redpresu_issuers")
+      .select("company_id")
+      .eq("id", companyId)
+      .single();
+
+    if (fetchError || !existingCompany) {
+      log.error("[updateCompany] Empresa no encontrada:", fetchError);
+      return { success: false, error: "Empresa no encontrada" };
+    }
+
+    // Admin solo puede editar su propia empresa
+    if (user.role !== "superadmin" && existingCompany.company_id !== userCompanyId) {
+      log.error("[updateCompany] Intento de edición cross-company", {
+        userId: user.id,
+        userCompanyId,
+        targetCompanyId: existingCompany.company_id
+      });
+      return { success: false, error: "Sin permisos para editar esta empresa" };
+    }
 
     // Validaciones
     if (data.email && !data.email.includes("@")) {
@@ -247,6 +297,14 @@ export async function deleteCompany(companyId: string): Promise<ActionResult> {
 
     if (!user) {
       return { success: false, error: "No autenticado" };
+    }
+
+    // SECURITY: Validar company_id obligatorio (aunque sea superadmin)
+    try {
+      requireValidCompanyId(user, '[deleteCompany]');
+    } catch (error) {
+      log.error('[deleteCompany] company_id inválido', { error });
+      return { success: false, error: "Usuario sin empresa asignada" };
     }
 
     // Solo superadmin puede eliminar empresas
