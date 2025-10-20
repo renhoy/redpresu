@@ -14,8 +14,18 @@ export default async function DashboardLayout({
 }) {
   const user = await getServerUser();
 
+  // El middleware ya verificó autenticación, si no hay usuario aquí
+  // es un problema de cookies entre middleware y layout
+  // Mostrar loading en lugar de redirect para evitar bucle
   if (!user) {
-    redirect("/login");
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-lime-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando...</p>
+        </div>
+      </div>
+    );
   }
 
   // Obtener modo de operación

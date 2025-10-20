@@ -5,14 +5,15 @@ export async function getServerUser() {
   const cookieStore = await cookies()
   const supabase = createServerComponentClient({ cookies: () => cookieStore })
 
-  // Usar getUser() en lugar de getSession() para mayor seguridad
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  // Primero intentar getSession() para ser consistente con middleware
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
-  if (authError || !user) {
-    console.log('[getServerUser] No auth user:', authError?.message)
+  if (sessionError || !session?.user) {
+    console.log('[getServerUser] No auth session:', sessionError?.message)
     return null
   }
 
+  const user = session.user
   console.log('[getServerUser] Auth user found:', user.id, user.email)
 
   const { data: userData, error: dbError } = await supabase
