@@ -24,8 +24,9 @@ export async function getDashboardStats(
   periodo: Periodo = "mes"
 ): Promise<DashboardStats | null> {
   try {
+    const cookieStore = await cookies();
     const supabase = createServerActionClient<Database>({
-      cookies,
+      cookies: () => cookieStore,
     });
 
     // Obtener usuario actual
