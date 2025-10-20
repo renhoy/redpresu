@@ -1128,8 +1128,8 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
       }
     }
 
-    // 5. Guardar PDF en /public/pdfs/
-    // Formato: presupuesto_nombre_nif_nie_YYYY-MM-DD_HH-MM-SS.pdf
+    // 5. Subir PDF a Supabase Storage (privado)
+    // Formato: {company_id}/presupuesto_nombre_nif_nie_YYYY-MM-DD_HH-MM-SS.pdf
     const now = new Date()
     const datePart = now.toISOString().split('T')[0] // YYYY-MM-DD
     const timePart = now.toTimeString().split(' ')[0].replace(/:/g, '-') // HH-MM-SS
@@ -1139,35 +1139,50 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
     const clientNif = sanitizeFilename(budgetTyped.client_nif_nie || 'sin_nif')
     const filename = `presupuesto_${clientName}_${clientNif}_${timestamp}.pdf`
 
-    const publicDir = path.join(process.cwd(), 'public', 'pdfs')
-    const filePath = path.join(publicDir, filename)
+    // SECURITY: Path incluye company_id para RLS policies
+    const storagePath = `${budgetTyped.company_id}/${filename}`
 
-    // Crear directorio si no existe
-    if (!fs.existsSync(publicDir)) {
-      fs.mkdirSync(publicDir, { recursive: true })
-      console.log('[generateBudgetPDF] Directorio creado:', publicDir)
+    console.log('[generateBudgetPDF] Subiendo a Storage:', storagePath)
+
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from('budget-pdfs')
+      .upload(storagePath, pdfBuffer!, {
+        contentType: 'application/pdf',
+        upsert: false, // No sobrescribir si existe (cada PDF es único por timestamp)
+      })
+
+    if (uploadError) {
+      console.error('[generateBudgetPDF] Error subiendo a Storage:', uploadError)
+      return { success: false, error: 'Error guardando PDF en Storage' }
     }
 
-    fs.writeFileSync(filePath, pdfBuffer!)
-    console.log('[generateBudgetPDF] PDF guardado en:', filePath)
+    console.log('[generateBudgetPDF] PDF subido exitosamente a Storage')
 
-    const pdfUrl = `/pdfs/${filename}`
-
-    // 6. Actualizar pdf_url en budgets
+    // 6. Actualizar pdf_url en budgets (guardar storage path, no URL pública)
     const { error: updateError } = await supabaseAdmin
       .from('redpresu_budgets')
-      .update({ pdf_url: pdfUrl })
+      .update({ pdf_url: storagePath })
       .eq('id', budgetId)
 
     if (updateError) {
       console.error('[generateBudgetPDF] Error actualizando pdf_url:', updateError)
-      // No retornamos error, el PDF ya está guardado
+      // Intentar limpiar archivo de Storage
+      await supabaseAdmin.storage.from('budget-pdfs').remove([storagePath])
+      return { success: false, error: 'Error actualizando presupuesto' }
     }
 
-    console.log('[generateBudgetPDF] ✅ PDF generado exitosamente:', pdfUrl)
+    console.log('[generateBudgetPDF] ✅ PDF generado y guardado exitosamente:', storagePath)
     revalidatePath('/budgets')
 
-    return { success: true, pdf_url: pdfUrl }
+    // Generar signed URL para retornar al cliente
+    const { data: signedUrlData } = await supabaseAdmin.storage
+      .from('budget-pdfs')
+      .createSignedUrl(storagePath, 3600) // 1 hora
+
+    return {
+      success: true,
+      pdf_url: signedUrlData?.signedUrl || storagePath
+    }
 
   } catch (error) {
     console.error('[generateBudgetPDF] Error crítico:', error)
@@ -1443,18 +1458,21 @@ export async function deleteBudgetPDF(budgetId: string): Promise<{
       return { success: false, error: 'No hay PDF para eliminar' }
     }
 
-    // Eliminar archivo físico
+    // Eliminar de Supabase Storage
     try {
-      const filePath = path.join(process.cwd(), 'public', budget.pdf_url)
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath)
-        console.log('[deleteBudgetPDF] PDF físico eliminado:', filePath)
+      const { error: storageError } = await supabaseAdmin.storage
+        .from('budget-pdfs')
+        .remove([budget.pdf_url])
+
+      if (storageError) {
+        console.error('[deleteBudgetPDF] Error eliminando de Storage:', storageError)
+        // Continuar para actualizar BD aunque falle la eliminación del storage
       } else {
-        console.warn('[deleteBudgetPDF] Archivo PDF no encontrado en disco:', filePath)
+        console.log('[deleteBudgetPDF] PDF eliminado de Storage:', budget.pdf_url)
       }
-    } catch (fsError) {
-      console.error('[deleteBudgetPDF] Error eliminando archivo físico:', fsError)
-      // Continuar para actualizar BD aunque falle la eliminación del archivo
+    } catch (storageError) {
+      console.error('[deleteBudgetPDF] Error eliminando archivo de Storage:', storageError)
+      // Continuar para actualizar BD aunque falle la eliminación del storage
     }
 
     // Actualizar BD para quitar pdf_url
@@ -1475,6 +1493,97 @@ export async function deleteBudgetPDF(budgetId: string): Promise<{
 
   } catch (error) {
     console.error('[deleteBudgetPDF] Error crítico:', error)
+    return { success: false, error: 'Error interno del servidor' }
+  }
+}
+
+/**
+ * Obtener URL firmada para descargar PDF desde Supabase Storage
+ * SECURITY: Solo permite acceso si el usuario pertenece a la empresa
+ *
+ * @param budgetId - ID del presupuesto
+ * @returns URL firmada válida por 1 hora o error
+ */
+export async function getBudgetPDFSignedUrl(budgetId: string): Promise<{
+  success: boolean
+  signedUrl?: string
+  error?: string
+}> {
+  try {
+    console.log('[getBudgetPDFSignedUrl] Obteniendo URL firmada para budget:', budgetId)
+
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+    // Autenticación
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      console.error('[getBudgetPDFSignedUrl] No autenticado:', authError)
+      return { success: false, error: 'No autenticado' }
+    }
+
+    // Obtener presupuesto para verificar permisos y pdf_url
+    const { data: budget, error: budgetError } = await supabaseAdmin
+      .from('redpresu_budgets')
+      .select('user_id, pdf_url, company_id')
+      .eq('id', budgetId)
+      .single()
+
+    if (budgetError || !budget) {
+      console.error('[getBudgetPDFSignedUrl] Presupuesto no encontrado:', budgetError)
+      return { success: false, error: 'Presupuesto no encontrado' }
+    }
+
+    if (!budget.pdf_url) {
+      return { success: false, error: 'PDF no disponible' }
+    }
+
+    // Verificar permisos (mismo company_id)
+    const { data: userData, error: userError } = await supabase
+      .from('redpresu_users')
+      .select('company_id, role')
+      .eq('id', user.id)
+      .single()
+
+    if (userError || !userData) {
+      console.error('[getBudgetPDFSignedUrl] Error obteniendo usuario:', userError)
+      return { success: false, error: 'Usuario no encontrado' }
+    }
+
+    // Autorización: mismo company_id o superadmin
+    const isAuthorized =
+      userData.company_id === budget.company_id ||
+      userData.role === 'superadmin'
+
+    if (!isAuthorized) {
+      console.error('[getBudgetPDFSignedUrl] Usuario no autorizado')
+      return { success: false, error: 'No tiene permisos para ver este PDF' }
+    }
+
+    // Generar URL firmada (1 hora de expiración)
+    const { data: signedUrlData, error: storageError } = await supabaseAdmin
+      .storage
+      .from('budget-pdfs')
+      .createSignedUrl(budget.pdf_url, 3600) // 3600s = 1 hora
+
+    if (storageError) {
+      console.error('[getBudgetPDFSignedUrl] Error generando signed URL:', storageError)
+      return { success: false, error: 'Error generando URL de descarga' }
+    }
+
+    if (!signedUrlData?.signedUrl) {
+      console.error('[getBudgetPDFSignedUrl] URL firmada vacía')
+      return { success: false, error: 'URL de descarga no disponible' }
+    }
+
+    console.log('[getBudgetPDFSignedUrl] URL firmada generada exitosamente')
+    return {
+      success: true,
+      signedUrl: signedUrlData.signedUrl
+    }
+
+  } catch (error) {
+    console.error('[getBudgetPDFSignedUrl] Error crítico:', error)
     return { success: false, error: 'Error interno del servidor' }
   }
 }
