@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { requestPasswordReset } from "@/app/actions/auth";
-import { getAppNameAction } from "@/app/actions/config";
+import { useAppName } from "@/hooks/useAppName";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,16 +35,9 @@ export default function ForgotPasswordPage() {
   const [errors, setErrors] = useState<ForgotPasswordErrors>({});
   const [isLoading, setIsLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
-  const [appName, setAppName] = useState("Redpresu");
 
-  // Cargar appName desde BD
-  useEffect(() => {
-    getAppNameAction().then((result) => {
-      if (result.success && result.data) {
-        setAppName(result.data);
-      }
-    });
-  }, []);
+  // Obtener app name dinámicamente desde config BD
+  const appName = useAppName();
 
   const validateForm = (): boolean => {
     try {
@@ -199,7 +192,7 @@ export default function ForgotPasswordPage() {
             <div className="mx-auto h-12 w-12 bg-lime-500 rounded-lg flex items-center justify-center mb-4">
               <FileText className="h-7 w-7 text-white" />
             </div>
-            <h2 className="text-3xl font-bold text-gray-900">Redpresu</h2>
+            <h2 className="text-3xl font-bold text-gray-900">{appName}</h2>
           </Link>
           <p className="mt-2 text-sm text-gray-600">
             Recupera el acceso a tu cuenta

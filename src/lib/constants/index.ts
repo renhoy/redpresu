@@ -19,8 +19,8 @@ export {
   LEVEL_COLORS,
   LEVEL_ID_PREFIXES,
   LEVEL_LIMITS,
-  type BudgetLevel
-} from './levels';
+  type BudgetLevel,
+} from "./levels";
 
 // Re-exportar constantes de estados
 export {
@@ -47,8 +47,8 @@ export {
   type UserStatus,
   type ClientStatus,
   type Priority,
-  type SyncStatus
-} from './statuses';
+  type SyncStatus,
+} from "./statuses";
 
 // Re-exportar constantes de roles
 export {
@@ -68,8 +68,8 @@ export {
   ROLE_SESSION_CONFIG,
   type UserRole,
   type Permission,
-  type ClientType
-} from './roles';
+  type ClientType,
+} from "./roles";
 
 // Re-exportar mensajes
 export {
@@ -86,8 +86,8 @@ export {
   WARNING_MESSAGES,
   STATUS_MESSAGES,
   CONFIG_MESSAGES,
-  DEFAULT_CONFIG
-} from './messages';
+  DEFAULT_CONFIG,
+} from "./messages";
 
 // Re-exportar constantes de CSV (ya existentes)
 export {
@@ -95,8 +95,8 @@ export {
   SEVERITY,
   LEVEL_MAP,
   REQUIRED_FIELDS,
-  CSV_DELIMITERS
-} from './csv';
+  CSV_DELIMITERS,
+} from "./csv";
 
 // Re-exportar constantes de cálculos (ya existentes)
 export {
@@ -109,23 +109,28 @@ export {
   VALIDATION_PATTERNS,
   BUDGET_LEVELS,
   CALCULATION_PRIORITIES,
-  PERFORMANCE_CONFIG
-} from './calculations';
+  PERFORMANCE_CONFIG,
+} from "./calculations";
 
 /**
  * Constantes globales del sistema
+ *
+ * NOTA: El nombre de la aplicación (APP_NAME) se obtiene dinámicamente desde la BD.
+ * - Server Components: usar `await getAppName()` desde @/lib/helpers/config-helpers
+ * - Client Components: usar `useAppName()` hook desde @/hooks/useAppName
+ * - El valor por defecto si no está configurado en BD es 'Redpresu'
  */
 export const SYSTEM_CONSTANTS = {
   // Identificadores
-  APP_NAME: 'Jeyca Presupuestos',
-  APP_VERSION: '1.0.0',
-  API_VERSION: 'v1',
+  // APP_NAME: Deprecado - Usar getAppName() o useAppName() en su lugar
+  APP_VERSION: "1.0.0",
+  API_VERSION: "v1",
 
   // Configuración de la aplicación
-  DEFAULT_LOCALE: 'es',
-  SUPPORTED_LOCALES: ['es', 'en'] as const,
-  DEFAULT_CURRENCY: 'EUR',
-  DEFAULT_TIMEZONE: 'Europe/Madrid',
+  DEFAULT_LOCALE: "es",
+  SUPPORTED_LOCALES: ["es", "en"] as const,
+  DEFAULT_CURRENCY: "EUR",
+  DEFAULT_TIMEZONE: "Europe/Madrid",
 
   // Límites del sistema
   MAX_FILE_SIZE: 10 * 1024 * 1024, // 10MB
@@ -145,29 +150,30 @@ export const SYSTEM_CONSTANTS = {
   // Validación
   MIN_PASSWORD_LENGTH: 8,
   MAX_PASSWORD_LENGTH: 128,
-  PASSWORD_REGEX: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+  PASSWORD_REGEX:
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
 
   // Formatos de fecha
-  DATE_FORMAT: 'DD-MM-YYYY',
-  DATETIME_FORMAT: 'DD-MM-YYYY HH:mm',
-  TIME_FORMAT: 'HH:mm',
+  DATE_FORMAT: "DD-MM-YYYY",
+  DATETIME_FORMAT: "DD-MM-YYYY HH:mm",
+  TIME_FORMAT: "HH:mm",
 
   // URLs de la aplicación
-  BASE_URL: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
-  API_BASE_URL: process.env.NEXT_PUBLIC_API_URL || '/api',
+  BASE_URL: process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000",
+  API_BASE_URL: process.env.NEXT_PUBLIC_API_URL || "/api",
 
   // Rutas
   ROUTES: {
-    HOME: '/',
-    LOGIN: '/login',
-    REGISTER: '/register',
-    DASHBOARD: '/dashboard',
-    BUDGETS: '/budgets',
-    CLIENTS: '/clients',
-    TARIFFS: '/tariffs',
-    SETTINGS: '/settings',
-    PROFILE: '/profile'
-  }
+    HOME: "/",
+    LOGIN: "/login",
+    REGISTER: "/register",
+    DASHBOARD: "/dashboard",
+    BUDGETS: "/budgets",
+    CLIENTS: "/clients",
+    TARIFFS: "/tariffs",
+    SETTINGS: "/settings",
+    PROFILE: "/profile",
+  },
 } as const;
 
 /**
@@ -180,7 +186,7 @@ export const UI_CONSTANTS = {
     MD: 768,
     LG: 1024,
     XL: 1280,
-    '2XL': 1536
+    "2XL": 1536,
   },
 
   // Z-index layers
@@ -192,34 +198,34 @@ export const UI_CONSTANTS = {
     MODAL: 1050,
     POPOVER: 1060,
     TOOLTIP: 1070,
-    TOAST: 1080
+    TOAST: 1080,
   },
 
   // Animaciones
   ANIMATION_DURATION: {
     FAST: 150,
     NORMAL: 300,
-    SLOW: 500
+    SLOW: 500,
   },
 
   // Tamaños de componentes
   COMPONENT_SIZES: {
-    XS: 'xs',
-    SM: 'sm',
-    MD: 'md',
-    LG: 'lg',
-    XL: 'xl'
+    XS: "xs",
+    SM: "sm",
+    MD: "md",
+    LG: "lg",
+    XL: "xl",
   },
 
   // Variantes de color
   COLOR_VARIANTS: {
-    PRIMARY: 'primary',
-    SECONDARY: 'secondary',
-    SUCCESS: 'success',
-    WARNING: 'warning',
-    ERROR: 'error',
-    INFO: 'info'
-  }
+    PRIMARY: "primary",
+    SECONDARY: "secondary",
+    SUCCESS: "success",
+    WARNING: "warning",
+    ERROR: "error",
+    INFO: "info",
+  },
 } as const;
 
 /**
@@ -227,16 +233,16 @@ export const UI_CONSTANTS = {
  */
 export const STORAGE_KEYS = {
   // localStorage keys
-  USER_PREFERENCES: 'user_preferences',
-  THEME: 'theme',
-  LANGUAGE: 'language',
-  SIDEBAR_STATE: 'sidebar_state',
-  TABLE_PREFERENCES: 'table_preferences',
+  USER_PREFERENCES: "user_preferences",
+  THEME: "theme",
+  LANGUAGE: "language",
+  SIDEBAR_STATE: "sidebar_state",
+  TABLE_PREFERENCES: "table_preferences",
 
   // sessionStorage keys
-  FORM_DRAFTS: 'form_drafts',
-  NAVIGATION_STATE: 'navigation_state',
-  TEMP_DATA: 'temp_data'
+  FORM_DRAFTS: "form_drafts",
+  NAVIGATION_STATE: "navigation_state",
+  TEMP_DATA: "temp_data",
 } as const;
 
 /**
@@ -244,19 +250,19 @@ export const STORAGE_KEYS = {
  */
 export const SYSTEM_EVENTS = {
   // Eventos de usuario
-  USER_LOGIN: 'user:login',
-  USER_LOGOUT: 'user:logout',
-  USER_REGISTER: 'user:register',
+  USER_LOGIN: "user:login",
+  USER_LOGOUT: "user:logout",
+  USER_REGISTER: "user:register",
 
   // Eventos de presupuestos
-  BUDGET_CREATED: 'budget:created',
-  BUDGET_UPDATED: 'budget:updated',
-  BUDGET_SENT: 'budget:sent',
-  BUDGET_APPROVED: 'budget:approved',
-  BUDGET_REJECTED: 'budget:rejected',
+  BUDGET_CREATED: "budget:created",
+  BUDGET_UPDATED: "budget:updated",
+  BUDGET_SENT: "budget:sent",
+  BUDGET_APPROVED: "budget:approved",
+  BUDGET_REJECTED: "budget:rejected",
 
   // Eventos de sistema
-  FILE_UPLOADED: 'file:uploaded',
-  PDF_GENERATED: 'pdf:generated',
-  ERROR_OCCURRED: 'error:occurred'
+  FILE_UPLOADED: "file:uploaded",
+  PDF_GENERATED: "pdf:generated",
+  ERROR_OCCURRED: "error:occurred",
 } as const;

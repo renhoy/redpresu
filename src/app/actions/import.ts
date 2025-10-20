@@ -15,6 +15,7 @@ import type { ActionResult } from '@/lib/types/database'
 import { revalidatePath } from 'next/cache'
 import { detectIVAsPresentes } from '@/lib/validators/csv-converter'
 import { requireValidCompanyId } from '@/lib/helpers/company-validation'
+import { getAppName } from '@/lib/helpers/config-helpers'
 import {
   ImportTariffsArraySchema,
   ImportBudgetsArraySchema,
@@ -67,9 +68,10 @@ export async function importTariffs(
       rawTariffs = JSON.parse(content)
     } catch (e) {
       log.error('[importTariffs] Error parsing JSON:', e)
+      const appName = await getAppName()
       return {
         success: false,
-        error: 'El archivo JSON de tarifa importado no es válido. Puedes exportar una tarifa existente para obtener un ejemplo del formato correcto.\n\nExporta tus tarifas para tener una copia de seguridad fuera de Redpresu. Si deseas generar nuevas tarifas hazlo desde Redpresu para evitar errores.'
+        error: `El archivo JSON de tarifa importado no es válido. Puedes exportar una tarifa existente para obtener un ejemplo del formato correcto.\n\nExporta tus tarifas para tener una copia de seguridad fuera de ${appName}. Si deseas generar nuevas tarifas hazlo desde ${appName} para evitar errores.`
       }
     }
 
@@ -208,9 +210,10 @@ export async function importBudgets(
       rawBudgets = JSON.parse(content)
     } catch (e) {
       log.error('[importBudgets] Error parsing JSON:', e)
+      const appName = await getAppName()
       return {
         success: false,
-        error: 'El archivo JSON de presupuesto importado no es válido. Puedes exportar un presupuesto existente para obtener un ejemplo del formato correcto.\n\nExporta tus presupuestos para tener una copia de seguridad fuera de Redpresu. Si deseas generar nuevos presupuestos hazlo desde Redpresu para evitar errores.'
+        error: `El archivo JSON de presupuesto importado no es válido. Puedes exportar un presupuesto existente para obtener un ejemplo del formato correcto.\n\nExporta tus presupuestos para tener una copia de seguridad fuera de ${appName}. Si deseas generar nuevos presupuestos hazlo desde ${appName} para evitar errores.`
       }
     }
 

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import PasswordResetForm from "@/components/auth/PasswordResetForm";
-import { getAppNameAction } from "@/app/actions/config";
+import { useAppName } from "@/hooks/useAppName";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,16 +20,9 @@ export default function ResetPasswordPage() {
   const router = useRouter();
   const [isValidToken, setIsValidToken] = useState<boolean | null>(null);
   const [isCheckingToken, setIsCheckingToken] = useState(true);
-  const [appName, setAppName] = useState("Redpresu");
 
-  // Cargar appName desde BD
-  useEffect(() => {
-    getAppNameAction().then((result) => {
-      if (result.success && result.data) {
-        setAppName(result.data);
-      }
-    });
-  }, []);
+  // Obtener app name dinámicamente desde config BD
+  const appName = useAppName();
 
   useEffect(() => {
     // Verificar si hay un hash en la URL (token de Supabase)
@@ -155,7 +148,7 @@ export default function ResetPasswordPage() {
           <div className="mx-auto h-12 w-12 bg-orange-500 rounded-lg flex items-center justify-center mb-4">
             <span className="text-white font-bold text-xl">J</span>
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">Redpresu</h2>
+          <h2 className="text-3xl font-bold text-gray-900">{appName}</h2>
           <p className="mt-2 text-sm text-gray-600">
             Crea una nueva contraseña para tu cuenta
           </p>
