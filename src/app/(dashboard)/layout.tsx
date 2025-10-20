@@ -26,7 +26,8 @@ export default async function DashboardLayout({
   const currentPlan = subscriptionResult.data?.plan || "free";
 
   // Obtener nombre de empresa/autónomo del emisor
-  const supabase = createServerActionClient({ cookies });
+  const cookieStore = await cookies();
+  const supabase = createServerActionClient({ cookies: () => cookieStore });
 
   const { data: issuer } = await supabase
     .from("redpresu_issuers")
@@ -35,14 +36,14 @@ export default async function DashboardLayout({
     .single();
 
   // Nombre del emisor y tipo
-  const companyName = issuer?.name || user.name;
+  const companyName = issuer?.name || user.nombre;
   const issuerType = issuer?.type === "empresa" ? "Empresa" : "Autónomo";
 
   return (
     <div className="min-h-screen bg-background">
       <Header
         userRole={user.role}
-        userName={user.name}
+        userName={user.nombre}
         companyName={companyName}
         issuerType={issuerType}
         currentPlan={currentPlan}
