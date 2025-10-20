@@ -46,14 +46,14 @@ export default async function DashboardLayout({
     .single();
 
   // Nombre del emisor y tipo
-  const companyName = issuer?.name || user.nombre;
+  const companyName = issuer?.name || user.name;
   const issuerType = issuer?.type === "empresa" ? "Empresa" : "Autónomo";
 
   return (
     <div className="min-h-screen bg-background">
       <Header
         userRole={user.role}
-        userName={user.nombre}
+        userName={user.name}
         companyName={companyName}
         issuerType={issuerType}
         currentPlan={currentPlan}

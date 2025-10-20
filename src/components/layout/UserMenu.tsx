@@ -91,7 +91,7 @@ export function UserMenu({
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-64">
+      <DropdownMenuContent align="end" className="w-44">
         {/* Header del menú */}
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
@@ -102,9 +102,17 @@ export function UserMenu({
             <p className="text-sm font-medium leading-none mt-2">
               {companyName || userName}
             </p>
-            <p className="text-xs leading-none text-muted-foreground">
-              {issuerType || ""}
-            </p>
+            {issuerType && (
+              <Badge
+                className={
+                  issuerType === "Empresa"
+                    ? "bg-blue-100 text-blue-800 text-[10px] px-1.5 py-0 w-fit"
+                    : "bg-purple-100 text-purple-800 text-[10px] px-1.5 py-0 w-fit"
+                }
+              >
+                {issuerType}
+              </Badge>
+            )}
           </div>
         </DropdownMenuLabel>
 
