@@ -57,6 +57,15 @@
   color: inherit;
 }
 
+/* Estilos para enlaces - CRITICAL: must match calculateHeight.js */
+.content-note .note-content a {
+  color: #0066cc;
+  text-decoration: underline;
+  font-size: inherit;
+  line-height: inherit;
+  font-weight: inherit;
+}
+
 /* Estilos para listas con viñetas - CRITICAL: must match calculateHeight.js */
 .content-note .note-content ul {
   margin: 0 0 10px 0;
