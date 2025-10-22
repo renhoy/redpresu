@@ -10,6 +10,17 @@ import { PDFDocument } from "pdf-lib";
 import type { PDFPayload, ProcessedElement, StructureData } from "../types";
 import { PageManager } from "./page-manager";
 
+// Importar componentes estáticamente para evitar problemas con require() dinámico
+const ContentLevels = require("../templates/default/js/component/contentLevels.js");
+const ContentTotals = require("../templates/default/js/component/contentTotals.js");
+const ContentClient = require("../templates/default/js/component/contentClient.js");
+const ContentNote = require("../templates/default/js/component/contentNote.js");
+const ContentSeparator = require("../templates/default/js/component/contentSeparator.js");
+const HeaderCompany = require("../templates/default/js/component/headerCompany.js");
+const HeaderTitle = require("../templates/default/js/component/headerTitle.js");
+const FooterSignatures = require("../templates/default/js/component/footerSignatures.js");
+const FooterPagination = require("../templates/default/js/component/footerPagination.js");
+
 export class RenderEngine {
   private pageManager: PageManager;
   private budgetData: PDFPayload | null = null;
@@ -471,41 +482,25 @@ export class RenderEngine {
 
     try {
       const componentName = element.component;
-      const templateId = this.budgetData.company.template;
 
-      // Mapear nombre de componente a archivo JS
-      const componentFileMap: Record<string, string> = {
-        company: "headerCompany.js",
-        title: "headerTitle.js",
-        client: "contentClient.js",
-        separator: "contentSeparator.js",
-        levels: "contentLevels.js",
-        totals: "contentTotals.js",
-        note: "contentNote.js",
-        signatures: "footerSignatures.js",
-        pagination: "footerPagination.js",
+      // Mapear nombre de componente a clase importada
+      const componentClassMap: Record<string, any> = {
+        company: HeaderCompany,
+        title: HeaderTitle,
+        client: ContentClient,
+        separator: ContentSeparator,
+        levels: ContentLevels,
+        totals: ContentTotals,
+        note: ContentNote,
+        signatures: FooterSignatures,
+        pagination: FooterPagination,
       };
 
-      const componentFile = componentFileMap[componentName];
-      if (!componentFile) {
+      const ComponentClass = componentClassMap[componentName];
+      if (!ComponentClass) {
         console.warn(`Componente desconocido: ${componentName}`);
         return `<div class="component-${componentName}"></div>`;
       }
-
-      // Cargar componente JavaScript
-      const componentPath = path.join(
-        process.cwd(),
-        "src/lib/rapid-pdf/templates",
-        templateId,
-        "js/component",
-        componentFile
-      );
-
-      // Limpiar cache de require para obtener versión actualizada
-      delete require.cache[require.resolve(componentPath)];
-
-      // Cargar clase del componente
-      const ComponentClass = require(componentPath);
 
       // Crear instancia y renderizar según el tipo de componente
       let componentInstance;
