@@ -177,6 +177,7 @@ function renumberHierarchicalIds(items: BudgetDataItem[]): BudgetDataItem[] {
 
 /**
  * Extrae solo los capítulos (level="chapter") del array filtrado
+ * Devuelve amounts en formato inglés (Rapid-PDF los convertirá a español)
  */
 function extractChapters(items: BudgetDataItem[]): Array<{
   level: string
@@ -190,7 +191,7 @@ function extractChapters(items: BudgetDataItem[]): Array<{
       level: item.level,
       id: item.id,
       name: item.name,
-      amount: formatSpanishCurrency(parseSpanishNumber(item.amount))
+      amount: parseSpanishNumber(item.amount).toFixed(2)
     }))
 }
 
@@ -236,19 +237,17 @@ function calculateTotals(
   // Base imponible = Total - IVA
   const base = totalAmount - totalIva
 
-  // Formatear IVAs agrupados con formato esperado por Rapid-PDF
+  // Formatear IVAs agrupados - amounts en inglés (Rapid-PDF los convertirá)
   const ivas = Array.from(ivaGroups.entries())
     .map(([percentage, amount]) => {
-      // Formatear porcentaje con coma decimal (5.00 → 5,00)
-      const percentageFormatted = percentage.toFixed(2).replace('.', ',')
       return {
-        name: `${percentageFormatted}% IVA`,
-        amount: formatSpanishCurrency(amount)
+        name: `${percentage.toFixed(2)}% IVA`,
+        amount: amount.toFixed(2)
       }
     })
     .sort((a, b) => {
-      const aNum = parseFloat(a.name.replace(',', '.'))
-      const bNum = parseFloat(b.name.replace(',', '.'))
+      const aNum = parseFloat(a.name)
+      const bNum = parseFloat(b.name)
       return aNum - bNum
     })
 
@@ -268,22 +267,21 @@ function calculateTotals(
   } = {
     base: {
       name: 'Base Imponible',
-      amount: formatSpanishCurrency(base)
+      amount: base.toFixed(2)
     },
     ivas,
     total: {
       name: 'TOTAL PRESUPUESTO',
-      amount: formatSpanishCurrency(totalAmount)
+      amount: totalAmount.toFixed(2)
     }
   }
 
   // Agregar IRPF si existe y es mayor que 0
   if (budget.irpf && budget.irpf > 0 && budget.irpf_percentage) {
     hasIRPF = true
-    const percentageFormatted = budget.irpf_percentage.toFixed(2).replace('.', ',')
     result.irpf = {
-      name: `${percentageFormatted}% IRPF`,
-      amount: formatSpanishCurrency(-budget.irpf) // Negativo porque es una retención
+      name: `${budget.irpf_percentage.toFixed(2)}% IRPF`,
+      amount: (-budget.irpf).toFixed(2) // Negativo porque es una retención
     }
     totalPagar -= budget.irpf
   }
@@ -305,12 +303,9 @@ function calculateTotals(
       const baseIVA = ivaAmountFromMap / (ivaNum / 100)
       const rePercentage = baseIVA > 0 ? (reAmountNum / baseIVA) * 100 : 0
 
-      const rePercentageFormatted = rePercentage.toFixed(2).replace('.', ',')
-      const ivaFormatted = ivaNum.toFixed(2).replace('.', ',')
-
       recargosArray.push({
-        name: `${rePercentageFormatted}% RE (IVA ${ivaFormatted}%)`,
-        amount: formatSpanishCurrency(reAmountNum)
+        name: `${rePercentage.toFixed(2)}% RE (IVA ${ivaNum.toFixed(2)}%)`,
+        amount: reAmountNum.toFixed(2)
       })
 
       totalPagar += reAmountNum
@@ -318,8 +313,8 @@ function calculateTotals(
 
     // Ordenar por IVA ascendente
     recargosArray.sort((a, b) => {
-      const aIva = parseFloat(a.name.match(/IVA\s+([\d,]+)%/)?.[1].replace(',', '.') || '0')
-      const bIva = parseFloat(b.name.match(/IVA\s+([\d,]+)%/)?.[1].replace(',', '.') || '0')
+      const aIva = parseFloat(a.name.match(/IVA\s+([\d.]+)%/)?.[1] || '0')
+      const bIva = parseFloat(b.name.match(/IVA\s+([\d.]+)%/)?.[1] || '0')
       return aIva - bIva
     })
 
@@ -333,12 +328,12 @@ function calculateTotals(
   if (hasIRPF || hasRE) {
     result.subtotal = {
       name: 'Subtotal',
-      amount: formatSpanishCurrency(totalAmount)
+      amount: totalAmount.toFixed(2)
     }
   }
 
   // Actualizar total a pagar
-  result.total.amount = formatSpanishCurrency(totalPagar)
+  result.total.amount = totalPagar.toFixed(2)
 
   return result
 }
@@ -387,34 +382,39 @@ function formatDate(dateString: string): string {
  * - quantity: '1.234,56'
  * - iva_percentage: '21,00'
  */
+/**
+ * Normaliza números a formato inglés para el payload
+ * El payload debe tener TODOS los números en formato inglés (punto decimal, sin separadores)
+ * Rapid-PDF se encargará de convertirlos a español al renderizar
+ */
 function formatItemNumbers(items: BudgetDataItem[]): BudgetDataItem[] {
   return items.map(item => {
     const formatted: BudgetDataItem = {
       ...item
     }
 
-    // Formatear amount con símbolo de euro
+    // Normalizar amount a formato inglés (sin formato, solo número)
     if (item.amount) {
       const amountNum = parseSpanishNumber(item.amount)
-      formatted.amount = formatSpanishCurrency(amountNum)
+      formatted.amount = amountNum.toFixed(2)
     }
 
-    // Formatear pvp con símbolo de euro (solo para items)
+    // Normalizar pvp a formato inglés (solo para items)
     if (item.level === 'item' && item.pvp) {
       const pvpNum = parseSpanishNumber(item.pvp)
-      formatted.pvp = formatSpanishCurrency(pvpNum)
+      formatted.pvp = pvpNum.toFixed(2)
     }
 
-    // Formatear quantity sin símbolo (solo para items)
+    // Normalizar quantity a formato inglés (solo para items)
     if (item.level === 'item' && item.quantity) {
       const quantityNum = parseSpanishNumber(item.quantity)
-      formatted.quantity = formatSpanishNumber(quantityNum, 2)
+      formatted.quantity = quantityNum.toFixed(2)
     }
 
-    // Formatear iva_percentage sin símbolo (solo para items)
+    // Normalizar iva_percentage a formato inglés (solo para items)
     if (item.level === 'item' && item.iva_percentage) {
       const ivaNum = parseSpanishNumber(item.iva_percentage)
-      formatted.iva_percentage = formatSpanishNumber(ivaNum, 2)
+      formatted.iva_percentage = ivaNum.toFixed(2)
     }
 
     return formatted

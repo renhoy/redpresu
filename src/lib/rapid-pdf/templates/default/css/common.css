@@ -1,0 +1,67 @@
+/* template/color/css/common.css */
+.header-company .name {
+  font-family: var(--font-primary);
+  font-size: var(--font-size-normal);
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.header-company .nif,
+.header-company .address,
+.header-company .contact {
+  font-family: var(--font-primary);
+  font-size: var(--font-size-normal);
+  line-height: 1.5;
+}
+
+.client-signatures {
+  font-family: var(--font-primary);
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1.5;
+}
+
+.company-signature .company-name {
+  font-family: var(--font-primary);
+  font-size: var(--font-size-normal);
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.company-signature .company-nif,
+.company-signature .company-address,
+.company-signature .company-contact {
+  font-family: var(--font-primary);
+  font-size: var(--font-size-signature);
+  line-height: 1.5;
+}
+
+.print-date,
+.validity,
+.pages {
+  font-family: var(--font-primary);
+  font-size: var(--font-size-normal);
+}
+
+.title {
+  font-family: var(--font-primary);
+  font-size: var(--font-size-title);
+  font-weight: 200;
+  font-style: italic;
+  color: #ffffff;
+}
+
+.note {
+  font-family: var(--font-primary);
+  font-size: var(--font-size-normal);
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1.5;
+  color: #333333;
+  text-align: center;
+  text-decoration: none;
+  text-transform: none;
+  border-radius: 4px;
+  background-color: #ffffff;
+}

@@ -1,0 +1,135 @@
+{
+  "document": {
+    "page": {
+      "dimensions": {
+        "width": 794,
+        "height": 1123
+      },
+      "margins": {
+        "top": 40,
+        "bottom": 40,
+        "left": 54,
+        "right": 54
+      },
+      "content_bottom": 1050,
+      "general_margin": 5
+    },
+    "sections": {
+      "summary": {
+        "header": [
+          { "component": "company" },
+          { "component": "title" }
+        ],
+        "content": [
+          { "component": "client" },
+          { "component": "separator" },
+          { "component": "levels" },
+          { "component": "totals" },
+          { "component": "note" }
+        ],
+        "footer": [
+          { "component": "signatures" },
+          { "component": "pagination" }
+        ]
+      },
+      "budget": {
+        "header": [
+          { "component": "company" },
+          { "component": "title" }
+        ],
+        "content": [
+          { "component": "levels" }
+        ],
+        "footer": [
+          { "component": "pagination" }
+        ]
+      },
+      "conditions": {
+        "header": [
+          { "component": "company" },
+          { "component": "title" }
+        ],
+        "content": [
+          { "component": "note" }
+        ],
+        "footer": [
+          { "component": "pagination" }
+        ]
+      }
+    },
+    "components": {
+      "company": {
+        "config": {
+          "file": "headerCompany.js",
+          "visibility": "all",
+          "y": 0,
+          "margin_bottom": 10
+        }
+      },
+      "title": {
+        "config": {
+          "file": "headerTitle.js",
+          "visibility": "all",
+          "y": 0,
+          "margin_bottom": 15
+        }
+      },
+      "client": {
+        "config": {
+          "file": "contentClient.js",
+          "visibility": "all",
+          "y": 0,
+          "margin_bottom": 10
+        }
+      },
+      "separator": {
+        "config": {
+          "file": "contentSeparator.js",
+          "visibility": "all",
+          "y": 0,
+          "margin_bottom": 5
+        }
+      },
+      "levels": {
+        "config": {
+          "file": "contentLevels.js",
+          "visibility": "all",
+          "y": 0,
+          "margin_bottom": 3
+        }
+      },
+      "totals": {
+        "config": {
+          "file": "contentTotals.js",
+          "visibility": "all",
+          "y": 0,
+          "margin_bottom": 15
+        }
+      },
+      "note": {
+        "config": {
+          "file": "contentNote.js",
+          "visibility": "all",
+          "y": 0,
+          "margin_bottom": 10
+        }
+      },
+      "signatures": {
+        "config": {
+          "file": "footerSignatures.js",
+          "visibility": "last",
+          "y": 950,
+          "margin_bottom": 10
+        }
+      },
+      "pagination": {
+        "config": {
+          "file": "footerPagination.js",
+          "visibility": "all",
+          "y": 1080,
+          "margin_bottom": 0
+        }
+      }
+    }
+  }
+}

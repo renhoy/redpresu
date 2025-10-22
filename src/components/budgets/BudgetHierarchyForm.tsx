@@ -50,6 +50,11 @@ const formatSpanishNumber = (value: number, decimals = 2): string => {
   return formatNumberES(value, decimals);
 };
 
+// Formatear número en formato inglés para almacenamiento (BD)
+const formatEnglishNumber = (value: number, decimals = 2): string => {
+  return value.toFixed(decimals);
+};
+
 interface BudgetItem {
   level: "chapter" | "subchapter" | "section" | "item";
   id: string;
@@ -116,28 +121,20 @@ export function BudgetHierarchyForm({
   const prevBudgetDataRef = useRef<string>("");
   const isInitialMount = useRef(true);
 
-  // Normalizar formato de números: convertir puntos a comas
-  const normalizeNumberFormat = (
-    value: string | undefined
-  ): string | undefined => {
-    if (value === undefined) return undefined;
-    // Convertir punto decimal a coma
-    return value.replace(".", ",");
-  };
-
-  // Initialize budget data - preserve existing quantities or set to 0
+  // Initialize budget data - preserve existing data as-is
   useEffect(() => {
+    // IMPORTANTE: Cargar datos tal cual vienen desde BD (formato inglés)
+    // NO convertir a español aquí, se convierte solo en la visualización
     const initialBudgetData = tariffData.map((item) => ({
       ...item,
-      // Preservar quantity y amount si ya existen (normalizando formato), sino inicializar a 0,00
+      // Preservar valores tal cual (formato inglés desde BD)
       quantity:
         item.quantity !== undefined
-          ? normalizeNumberFormat(item.quantity)
+          ? String(item.quantity)
           : item.level === "item"
-          ? "0,00"
+          ? "0.00"
           : undefined,
-      amount:
-        item.amount !== undefined ? normalizeNumberFormat(item.amount) : "0,00",
+      amount: item.amount !== undefined ? String(item.amount) : "0.00",
     }));
 
     setBudgetData(initialBudgetData);
@@ -240,10 +237,11 @@ export function BudgetHierarchyForm({
           const pvp = parseSpanishNumber(item.pvp || "0");
           const amount = quantity * pvp;
 
+          // IMPORTANTE: Guardar en formato INGLÉS para BD
           return {
             ...item,
-            quantity: formatSpanishNumber(quantity),
-            amount: formatSpanishNumber(amount),
+            quantity: formatEnglishNumber(quantity),
+            amount: formatEnglishNumber(amount),
           };
         }
         return item;
@@ -269,11 +267,12 @@ export function BudgetHierarchyForm({
       });
 
       // 3. Aplicar totales calculados a chapters/subchapters/sections
+      // IMPORTANTE: Guardar en formato INGLÉS para BD
       return updatedData.map((item) => {
         if (item.level !== "item" && totalsMap.has(item.id)) {
           return {
             ...item,
-            amount: formatSpanishNumber(totalsMap.get(item.id)!),
+            amount: formatEnglishNumber(totalsMap.get(item.id)!),
           };
         }
         return item;
@@ -283,14 +282,14 @@ export function BudgetHierarchyForm({
 
   const incrementQuantity = (itemId: string, currentQuantity: string) => {
     const quantity = parseSpanishNumber(currentQuantity);
-    const newQuantity = formatSpanishNumber(quantity + 1);
+    const newQuantity = formatEnglishNumber(quantity + 1);
     updateItemQuantity(itemId, newQuantity);
   };
 
   const decrementQuantity = (itemId: string, currentQuantity: string) => {
     const quantity = parseSpanishNumber(currentQuantity);
     const newQuantity = Math.max(0, quantity - 1);
-    updateItemQuantity(itemId, formatSpanishNumber(newQuantity));
+    updateItemQuantity(itemId, formatEnglishNumber(newQuantity));
   };
 
   // FUNCIONES DE NAVEGACIÓN (inspiradas en ItemNavigation)
@@ -662,7 +661,7 @@ export function BudgetHierarchyForm({
                 className="h-7 w-7 p-0 bg-gray-200 border-gray-400 hover:bg-gray-300"
                 onClick={(e) => {
                   e.stopPropagation();
-                  decrementQuantity(item.id, item.quantity || "0,00");
+                  decrementQuantity(item.id, item.quantity || "0.00");
                 }}
               >
                 <Minus className="h-3 w-3" />
@@ -673,7 +672,7 @@ export function BudgetHierarchyForm({
                 value={
                   editingValues[item.id] !== undefined
                     ? editingValues[item.id]
-                    : item.quantity || "0,00"
+                    : item.quantity || "0.00"
                 }
                 onChange={(e) => {
                   // Guardar en estado temporal sin disparar cálculos
@@ -724,7 +723,7 @@ export function BudgetHierarchyForm({
                 className="h-7 w-7 p-0 bg-gray-200 border-gray-400 hover:bg-gray-300"
                 onClick={(e) => {
                   e.stopPropagation();
-                  incrementQuantity(item.id, item.quantity || "0,00");
+                  incrementQuantity(item.id, item.quantity || "0.00");
                 }}
               >
                 <Plus className="h-3 w-3" />

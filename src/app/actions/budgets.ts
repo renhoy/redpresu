@@ -9,6 +9,10 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 import { Tariff, Budget, BudgetStatus } from '@/lib/types/database'
 import { revalidatePath } from 'next/cache'
 import { buildPDFPayload } from '@/lib/helpers/pdf-payload-builder'
+import { generatePDF } from '@/lib/rapid-pdf'
+import { promises as fs } from 'fs'
+import path from 'path'
+import { randomUUID } from 'crypto'
 import {
   shouldApplyIRPF,
   calculateIRPF,
@@ -1199,90 +1203,154 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
     }
 
     // FLUJO COMPLETO (desarrollo y producción)
-    // 2. Validar variables de entorno
-    const RAPID_PDF_URL = process.env.RAPID_PDF_URL
-    const RAPID_PDF_API_KEY = process.env.RAPID_PDF_API_KEY
-
-    if (!RAPID_PDF_URL || !RAPID_PDF_API_KEY) {
-      log.error('[generateBudgetPDF] Variables de entorno Rapid-PDF no configuradas')
-      return { success: false, error: 'Servicio PDF no configurado' }
-    }
-
-    // 3. Llamar a Rapid-PDF API con timeout 60s
-    log.info('[generateBudgetPDF] Llamando a Rapid-PDF API...')
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 60000) // 60 segundos
-
-    let rapidPdfResponse
-    try {
-      rapidPdfResponse = await fetch(`${RAPID_PDF_URL}/generate_document`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': RAPID_PDF_API_KEY
-        },
-        body: JSON.stringify(payload),
-        signal: controller.signal
-      })
-
-      clearTimeout(timeoutId)
-
-      if (!rapidPdfResponse.ok) {
-        const errorText = await rapidPdfResponse.text()
-        log.error('[generateBudgetPDF] Error Rapid-PDF:', rapidPdfResponse.status, errorText)
-        return {
-          success: false,
-          error: `Error del servicio PDF (${rapidPdfResponse.status})`
-        }
-      }
-
-    } catch (fetchError: any) {
-      clearTimeout(timeoutId)
-
-      if (fetchError.name === 'AbortError') {
-        log.error('[generateBudgetPDF] Timeout > 60s')
-        return { success: false, error: 'Timeout: generación PDF excedió 60 segundos' }
-      }
-
-      log.error('[generateBudgetPDF] Error de conexión Rapid-PDF:', fetchError)
-      return { success: false, error: 'Servicio PDF no disponible' }
-    }
-
-    const rapidPdfData = await rapidPdfResponse.json()
-    log.info('[generateBudgetPDF] Respuesta Rapid-PDF:', rapidPdfData)
-
-    if (!rapidPdfData.url) {
-      log.error('[generateBudgetPDF] Respuesta sin URL:', rapidPdfData)
-      return { success: false, error: 'Respuesta inválida del servicio PDF' }
-    }
-
-    // 4. Descargar PDF desde la URL retornada
-    log.info('[generateBudgetPDF] Descargando PDF desde:', rapidPdfData.url)
+    // Decisión: usar módulo interno o API externa
+    const USE_INTERNAL_MODULE = process.env.USE_RAPID_PDF_MODULE === 'true'
 
     let pdfBuffer: Buffer
-    for (let attempt = 1; attempt <= 2; attempt++) {
+
+    if (USE_INTERNAL_MODULE) {
+      // ========================================================================
+      // NUEVO: Generar PDF con módulo interno
+      // ========================================================================
+      log.info('[generateBudgetPDF] 🆕 Usando módulo interno Rapid-PDF...')
+
       try {
-        const pdfUrl = `${RAPID_PDF_URL}${rapidPdfData.url}`
-        const downloadResponse = await fetch(pdfUrl)
+        // Definir ruta temporal para el PDF
+        const tempDir = path.join(process.cwd(), 'temp', 'pdfs')
+        await fs.mkdir(tempDir, { recursive: true })
 
-        if (!downloadResponse.ok) {
-          throw new Error(`HTTP ${downloadResponse.status}`)
+        const tempFileName = `budget-${budgetId}-${randomUUID()}.pdf`
+        const tempFilePath = path.join(tempDir, tempFileName)
+
+        // Generar PDF con módulo interno
+        const result = await generatePDF(payload, {
+          outputPath: tempFilePath,
+          mode: 'produccion',
+        })
+
+        if (!result.success) {
+          log.error('[generateBudgetPDF] Error generando PDF:', result.error)
+          return { success: false, error: result.error }
         }
 
-        const arrayBuffer = await downloadResponse.arrayBuffer()
-        pdfBuffer = Buffer.from(arrayBuffer)
-        log.info('[generateBudgetPDF] PDF descargado exitosamente:', pdfBuffer.length, 'bytes')
-        break
+        log.info(
+          '[generateBudgetPDF] PDF generado exitosamente en',
+          result.processingTime,
+          'ms'
+        )
 
-      } catch (downloadError) {
-        log.error(`[generateBudgetPDF] Intento ${attempt}/2 descarga falló:`, downloadError)
+        // Leer archivo generado
+        pdfBuffer = await fs.readFile(tempFilePath)
+        log.info('[generateBudgetPDF] PDF leído:', pdfBuffer.length, 'bytes')
 
-        if (attempt === 2) {
-          return { success: false, error: 'Error descargando PDF generado' }
+        // Limpiar archivo temporal
+        try {
+          await fs.unlink(tempFilePath)
+        } catch (cleanupError) {
+          log.warn(
+            '[generateBudgetPDF] No se pudo limpiar archivo temporal:',
+            cleanupError
+          )
         }
 
-        // Esperar 1s antes de reintentar
-        await new Promise(resolve => setTimeout(resolve, 1000))
+      } catch (moduleError) {
+        log.error('[generateBudgetPDF] Error con módulo interno:', moduleError)
+        return {
+          success: false,
+          error: `Error generando PDF: ${moduleError instanceof Error ? moduleError.message : 'Unknown error'}`
+        }
+      }
+
+    } else {
+      // ========================================================================
+      // LEGACY: Llamar a API externa (lógica original)
+      // ========================================================================
+      log.info('[generateBudgetPDF] 📡 Usando API externa Rapid-PDF...')
+
+      // 2. Validar variables de entorno
+      const RAPID_PDF_URL = process.env.RAPID_PDF_URL
+      const RAPID_PDF_API_KEY = process.env.RAPID_PDF_API_KEY
+
+      if (!RAPID_PDF_URL || !RAPID_PDF_API_KEY) {
+        log.error('[generateBudgetPDF] Variables de entorno Rapid-PDF no configuradas')
+        return { success: false, error: 'Servicio PDF no configurado' }
+      }
+
+      // 3. Llamar a Rapid-PDF API con timeout 60s
+      log.info('[generateBudgetPDF] Llamando a Rapid-PDF API...')
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 60000) // 60 segundos
+
+      let rapidPdfResponse
+      try {
+        rapidPdfResponse = await fetch(`${RAPID_PDF_URL}/generate_document`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': RAPID_PDF_API_KEY
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        })
+
+        clearTimeout(timeoutId)
+
+        if (!rapidPdfResponse.ok) {
+          const errorText = await rapidPdfResponse.text()
+          log.error('[generateBudgetPDF] Error Rapid-PDF:', rapidPdfResponse.status, errorText)
+          return {
+            success: false,
+            error: `Error del servicio PDF (${rapidPdfResponse.status})`
+          }
+        }
+
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId)
+
+        if (fetchError.name === 'AbortError') {
+          log.error('[generateBudgetPDF] Timeout > 60s')
+          return { success: false, error: 'Timeout: generación PDF excedió 60 segundos' }
+        }
+
+        log.error('[generateBudgetPDF] Error de conexión Rapid-PDF:', fetchError)
+        return { success: false, error: 'Servicio PDF no disponible' }
+      }
+
+      const rapidPdfData = await rapidPdfResponse.json()
+      log.info('[generateBudgetPDF] Respuesta Rapid-PDF:', rapidPdfData)
+
+      if (!rapidPdfData.url) {
+        log.error('[generateBudgetPDF] Respuesta sin URL:', rapidPdfData)
+        return { success: false, error: 'Respuesta inválida del servicio PDF' }
+      }
+
+      // 4. Descargar PDF desde la URL retornada
+      log.info('[generateBudgetPDF] Descargando PDF desde:', rapidPdfData.url)
+
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          const pdfUrl = `${RAPID_PDF_URL}${rapidPdfData.url}`
+          const downloadResponse = await fetch(pdfUrl)
+
+          if (!downloadResponse.ok) {
+            throw new Error(`HTTP ${downloadResponse.status}`)
+          }
+
+          const arrayBuffer = await downloadResponse.arrayBuffer()
+          pdfBuffer = Buffer.from(arrayBuffer)
+          log.info('[generateBudgetPDF] PDF descargado exitosamente:', pdfBuffer.length, 'bytes')
+          break
+
+        } catch (downloadError) {
+          log.error(`[generateBudgetPDF] Intento ${attempt}/2 descarga falló:`, downloadError)
+
+          if (attempt === 2) {
+            return { success: false, error: 'Error descargando PDF generado' }
+          }
+
+          // Esperar 1s antes de reintentar
+          await new Promise(resolve => setTimeout(resolve, 1000))
+        }
       }
     }
 

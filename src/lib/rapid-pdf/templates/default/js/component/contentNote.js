@@ -1,0 +1,68 @@
+// Componente para notas adaptado para recibir objeto element
+// {"_META_file_path_": "template/color/js/component/contentNote.js"}
+
+class ContentNote {
+  constructor(element) {
+    this.element = element;
+  }
+
+  /**
+   * Detecta si el texto contiene HTML
+   */
+  isHTML(text) {
+    return /<[^>]+>/.test(text);
+  }
+
+  /**
+   * Limpia HTML a texto plano (fallback)
+   */
+  stripHTML(html) {
+    return html.replace(/<[^>]+>/g, '').trim();
+  }
+
+  /**
+   * Procesa el contenido: HTML o texto plano
+   */
+  processContent(content) {
+    if (!content || content.trim() === '' || content === '<p></p>') {
+      return '';
+    }
+
+    // Si contiene HTML, retornar como está
+    if (this.isHTML(content)) {
+      return content;
+    }
+
+    // Si es texto plano, envolver en <p>
+    return `<p>${content}</p>`;
+  }
+
+  render() {
+    if (!this.element || !this.element.paragraphData) {
+      return '<div class="content-note"></div>';
+    }
+
+    const processedContent = this.processContent(this.element.paragraphData);
+    
+    if (!processedContent) {
+      return '<div class="content-note"></div>';
+    }
+
+    return `<div class="content-note">
+      <div class="note-content">${processedContent}</div>
+    </div>`;
+  }
+
+  static async create(budgetData, structureData, section = null, paragraph = null) {
+    return new ContentNote({
+      paragraphData: paragraph,
+      section: section
+    });
+  }
+
+  static async createFromElement(element) {
+    return new ContentNote(element);
+  }
+}
+
+module.exports = ContentNote;

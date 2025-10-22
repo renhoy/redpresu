@@ -1,0 +1,10 @@
+/* template/color/css/headerTitle.css */
+
+.header-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-primary);
+  box-sizing: border-box;
+  height: 40px;
+}

@@ -1,0 +1,62 @@
+/* template/color/css/styles.css */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #f0f0f0;
+  font-family: var(--font-primary);
+}
+
+#action-buttons {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  gap: 20px;
+  background-color: rgba(255, 255, 255, 0.8);
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+#view-button,
+#save-button {
+  padding: 10px;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+}
+
+#view-button {
+  background-color: var(--color-secondary);
+}
+
+#save-button {
+  background-color: var(--color-primary);
+}
+
+#view-button:hover,
+#save-button:hover {
+  opacity: 0.9;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 50px; /* Espacio para la barra de menú */
+}
+
+.page {
+  width: var(--page-width, 794px);
+  height: var(--page-height, 1123px);
+  margin: 20px auto;
+  background-color: white;
+  border: 1px solid #ccc;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}

@@ -1,0 +1,158 @@
+/* template/color/css/contentLevels.css */
+/* Styles for the levels component */
+
+.content-levels {
+  width: 100%;
+  position: relative;
+}
+
+/* Main container structure with centering */
+.content-chapter,
+.content-subchapter,
+.content-section,
+.content-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Common styles for all levels (first line) */
+.chapter-l1,
+.subchapter-l1,
+.section-l1,
+.item-l1 {
+  display: flex;
+  box-sizing: border-box;
+}
+
+/* Specific styles for levels with appropriate widths and centering */
+.chapter-l1 {
+  width: 100%;
+  background-color: var(--color-secondary);
+  color: white;
+  padding: 2px 8px;
+}
+
+.subchapter-l1 {
+  width: calc(100% - 12px);
+  background-color: #ffdbaa;
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+  padding: 2px 12px;
+}
+
+.section-l1 {
+  width: calc(100% - 20px);
+  background-color: #e8f8ee;
+  border: 1px solid var(--color-secondary);
+  color: var(--color-secondary);
+  padding: 2px 8px;
+}
+
+.item-l1 {
+  width: calc(100% - 28px);
+  background-color: #f2f2f2;
+  border-left: 1px solid var(--color-gray);
+  border-right: 1px solid var(--color-gray);
+  border-top: 1px solid var(--color-gray);
+  padding: 2px 4px;
+}
+
+/* Styles for names */
+.chapter-name,
+.subchapter-name,
+.section-name,
+.item-name {
+  flex-grow: 1;
+  box-sizing: border-box;
+  font-weight: bold;
+}
+
+.chapter-name {
+  color: white;
+  text-transform: uppercase;
+}
+
+.subchapter-name {
+  color: var(--color-primary);
+  text-transform: uppercase;
+}
+
+.section-name {
+  color: var(--color-secondary);
+  font-style: italic;
+}
+
+.item-name {
+  color: black;
+}
+
+/* Styles for amounts */
+.chapter-amount,
+.subchapter-amount,
+.section-amount,
+.item-amount {
+  width: 120px;
+  text-align: right;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  font-weight: bold;
+}
+
+.chapter-amount {
+  color: white;
+}
+
+.subchapter-amount {
+  color: var(--color-primary);
+}
+
+.section-amount {
+  color: var(--color-secondary);
+}
+
+/* Styles for second line of item (technical details) */
+.item-l2 {
+  display: flex;
+  width: calc(100% - 28px);
+  background-color: #f2f2f2;
+  box-sizing: border-box;
+  padding: 2px 80px 2px 8px;
+  border-left: 1px solid var(--color-gray);
+  border-right: 1px solid var(--color-gray);
+  justify-content: flex-start;
+  justify-content: space-between;
+}
+
+/* Elements of the second line */
+.item-unit,
+.item-quantity,
+.item-pvp,
+.item-iva_percentage {
+  margin-right: 20px;
+}
+
+.item-unit span,
+.item-quantity span,
+.item-pvp span,
+.item-iva_percentage span {
+  font-weight: bold;
+  color: var(--color-text);
+}
+
+/* Styles for third line of item (description) */
+.item-l3 {
+  width: calc(100% - 28px);
+  background-color: white;
+  box-sizing: border-box;
+  padding: 8px;
+  margin-bottom: 10px;
+}
+
+.item-description {
+  width: 100%;
+  color: black;
+  font-style: italic;
+}

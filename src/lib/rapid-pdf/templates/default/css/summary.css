@@ -1,0 +1,70 @@
+/* template/color/css/summary.css */
+
+.content-client .tag,
+.content-client .name,
+.content-client .nif_nie,
+.content-client .address,
+.content-client .contact {
+  font-family: var(--font-primary);
+  font-size: var(--font-size-normal);
+  line-height: 1.5;
+}
+
+.content-client .tag,
+.content-client .name {
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.chapter-name,
+.chapter-amount {
+  font-family: var(--font-primary);
+  font-size: var(--font-size-normal);
+  font-style: italic;
+  color: white;
+  line-height: 1.1;
+}
+
+.chapter-amount {
+  text-align: right;
+}
+
+.content-totals .base,
+.content-totals .ivas,
+.content-totals .subtotal,
+.content-totals .irpf,
+.content-totals .recargos,
+.content-totals .total {
+  font-family: var(--font-primary);
+  font-size: var(--font-size-normal);
+  font-style: italic;
+  text-transform: uppercase;
+}
+
+.content-totals .base {
+  font-weight: bold;
+  color: var(--color-secondary);
+}
+
+.content-totals .subtotal {
+  font-weight: bold;
+  color: var(--color-primary);
+}
+
+.content-totals [class^="iva"] [class$="-name"],
+.content-totals [class^="iva"] [class$="-amount"] {
+  font-weight: normal;
+}
+
+
+.total {
+  font-weight: bold;
+  border: 2px solid var(--color-primary);
+  color: var(--color-primary);
+}
+
+.subtotal {
+  font-weight: bold;
+  border-top: 2px solid var(--color-primary);
+  color: var(--color-secondary);
+}
