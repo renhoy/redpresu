@@ -21,6 +21,14 @@ class ContentNote {
   }
 
   /**
+   * Convierte enlaces Markdown [texto](url) a HTML <a href="url">texto</a>
+   */
+  convertMarkdownLinks(text) {
+    // Convertir [texto](url) a <a href="url">texto</a>
+    return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+  }
+
+  /**
    * Procesa el contenido: HTML o texto plano
    */
   processContent(content) {
@@ -28,13 +36,16 @@ class ContentNote {
       return '';
     }
 
+    // Convertir enlaces Markdown a HTML primero
+    let processedContent = this.convertMarkdownLinks(content);
+
     // Si contiene HTML, retornar como está
-    if (this.isHTML(content)) {
-      return content;
+    if (this.isHTML(processedContent)) {
+      return processedContent;
     }
 
     // Si es texto plano, envolver en <p>
-    return `<p>${content}</p>`;
+    return `<p>${processedContent}</p>`;
   }
 
   render() {

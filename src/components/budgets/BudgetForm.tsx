@@ -25,7 +25,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   ArrowLeft,
   ArrowRight,
-  Trash2,
+  ListX,
   Save,
   FileStack,
   Loader2,
@@ -898,7 +898,7 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                       setErrors({});
                     }}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <ListX className="w-4 h-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -994,7 +994,7 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                     className="bg-red-600 text-white hover:bg-red-700 border-red-600"
                     onClick={handleClearBudgetData}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <ListX className="w-4 h-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>

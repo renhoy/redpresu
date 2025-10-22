@@ -367,6 +367,199 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- Name: redpresu_issuers; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.redpresu_issuers (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    company_id integer DEFAULT 1 NOT NULL,
+    type text NOT NULL,
+    name text NOT NULL,
+    nif text NOT NULL,
+    address text NOT NULL,
+    postal_code text,
+    locality text,
+    province text,
+    country text DEFAULT 'España'::text,
+    phone text,
+    email text,
+    web text,
+    irpf_percentage numeric(5,2),
+    logo_url text,
+    note text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    CONSTRAINT issuers_email_check CHECK (((email IS NULL) OR (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'::text))),
+    CONSTRAINT issuers_irpf_percentage_check CHECK (((irpf_percentage >= (0)::numeric) AND (irpf_percentage <= (100)::numeric))),
+    CONSTRAINT issuers_type_check CHECK ((type = ANY (ARRAY['empresa'::text, 'autonomo'::text])))
+);
+
+
+--
+-- Name: TABLE redpresu_issuers; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.redpresu_issuers IS 'Datos fiscales de emisores (empresa o autónomo) para facturación';
+
+
+--
+-- Name: COLUMN redpresu_issuers.user_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_issuers.user_id IS 'Owner/responsible user for this issuer';
+
+
+--
+-- Name: COLUMN redpresu_issuers.company_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_issuers.company_id IS 'Company ID for multi-tenant (default 1 = first company)';
+
+
+--
+-- Name: COLUMN redpresu_issuers.type; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_issuers.type IS 'Tipo de emisor: empresa o autonomo';
+
+
+--
+-- Name: COLUMN redpresu_issuers.name; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_issuers.name IS 'Nombre o razón social del emisor';
+
+
+--
+-- Name: COLUMN redpresu_issuers.nif; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_issuers.nif IS 'NIF/CIF del emisor';
+
+
+--
+-- Name: COLUMN redpresu_issuers.address; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_issuers.address IS 'Dirección del emisor';
+
+
+--
+-- Name: COLUMN redpresu_issuers.postal_code; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_issuers.postal_code IS 'Código postal';
+
+
+--
+-- Name: COLUMN redpresu_issuers.locality; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_issuers.locality IS 'Localidad';
+
+
+--
+-- Name: COLUMN redpresu_issuers.province; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_issuers.province IS 'Provincia';
+
+
+--
+-- Name: COLUMN redpresu_issuers.country; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_issuers.country IS 'País';
+
+
+--
+-- Name: COLUMN redpresu_issuers.phone; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_issuers.phone IS 'Teléfono de contacto';
+
+
+--
+-- Name: COLUMN redpresu_issuers.email; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_issuers.email IS 'Email de contacto';
+
+
+--
+-- Name: COLUMN redpresu_issuers.web; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_issuers.web IS 'Sitio web';
+
+
+--
+-- Name: COLUMN redpresu_issuers.irpf_percentage; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_issuers.irpf_percentage IS 'Porcentaje de IRPF (solo autónomos)';
+
+
+--
+-- Name: COLUMN redpresu_issuers.logo_url; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_issuers.logo_url IS 'URL del logo del emisor';
+
+
+--
+-- Name: COLUMN redpresu_issuers.note; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_issuers.note IS 'Nota o descripción adicional';
+
+
+--
+-- Name: COLUMN redpresu_issuers.deleted_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_issuers.deleted_at IS 'Timestamp de eliminación (soft-delete). NULL = activo, timestamp = eliminado';
+
+
+--
+-- Name: active_issuers; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.active_issuers AS
+ SELECT redpresu_issuers.id,
+    redpresu_issuers.user_id,
+    redpresu_issuers.company_id,
+    redpresu_issuers.type,
+    redpresu_issuers.name,
+    redpresu_issuers.nif,
+    redpresu_issuers.address,
+    redpresu_issuers.postal_code,
+    redpresu_issuers.locality,
+    redpresu_issuers.province,
+    redpresu_issuers.country,
+    redpresu_issuers.phone,
+    redpresu_issuers.email,
+    redpresu_issuers.web,
+    redpresu_issuers.irpf_percentage,
+    redpresu_issuers.logo_url,
+    redpresu_issuers.note,
+    redpresu_issuers.created_at,
+    redpresu_issuers.updated_at,
+    redpresu_issuers.deleted_at
+   FROM public.redpresu_issuers
+  WHERE (redpresu_issuers.deleted_at IS NULL);
+
+
+--
+-- Name: VIEW active_issuers; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON VIEW public.active_issuers IS 'Vista de empresas activas (no eliminadas). Usar en queries normales.';
+
+
+--
 -- Name: redpresu_companies; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -849,155 +1042,6 @@ COMMENT ON COLUMN public.redpresu_config.category IS 'Categoría: general, fisca
 --
 
 COMMENT ON COLUMN public.redpresu_config.is_system IS 'Si es true, solo superadmin puede modificar';
-
-
---
--- Name: redpresu_issuers; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.redpresu_issuers (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    user_id uuid NOT NULL,
-    company_id integer DEFAULT 1 NOT NULL,
-    type text NOT NULL,
-    name text NOT NULL,
-    nif text NOT NULL,
-    address text NOT NULL,
-    postal_code text,
-    locality text,
-    province text,
-    country text DEFAULT 'España'::text,
-    phone text,
-    email text,
-    web text,
-    irpf_percentage numeric(5,2),
-    logo_url text,
-    note text,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT issuers_email_check CHECK (((email IS NULL) OR (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'::text))),
-    CONSTRAINT issuers_irpf_percentage_check CHECK (((irpf_percentage >= (0)::numeric) AND (irpf_percentage <= (100)::numeric))),
-    CONSTRAINT issuers_type_check CHECK ((type = ANY (ARRAY['empresa'::text, 'autonomo'::text])))
-);
-
-
---
--- Name: TABLE redpresu_issuers; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public.redpresu_issuers IS 'Datos fiscales de emisores (empresa o autónomo) para facturación';
-
-
---
--- Name: COLUMN redpresu_issuers.user_id; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.redpresu_issuers.user_id IS 'Owner/responsible user for this issuer';
-
-
---
--- Name: COLUMN redpresu_issuers.company_id; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.redpresu_issuers.company_id IS 'Company ID for multi-tenant (default 1 = first company)';
-
-
---
--- Name: COLUMN redpresu_issuers.type; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.redpresu_issuers.type IS 'Tipo de emisor: empresa o autonomo';
-
-
---
--- Name: COLUMN redpresu_issuers.name; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.redpresu_issuers.name IS 'Nombre o razón social del emisor';
-
-
---
--- Name: COLUMN redpresu_issuers.nif; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.redpresu_issuers.nif IS 'NIF/CIF del emisor';
-
-
---
--- Name: COLUMN redpresu_issuers.address; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.redpresu_issuers.address IS 'Dirección del emisor';
-
-
---
--- Name: COLUMN redpresu_issuers.postal_code; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.redpresu_issuers.postal_code IS 'Código postal';
-
-
---
--- Name: COLUMN redpresu_issuers.locality; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.redpresu_issuers.locality IS 'Localidad';
-
-
---
--- Name: COLUMN redpresu_issuers.province; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.redpresu_issuers.province IS 'Provincia';
-
-
---
--- Name: COLUMN redpresu_issuers.country; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.redpresu_issuers.country IS 'País';
-
-
---
--- Name: COLUMN redpresu_issuers.phone; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.redpresu_issuers.phone IS 'Teléfono de contacto';
-
-
---
--- Name: COLUMN redpresu_issuers.email; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.redpresu_issuers.email IS 'Email de contacto';
-
-
---
--- Name: COLUMN redpresu_issuers.web; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.redpresu_issuers.web IS 'Sitio web';
-
-
---
--- Name: COLUMN redpresu_issuers.irpf_percentage; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.redpresu_issuers.irpf_percentage IS 'Porcentaje de IRPF (solo autónomos)';
-
-
---
--- Name: COLUMN redpresu_issuers.logo_url; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.redpresu_issuers.logo_url IS 'URL del logo del emisor';
-
-
---
--- Name: COLUMN redpresu_issuers.note; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.redpresu_issuers.note IS 'Nota o descripción adicional';
 
 
 --
@@ -1522,10 +1566,24 @@ CREATE INDEX idx_empresas_status ON public.redpresu_companies USING btree (statu
 
 
 --
+-- Name: idx_issuers_active; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_issuers_active ON public.redpresu_issuers USING btree (company_id) WHERE (deleted_at IS NULL);
+
+
+--
 -- Name: idx_issuers_company_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_issuers_company_id ON public.redpresu_issuers USING btree (company_id);
+
+
+--
+-- Name: idx_issuers_deleted_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_issuers_deleted_at ON public.redpresu_issuers USING btree (deleted_at) WHERE (deleted_at IS NOT NULL);
 
 
 --
@@ -1935,12 +1993,30 @@ CREATE POLICY empresas_select_superadmin ON public.redpresu_companies FOR SELECT
 
 
 --
+-- Name: redpresu_issuers issuers_delete_own_company; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY issuers_delete_own_company ON public.redpresu_issuers FOR DELETE USING ((EXISTS ( SELECT 1
+   FROM public.redpresu_users
+  WHERE ((redpresu_users.id = auth.uid()) AND (redpresu_users.role = 'superadmin'::text)))));
+
+
+--
 -- Name: redpresu_issuers issuers_delete_policy; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY issuers_delete_policy ON public.redpresu_issuers FOR DELETE TO authenticated USING ((EXISTS ( SELECT 1
    FROM public.redpresu_users
   WHERE ((redpresu_users.id = auth.uid()) AND (redpresu_users.role = 'superadmin'::text)))));
+
+
+--
+-- Name: redpresu_issuers issuers_insert_own_company; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY issuers_insert_own_company ON public.redpresu_issuers FOR INSERT WITH CHECK (((company_id IN ( SELECT redpresu_users.company_id
+   FROM public.redpresu_users
+  WHERE (redpresu_users.id = auth.uid()))) AND (deleted_at IS NULL)));
 
 
 --
@@ -1956,9 +2032,9 @@ CREATE POLICY issuers_insert_superadmin ON public.redpresu_issuers FOR INSERT TO
 -- Name: redpresu_issuers issuers_select_own_company; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY issuers_select_own_company ON public.redpresu_issuers FOR SELECT TO authenticated USING ((company_id IN ( SELECT redpresu_users.company_id AS empresa_id
+CREATE POLICY issuers_select_own_company ON public.redpresu_issuers FOR SELECT USING (((company_id IN ( SELECT redpresu_users.company_id
    FROM public.redpresu_users
-  WHERE (redpresu_users.id = auth.uid()))));
+  WHERE (redpresu_users.id = auth.uid()))) AND (deleted_at IS NULL)));
 
 
 --
@@ -1975,6 +2051,17 @@ CREATE POLICY issuers_select_superadmin ON public.redpresu_issuers FOR SELECT TO
 --
 
 CREATE POLICY issuers_update_own ON public.redpresu_issuers FOR UPDATE TO authenticated USING ((user_id = auth.uid())) WITH CHECK ((user_id = auth.uid()));
+
+
+--
+-- Name: redpresu_issuers issuers_update_own_company; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY issuers_update_own_company ON public.redpresu_issuers FOR UPDATE USING (((company_id IN ( SELECT redpresu_users.company_id
+   FROM public.redpresu_users
+  WHERE (redpresu_users.id = auth.uid()))) AND (deleted_at IS NULL))) WITH CHECK ((company_id IN ( SELECT redpresu_users.company_id
+   FROM public.redpresu_users
+  WHERE (redpresu_users.id = auth.uid()))));
 
 
 --
