@@ -36,11 +36,11 @@ class ContentNote {
       return '';
     }
 
-    // Convertir enlaces Markdown a HTML primero
+    // Convertir enlaces Markdown a HTML SIEMPRE (antes de cualquier otra cosa)
     let processedContent = this.convertMarkdownLinks(content);
 
-    // Si contiene HTML, retornar como está
-    if (this.isHTML(processedContent)) {
+    // Si ya contiene HTML, retornar como está (ya procesados los enlaces)
+    if (this.isHTML(content)) {
       return processedContent;
     }
 
