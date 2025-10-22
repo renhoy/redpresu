@@ -1597,17 +1597,19 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
             <AlertDialogTitle>
               ⚠️ Confirma que deseas sobrescribir
             </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <p className="font-semibold">Esta acción NO se puede deshacer.</p>
-              <p>
-                Los datos anteriores de cliente y presupuesto serán
-                sobreescritos por los actuales.
-              </p>
-              {existingBudget?.pdf_url && (
-                <p className="text-destructive font-medium">
-                  Se eliminará el archivo PDF si existe.
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p className="font-semibold">Esta acción NO se puede deshacer.</p>
+                <p>
+                  Los datos anteriores de cliente y presupuesto serán
+                  sobreescritos por los actuales.
                 </p>
-              )}
+                {existingBudget?.pdf_url && (
+                  <p className="text-destructive font-medium">
+                    Se eliminará el archivo PDF si existe.
+                  </p>
+                )}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1633,18 +1635,20 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
             <AlertDialogTitle>
               Confirma la generación del nuevo PDF
             </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <p>
-                Al generar un nuevo PDF se realizarán las siguientes acciones:
-              </p>
-              <ul className="list-disc list-inside space-y-1">
-                <li>Se guardarán los datos actuales del presupuesto</li>
-                <li>Se eliminará el PDF anterior</li>
-                <li>Se generará un nuevo PDF con los datos actualizados</li>
-              </ul>
-              <p className="font-semibold mt-2">
-                ⚠️ Los datos y PDF anteriores se perderán permanentemente
-              </p>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>
+                  Al generar un nuevo PDF se realizarán las siguientes acciones:
+                </p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Se guardarán los datos actuales del presupuesto</li>
+                  <li>Se eliminará el PDF anterior</li>
+                  <li>Se generará un nuevo PDF con los datos actualizados</li>
+                </ul>
+                <p className="font-semibold mt-2">
+                  ⚠️ Los datos y PDF anteriores se perderán permanentemente
+                </p>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
