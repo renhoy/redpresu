@@ -470,16 +470,91 @@ export class RenderEngine {
     }
 
     try {
-      // Por ahora retornamos HTML básico
-      // En la FASE 4 se integrará con los componentes reales del template
       const componentName = element.component;
+      const templateId = this.budgetData.company.template;
 
-      // HTML de placeholder - será reemplazado con los componentes reales
-      return `<div class="component-${componentName}">
-        <p>${componentName} - ${JSON.stringify(element).substring(0, 100)}</p>
-      </div>`;
+      // Mapear nombre de componente a archivo JS
+      const componentFileMap: Record<string, string> = {
+        company: "headerCompany.js",
+        title: "headerTitle.js",
+        client: "contentClient.js",
+        separator: "contentSeparator.js",
+        levels: "contentLevels.js",
+        totals: "contentTotals.js",
+        note: "contentNote.js",
+        signatures: "footerSignatures.js",
+        pagination: "footerPagination.js",
+      };
+
+      const componentFile = componentFileMap[componentName];
+      if (!componentFile) {
+        console.warn(`Componente desconocido: ${componentName}`);
+        return `<div class="component-${componentName}"></div>`;
+      }
+
+      // Cargar componente JavaScript
+      const componentPath = path.join(
+        process.cwd(),
+        "src/lib/rapid-pdf/templates",
+        templateId,
+        "js/component",
+        componentFile
+      );
+
+      // Limpiar cache de require para obtener versión actualizada
+      delete require.cache[require.resolve(componentPath)];
+
+      // Cargar clase del componente
+      const ComponentClass = require(componentPath);
+
+      // Crear instancia y renderizar según el tipo de componente
+      let componentInstance;
+
+      if (componentName === "levels") {
+        // Para levels, pasar levelData
+        componentInstance = new ComponentClass({
+          levelData: element.levelData,
+        });
+      } else if (componentName === "totals") {
+        // Para totals, pasar datos de totales desde budgetData
+        const totalsData = this.budgetData.summary?.totals;
+        if (!totalsData) {
+          return `<div class="component-totals"></div>`;
+        }
+
+        componentInstance = new ComponentClass({
+          base_name: totalsData.base?.name || "Base Imponible",
+          base_amount: totalsData.base?.amount || "0.00",
+          ivas: totalsData.ivas || [],
+          subtotal: totalsData.subtotal,
+          subtotal_name: totalsData.subtotal?.name,
+          subtotal_amount: totalsData.subtotal?.amount,
+          irpf: totalsData.irpf,
+          irpf_name: totalsData.irpf?.name,
+          irpf_amount: totalsData.irpf?.amount,
+          re: totalsData.re || [],
+          total_name: totalsData.total?.name || "TOTAL PRESUPUESTO",
+          total_amount: totalsData.total?.amount || "0.00",
+        });
+      } else if (componentName === "client") {
+        // Para client, pasar datos del cliente
+        const clientData = this.budgetData.summary?.client;
+        componentInstance = new ComponentClass({ clientData });
+      } else if (componentName === "note") {
+        // Para note, pasar el texto de la nota
+        const noteText = element.noteText || this.budgetData.summary?.note || "";
+        componentInstance = new ComponentClass({ noteText });
+      } else {
+        // Para otros componentes, pasar element completo
+        componentInstance = new ComponentClass(element);
+      }
+
+      // Renderizar HTML
+      const html = componentInstance.render();
+      return html;
     } catch (error) {
       console.error(`Error generando HTML para ${element.component}:`, error);
+      console.error("Stack:", error instanceof Error ? error.stack : "");
       return `<div class="component-error">Error: ${element.component}</div>`;
     }
   }
