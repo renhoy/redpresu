@@ -91,7 +91,7 @@ export function CompanyCard({ company }: CompanyCardProps) {
             </div>
 
             {/* Columna 2 */}
-            <div className="space-y-2">
+            <div className="space-y-2 text-right">
               {/* Línea 1: NIF/CIF */}
               <div className="font-mono">{company.nif}</div>
               {/* Línea 2: Tipo */}
@@ -154,8 +154,8 @@ export function CompanyCard({ company }: CompanyCardProps) {
               disabled={company.id === 1}
               className={
                 company.id === 1
-                  ? "opacity-50 cursor-not-allowed"
-                  : "border-red-500 text-red-600 hover:bg-red-50"
+                  ? "border-destructive/50 text-destructive/50 cursor-not-allowed"
+                  : "border-destructive text-destructive hover:bg-destructive/10"
               }
             >
               <Trash2 className="h-3 w-3 mr-1" />

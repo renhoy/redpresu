@@ -201,16 +201,16 @@ export default function CompanyForm({
     <TooltipProvider>
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 md:items-center">
+          <div className="text-center md:text-left w-full md:w-auto">
+            <h1 className="text-3xl font-bold flex items-center justify-center md:justify-start gap-2">
               <Building2 className="h-6 w-6" />
               Editar Empresa
             </h1>
             <p className="text-sm">Modifica los datos de tu empresa</p>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 justify-center md:justify-end w-full md:w-auto">
             <Button
               type="button"
               variant="outline"

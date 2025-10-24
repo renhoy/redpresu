@@ -421,6 +421,7 @@ export default function UserTable({
               currentUserId={currentUserId}
               currentUserRole={currentUserRole}
               onToggleStatus={handleToggleStatusFromCard}
+              onStatusChange={handleStatusChange}
               formatDate={formatDate}
             />
           ))

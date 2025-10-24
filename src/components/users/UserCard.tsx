@@ -4,6 +4,13 @@ import { UserWithInviter } from "@/app/actions/users";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Pencil, Trash2, Mail, UserCheck } from "lucide-react";
 import Link from "next/link";
 
@@ -12,6 +19,7 @@ interface UserCardProps {
   currentUserId: string;
   currentUserRole: string;
   onToggleStatus: (user: UserWithInviter) => void;
+  onStatusChange: (userId: string, status: "active" | "inactive" | "pending") => void;
   formatDate: (date: string | null) => string;
 }
 
@@ -20,46 +28,19 @@ export function UserCard({
   currentUserId,
   currentUserRole,
   onToggleStatus,
+  onStatusChange,
   formatDate,
 }: UserCardProps) {
-  const getRoleBadge = (role: string) => {
-    const variants: Record<string, "default" | "secondary" | "destructive"> = {
-      superadmin: "destructive",
-      admin: "default",
-      vendedor: "secondary",
-    };
-
-    const labels: Record<string, string> = {
-      superadmin: "Super Admin",
-      admin: "Admin",
-      vendedor: "Comercial",
-    };
-
-    return (
-      <Badge variant={variants[role] || "secondary"}>
-        {labels[role] || role}
-      </Badge>
-    );
+  const statusColors = {
+    active: "bg-green-100 text-green-800",
+    inactive: "bg-gray-200 text-gray-700",
+    pending: "bg-orange-100 text-orange-800",
   };
 
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "outline"> = {
-      active: "default",
-      inactive: "secondary",
-      pending: "outline",
-    };
-
-    const labels: Record<string, string> = {
-      active: "Activo",
-      inactive: "Inactivo",
-      pending: "Pendiente",
-    };
-
-    return (
-      <Badge variant={variants[status] || "outline"}>
-        {labels[status] || status}
-      </Badge>
-    );
+  const statusLabels = {
+    active: "Activo",
+    inactive: "Inactivo",
+    pending: "Pendiente",
   };
 
   const canEdit = currentUserRole !== "vendedor" || user.id === currentUserId;
@@ -68,21 +49,62 @@ export function UserCard({
     <Card className="w-full mb-3">
       <CardContent className="p-3">
         <div className="space-y-3">
-          {/* Fila 1: Nombre + Rol + Estado */}
-          <div className="flex justify-between items-start gap-3">
-            <div className="flex-1 min-w-0 space-y-1">
-              {/* Nombre */}
+          {/* Fila 1: Grid 2 columnas */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+            {/* Columna 1 */}
+            <div className="space-y-1">
+              {/* Línea 1: Nombre usuario */}
               <div className="font-semibold text-sm truncate">
                 {user.name} {user.apellidos}
               </div>
-              {/* Email + Badges */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs text-muted-foreground truncate">
-                  {user.email}
-                </span>
-                {getRoleBadge(user.role)}
-                {getStatusBadge(user.status)}
+              {/* Línea 2: Email */}
+              <div className="text-xs text-muted-foreground truncate">
+                {user.email}
               </div>
+            </div>
+
+            {/* Columna 2 - Línea 1: Selector Estado alineado derecha */}
+            <div className="flex justify-end items-start">
+              <Select
+                value={user.status}
+                onValueChange={(value) =>
+                  onStatusChange(user.id, value as "active" | "inactive" | "pending")
+                }
+                disabled={
+                  currentUserRole === "vendedor" && user.id !== currentUserId
+                }
+              >
+                <SelectTrigger className="w-[110px] h-7 bg-white">
+                  <SelectValue>
+                    <Badge
+                      className={
+                        statusColors[user.status as keyof typeof statusColors] ||
+                        "bg-gray-200 text-gray-700"
+                      }
+                    >
+                      {statusLabels[user.status as keyof typeof statusLabels] ||
+                        user.status}
+                    </Badge>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="active">
+                    <Badge className={statusColors.active}>
+                      {statusLabels.active}
+                    </Badge>
+                  </SelectItem>
+                  <SelectItem value="inactive">
+                    <Badge className={statusColors.inactive}>
+                      {statusLabels.inactive}
+                    </Badge>
+                  </SelectItem>
+                  <SelectItem value="pending">
+                    <Badge className={statusColors.pending}>
+                      {statusLabels.pending}
+                    </Badge>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
