@@ -218,9 +218,10 @@ export default function UserForm({
 
           toast.success("Usuario creado correctamente. Ahora puedes enviarle la invitación usando el botón [+ email]");
 
-          // Redirigir a lista de usuarios
-          router.push("/users");
-          router.refresh();
+          // Redirigir a lista de usuarios con recarga completa
+          setTimeout(() => {
+            window.location.href = "/users";
+          }, 1500);
         } else {
           // Flujo normal para admin (crear usuario de su misma empresa)
           const createData: CreateUserData = {
@@ -240,9 +241,10 @@ export default function UserForm({
 
           toast.success("Usuario creado correctamente. Ahora puedes enviarle la invitación usando el botón [+ email]");
 
-          // Redirigir a lista de usuarios
-          router.push("/users");
-          router.refresh();
+          // Redirigir a lista de usuarios con recarga completa
+          setTimeout(() => {
+            window.location.href = "/users";
+          }, 1500);
         }
 
         // Redirigir después de crear
