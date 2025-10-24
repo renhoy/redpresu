@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { TariffFormFields } from "./TariffFormFields";
 import { CSVUploadPreview } from "./CSVUploadPreview";
-import { Layers } from "lucide-react";
+import { Layers, Play } from "lucide-react";
 import {
   createTariff,
   updateTariff,
@@ -13,6 +13,8 @@ import {
 } from "@/app/actions/tariffs";
 import { Tariff } from "@/lib/types/database";
 import { isValidNIF, getNIFErrorMessage } from "@/lib/helpers/nif-validator";
+import { driver } from "driver.js";
+import "driver.js/dist/driver.css";
 
 interface TariffFormProps {
   mode: "create" | "edit";
@@ -206,6 +208,32 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
     }
   };
 
+  const startTour = async (tourId: string) => {
+    try {
+      const response = await fetch("/help/tours.json");
+      const tours = await response.json();
+      const tourConfig = tours[tourId];
+
+      if (!tourConfig) {
+        console.error(`Tour "${tourId}" not found`);
+        return;
+      }
+
+      const driverObj = driver({
+        showProgress: true,
+        steps: tourConfig.steps,
+        nextBtnText: "Siguiente →",
+        prevBtnText: "← Anterior",
+        doneBtnText: "Finalizar",
+        popoverClass: "driver-popover-lime",
+      });
+
+      driverObj.drive();
+    } catch (error) {
+      console.error("Error loading tour:", error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-lime-50">
       {/* Línea 2: Título + Botones (sticky) */}
@@ -213,10 +241,21 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-cyan-600 flex items-center gap-2">
-                <Layers className="h-6 w-6" />
-                {mode === "create" ? "Nueva Tarifa" : "Editar Tarifa"}
-              </h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-bold text-cyan-600 flex items-center gap-2">
+                  <Layers className="h-6 w-6" />
+                  {mode === "create" ? "Nueva Tarifa" : "Editar Tarifa"}
+                </h1>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => startTour("tarifa-create")}
+                  className="border-cyan-600 text-cyan-600 hover:bg-blue-50 h-8 px-3 gap-1.5"
+                >
+                  <Play className="h-3.5 w-3.5" />
+                  <span className="text-xs font-medium">Tour</span>
+                </Button>
+              </div>
               <p className="text-sm text-cyan-600">
                 Complete los datos de la tarifa
               </p>

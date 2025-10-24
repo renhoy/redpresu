@@ -87,6 +87,7 @@ export async function startTour(tourId: string, toursData?: ToursData): Promise<
       prevBtnText: 'Anterior',
       doneBtnText: 'Finalizar',
       progressText: '{{current}} de {{total}}',
+      popoverClass: 'driver-popover-lime',
       onDestroyStarted: () => {
         // Limpiar tour pendiente al finalizar
         clearPendingTour();

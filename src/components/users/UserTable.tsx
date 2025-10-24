@@ -58,6 +58,7 @@ export default function UserTable({
   );
   const [isToggleDialogOpen, setIsToggleDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const router = useRouter();
 
   const handleStatusChange = async (
@@ -163,8 +164,28 @@ export default function UserTable({
     setIsToggleDialogOpen(true);
   };
 
+  // Filtrar usuarios por estado
+  const filteredUsers = statusFilter === "all"
+    ? users
+    : users.filter(u => u.status === statusFilter);
+
   return (
     <>
+      {/* Filtro de Estado */}
+      <div className="mb-4 flex items-center gap-3">
+        <span className="text-sm font-medium text-gray-700">Filtrar por estado:</span>
+        <Select value={statusFilter} onValueChange={(value: "all" | "active" | "inactive") => setStatusFilter(value)}>
+          <SelectTrigger className="w-[180px] bg-white">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-white">
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="active">Activos</SelectItem>
+            <SelectItem value="inactive">Inactivos</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       {/* Vista Desktop - Tabla */}
       <div className="hidden lg:block rounded-md border bg-gray-100">
         <Table>
@@ -179,17 +200,17 @@ export default function UserTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.length === 0 ? (
+            {filteredUsers.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={6}
                   className="text-center text-muted-foreground py-4"
                 >
-                  No hay usuarios registrados
+                  {statusFilter === "all" ? "No hay usuarios registrados" : `No hay usuarios ${statusFilter === "active" ? "activos" : "inactivos"}`}
                 </TableCell>
               </TableRow>
             ) : (
-              users.map((user) => (
+              filteredUsers.map((user) => (
                 <TableRow
                   key={user.id}
                   className="bg-white border-t hover:bg-lime-50/50"
@@ -387,12 +408,12 @@ export default function UserTable({
 
       {/* Vista Mobile/Tablet - Cards */}
       <div className="lg:hidden">
-        {users.length === 0 ? (
+        {filteredUsers.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground border rounded-lg">
-            No hay usuarios registrados
+            {statusFilter === "all" ? "No hay usuarios registrados" : `No hay usuarios ${statusFilter === "active" ? "activos" : "inactivos"}`}
           </div>
         ) : (
-          users.map((user) => (
+          filteredUsers.map((user) => (
             <UserCard
               key={user.id}
               user={user}

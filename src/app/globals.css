@@ -68,3 +68,22 @@
     background: #f7fee7;
   }
 }
+
+/* Estilos personalizados para tours de Driver.js */
+.driver-popover-lime.driver-popover {
+  background-color: #ecfccb !important;
+}
+
+.driver-popover-lime .driver-popover-title {
+  background-color: #ecfccb !important;
+  color: #365314 !important;
+}
+
+.driver-popover-lime .driver-popover-description {
+  background-color: #ecfccb !important;
+  color: #4d7c0f !important;
+}
+
+.driver-popover-lime .driver-popover-footer {
+  background-color: #ecfccb !important;
+}

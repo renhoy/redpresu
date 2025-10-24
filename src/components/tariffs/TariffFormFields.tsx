@@ -44,7 +44,7 @@ export function TariffFormFields({
   return (
     <div className="space-y-6">
       {/* Card 1: Datos Tarifa */}
-      <Card className="bg-blue-50">
+      <Card id="card-datos-tarifa" className="bg-blue-50">
         <CardHeader>
           <CardTitle>Datos Tarifa</CardTitle>
         </CardHeader>
@@ -164,6 +164,7 @@ export function TariffFormFields({
                 }
               >
                 <SelectTrigger
+                  id="status"
                   className={`bg-white ${
                     errors.status ? "border-destructive" : ""
                   }`}
@@ -181,16 +182,18 @@ export function TariffFormFields({
       </Card>
 
       {/* Card 2: Datos Empresa */}
-      <Card className="bg-blue-50">
+      <Card id="card-datos-empresa" className="bg-blue-50">
         <CardHeader>
           <CardTitle>Datos Empresa</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <LogoUploader
-            value={data.logo_url}
-            onChange={(url) => handleInputChange("logo_url", url)}
-            error={errors.logo_url}
-          />
+          <div id="logo-uploader">
+            <LogoUploader
+              value={data.logo_url}
+              onChange={(url) => handleInputChange("logo_url", url)}
+              error={errors.logo_url}
+            />
+          </div>
 
           {/* Vista Previa Inline */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
@@ -368,13 +371,13 @@ export function TariffFormFields({
       </Card>
 
       {/* Card 3: Configuración Visual */}
-      <Card className="bg-blue-50">
+      <Card id="card-configuracion-visual" className="bg-blue-50">
         <CardHeader>
           <CardTitle>Configuración Visual</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
-            <div>
+            <div id="template-selector">
               <TemplateSelector
                 value={data.template}
                 onChange={(value) => handleInputChange("template", value)}
@@ -462,12 +465,12 @@ export function TariffFormFields({
       </Card>
 
       {/* Card 4: Notas PDF */}
-      <Card className="bg-blue-50">
+      <Card id="card-notas-pdf" className="bg-blue-50">
         <CardHeader>
           <CardTitle>Notas PDF</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
+          <div id="summary_note">
             <div className="flex items-center gap-2 mb-2">
               <Label htmlFor="summary_note">Texto resumen PDF *</Label>
               <TooltipProvider>
@@ -499,7 +502,7 @@ export function TariffFormFields({
             )}
           </div>
 
-          <div>
+          <div id="conditions_note">
             <div className="flex items-center gap-2 mb-2">
               <Label htmlFor="conditions_note">Texto condiciones PDF *</Label>
               <TooltipProvider>
@@ -533,12 +536,12 @@ export function TariffFormFields({
       </Card>
 
       {/* Card 5: Notas Formulario */}
-      <Card className="bg-blue-50">
+      <Card id="card-notas-formulario" className="bg-blue-50">
         <CardHeader>
           <CardTitle>Notas Formulario</CardTitle>
         </CardHeader>
         <CardContent>
-          <div>
+          <div id="legal_note">
             <div className="flex items-center gap-2 mb-2">
               <Label htmlFor="legal_note">
                 Notas legales página presupuesto *
