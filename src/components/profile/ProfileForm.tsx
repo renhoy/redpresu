@@ -270,9 +270,9 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3">
+      <div className="flex flex-col items-center md:items-start md:flex-row md:justify-between gap-4">
+        <div className="text-center md:text-left">
+          <div className="flex items-center justify-center md:justify-start gap-3">
             <h1 className="text-3xl font-bold flex items-center gap-2">
               <User className="h-6 w-6" />
               Mi Perfil
@@ -292,7 +292,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
             Administra tu información personal y configuración de cuenta
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex justify-center md:justify-end gap-2">
           <Button id="btn-guardar-perfil" type="submit" disabled={isLoading}>
             {isLoading ? (
               <>
