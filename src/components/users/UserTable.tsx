@@ -709,7 +709,7 @@ export default function UserTable({
           }
         }}
       >
-        <AlertDialogContent className="w-[80vw] max-w-[80vw] sm:w-[80vw] sm:max-w-[80vw] h-[80vh] max-h-[80vh] flex flex-col">
+        <AlertDialogContent className="w-[80vw] max-w-[80vw] sm:w-[80vw] sm:max-w-[80vw] h-[80vh] max-h-[80vh] flex flex-col overflow-hidden">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lime-600 flex items-center gap-2">
               <Mail className="h-5 w-5" />
@@ -717,8 +717,8 @@ export default function UserTable({
             </AlertDialogTitle>
           </AlertDialogHeader>
 
-          <div className="space-y-3 overflow-y-auto flex-1 px-1">
-            <div className="text-sm text-muted-foreground">
+          <div className="space-y-3 overflow-y-auto overflow-x-hidden flex-1 px-1">
+            <div className="text-sm text-muted-foreground break-words">
               Se enviará un email a{" "}
               <strong className="text-foreground">{selectedUser?.email}</strong>{" "}
               con un enlace para que configure su contraseña y acceda al sistema.
@@ -728,7 +728,7 @@ export default function UserTable({
               <div className="text-sm font-medium text-lime-900 mb-2">
                 Vista previa del mensaje:
               </div>
-              <div className="bg-white border border-lime-100 rounded p-3 text-sm text-gray-700 whitespace-pre-wrap max-h-60 overflow-y-auto">
+              <div className="bg-white border border-lime-100 rounded p-3 text-sm text-gray-700 whitespace-pre-wrap break-words max-h-60 overflow-y-auto overflow-x-hidden">
                 {invitationMessage}
               </div>
             </div>
@@ -746,7 +746,7 @@ export default function UserTable({
             </div>
 
             <div className="bg-lime-50 border border-blue-200 rounded-md p-3">
-              <div className="text-xs text-blue-800">
+              <div className="text-xs text-blue-800 break-words">
                 ℹ️ <strong>Nota:</strong> Al confirmar, se intentará abrir tu aplicación
                 de email predeterminada con el mensaje prellenado. Si no funciona,
                 el mensaje ya estará copiado en tu portapapeles para que puedas
