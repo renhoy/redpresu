@@ -47,12 +47,14 @@ export function TourButton({ tourId, targetPath }: TourButtonProps) {
 
   return (
     <Button
+      variant="outline"
+      size="sm"
       onClick={handleStartTour}
       disabled={loading}
-      className="gap-2 bg-lime-500 hover:bg-lime-600 text-white"
+      className="border-cyan-600 text-cyan-600 hover:bg-blue-50 h-8 px-3 gap-1.5"
     >
-      <Play className="w-4 h-4" />
-      {loading ? "Iniciando..." : "Iniciar Tour Interactivo"}
+      <Play className="h-3.5 w-3.5" />
+      <span className="text-xs font-medium">{loading ? "Iniciando..." : "Tour"}</span>
     </Button>
   );
 }

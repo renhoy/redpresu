@@ -282,6 +282,52 @@
       }
     ]
   },
+  "usuarios-page": {
+    "steps": [
+      {
+        "element": "#btn-nuevo-usuario",
+        "popover": {
+          "title": "1. Botón Nuevo Usuario",
+          "description": "Haz clic aquí para crear un nuevo usuario. Solo los administradores y superadministradores pueden crear usuarios."
+        }
+      },
+      {
+        "element": "[data-tour='filtro-estado-usuarios']",
+        "popover": {
+          "title": "2. Filtro de Estado",
+          "description": "Filtra los usuarios por estado: Todos, Activos o Inactivos. Facilita encontrar rápidamente los usuarios según su estado actual."
+        }
+      },
+      {
+        "element": "[data-tour='tabla-usuarios']",
+        "popover": {
+          "title": "3. Tabla de Usuarios",
+          "description": "Lista completa de usuarios de la empresa con su información: email, nombre, rol, estado, invitador y último acceso."
+        }
+      },
+      {
+        "element": "[data-tour='select-estado-usuario']",
+        "popover": {
+          "title": "4. Selector de Estado del Usuario",
+          "description": "Cambia el estado del usuario entre Activo, Inactivo o Pendiente. Los usuarios inactivos no pueden acceder al sistema."
+        }
+      },
+      {
+        "element": "[data-tour='btn-editar-usuario']",
+        "popover": {
+          "title": "5. Botón Editar",
+          "description": "Edita los datos del usuario: nombre, apellidos, rol y otros datos. Los cambios se aplican inmediatamente."
+        }
+      },
+      {
+        "element": "[data-tour='btn-activar-desactivar']",
+        "popover": {
+          "title": "6. Botón Activar/Desactivar",
+          "description": "Cambia el estado de acceso del usuario. Los usuarios desactivados no pueden iniciar sesión en la aplicación."
+        }
+      }
+    ]
+  },
   "tarifa-create": {
     "steps": [
       {

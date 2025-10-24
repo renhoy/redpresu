@@ -55,7 +55,7 @@ export default async function UsersPage() {
 
           <div className="flex flex-wrap gap-2 justify-center md:justify-end w-full md:w-auto">
             {canCreateUsers && (
-              <Button asChild>
+              <Button id="btn-nuevo-usuario" asChild>
                 <Link href="/users/create">
                   <Plus className="mr-2 h-4 w-4" />
                   Nuevo Usuario

@@ -172,7 +172,7 @@ export default function UserTable({
   return (
     <>
       {/* Filtro de Estado */}
-      <div className="mb-4 flex items-center gap-3">
+      <div className="mb-4 flex items-center gap-3" data-tour="filtro-estado-usuarios">
         <span className="text-sm font-medium text-gray-700">Filtrar por estado:</span>
         <Select value={statusFilter} onValueChange={(value: "all" | "active" | "inactive") => setStatusFilter(value)}>
           <SelectTrigger className="w-[180px] bg-white">
@@ -187,7 +187,7 @@ export default function UserTable({
       </div>
 
       {/* Vista Desktop - Tabla */}
-      <div className="hidden lg:block rounded-md border bg-gray-100">
+      <div className="hidden lg:block rounded-md border bg-gray-100" data-tour="tabla-usuarios">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
@@ -242,7 +242,7 @@ export default function UserTable({
 
                   {/* Columna Estado con Selector */}
                   <TableCell className="p-4">
-                    <div className="flex justify-center">
+                    <div className="flex justify-center" data-tour="select-estado-usuario">
                       <Select
                         value={user.status}
                         onValueChange={(value) =>
@@ -331,7 +331,7 @@ export default function UserTable({
                             {/* Botón Editar */}
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Button variant="outline" size="icon" asChild>
+                                <Button variant="outline" size="icon" asChild data-tour="btn-editar-usuario">
                                   <Link href={`/users/${user.id}/edit`}>
                                     <Pencil className="h-4 w-4" />
                                   </Link>
@@ -349,6 +349,7 @@ export default function UserTable({
                                   <Button
                                     variant="outline"
                                     size="icon"
+                                    data-tour="btn-activar-desactivar"
                                     onClick={() => {
                                       setSelectedUser(user);
                                       setIsToggleDialogOpen(true);
