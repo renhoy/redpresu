@@ -338,31 +338,35 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Desktop: 25% - 45% - 15% - 15% */}
-            {/* Tablet: 50% - 50% - 50% - 50% */}
-            {/* Móvil: 100% - 100% - 50% - 50% */}
-            <div className="md:col-span-1">
+          {/* Desktop: 1 línea (25% - 45% - 15% - 15%) */}
+          {/* Tablet: 2 líneas (50%-50%, 50%-50%) */}
+          {/* Móvil: 3 líneas (100%, 100%, 50%-50%) */}
+          <div className="grid grid-cols-4 lg:grid-cols-20 gap-4">
+            {/* Nombre: Desktop 25% (5/20), Tablet 50% (2/4), Móvil 100% (4/4) */}
+            <div className="col-span-4 md:col-span-2 lg:col-span-5">
               <p className="text-sm">
                 <span className="font-bold">Nombre:</span> {profile.name}
               </p>
             </div>
 
-            <div className="md:col-span-2 lg:col-span-2">
+            {/* Email: Desktop 45% (9/20), Tablet 50% (2/4), Móvil 100% (4/4) */}
+            <div className="col-span-4 md:col-span-2 lg:col-span-9">
               <p className="text-sm">
                 <span className="font-bold">Email:</span> {profile.email}
               </p>
             </div>
 
-            <div className="md:col-span-1 lg:col-span-1">
+            {/* Rol: Desktop 15% (3/20), Tablet 50% (2/4), Móvil 50% (2/4) */}
+            <div className="col-span-2 md:col-span-2 lg:col-span-3">
               <p className="text-sm">
                 <span className="font-bold">Rol:</span>{" "}
                 <span className="capitalize">{profile.role}</span>
               </p>
             </div>
 
+            {/* Tipo: Desktop 15% (3/20), Tablet 50% (2/4), Móvil 50% (2/4) */}
             {profile.emisor && (
-              <div className="md:col-span-2 lg:col-span-4">
+              <div className="col-span-2 md:col-span-2 lg:col-span-3">
                 <p className="text-sm">
                   <span className="font-bold">Tipo:</span>{" "}
                   {profile.emisor.tipo === "autonomo" ? "Autónomo" : "Empresa"}
@@ -379,7 +383,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Building2 className="h-5 w-5" />
-              Datos del Emisor
+              Datos de {profile.emisor.tipo === "autonomo" ? "Autónomo" : "Empresa"}
             </CardTitle>
             <CardDescription>
               Información fiscal que aparecerá en tus presupuestos
@@ -388,9 +392,12 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
           <CardContent className="space-y-4">
             {profile.emisor.tipo === "empresa" ? (
               <>
-                {/* EMPRESA - Desktop/Tablet: Nombre Comercial* (75%) NIF/CIF* (25%) */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="md:col-span-4 lg:col-span-3 space-y-2">
+                {/* EMPRESA */}
+                {/* Desktop: Nombre Comercial* (75%) NIF/CIF* (25%) */}
+                {/* Tablet: Nombre Comercial* (75%) NIF/CIF* (25%) */}
+                {/* Móvil: Nombre Comercial* (100%), NIF (100%) */}
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="col-span-4 md:col-span-3 space-y-2">
                     <Label htmlFor="nombre_comercial">Nombre Comercial *</Label>
                     <Input
                       id="nombre_comercial"
@@ -404,7 +411,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
                     )}
                   </div>
 
-                  <div className="md:col-span-4 lg:col-span-1 space-y-2">
+                  <div className="col-span-4 md:col-span-1 space-y-2">
                     <Label htmlFor="nif">NIF/CIF *</Label>
                     <Input
                       id="nif"
@@ -421,10 +428,14 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
               </>
             ) : (
               <>
-                {/* AUTÓNOMO - Desktop/Tablet: Nombre Comercial* (50%) NIF/CIF* (25%) IRPF (25%) */}
+                {/* AUTÓNOMO */}
+                {/* Desktop: Nombre Comercial* (50%) NIF/CIF* (25%) IRPF (25%) */}
+                {/* Tablet: Nombre Comercial* (100%), NIF (50%) IRPF (50%) */}
                 {/* Móvil: Nombre (100%), NIF (75%) IRPF (25%) */}
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="space-y-2">
+
+                {/* Desktop: 1 línea con 3 campos */}
+                <div className="hidden lg:grid lg:grid-cols-4 gap-4">
+                  <div className="lg:col-span-2 space-y-2">
                     <Label htmlFor="nombre_comercial">Nombre Comercial *</Label>
                     <Input
                       id="nombre_comercial"
@@ -437,10 +448,8 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
                       <p className="text-sm text-red-600">{errors.nombre_comercial}</p>
                     )}
                   </div>
-                </div>
 
-                <div className="grid grid-cols-4 gap-4">
-                  <div className="col-span-3 space-y-2">
+                  <div className="lg:col-span-1 space-y-2">
                     <Label htmlFor="nif">NIF/CIF *</Label>
                     <Input
                       id="nif"
@@ -454,7 +463,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
                     )}
                   </div>
 
-                  <div className="col-span-1 space-y-2">
+                  <div className="lg:col-span-1 space-y-2">
                     <Label htmlFor="irpf_percentage">% IRPF</Label>
                     <Input
                       id="irpf_percentage"
@@ -472,12 +481,67 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
                     )}
                   </div>
                 </div>
+
+                {/* Tablet y Móvil: distribución diferente */}
+                <div className="lg:hidden space-y-4">
+                  {/* Nombre Comercial */}
+                  <div className="space-y-2">
+                    <Label htmlFor="nombre_comercial">Nombre Comercial *</Label>
+                    <Input
+                      id="nombre_comercial"
+                      value={formData.nombre_comercial}
+                      onChange={handleInputChange("nombre_comercial")}
+                      className={errors.nombre_comercial ? "border-red-500" : ""}
+                      disabled={isLoading}
+                    />
+                    {errors.nombre_comercial && (
+                      <p className="text-sm text-red-600">{errors.nombre_comercial}</p>
+                    )}
+                  </div>
+
+                  {/* NIF/CIF + IRPF */}
+                  {/* Tablet: 50%-50%, Móvil: 75%-25% */}
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="col-span-3 md:col-span-2 space-y-2">
+                      <Label htmlFor="nif">NIF/CIF *</Label>
+                      <Input
+                        id="nif"
+                        value={formData.nif}
+                        onChange={handleInputChange("nif")}
+                        className={errors.nif ? "border-red-500" : ""}
+                        disabled={isLoading}
+                      />
+                      {errors.nif && (
+                        <p className="text-sm text-red-600">{errors.nif}</p>
+                      )}
+                    </div>
+
+                    <div className="col-span-1 md:col-span-2 space-y-2">
+                      <Label htmlFor="irpf_percentage">% IRPF</Label>
+                      <Input
+                        id="irpf_percentage"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value={formData.irpf_percentage ?? ""}
+                        onChange={handleInputChange("irpf_percentage")}
+                        className={errors.irpf_percentage ? "border-red-500" : ""}
+                        disabled={isLoading}
+                      />
+                      {errors.irpf_percentage && (
+                        <p className="text-sm text-red-600">{errors.irpf_percentage}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </>
             )}
 
             {/* Dirección Fiscal* (75%) Código Postal* (25%) */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="md:col-span-4 lg:col-span-3 space-y-2">
+            {/* Desktop/Tablet: 75%-25%, Móvil: 100%-100% */}
+            <div className="grid grid-cols-4 gap-4">
+              <div className="col-span-4 md:col-span-3 space-y-2">
                 <Label htmlFor="direccion_fiscal">Dirección Fiscal *</Label>
                 <Input
                   id="direccion_fiscal"
@@ -491,7 +555,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
                 )}
               </div>
 
-              <div className="md:col-span-4 lg:col-span-1 space-y-2">
+              <div className="col-span-4 md:col-span-1 space-y-2">
                 <Label htmlFor="codigo_postal">Código Postal *</Label>
                 <Input
                   id="codigo_postal"
