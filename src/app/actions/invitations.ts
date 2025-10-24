@@ -113,18 +113,31 @@ export async function createUserInvitation(
       }
     }
 
-    // Verificar que el email no esté ya registrado
+    // Verificar el estado del usuario si ya está registrado
     const { data: existingUser, error: checkError } = await supabaseAdmin
       .from('redpresu_users')
-      .select('id, email')
+      .select('id, email, status')
       .eq('email', email.trim().toLowerCase())
       .maybeSingle()
 
     if (existingUser) {
-      return {
-        success: false,
-        error: 'Este email ya está registrado en el sistema'
+      // Si el usuario ya está activo (tiene contraseña), no permitir invitación
+      if (existingUser.status === 'active' || existingUser.status === 'inactive') {
+        return {
+          success: false,
+          error: 'Este usuario ya ha configurado su contraseña'
+        }
       }
+
+      // Si está en pending, puede recibir invitación (no tiene contraseña aún)
+      if (existingUser.status !== 'pending') {
+        return {
+          success: false,
+          error: 'Este email ya está registrado en el sistema'
+        }
+      }
+
+      // Usuario está en pending: OK, continuar con invitación
     }
 
     // Verificar si ya existe una invitación pendiente para este email
@@ -411,57 +424,119 @@ export async function acceptInvitation(
       }
     }
 
-    // Crear usuario en auth.users
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email: invitation.email,
-      password,
-      email_confirm: true,
-      user_metadata: {
-        name,
-        last_name: lastName
-      }
-    })
-
-    if (authError) {
-      log.error('[acceptInvitation] Error creando usuario en auth:', authError)
-
-      let errorMessage = authError.message
-      if (authError.message.includes('already registered')) {
-        errorMessage = 'Este email ya está registrado'
-      }
-
-      return { success: false, error: errorMessage }
-    }
-
-    if (!authData.user) {
-      return { success: false, error: 'Error al crear el usuario' }
-    }
-
-    const userId = authData.user.id
-
-    // Crear registro en public.redpresu_users
-    const { error: userError } = await supabaseAdmin
+    // Verificar si el usuario ya existe (pre-creado por admin)
+    const { data: existingUser, error: existingUserError } = await supabaseAdmin
       .from('redpresu_users')
-      .insert({
-        id: userId,
-        name: name.trim(),
-        last_name: lastName.trim(),
+      .select('id, status, role, name, last_name')
+      .eq('email', invitation.email)
+      .maybeSingle()
+
+    let userId: string
+
+    if (existingUser && existingUser.status === 'pending') {
+      // FLUJO A: Usuario pre-creado por admin (status='pending')
+      // Solo actualizamos su contraseña y lo activamos
+      log.info('[acceptInvitation] Usuario pre-creado encontrado, actualizando contraseña:', existingUser.id)
+
+      userId = existingUser.id
+
+      // Actualizar contraseña en auth.users
+      const { error: updatePasswordError } = await supabaseAdmin.auth.admin.updateUserById(
+        userId,
+        {
+          password,
+          email_confirm: true,
+          user_metadata: {
+            name,
+            last_name: lastName
+          }
+        }
+      )
+
+      if (updatePasswordError) {
+        log.error('[acceptInvitation] Error actualizando contraseña:', updatePasswordError)
+        return {
+          success: false,
+          error: 'Error al configurar la contraseña'
+        }
+      }
+
+      // Actualizar registro en redpresu_users
+      const { error: updateUserError } = await supabaseAdmin
+        .from('redpresu_users')
+        .update({
+          name: name.trim(),
+          last_name: lastName.trim(),
+          status: 'active',
+          invited_by: invitation.inviter_id,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId)
+
+      if (updateUserError) {
+        log.error('[acceptInvitation] Error actualizando usuario:', updateUserError)
+        return {
+          success: false,
+          error: 'Error al actualizar el perfil de usuario'
+        }
+      }
+
+    } else {
+      // FLUJO B: Usuario NO existe, crear nuevo (flujo original de invitación directa)
+      log.info('[acceptInvitation] Creando nuevo usuario para:', invitation.email)
+
+      // Crear usuario en auth.users
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
         email: invitation.email,
-        role: 'vendedor',
-        company_id: inviterData.company_id,
-        status: 'active',
-        invited_by: invitation.inviter_id
+        password,
+        email_confirm: true,
+        user_metadata: {
+          name,
+          last_name: lastName
+        }
       })
 
-    if (userError) {
-      log.error('[acceptInvitation] Error creando usuario en tabla:', userError)
+      if (authError) {
+        log.error('[acceptInvitation] Error creando usuario en auth:', authError)
 
-      // Rollback: eliminar usuario de auth
-      await supabaseAdmin.auth.admin.deleteUser(userId)
+        let errorMessage = authError.message
+        if (authError.message.includes('already registered')) {
+          errorMessage = 'Este email ya está registrado'
+        }
 
-      return {
-        success: false,
-        error: 'Error al crear el perfil de usuario'
+        return { success: false, error: errorMessage }
+      }
+
+      if (!authData.user) {
+        return { success: false, error: 'Error al crear el usuario' }
+      }
+
+      userId = authData.user.id
+
+      // Crear registro en public.redpresu_users
+      const { error: userError } = await supabaseAdmin
+        .from('redpresu_users')
+        .insert({
+          id: userId,
+          name: name.trim(),
+          last_name: lastName.trim(),
+          email: invitation.email,
+          role: 'vendedor',
+          company_id: inviterData.company_id,
+          status: 'active',
+          invited_by: invitation.inviter_id
+        })
+
+      if (userError) {
+        log.error('[acceptInvitation] Error creando usuario en tabla:', userError)
+
+        // Rollback: eliminar usuario de auth
+        await supabaseAdmin.auth.admin.deleteUser(userId)
+
+        return {
+          success: false,
+          error: 'Error al crear el perfil de usuario'
+        }
       }
     }
 

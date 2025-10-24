@@ -306,12 +306,18 @@ export async function createUser(data: CreateUserData) {
 
     if (authError) {
       log.error("Error creating auth user:", authError);
+
+      // Traducir mensajes comunes de Supabase
+      let errorMessage = "Error al crear usuario en sistema de autenticación";
+
+      if (authError.message.includes("already registered") ||
+          authError.message.includes("User already exists")) {
+        errorMessage = "Este email ya está registrado en el sistema";
+      }
+
       return {
         success: false,
-        error:
-          authError.message === "User already registered"
-            ? "Este email ya está registrado"
-            : "Error al crear usuario en sistema de autenticación",
+        error: errorMessage,
       };
     }
 

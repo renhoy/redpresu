@@ -408,7 +408,11 @@ export default function UserTable({
                       </div>
                     ) : (
                       <>
-                        {currentUserRole !== "vendedor" && (
+                        {/* Botón [+ email] solo aparece si:
+                            1. No tiene inviter_name (invited_by NULL)
+                            2. Estado es 'pending' (sin contraseña configurada aún)
+                            3. Usuario actual es admin/superadmin */}
+                        {currentUserRole !== "vendedor" && user.status === "pending" && (
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>

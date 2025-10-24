@@ -65,8 +65,8 @@ export default function UserForm({
 }: UserFormProps) {
   const [formData, setFormData] = useState<FormData>({
     email: user?.email || "",
-    name: user?.nombre || "",
-    last_name: user?.apellidos || "",
+    name: user?.name || "",
+    last_name: user?.last_name || "",
     role: user?.role || "vendedor",
     status: user?.status || "active",
     issuer_id: undefined,
@@ -202,8 +202,8 @@ export default function UserForm({
 
           const registerData: RegisterData = {
             email: formData.email,
-            name: formData.nombre,
-            last_name: formData.apellidos,
+            name: formData.name,
+            last_name: formData.last_name,
             password: temporaryPassword,
             tipo: "empresa", // No importa, no se usará
             nombreComercial: "", // No importa, no se usará
@@ -227,8 +227,8 @@ export default function UserForm({
           // Flujo normal para admin (crear usuario de su misma empresa)
           const createData: CreateUserData = {
             email: formData.email,
-            name: formData.nombre,
-            last_name: formData.apellidos,
+            name: formData.name,
+            last_name: formData.last_name,
             role: formData.role,
             company_id: empresaId,
           };
@@ -252,10 +252,10 @@ export default function UserForm({
       } else {
         // Actualizar usuario
         const updateData: UpdateUserData = {
-          name: formData.nombre !== user?.nombre ? formData.nombre : undefined,
+          name: formData.name !== user?.name ? formData.name : undefined,
           last_name:
-            formData.apellidos !== user?.apellidos
-              ? formData.apellidos
+            formData.last_name !== user?.last_name
+              ? formData.last_name
               : undefined,
           role: formData.role !== user?.role ? formData.role : undefined,
           status:
@@ -539,14 +539,14 @@ export default function UserForm({
                 id="name"
                 type="text"
                 placeholder="Juan"
-                value={formData.nombre}
+                value={formData.name}
                 onChange={handleInputChange("name")}
-                className={errors.nombre ? "border-red-500" : ""}
+                className={errors.name ? "border-red-500" : ""}
                 disabled={isLoading}
                 required
               />
-              {errors.nombre && (
-                <p className="text-sm text-red-600">{errors.nombre}</p>
+              {errors.name && (
+                <p className="text-sm text-red-600">{errors.name}</p>
               )}
             </div>
 
@@ -556,14 +556,14 @@ export default function UserForm({
                 id="last_name"
                 type="text"
                 placeholder="García López"
-                value={formData.apellidos}
+                value={formData.last_name}
                 onChange={handleInputChange("last_name")}
-                className={errors.apellidos ? "border-red-500" : ""}
+                className={errors.last_name ? "border-red-500" : ""}
                 disabled={isLoading}
                 required
               />
-              {errors.apellidos && (
-                <p className="text-sm text-red-600">{errors.apellidos}</p>
+              {errors.last_name && (
+                <p className="text-sm text-red-600">{errors.last_name}</p>
               )}
             </div>
           </div>
