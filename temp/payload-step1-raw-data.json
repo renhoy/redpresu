@@ -6,19 +6,19 @@
       "id": "1",
       "name": "Pescado Fresco",
       "level": "chapter",
-      "amount": "256.00"
+      "amount": "10.80"
     },
     {
       "id": "1.1",
       "name": "Pescado Blanco",
       "level": "subchapter",
-      "amount": "256.00"
+      "amount": "10.80"
     },
     {
       "id": "1.1.1",
       "name": "Pescados de Arrába",
       "level": "section",
-      "amount": "256.00"
+      "amount": "10.80"
     },
     {
       "id": "1.1.1.1",
@@ -26,8 +26,8 @@
       "name": "Merluza",
       "unit": "kg",
       "level": "item",
-      "amount": "0,00",
-      "quantity": "0,00",
+      "amount": "10.80",
+      "quantity": "1.00",
       "description": "Filete de merluza fresca sin espinas.",
       "iva_percentage": "10.00"
     },
@@ -59,8 +59,8 @@
       "name": "Acedías",
       "unit": "kg",
       "level": "item",
-      "amount": "256.00",
-      "quantity": "20.00",
+      "amount": "0,00",
+      "quantity": "0,00",
       "description": "Acedías frescas del golfo.",
       "iva_percentage": "10.00"
     },
@@ -368,7 +368,7 @@
       "id": "3",
       "name": "Productos Congelados",
       "level": "chapter",
-      "amount": "200.00"
+      "amount": "0.00"
     },
     {
       "id": "3.1",
@@ -387,8 +387,8 @@
       "name": "Calamares en Anillas",
       "unit": "kg",
       "level": "item",
-      "amount": "200.00",
-      "quantity": "20.00",
+      "amount": "0,00",
+      "quantity": "0,00",
       "description": "Calamar congelado limpio.",
       "iva_percentage": "10.00"
     },
@@ -501,7 +501,7 @@
       "id": "5",
       "name": "Preparados y Ahumados",
       "level": "chapter",
-      "amount": "500.00"
+      "amount": "0.00"
     },
     {
       "id": "5.1",
@@ -509,8 +509,8 @@
       "name": "Salmón Ahumado",
       "unit": "kg",
       "level": "item",
-      "amount": "500.00",
-      "quantity": "20.00",
+      "amount": "0,00",
+      "quantity": "0,00",
       "description": "Lomo de salmón ahumado.",
       "iva_percentage": "10.00"
     },

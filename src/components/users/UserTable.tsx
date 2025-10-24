@@ -65,7 +65,6 @@ export default function UserTable({
   const [reassignUserId, setReassignUserId] = useState<string>("");
   const [deleteAction, setDeleteAction] = useState<"delete" | "reassign">("reassign");
   const [invitationMessage, setInvitationMessage] = useState("");
-  const [invitationToken, setInvitationToken] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const router = useRouter();
@@ -220,42 +219,55 @@ export default function UserTable({
 
   const handleInviteUser = async (user: UserWithInviter) => {
     setSelectedUser(user);
-    setIsLoading(true);
 
-    // Crear invitación (usa configuración de expiración de BD)
-    const result = await createUserInvitation(user.email);
+    // Generar mensaje de preview (sin crear invitación en BD aún)
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+    const previewMessage = `Hola,
 
-    if (!result.success) {
-      toast.error(result.error || "Error al crear invitación");
-      setIsLoading(false);
-      return;
-    }
+Has sido invitado/a a unirte al Sistema de Gestión de Presupuestos.
 
-    // Guardar mensaje y token
-    setInvitationMessage(result.data?.emailMessage || "");
-    setInvitationToken(result.data?.token || "");
-    setIsLoading(false);
+Para completar tu registro y configurar tu contraseña, haz clic en el siguiente enlace:
+
+${baseUrl}/accept-invitation?token=XXXXXX
+
+Este enlace es válido por 7 días.
+
+Si no solicitaste esta invitación, puedes ignorar este mensaje.
+
+Saludos,
+El equipo de Gestión de Presupuestos`;
+
+    setInvitationMessage(previewMessage);
     setIsInviteDialogOpen(true);
   };
 
   const handleSendInvitation = async () => {
-    if (!selectedUser || !invitationMessage) return;
+    if (!selectedUser) return;
 
     setIsLoading(true);
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
-    const invitationUrl = `${baseUrl}/accept-invitation?token=${invitationToken}`;
-
     try {
+      // Crear invitación en BD (ahora que el usuario confirmó)
+      const result = await createUserInvitation(selectedUser.email);
+
+      if (!result.success) {
+        toast.error(result.error || "Error al crear invitación");
+        setIsLoading(false);
+        return;
+      }
+
+      const token = result.data?.token || "";
+      const emailMessage = result.data?.emailMessage || "";
+
       // Intentar enviar email directamente (si está configurado)
       // Por ahora, intentar abrir cliente de email
       const subject = "Invitación al Sistema de Presupuestos";
-      const body = encodeURIComponent(invitationMessage);
+      const body = encodeURIComponent(emailMessage);
       const mailtoLink = `mailto:${selectedUser.email}?subject=${encodeURIComponent(subject)}&body=${body}`;
 
       // Copiar al portapapeles como fallback
       try {
-        await navigator.clipboard.writeText(invitationMessage);
+        await navigator.clipboard.writeText(emailMessage);
         toast.success("Mensaje copiado al portapapeles");
       } catch (clipboardError) {
         console.error("Error al copiar al portapapeles:", clipboardError);
@@ -264,13 +276,12 @@ export default function UserTable({
       // Intentar abrir cliente de email
       window.location.href = mailtoLink;
 
-      toast.success(`Invitación creada para ${selectedUser.email}`);
+      toast.success(`Invitación enviada a ${selectedUser.email}`);
 
       // Cerrar diálogo y limpiar
       setIsInviteDialogOpen(false);
       setSelectedUser(null);
       setInvitationMessage("");
-      setInvitationToken("");
 
       // Refresh para actualizar lista
       router.refresh();

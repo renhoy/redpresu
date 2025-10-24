@@ -591,6 +591,36 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
     log.info(`[deleteUser] Se borrarán todos los datos del usuario ${userId}`);
   }
 
+  // Obtener email del usuario antes de borrarlo (para borrar invitaciones)
+  const { data: userToDelete } = await supabaseAdmin
+    .from("redpresu_users")
+    .select("email")
+    .eq("id", userId)
+    .single();
+
+  // Borrar invitaciones relacionadas con este usuario
+  // 1. Donde el usuario es el invitador (inviter_id)
+  const { error: inviterError } = await supabaseAdmin
+    .from("redpresu_user_invitations")
+    .delete()
+    .eq("inviter_id", userId);
+
+  if (inviterError) {
+    log.error("[deleteUser] Error borrando invitaciones como invitador:", inviterError);
+  }
+
+  // 2. Donde el usuario es el invitado (email)
+  if (userToDelete?.email) {
+    const { error: invitedError } = await supabaseAdmin
+      .from("redpresu_user_invitations")
+      .delete()
+      .eq("email", userToDelete.email);
+
+    if (invitedError) {
+      log.error("[deleteUser] Error borrando invitaciones como invitado:", invitedError);
+    }
+  }
+
   // Eliminar de auth.users (cascada eliminará de public.redpresu_users)
   const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId);
 

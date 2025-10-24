@@ -3,17 +3,31 @@
   "data": {
     "base": {
       "name": "Base Imponible",
-      "amount": "869.09"
+      "amount": "9.82"
     },
     "ivas": [
       {
         "name": "10.00% IVA",
-        "amount": "86.91"
+        "amount": "0.98"
       }
     ],
     "total": {
       "name": "TOTAL PRESUPUESTO",
-      "amount": "956.00"
+      "amount": "9.47"
+    },
+    "irpf": {
+      "name": "15.00% IRPF",
+      "amount": "-1.47"
+    },
+    "re": [
+      {
+        "name": "1.43% RE (IVA 10.00%)",
+        "amount": "0.14"
+      }
+    ],
+    "subtotal": {
+      "name": "Subtotal",
+      "amount": "10.80"
     }
   }
 }
