@@ -299,6 +299,22 @@ COMMENT ON FUNCTION public.get_user_role_by_id(p_user_id uuid) IS 'Obtiene el ro
 
 
 --
+-- Name: mark_expired_invitations(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.mark_expired_invitations() RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    AS $$
+BEGIN
+  UPDATE public.redpresu_user_invitations
+  SET status = 'expired', updated_at = NOW()
+  WHERE status = 'pending'
+  AND expires_at < NOW();
+END;
+$$;
+
+
+--
 -- Name: update_budget_notes_updated_at(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -365,6 +381,68 @@ COMMENT ON FUNCTION public.update_user_last_login(user_id uuid) IS 'Updates last
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
+
+--
+-- Name: redpresu_companies; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.redpresu_companies (
+    id integer NOT NULL,
+    name text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    status text DEFAULT 'active'::text NOT NULL,
+    CONSTRAINT empresas_status_check CHECK ((status = ANY (ARRAY['active'::text, 'inactive'::text])))
+);
+
+
+--
+-- Name: TABLE redpresu_companies; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.redpresu_companies IS 'Empresas del sistema multi-tenant';
+
+
+--
+-- Name: COLUMN redpresu_companies.id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_companies.id IS 'ID único de la empresa';
+
+
+--
+-- Name: COLUMN redpresu_companies.name; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_companies.name IS 'Nombre de la empresa';
+
+
+--
+-- Name: COLUMN redpresu_companies.status; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_companies.status IS 'Estado de la empresa: active o inactive';
+
+
+--
+-- Name: empresas_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.empresas_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: empresas_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.empresas_id_seq OWNED BY public.redpresu_companies.id;
+
 
 --
 -- Name: redpresu_issuers; Type: TABLE; Schema: public; Owner: -
@@ -524,10 +602,10 @@ COMMENT ON COLUMN public.redpresu_issuers.deleted_at IS 'Timestamp de eliminaci�
 
 
 --
--- Name: active_issuers; Type: VIEW; Schema: public; Owner: -
+-- Name: redpresu_active_issuers; Type: VIEW; Schema: public; Owner: -
 --
 
-CREATE VIEW public.active_issuers AS
+CREATE VIEW public.redpresu_active_issuers AS
  SELECT redpresu_issuers.id,
     redpresu_issuers.user_id,
     redpresu_issuers.company_id,
@@ -553,72 +631,10 @@ CREATE VIEW public.active_issuers AS
 
 
 --
--- Name: VIEW active_issuers; Type: COMMENT; Schema: public; Owner: -
+-- Name: VIEW redpresu_active_issuers; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON VIEW public.active_issuers IS 'Vista de empresas activas (no eliminadas). Usar en queries normales.';
-
-
---
--- Name: redpresu_companies; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.redpresu_companies (
-    id integer NOT NULL,
-    name text NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    status text DEFAULT 'active'::text NOT NULL,
-    CONSTRAINT empresas_status_check CHECK ((status = ANY (ARRAY['active'::text, 'inactive'::text])))
-);
-
-
---
--- Name: TABLE redpresu_companies; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public.redpresu_companies IS 'Empresas del sistema multi-tenant';
-
-
---
--- Name: COLUMN redpresu_companies.id; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.redpresu_companies.id IS 'ID único de la empresa';
-
-
---
--- Name: COLUMN redpresu_companies.name; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.redpresu_companies.name IS 'Nombre de la empresa';
-
-
---
--- Name: COLUMN redpresu_companies.status; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.redpresu_companies.status IS 'Estado de la empresa: active o inactive';
-
-
---
--- Name: empresas_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.empresas_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: empresas_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.empresas_id_seq OWNED BY public.redpresu_companies.id;
+COMMENT ON VIEW public.redpresu_active_issuers IS 'Vista de emisores activos (no eliminados). Usar en queries normales.';
 
 
 --
@@ -1253,6 +1269,65 @@ COMMENT ON COLUMN public.redpresu_tariffs.is_template IS 'Indica si esta tarifa 
 
 
 --
+-- Name: redpresu_user_invitations; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.redpresu_user_invitations (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    inviter_id uuid NOT NULL,
+    email text NOT NULL,
+    token text NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    status text DEFAULT 'pending'::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT invitations_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'accepted'::text, 'expired'::text, 'cancelled'::text])))
+);
+
+
+--
+-- Name: TABLE redpresu_user_invitations; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.redpresu_user_invitations IS 'Tabla de invitaciones de usuarios con tokens de acceso';
+
+
+--
+-- Name: COLUMN redpresu_user_invitations.inviter_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_user_invitations.inviter_id IS 'Usuario que envía la invitación';
+
+
+--
+-- Name: COLUMN redpresu_user_invitations.email; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_user_invitations.email IS 'Email del usuario invitado';
+
+
+--
+-- Name: COLUMN redpresu_user_invitations.token; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_user_invitations.token IS 'Token único para validar la invitación';
+
+
+--
+-- Name: COLUMN redpresu_user_invitations.expires_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_user_invitations.expires_at IS 'Fecha de expiración del token';
+
+
+--
+-- Name: COLUMN redpresu_user_invitations.status; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_user_invitations.status IS 'Estado: pending, accepted, expired, cancelled';
+
+
+--
 -- Name: redpresu_users; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1423,6 +1498,22 @@ ALTER TABLE ONLY public.redpresu_subscriptions
 
 
 --
+-- Name: redpresu_user_invitations redpresu_user_invitations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.redpresu_user_invitations
+    ADD CONSTRAINT redpresu_user_invitations_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: redpresu_user_invitations redpresu_user_invitations_token_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.redpresu_user_invitations
+    ADD CONSTRAINT redpresu_user_invitations_token_key UNIQUE (token);
+
+
+--
 -- Name: redpresu_tariffs tariffs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1563,6 +1654,41 @@ CREATE INDEX idx_config_is_system ON public.redpresu_config USING btree (is_syst
 --
 
 CREATE INDEX idx_empresas_status ON public.redpresu_companies USING btree (status);
+
+
+--
+-- Name: idx_invitations_email; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_invitations_email ON public.redpresu_user_invitations USING btree (email);
+
+
+--
+-- Name: idx_invitations_expires_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_invitations_expires_at ON public.redpresu_user_invitations USING btree (expires_at);
+
+
+--
+-- Name: idx_invitations_inviter_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_invitations_inviter_id ON public.redpresu_user_invitations USING btree (inviter_id);
+
+
+--
+-- Name: idx_invitations_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_invitations_status ON public.redpresu_user_invitations USING btree (status);
+
+
+--
+-- Name: idx_invitations_token; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_invitations_token ON public.redpresu_user_invitations USING btree (token);
 
 
 --
@@ -1840,6 +1966,14 @@ ALTER TABLE ONLY public.redpresu_issuers
 
 
 --
+-- Name: redpresu_user_invitations redpresu_user_invitations_inviter_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.redpresu_user_invitations
+    ADD CONSTRAINT redpresu_user_invitations_inviter_id_fkey FOREIGN KEY (inviter_id) REFERENCES public.redpresu_users(id) ON DELETE CASCADE;
+
+
+--
 -- Name: redpresu_tariffs tariffs_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1993,6 +2127,43 @@ CREATE POLICY empresas_select_superadmin ON public.redpresu_companies FOR SELECT
 
 
 --
+-- Name: redpresu_user_invitations invitations_delete_policy; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY invitations_delete_policy ON public.redpresu_user_invitations FOR DELETE USING (((inviter_id = auth.uid()) OR (EXISTS ( SELECT 1
+   FROM public.redpresu_users
+  WHERE ((redpresu_users.id = auth.uid()) AND (redpresu_users.role = ANY (ARRAY['admin'::text, 'superadmin'::text])))))));
+
+
+--
+-- Name: redpresu_user_invitations invitations_insert_policy; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY invitations_insert_policy ON public.redpresu_user_invitations FOR INSERT WITH CHECK ((EXISTS ( SELECT 1
+   FROM public.redpresu_users
+  WHERE ((redpresu_users.id = auth.uid()) AND (redpresu_users.role = ANY (ARRAY['admin'::text, 'superadmin'::text]))))));
+
+
+--
+-- Name: redpresu_user_invitations invitations_select_policy; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY invitations_select_policy ON public.redpresu_user_invitations FOR SELECT USING ((auth.uid() IN ( SELECT u1.id
+   FROM (public.redpresu_users u1
+     JOIN public.redpresu_users u2 ON ((u1.company_id = u2.company_id)))
+  WHERE (u2.id = redpresu_user_invitations.inviter_id))));
+
+
+--
+-- Name: redpresu_user_invitations invitations_update_policy; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY invitations_update_policy ON public.redpresu_user_invitations FOR UPDATE USING (((inviter_id = auth.uid()) OR (EXISTS ( SELECT 1
+   FROM public.redpresu_users
+  WHERE ((redpresu_users.id = auth.uid()) AND (redpresu_users.role = ANY (ARRAY['admin'::text, 'superadmin'::text])))))));
+
+
+--
 -- Name: redpresu_issuers issuers_delete_own_company; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -2143,6 +2314,12 @@ CREATE POLICY redpresu_subscriptions_update_own_company ON public.redpresu_subsc
 --
 
 ALTER TABLE public.redpresu_tariffs ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: redpresu_user_invitations; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.redpresu_user_invitations ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: redpresu_users; Type: ROW SECURITY; Schema: public; Owner: -

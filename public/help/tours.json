@@ -380,10 +380,10 @@
         }
       },
       {
-        "element": "[data-tour='btn-activar-desactivar']",
+        "element": "[data-tour='btn-borrar-usuario']",
         "popover": {
-          "title": "6. Botón Activar/Desactivar",
-          "description": "Cambia el estado de acceso del usuario. Los usuarios desactivados no pueden iniciar sesión en la aplicación."
+          "title": "6. Botón Borrar Usuario",
+          "description": "Elimina permanentemente el usuario. Podrás elegir si borrar todos sus datos o reasignarlos a otro usuario."
         }
       }
     ]

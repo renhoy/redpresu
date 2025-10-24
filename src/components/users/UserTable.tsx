@@ -61,6 +61,7 @@ export default function UserTable({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [reassignUserId, setReassignUserId] = useState<string>("");
+  const [deleteAction, setDeleteAction] = useState<"delete" | "reassign">("reassign");
   const [invitationMessage, setInvitationMessage] = useState("");
   const [invitationToken, setInvitationToken] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -177,22 +178,42 @@ export default function UserTable({
   };
 
   const handleDeleteUser = async () => {
-    if (!selectedUser || !reassignUserId) {
+    if (!selectedUser) {
+      toast.error("No se ha seleccionado ningún usuario");
+      return;
+    }
+
+    if (deleteAction === "reassign" && !reassignUserId) {
       toast.error("Debe seleccionar un usuario para reasignar los registros");
       return;
     }
 
     setIsLoading(true);
 
-    // TODO: Implementar deleteUser con reasignación
-    // const result = await deleteUser(selectedUser.id, reassignUserId);
+    // Importar deleteUser desde actions
+    const { deleteUser } = await import("@/app/actions/users");
 
-    toast.info("Funcionalidad de borrado en desarrollo");
+    const result = await deleteUser(
+      selectedUser.id,
+      deleteAction === "reassign" ? reassignUserId : null
+    );
+
+    if (result.success) {
+      toast.success("Usuario borrado correctamente");
+
+      // Actualizar lista local
+      setUsers((prev) => prev.filter((u) => u.id !== selectedUser.id));
+
+      router.refresh();
+    } else {
+      toast.error(result.error || "Error al borrar usuario");
+    }
 
     setIsLoading(false);
     setIsDeleteDialogOpen(false);
     setSelectedUser(null);
     setReassignUserId("");
+    setDeleteAction("reassign");
   };
 
   const handleInviteUser = async (user: UserWithInviter) => {
@@ -471,37 +492,26 @@ export default function UserTable({
                               </TooltipContent>
                             </Tooltip>
 
-                            {/* Botón Activar/Desactivar - Solo admin/superadmin */}
+                            {/* Botón Borrar Usuario - Solo admin/superadmin */}
                             {currentUserRole !== "vendedor" && (
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Button
                                     variant="outline"
                                     size="icon"
-                                    data-tour="btn-activar-desactivar"
+                                    data-tour="btn-borrar-usuario"
                                     onClick={() => {
                                       setSelectedUser(user);
-                                      setIsToggleDialogOpen(true);
+                                      setReassignUserId("");
+                                      setIsDeleteDialogOpen(true);
                                     }}
-                                    className={
-                                      user.status === "active"
-                                        ? "border-orange-500 text-orange-600 hover:bg-orange-50"
-                                        : "border-green-600 text-green-600 hover:bg-green-50"
-                                    }
+                                    className="border-red-500 text-red-600 hover:bg-red-50"
                                   >
-                                    {user.status === "active" ? (
-                                      <Trash2 className="h-4 w-4" />
-                                    ) : (
-                                      <UserCheck className="h-4 w-4" />
-                                    )}
+                                    <Trash2 className="h-4 w-4" />
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>
-                                    {user.status === "active"
-                                      ? "Desactivar"
-                                      : "Activar"}
-                                  </p>
+                                  <p>Borrar usuario</p>
                                 </TooltipContent>
                               </Tooltip>
                             )}
@@ -606,11 +616,11 @@ export default function UserTable({
             <AlertDialogTitle className="text-red-600">
               ⚠️ Borrar Usuario
             </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-3">
+            <AlertDialogDescription className="space-y-4">
               <p>
                 ¿Estás seguro de que quieres borrar a{" "}
                 <strong className="text-foreground">
-                  {selectedUser?.name} {selectedUser?.apellidos}
+                  {selectedUser?.name} {selectedUser?.last_name}
                 </strong>
                 ?
               </p>
@@ -618,46 +628,78 @@ export default function UserTable({
               <div className="bg-red-50 border border-red-200 rounded-md p-3">
                 <p className="text-sm text-red-800">
                   <strong>⚠️ Advertencia:</strong> Esta acción no se puede deshacer.
-                  Todos los registros del usuario (tarifas, presupuestos, etc.)
-                  serán reasignados al usuario seleccionado.
                 </p>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <label className="text-sm font-medium text-foreground">
-                  Reasignar registros a:
+                  ¿Qué hacer con los datos del usuario? (tarifas, presupuestos, etc.):
                 </label>
-                <Select value={reassignUserId} onValueChange={setReassignUserId}>
-                  <SelectTrigger className="w-full bg-white">
-                    <SelectValue placeholder="Selecciona un usuario" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white">
-                    {users
-                      .filter(
-                        (u) =>
-                          u.id !== selectedUser?.id &&
-                          u.status === "active"
-                      )
-                      .map((user) => (
-                        <SelectItem key={user.id} value={user.id}>
-                          {user.name} {user.apellidos} ({user.email})
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-                {!reassignUserId && (
-                  <p className="text-xs text-muted-foreground">
-                    Debes seleccionar un usuario para continuar
-                  </p>
-                )}
+
+                <RadioGroup value={deleteAction} onValueChange={(value: "delete" | "reassign") => setDeleteAction(value)}>
+                  <div className="flex items-start space-x-3 p-3 rounded-lg border-2 border-gray-200 hover:border-gray-300">
+                    <RadioGroupItem value="delete" id="delete" className="mt-1" />
+                    <Label htmlFor="delete" className="flex-1 cursor-pointer">
+                      <div className="space-y-1">
+                        <p className="font-semibold text-base">Borrar todos los datos</p>
+                        <p className="text-sm text-gray-600">
+                          Se eliminarán permanentemente todas las tarifas, presupuestos y demás datos creados por este usuario.
+                        </p>
+                      </div>
+                    </Label>
+                  </div>
+
+                  <div className="flex items-start space-x-3 p-3 rounded-lg border-2 border-gray-200 hover:border-gray-300">
+                    <RadioGroupItem value="reassign" id="reassign" className="mt-1" />
+                    <Label htmlFor="reassign" className="flex-1 cursor-pointer">
+                      <div className="space-y-1">
+                        <p className="font-semibold text-base">Reasignar datos a otro usuario</p>
+                        <p className="text-sm text-gray-600">
+                          Los datos del usuario (tarifas, presupuestos, etc.) se asignarán al usuario que selecciones.
+                        </p>
+                      </div>
+                    </Label>
+                  </div>
+                </RadioGroup>
               </div>
+
+              {deleteAction === "reassign" && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">
+                    Reasignar registros a:
+                  </label>
+                  <Select value={reassignUserId} onValueChange={setReassignUserId}>
+                    <SelectTrigger className="w-full bg-white">
+                      <SelectValue placeholder="Selecciona un usuario" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      {users
+                        .filter(
+                          (u) =>
+                            u.id !== selectedUser?.id &&
+                            u.status === "active"
+                        )
+                        .map((user) => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.name} {user.last_name} ({user.email})
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  {!reassignUserId && (
+                    <p className="text-xs text-muted-foreground">
+                      Debes seleccionar un usuario para continuar
+                    </p>
+                  )}
+                </div>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isLoading}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteUser}
-              disabled={isLoading || !reassignUserId}
+              disabled={isLoading || (deleteAction === "reassign" && !reassignUserId)}
               className="bg-red-600 hover:bg-red-700"
             >
               {isLoading ? "Borrando..." : "Sí, borrar usuario"}

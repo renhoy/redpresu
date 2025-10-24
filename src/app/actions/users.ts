@@ -339,7 +339,7 @@ export async function createUser(data: CreateUserData) {
         role: data.role,
         company_id: data.company_id,
         status: "pending", // Usuario debe cambiar password en primer login
-        invited_by: currentUser.id,
+        invited_by: null, // Se asignará cuando acepte la invitación
       })
       .select()
       .single();
@@ -478,15 +478,17 @@ export async function toggleUserStatus(
 }
 
 /**
- * Eliminar usuario (físicamente - solo superadmin)
+ * Eliminar usuario permanentemente
+ * @param userId - ID del usuario a eliminar
+ * @param reassignToUserId - ID del usuario al que reasignar datos (null para borrar datos)
  */
-export async function deleteUser(userId: string) {
+export async function deleteUser(userId: string, reassignToUserId: string | null) {
   const { allowed, currentUser } = await checkAdminPermission();
 
-  if (!allowed || !currentUser || currentUser.role !== "superadmin") {
+  if (!allowed || !currentUser) {
     return {
       success: false,
-      error: "Solo superadmin puede eliminar usuarios permanentemente",
+      error: "No tienes permisos para eliminar usuarios",
     };
   }
 
@@ -510,32 +512,97 @@ export async function deleteUser(userId: string) {
     };
   }
 
-  // Verificar que el usuario pertenece a la misma empresa
-  const { data: targetUser } = await supabaseAdmin
+  // Verificar que el usuario a eliminar pertenece a la misma empresa
+  const { data: targetUser, error: targetError } = await supabaseAdmin
     .from("redpresu_users")
-    .select("company_id")
+    .select("company_id, role")
     .eq("id", userId)
     .single();
 
-  if (!targetUser || targetUser.company_id !== companyId) {
+  if (targetError || !targetUser || targetUser.company_id !== companyId) {
     return {
       success: false,
       error: "Usuario no encontrado",
     };
   }
 
-  // Eliminar de auth.users (cascada eliminará de public.users)
-  const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(
-    userId
-  );
-
-  if (authError) {
-    log.error("Error deleting user:", authError);
+  // Admin no puede borrar superadmin
+  if (currentUser.role === "admin" && targetUser.role === "superadmin") {
     return {
       success: false,
-      error: "Error al eliminar usuario",
+      error: "No tienes permisos para eliminar un superadmin",
     };
   }
+
+  // Si se va a reasignar, verificar que el usuario destino existe y es de la misma empresa
+  if (reassignToUserId) {
+    const { data: reassignUser, error: reassignError } = await supabaseAdmin
+      .from("redpresu_users")
+      .select("id, company_id, status")
+      .eq("id", reassignToUserId)
+      .single();
+
+    if (reassignError || !reassignUser || reassignUser.company_id !== companyId) {
+      return {
+        success: false,
+        error: "Usuario de reasignación no válido",
+      };
+    }
+
+    if (reassignUser.status !== "active") {
+      return {
+        success: false,
+        error: "El usuario de reasignación debe estar activo",
+      };
+    }
+
+    // Reasignar tarifas
+    const { error: tariffsError } = await supabaseAdmin
+      .from("redpresu_tariffs")
+      .update({ user_id: reassignToUserId })
+      .eq("user_id", userId);
+
+    if (tariffsError) {
+      log.error("[deleteUser] Error reasignando tarifas:", tariffsError);
+      return {
+        success: false,
+        error: "Error al reasignar tarifas",
+      };
+    }
+
+    // Reasignar presupuestos
+    const { error: budgetsError } = await supabaseAdmin
+      .from("redpresu_budgets")
+      .update({ user_id: reassignToUserId })
+      .eq("user_id", userId);
+
+    if (budgetsError) {
+      log.error("[deleteUser] Error reasignando presupuestos:", budgetsError);
+      return {
+        success: false,
+        error: "Error al reasignar presupuestos",
+      };
+    }
+
+    log.info(`[deleteUser] Datos reasignados de ${userId} a ${reassignToUserId}`);
+  } else {
+    // Si no se reasigna, borrar datos en cascada
+    // Las tablas con ON DELETE CASCADE se encargarán automáticamente
+    log.info(`[deleteUser] Se borrarán todos los datos del usuario ${userId}`);
+  }
+
+  // Eliminar de auth.users (cascada eliminará de public.redpresu_users)
+  const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+
+  if (authError) {
+    log.error("[deleteUser] Error eliminando usuario de auth:", authError);
+    return {
+      success: false,
+      error: "Error al eliminar usuario del sistema de autenticación",
+    };
+  }
+
+  log.info(`[deleteUser] Usuario ${userId} eliminado correctamente`);
 
   return {
     success: true,
