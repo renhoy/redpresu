@@ -343,14 +343,41 @@ export default function UserTable({
                 >
                   {/* Columna Email */}
                   <TableCell className="p-4">
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      <span
-                        className="font-medium"
-                        style={{ fontSize: "12px" }}
-                      >
-                        {user.email}
-                      </span>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <span
+                          className="font-medium"
+                          style={{ fontSize: "12px" }}
+                        >
+                          {user.email}
+                        </span>
+                      </div>
+
+                      {/* Botón [+ email] - Solo si no tiene inviter y status=pending */}
+                      {!user.inviter_name &&
+                       user.status === "pending" &&
+                       currentUserRole !== "vendedor" && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleInviteUser(user)}
+                                disabled={isLoading}
+                                className="border-lime-500 text-lime-600 hover:bg-lime-50 ml-2"
+                              >
+                                <Plus className="h-3 w-3 mr-1" />
+                                <Mail className="h-3 w-3" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Invitar por email</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
                     </div>
                   </TableCell>
 
@@ -430,33 +457,7 @@ export default function UserTable({
                         </div>
                       </div>
                     ) : (
-                      <>
-                        {/* Botón [+ email] solo aparece si:
-                            1. No tiene inviter_name (invited_by NULL)
-                            2. Estado es 'pending' (sin contraseña configurada aún)
-                            3. Usuario actual es admin/superadmin */}
-                        {currentUserRole !== "vendedor" && user.status === "pending" && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleInviteUser(user)}
-                                  disabled={isLoading}
-                                  className="border-lime-500 text-lime-600 hover:bg-lime-50"
-                                >
-                                  <Plus className="h-3 w-3 mr-1" />
-                                  <Mail className="h-3 w-3" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Invitar por email</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                      </>
+                      <span className="text-xs text-muted-foreground">—</span>
                     )}
                   </TableCell>
 
@@ -517,25 +518,6 @@ export default function UserTable({
                                 </TooltipContent>
                               </Tooltip>
                             )}
-
-                            {/* Botón Reenviar invitación - Solo si pending */}
-                            {user.status === "pending" &&
-                              currentUserRole !== "vendedor" && (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      size="icon"
-                                      className="border-blue-500 text-lime-600 hover:bg-lime-50"
-                                    >
-                                      <Mail className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Reenviar invitación</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              )}
                           </>
                         )}
                       </div>
