@@ -54,7 +54,7 @@ export function TourButton({ tourId, targetPath }: TourButtonProps) {
       className="border-lime-500 text-lime-600 hover:bg-lime-50 h-8 px-3 gap-1.5"
     >
       <Play className="h-3.5 w-3.5" />
-      <span className="text-xs font-medium">{loading ? "Iniciando..." : "Tour"}</span>
+      <span className="text-xs font-medium">{loading ? "Iniciando..." : "Guía"}</span>
     </Button>
   );
 }

@@ -84,19 +84,18 @@ export function BudgetNotesIcon({ budgetId, initialCount = 0, className = '' }: 
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  size="sm"
-                  className={`relative h-7 px-2 gap-1.5 text-xs border-lime-600 text-lime-600 hover:bg-lime-50 hover:text-lime-700 ${className}`}
+                  size="icon"
+                  className={`relative h-7 w-7 border-lime-500 text-lime-500 hover:bg-lime-50 hover:text-lime-600 ${className}`}
                   onClick={(e) => {
                     console.log('[BudgetNotesIcon] Button clicked')
                     e.stopPropagation()
                   }}
                 >
                   <NotebookPen className="h-3.5 w-3.5 flex-shrink-0" />
-                  <span>Notas</span>
                   {notesCount > 0 && (
                     <Badge
                       variant="secondary"
-                      className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px] bg-lime-600 text-white"
+                      className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px] bg-lime-500 text-white"
                     >
                       {notesCount}
                     </Badge>
@@ -105,7 +104,7 @@ export function BudgetNotesIcon({ budgetId, initialCount = 0, className = '' }: 
               </PopoverTrigger>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{notesCount > 0 ? 'Ver y editar notas' : 'Crear nota'}</p>
+              <p>Notas</p>
             </TooltipContent>
             <PopoverContent
               className="w-80 p-0"

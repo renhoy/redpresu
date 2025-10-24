@@ -242,7 +242,7 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold text-lime-600 flex items-center gap-2">
+                <h1 className="text-3xl font-bold text-black flex items-center gap-2">
                   <Layers className="h-6 w-6" />
                   {mode === "create" ? "Nueva Tarifa" : "Editar Tarifa"}
                 </h1>
@@ -253,10 +253,10 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
                   className="border-lime-500 text-lime-600 hover:bg-lime-50 h-8 px-3 gap-1.5"
                 >
                   <Play className="h-3.5 w-3.5" />
-                  <span className="text-xs font-medium">Tour</span>
+                  <span className="text-xs font-medium">Guía</span>
                 </Button>
               </div>
-              <p className="text-sm text-lime-600">
+              <p className="text-sm text-black">
                 Complete los datos de la tarifa
               </p>
             </div>

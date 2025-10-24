@@ -235,7 +235,7 @@ export function TariffList({
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
         <div className="text-center md:text-left w-full md:w-auto">
           <div className="flex items-center justify-center md:justify-start gap-3">
-            <h1 className="text-3xl font-bold text-lime-600 flex items-center gap-2">
+            <h1 className="text-3xl font-bold text-black flex items-center gap-2">
               <Layers className="h-6 w-6" />
               Tarifas
             </h1>
@@ -249,10 +249,10 @@ export function TariffList({
               className="border-lime-500 text-lime-600 hover:bg-lime-50 h-8 px-3 gap-1.5"
             >
               <Play className="h-3.5 w-3.5" />
-              <span className="text-xs font-medium">Tour</span>
+              <span className="text-xs font-medium">Guía</span>
             </Button>
           </div>
-          <p className="text-sm text-lime-600">
+          <p className="text-sm text-black">
             Gestiona tus tarifas y crea presupuestos
           </p>
         </div>

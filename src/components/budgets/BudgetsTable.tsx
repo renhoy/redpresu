@@ -465,11 +465,11 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
           <td className="p-4">
             <div className="flex items-center gap-2">
               {/* Indentación visual + icono expandir/colapsar */}
-              <div
-                style={{ marginLeft: `${depth * 24}px` }}
-                className="flex items-center gap-1"
-              >
-                {hasChildren ? (
+              {hasChildren && (
+                <div
+                  style={{ marginLeft: `${depth * 24}px` }}
+                  className="flex items-center gap-1"
+                >
                   <Button
                     variant="ghost"
                     size="icon"
@@ -482,13 +482,11 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
                       <ChevronRight className="h-4 w-4" />
                     )}
                   </Button>
-                ) : (
-                  <div className="w-5" />
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Datos del cliente */}
-              <div className="space-y-1 flex-1">
+              <div className="space-y-1 flex-1" style={{ marginLeft: depth > 0 ? `${depth * 24}px` : '0' }}>
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-medium text-xs">
                     {budget.client_name} ({budget.client_nif_nie || "N/A"})
@@ -772,7 +770,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
         <div className="text-center md:text-left w-full md:w-auto">
           <div className="flex items-center justify-center md:justify-start gap-3">
-            <h1 className="text-3xl font-bold text-lime-700 flex items-center gap-2">
+            <h1 className="text-3xl font-bold text-black flex items-center gap-2">
               <FileText className="h-6 w-6" />
               Presupuestos
             </h1>
@@ -786,10 +784,10 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
               className="border-lime-600 text-lime-600 hover:bg-lime-50 h-8 px-3 gap-1.5"
             >
               <Play className="h-3.5 w-3.5" />
-              <span className="text-xs font-medium">Tour</span>
+              <span className="text-xs font-medium">Guía</span>
             </Button>
           </div>
-          <p className="text-sm text-lime-600">
+          <p className="text-sm text-black">
             Gestiona tus presupuestos creados
           </p>
         </div>
