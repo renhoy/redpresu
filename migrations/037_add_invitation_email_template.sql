@@ -11,7 +11,7 @@
 BEGIN;
 
 -- Insertar configuración de plantilla de email de invitación
-INSERT INTO public.config (key, value, description, category, is_system)
+INSERT INTO public.redpresu_config (key, value, description, category, is_system)
 VALUES (
   'invitation_email_template',
   '"Has sido invitado al Sistema de Presupuestos.\n\nPor favor, accede al siguiente enlace para configurar tu contraseña y activar tu cuenta:\n\n{{invitationUrl}}\n\nEste enlace es válido por 7 días.\n\n---\nSi no solicitaste esta invitación, puedes ignorar este mensaje."'::jsonb,
@@ -31,7 +31,7 @@ COMMIT;
 -- COMENTARIOS
 -- ============================================
 
-COMMENT ON TABLE public.config IS
+COMMENT ON TABLE public.redpresu_config IS
   'Configuración global del sistema editable por superadmin';
 
 -- ============================================
@@ -40,7 +40,7 @@ COMMENT ON TABLE public.config IS
 -- Para revertir esta migración, ejecutar:
 --
 -- BEGIN;
--- DELETE FROM public.config WHERE key = 'invitation_email_template';
+-- DELETE FROM public.redpresu_config WHERE key = 'invitation_email_template';
 -- COMMIT;
 
 -- ============================================
@@ -49,7 +49,7 @@ COMMENT ON TABLE public.config IS
 --
 -- Ver la configuración creada:
 -- SELECT key, value, description, category, is_system, created_at
--- FROM public.config
+-- FROM public.redpresu_config
 -- WHERE key = 'invitation_email_template';
 --
 -- ============================================
