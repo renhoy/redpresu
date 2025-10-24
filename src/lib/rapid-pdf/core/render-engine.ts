@@ -4,22 +4,13 @@
  */
 
 import puppeteer, { Browser, Page } from "puppeteer";
-import { promises as fs } from "fs";
 import path from "path";
 import { PDFDocument } from "pdf-lib";
 import type { PDFPayload, ProcessedElement, StructureData } from "../types";
 import { PageManager } from "./page-manager";
 
-// Importar componentes estáticamente para evitar problemas con require() dinámico
-const ContentLevels = require("../templates/default/js/component/contentLevels.js");
-const ContentTotals = require("../templates/default/js/component/contentTotals.js");
-const ContentClient = require("../templates/default/js/component/contentClient.js");
-const ContentNote = require("../templates/default/js/component/contentNote.js");
-const ContentSeparator = require("../templates/default/js/component/contentSeparator.js");
-const HeaderCompany = require("../templates/default/js/component/headerCompany.js");
-const HeaderTitle = require("../templates/default/js/component/headerTitle.js");
-const FooterSignatures = require("../templates/default/js/component/footerSignatures.js");
-const FooterPagination = require("../templates/default/js/component/footerPagination.js");
+// Usar require para fs.promises (compatible con Next.js Server Actions)
+const fs = require("fs").promises;
 
 export class RenderEngine {
   private pageManager: PageManager;
@@ -27,6 +18,44 @@ export class RenderEngine {
   private structureData: StructureData | null = null;
   private browser: Browser | null = null;
   private activePage: Page | null = null;
+  private componentCache: Map<string, any> = new Map();
+
+  /**
+   * Carga un componente dinámicamente según el template del payload
+   * Igual que rapid_pdf: usa budgetData.company.template para la ruta
+   * Usa import() dinámico que es compatible con Next.js
+   */
+  private async loadComponentAsync(componentFile: string): Promise<any> {
+    if (!this.budgetData) {
+      throw new Error("budgetData no está configurado");
+    }
+
+    const templateId = this.budgetData.company.template;
+    const cacheKey = `${templateId}/${componentFile}`;
+
+    // console.log(`[loadComponentAsync] Cargando: ${componentFile} del template: ${templateId}`);
+
+    // Usar cache para evitar recargar
+    if (this.componentCache.has(cacheKey)) {
+      // console.log(`[loadComponentAsync] ✓ Usando cache para: ${componentFile}`);
+      return this.componentCache.get(cacheKey);
+    }
+
+    // Cargar componente usando import() dinámico
+    // Next.js soporta esto para Server Actions
+    const componentPath = `../templates/${templateId}/js/component/${componentFile}`;
+
+    try {
+      const module = await import(componentPath);
+      const ComponentClass = module.default || module;
+      this.componentCache.set(cacheKey, ComponentClass);
+      // console.log(`[loadComponentAsync] ✓ Cargado exitosamente: ${componentFile}`);
+      return ComponentClass;
+    } catch (error) {
+      console.error(`[loadComponentAsync] ✗ Error cargando ${componentFile}:`, error);
+      throw new Error(`Error cargando componente '${componentFile}' del template '${templateId}': ${error.message}`);
+    }
+  }
 
   constructor(pageManager: PageManager) {
     this.pageManager = pageManager;
@@ -166,18 +195,22 @@ export class RenderEngine {
   /**
    * Inicializa página final para renderizado
    */
-  async initFinalPage(): Promise<void> {
+  async initFinalPage(isDevelopment: boolean = false): Promise<void> {
     if (!this.budgetData || !this.structureData) {
       throw new Error("BudgetData y StructureData deben estar configurados");
     }
 
-    console.log("RenderEngine: Inicializando página final");
+    if (isDevelopment) {
+      console.log("RenderEngine: Página final inicializada");
+    }
 
     if (this.activePage) {
       try {
         await this.activePage.close();
       } catch (error) {
-        console.warn("Error cerrando página previa:", error);
+        if (isDevelopment) {
+          console.warn("Error cerrando página previa:", error);
+        }
       }
       this.activePage = null;
     }
@@ -199,12 +232,30 @@ export class RenderEngine {
 
     const pageTitle = this.budgetData.pdf?.title || "Presupuesto";
 
+    // Inyectar variables CSS de márgenes desde structure.json
+    const margins = pageConfig.margins || {};
+    const dimensions = pageConfig.dimensions || {};
+    const contentHeight = (dimensions.height || 1123) - (margins.top || 40) - (margins.bottom || 40);
+
+    const cssVariables = `
+:root {
+  --page-width: ${dimensions.width || 794}px;
+  --page-height: ${dimensions.height || 1123}px;
+  --margin-top: ${margins.top || 40}px;
+  --margin-bottom: ${margins.bottom || 40}px;
+  --margin-left: ${margins.left || 54}px;
+  --margin-right: ${margins.right || 54}px;
+  --content-width: 100%;
+  --content-height: ${contentHeight}px;
+}`;
+
     const baseHTML = `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <title>${pageTitle}</title>
   <style>${cssContent}</style>
+  <style>${cssVariables}</style>
 </head>
 <body>
   <div id="app">
@@ -217,7 +268,6 @@ export class RenderEngine {
 </html>`;
 
     await this.activePage.setContent(baseHTML);
-    console.log("RenderEngine: Página final inicializada");
   }
 
   /**
@@ -225,7 +275,8 @@ export class RenderEngine {
    */
   async renderElementAtPosition(
     element: ProcessedElement,
-    yPosition: number
+    yPosition: number,
+    isDevelopment: boolean = false
   ): Promise<void> {
     if (!this.activePage || !this.budgetData || !this.structureData) {
       throw new Error("RenderEngine no inicializado correctamente");
@@ -268,9 +319,11 @@ export class RenderEngine {
         element.component
       );
 
-      console.log(
-        `RenderEngine: Renderizado ${element.component} en Y=${yPosition}`
-      );
+      if (isDevelopment) {
+        console.log(
+          `RenderEngine: Renderizado ${element.component} en Y=${yPosition}`
+        );
+      }
     } catch (error) {
       console.error(`Error renderizando ${element.component}:`, error);
     }
@@ -416,6 +469,7 @@ export class RenderEngine {
       console.log("RenderEngine: Generando PDF inicial con Puppeteer");
 
       // Generar PDF inicial con Puppeteer
+      console.log("RenderEngine: Llamando a page.pdf()...");
       const puppeteerPdfData = await pdfPage.pdf({
         width: pageConfig.dimensions.width + "px",
         height: pageConfig.dimensions.height + "px",
@@ -431,7 +485,9 @@ export class RenderEngine {
         preferCSSPageSize: true,
       });
 
+      console.log("RenderEngine: PDF generado, cerrando página...");
       await pdfPage.close();
+      console.log("RenderEngine: Página cerrada correctamente");
 
       console.log("RenderEngine: Aplicando metadatos con pdf-lib");
       console.log(`- Título: ${pdfTitle}`);
@@ -483,36 +539,41 @@ export class RenderEngine {
     try {
       const componentName = element.component;
 
-      // Mapear nombre de componente a clase importada
-      const componentClassMap: Record<string, any> = {
-        company: HeaderCompany,
-        title: HeaderTitle,
-        client: ContentClient,
-        separator: ContentSeparator,
-        levels: ContentLevels,
-        totals: ContentTotals,
-        note: ContentNote,
-        signatures: FooterSignatures,
-        pagination: FooterPagination,
+      // Mapear nombre de componente a archivo (dinámicamente desde template)
+      const componentFileMap: Record<string, string> = {
+        company: "headerCompany.js",
+        title: "headerTitle.js",
+        client: "contentClient.js",
+        separator: "contentSeparator.js",
+        levels: "contentLevels.js",
+        totals: "contentTotals.js",
+        note: "contentNote.js",
+        signatures: "footerSignatures.js",
+        pagination: "footerPagination.js",
       };
 
-      const ComponentClass = componentClassMap[componentName];
-      if (!ComponentClass) {
+      const componentFile = componentFileMap[componentName];
+      if (!componentFile) {
         console.warn(`Componente desconocido: ${componentName}`);
         return `<div class="component-${componentName}"></div>`;
       }
+
+      // Cargar componente dinámicamente según el template
+      const ComponentClass = await this.loadComponentAsync(componentFile);
 
       // Crear instancia y renderizar según el tipo de componente
       let componentInstance;
 
       if (componentName === "levels") {
         // Para levels, pasar levelData
+        console.log(`[generateComponentHTML] levels - levelData:`, element.levelData ? "presente" : "ausente");
         componentInstance = new ComponentClass({
           levelData: element.levelData,
         });
       } else if (componentName === "totals") {
         // Para totals, pasar datos de totales desde budgetData
         const totalsData = this.budgetData.summary?.totals;
+        console.log(`[generateComponentHTML] totals - totalsData:`, totalsData ? "presente" : "ausente");
         if (!totalsData) {
           return `<div class="component-totals"></div>`;
         }
@@ -532,15 +593,23 @@ export class RenderEngine {
           total_amount: totalsData.total?.amount || "0.00",
         });
       } else if (componentName === "client") {
-        // Para client, pasar datos del cliente
+        // Para client, pasar datos del cliente directamente como propiedades
         const clientData = this.budgetData.summary?.client;
-        componentInstance = new ComponentClass({ clientData });
+        console.log(`[generateComponentHTML] client - clientData:`, clientData);
+        componentInstance = new ComponentClass({
+          client_name: clientData?.name,
+          client_nif_nie: clientData?.nif_nie,
+          client_address: clientData?.address,
+          client_contact: clientData?.contact
+        });
       } else if (componentName === "note") {
-        // Para note, pasar el texto de la nota
-        const noteText = element.noteText || this.budgetData.summary?.note || "";
-        componentInstance = new ComponentClass({ noteText });
+        // Para note, usar el paragraphData del elemento (cada elemento es un párrafo individual)
+        const paragraphData = (element as any).paragraphData || (element as any).paragraph_text || "";
+        console.log(`[generateComponentHTML] note - paragraph length:`, paragraphData.length);
+        componentInstance = new ComponentClass({ paragraphData });
       } else {
         // Para otros componentes, pasar element completo
+        console.log(`[generateComponentHTML] ${componentName} - usando element completo`);
         componentInstance = new ComponentClass(element);
       }
 
@@ -556,6 +625,7 @@ export class RenderEngine {
 
   /**
    * Carga todo el CSS necesario
+   * Igual que rapid_pdf: carga CSS globales y de cada componente
    */
   private async loadAllCSS(): Promise<string> {
     if (!this.budgetData) {
@@ -563,23 +633,50 @@ export class RenderEngine {
     }
 
     const templateId = this.budgetData.company.template;
+    const templateBasePath = path.join(process.cwd(), "src/lib/rapid-pdf/templates", templateId, "css");
+    const globalCSSPath = path.join(process.cwd(), "src/lib/rapid-pdf/css");
 
+    // IMPORTANTE: Orden correcto de carga CSS (igual que rapid_pdf):
+    // 1. themeVariables.css - Define las variables CSS
+    // 2. styles-global.css - Define .page, .content-area, etc.
+    // 3. styles.css del template - Estilos específicos del template
+    // 4. CSS de componentes
     const cssFiles = [
-      path.join(process.cwd(), "src/lib/rapid-pdf/templates", templateId, "css", "styles.css"),
-      path.join(process.cwd(), "src/lib/rapid-pdf/templates", templateId, "css", "common.css"),
+      path.join(globalCSSPath, "themeVariables.css"),  // <- PRIMERO: variables globales
+      path.join(globalCSSPath, "styles-global.css"),   // <- SEGUNDO: estilos globales (.page, .content-area)
+      path.join(templateBasePath, "styles.css"),       // <- TERCERO: estilos del template
+      path.join(templateBasePath, "headerCompany.css"),
+      path.join(templateBasePath, "headerTitle.css"),
+      path.join(templateBasePath, "contentClient.css"),
+      path.join(templateBasePath, "contentSeparator.css"),
+      path.join(templateBasePath, "contentTotals.css"),
+      path.join(templateBasePath, "contentNote.css"),
+      path.join(templateBasePath, "contentLevels.css"),
+      path.join(templateBasePath, "footerSignatures.css"),
+      path.join(templateBasePath, "footerPagination.css"),
+      path.join(templateBasePath, "common.css"),
+      path.join(templateBasePath, "summary.css"),
+      path.join(templateBasePath, "budget.css"),
     ];
 
     let combinedCSS = "";
+    console.log(`[loadAllCSS] Cargando CSS para template: ${templateId}`);
+
     for (const cssFile of cssFiles) {
       try {
         const cssContent = await fs.readFile(cssFile, "utf8");
         combinedCSS += `\n/* ${path.basename(cssFile)} */\n${cssContent}\n`;
+        console.log(`[loadAllCSS] ✓ Cargado: ${path.basename(cssFile)} (${cssContent.length} bytes)`);
       } catch (error) {
-        console.warn(`CSS file not found: ${cssFile}`);
+        console.warn(`[loadAllCSS] ✗ CSS file not found: ${cssFile}`);
       }
     }
 
-    return this.applyDynamicColors(combinedCSS);
+    console.log(`[loadAllCSS] Total CSS combinado: ${combinedCSS.length} bytes`);
+    const processedCSS = this.applyDynamicColors(combinedCSS);
+    console.log(`[loadAllCSS] Después de applyDynamicColors: ${processedCSS.length} bytes`);
+
+    return processedCSS;
   }
 
   /**
@@ -665,12 +762,16 @@ export class RenderEngine {
    */
   async close(): Promise<void> {
     try {
-      if (this.activePage) {
-        await this.activePage.close();
+      if (this.activePage && typeof this.activePage.close === 'function') {
+        await this.activePage.close().catch((err) => {
+          console.warn("Error cerrando página (ya podría estar cerrada):", err.message);
+        });
         this.activePage = null;
       }
-      if (this.browser) {
-        await this.browser.close();
+      if (this.browser && typeof this.browser.close === 'function') {
+        await this.browser.close().catch((err) => {
+          console.warn("Error cerrando browser (ya podría estar cerrado):", err.message);
+        });
         this.browser = null;
       }
       console.log("RenderEngine: Puppeteer cerrado correctamente");

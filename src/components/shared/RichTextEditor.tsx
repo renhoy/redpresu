@@ -62,7 +62,7 @@ export function RichTextEditor({
       Link.configure({
         openOnClick: true,
         HTMLAttributes: {
-          class: 'text-cyan-600 underline cursor-pointer hover:text-cyan-700',
+          class: 'text-lime-600 underline cursor-pointer hover:text-lime-700',
           rel: 'noopener noreferrer',
           target: '_blank',
         },
@@ -333,7 +333,7 @@ export function RichTextEditor({
                 type="button"
                 size="sm"
                 onClick={() => handleEditLink(hoveredLink.href, hoveredLink.text, hoveredLink.position)}
-                className="h-6 px-2 bg-cyan-600 hover:bg-cyan-700 text-white text-xs"
+                className="h-6 px-2 bg-lime-500 hover:bg-lime-600 text-white text-xs"
               >
                 Editar
               </Button>
@@ -419,7 +419,7 @@ export function RichTextEditor({
                 type="button"
                 onClick={handleSaveLink}
                 disabled={!linkUrl}
-                className="bg-cyan-600 hover:bg-cyan-700 text-white"
+                className="bg-lime-500 hover:bg-lime-600 text-white"
               >
                 Añadir
               </Button>

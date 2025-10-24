@@ -29,17 +29,15 @@ export default async function HelpPage() {
   return (
     <div className="min-h-screen bg-lime-50">
       <div className="container mx-auto px-4 py-6">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <HelpCircle className="h-6 w-6" />
-              Centro de Ayuda
-            </h1>
-            <p className="text-sm">
-              Encuentra toda la ayduda en información para aprovechar al máximo
-              la aplicación
-            </p>
-          </div>
+        <div className="mb-6 text-center md:text-left">
+          <h1 className="text-3xl font-bold flex items-center justify-center md:justify-start gap-2">
+            <HelpCircle className="h-6 w-6" />
+            Centro de Ayuda
+          </h1>
+          <p className="text-sm">
+            Encuentra toda la ayduda en información para aprovechar al máximo
+            la aplicación
+          </p>
         </div>
 
         <HelpIndex articles={articles} />

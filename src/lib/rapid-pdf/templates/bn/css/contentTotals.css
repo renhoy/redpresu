@@ -1,0 +1,48 @@
+/* template/bn/css/contentTotals.css */
+
+.content-totals {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  box-sizing: border-box;
+}
+
+.content-totals .totals-mizq {
+  grid-column: 1;
+  width: 100%;
+}
+
+.content-totals .totals {
+  grid-column: 2;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.content-totals .totals > div {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.content-totals .ivas,
+.content-totals .recargos {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.content-totals .ivas > div,
+.content-totals .recargos > div {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.content-totals .ivas [class^="iva"] .name,
+.content-totals .irpf .name,
+.content-totals .recargos [class^="re"] .name {
+  margin-left: 12px;
+}

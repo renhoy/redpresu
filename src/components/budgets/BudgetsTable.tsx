@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Budget } from "@/lib/types/database";
 import { formatCurrency } from "@/lib/helpers/format";
 import { Badge } from "@/components/ui/badge";
@@ -44,7 +44,9 @@ import {
   Layers,
   FilePlus,
   Copy,
+  Play,
 } from "lucide-react";
+import { startTour, checkAndStartPendingTour } from "@/lib/helpers/tour-helpers";
 import {
   deleteBudget,
   deleteBudgetPDF,
@@ -71,8 +73,8 @@ interface BudgetsTableProps {
 const statusColors = {
   borrador: "bg-black text-neutral-200",
   pendiente: "bg-orange-100 text-yellow-800",
-  enviado: "bg-slate-100 text-cyan-600",
-  aprobado: "bg-blue-50 text-green-600",
+  enviado: "bg-slate-100 text-lime-600",
+  aprobado: "bg-lime-50 text-green-600",
   rechazado: "bg-pink-100 text-rose-600",
   caducado: "bg-neutral-200 text-black",
 };
@@ -297,6 +299,11 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
     allBudgetIds.length > 0 && selectedBudgets.length === allBudgetIds.length;
   const isSomeSelected = selectedBudgets.length > 0;
 
+  // Detectar y ejecutar tour pendiente
+  useEffect(() => {
+    checkAndStartPendingTour();
+  }, []);
+
   // Exportación
   const handleExport = async () => {
     if (selectedBudgets.length === 0) {
@@ -518,7 +525,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon" asChild>
+                  <Button data-tour="btn-tarifa" variant="outline" size="icon" asChild>
                     <Link href={`/tariffs?tariff_id=${budget.tariff_id}`}>
                       <Layers className="h-4 w-4" />
                     </Link>
@@ -535,7 +542,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="cursor-help" style={{ fontSize: "12px" }}>
+                  <span data-tour="columna-total" className="cursor-help" style={{ fontSize: "12px" }}>
                     {formatCurrency(budget.total || 0)}
                   </span>
                 </TooltipTrigger>
@@ -579,7 +586,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
                 )
               }
             >
-              <SelectTrigger className="w-[140px] bg-white">
+              <SelectTrigger data-tour="select-estado-presupuesto" className="w-[140px] bg-white">
                 <SelectValue>
                   <Badge
                     className={
@@ -632,6 +639,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
+                          data-tour="btn-generar-pdf"
                           variant="outline"
                           size="icon"
                           onClick={async () => {
@@ -661,6 +669,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
+                          data-tour="btn-generar-pdf"
                           variant="outline"
                           size="icon"
                           onClick={() => handleGeneratePDF(budget.id)}
@@ -685,6 +694,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
+                      data-tour="btn-editar-presupuesto"
                       variant="outline"
                       size="icon"
                       onClick={() =>
@@ -705,6 +715,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
+                      data-tour="btn-duplicar-presupuesto"
                       variant="outline"
                       size="icon"
                       onClick={() =>
@@ -723,6 +734,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
+                      data-tour="btn-eliminar-presupuesto"
                       variant="outline"
                       size="icon"
                       onClick={() =>
@@ -757,21 +769,36 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
   return (
     <div className="space-y-4">
       {/* Header con botones */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-lime-700 flex items-center gap-2">
-            <FileText className="h-6 w-6" />
-            Presupuestos
-          </h1>
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="text-center md:text-left w-full md:w-auto">
+          <div className="flex items-center justify-center md:justify-start gap-3">
+            <h1 className="text-3xl font-bold text-lime-700 flex items-center gap-2">
+              <FileText className="h-6 w-6" />
+              Presupuestos
+            </h1>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const tourId = filteredBudgets.length === 0 ? "presupuestos-page-vacia" : "presupuestos-page";
+                startTour(tourId);
+              }}
+              className="border-lime-600 text-lime-600 hover:bg-lime-50 h-8 px-3 gap-1.5"
+            >
+              <Play className="h-3.5 w-3.5" />
+              <span className="text-xs font-medium">Tour</span>
+            </Button>
+          </div>
           <p className="text-sm text-lime-600">
             Gestiona tus presupuestos creados
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 justify-center md:justify-end w-full md:w-auto">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
+                  id="btn-exportar-presupuesto"
                   variant="outline"
                   disabled={!isSomeSelected || exporting}
                   onClick={handleExport}
@@ -803,6 +830,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
               disabled={importing}
             />
             <Button
+              id="btn-importar-presupuesto"
               variant="outline"
               className="border-lime-600 text-lime-600 hover:bg-lime-50"
               onClick={() =>
@@ -815,7 +843,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
             </Button>
           </>
 
-          <Button asChild className="bg-lime-600 hover:bg-lime-700">
+          <Button id="btn-nuevo-presupuesto-list" asChild className="bg-lime-600 hover:bg-lime-700">
             <Link href="/budgets/create">
               <Plus className="mr-2 h-4 w-4" />
               Nuevo Presupuesto
@@ -841,7 +869,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
       )}
 
       {/* Filtros */}
-      <div className="flex gap-4 items-center">
+      <div id="filtros-presupuesto" className="flex gap-4 items-center">
         <Input
           placeholder="Buscar por cliente o NIF..."
           value={search}
@@ -898,8 +926,23 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
         </div>
 
         {filteredBudgets.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground bg-white">
-            No se encontraron presupuestos
+          <div id="nota-crear-tarifa" className="text-center py-12 bg-white">
+            <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium mb-2">No hay presupuestos</h3>
+            <p className="text-muted-foreground mb-2">
+              {search || statusFilter !== "all"
+                ? "No se encontraron presupuestos con los filtros aplicados"
+                : "Aún no has creado ningún presupuesto"}
+            </p>
+            {!search && statusFilter === "all" && (
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                Para crear presupuestos, primero necesitas tener al menos una tarifa activa.{" "}
+                <Link href="/tariffs" className="text-lime-600 hover:underline">
+                  Ve a la página de Tarifas
+                </Link>
+                , crea una nueva tarifa, y luego podrás generar presupuestos basados en ella.
+              </p>
+            )}
           </div>
         )}
       </div>
@@ -907,8 +950,23 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
       {/* Vista Mobile/Tablet - Cards */}
       <div className="lg:hidden">
         {filteredBudgets.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            No se encontraron presupuestos
+          <div className="text-center py-12">
+            <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium mb-2">No hay presupuestos</h3>
+            <p className="text-muted-foreground mb-2">
+              {search || statusFilter !== "all"
+                ? "No se encontraron presupuestos con los filtros aplicados"
+                : "Aún no has creado ningún presupuesto"}
+            </p>
+            {!search && statusFilter === "all" && (
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                Para crear presupuestos, primero necesitas tener al menos una tarifa activa.{" "}
+                <Link href="/tariffs" className="text-lime-600 hover:underline">
+                  Ve a la página de Tarifas
+                </Link>
+                , crea una nueva tarifa, y luego podrás generar presupuestos basados en ella.
+              </p>
+            )}
           </div>
         ) : (
           filteredBudgets.map((budget) => (

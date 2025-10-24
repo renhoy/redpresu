@@ -11,6 +11,8 @@ import {
   ChevronDown,
   Building2,
   UserCircle,
+  Home,
+  HelpCircle,
 } from "lucide-react";
 import LogoutButton from "@/components/auth/LogoutButton";
 import {
@@ -109,7 +111,7 @@ export function UserMenu({
               <Badge
                 className={
                   issuerType === "Empresa"
-                    ? "bg-blue-50 text-blue-800 text-[10px] px-1.5 py-0 w-fit"
+                    ? "bg-lime-50 text-blue-800 text-[10px] px-1.5 py-0 w-fit"
                     : "bg-purple-50 text-purple-800 text-[10px] px-1.5 py-0 w-fit"
                 }
               >
@@ -136,6 +138,25 @@ export function UserMenu({
         )}
 
         {/* Opciones del menú */}
+
+        {/* Panel y Ayuda - Solo visible en móvil/tablet */}
+        <div className="lg:hidden">
+          <Link href="/dashboard">
+            <DropdownMenuItem className="cursor-pointer">
+              <Home className="mr-2 h-4 w-4" />
+              <span>Panel</span>
+            </DropdownMenuItem>
+          </Link>
+
+          <Link href="/help">
+            <DropdownMenuItem className="cursor-pointer">
+              <HelpCircle className="mr-2 h-4 w-4" />
+              <span>Ayuda</span>
+            </DropdownMenuItem>
+          </Link>
+
+          <DropdownMenuSeparator />
+        </div>
 
         <Link href="/profile">
           <DropdownMenuItem className="cursor-pointer">

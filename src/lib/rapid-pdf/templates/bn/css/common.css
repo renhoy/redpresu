@@ -1,0 +1,100 @@
+/* template/bn/css/common.css */
+
+:root {
+  /* Main colors - will be dynamically overwritten by load-styles.js */
+  --color-primary: #109c61;
+  --color-secondary: #e8951c;
+  --color-primary-dark: #0b7a4d;
+  --color-secondary-dark: #d68200;
+  --color-primary-light: #1ec98a;
+  --color-secondary-light: #ffa83e;
+
+  --color-chapter: white;
+  --bg-chapter: black;
+  --border-chapter: var(--color-gray);
+  --font-chapter: 16px;
+
+  --color-subchapter: black;
+  --bg-subchapter: white;
+  --border-subchapter: black;
+  --font-subchapter: 16px;
+
+  --color-section: black;
+  --bg-section: white;
+  --border-section: black;
+  --font-section: 16px;
+
+  --color-item: black;
+  --bg-item: var(--color-gray-light);
+  --border-item: var(--color-gray);
+  --font-item: 16px;
+
+}
+
+
+.header-company .name {
+  font-family: var(--font-primary);
+  font-size: var(--font-size-normal);
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.header-company .nif,
+.header-company .address,
+.header-company .contact {
+  font-family: var(--font-primary);
+  font-size: var(--font-size-normal);
+  line-height: 1.5;
+}
+
+.client-signatures {
+  font-family: var(--font-primary);
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1.5;
+}
+
+.company-signature .company-name {
+  font-family: var(--font-primary);
+  font-size: var(--font-size-normal);
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.company-signature .company-nif,
+.company-signature .company-address,
+.company-signature .company-contact {
+  font-family: var(--font-primary);
+  font-size: var(--font-size-signature);
+  line-height: 1.5;
+}
+
+.print-date,
+.validity,
+.pages {
+  font-family: var(--font-primary);
+  font-size: var(--font-size-normal);
+}
+
+.title {
+  font-family: var(--font-primary);
+  font-size: var(--font-size-title);
+  font-weight: 200;
+  font-style: italic;
+  color: black;
+}
+
+.note {
+  font-family: var(--font-primary);
+  font-size: var(--font-size-normal);
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1.5;
+  color: #333333;
+  text-align: center;
+  text-decoration: none;
+  text-transform: none;
+  border-radius: 4px;
+  background-color: #ffffff;
+}

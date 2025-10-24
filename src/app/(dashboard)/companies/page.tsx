@@ -40,27 +40,25 @@ export default async function CompaniesPage() {
     <div className="min-h-screen bg-lime-50">
       <div className="container mx-auto px-4 py-6">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <Building2 className="h-6 w-6" />
-              Empresas
-            </h1>
-            <p className="text-sm">Gestiona todas las empresas del sistema</p>
-          </div>
+        <div className="mb-6 text-center md:text-left">
+          <h1 className="text-3xl font-bold flex items-center justify-center md:justify-start gap-2">
+            <Building2 className="h-6 w-6" />
+            Empresas
+          </h1>
+          <p className="text-sm">Gestiona todas las empresas del sistema</p>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-white rounded-lg border p-4">
             <div className="text-sm text-muted-foreground">Total Empresas</div>
-            <div className="text-2xl font-bold text-cyan-600">
+            <div className="text-2xl font-bold text-lime-600">
               {companies.length}
             </div>
           </div>
-          <div className="bg-blue-50 rounded-lg border p-4">
+          <div className="bg-lime-50 rounded-lg border p-4">
             <div className="text-sm text-muted-foreground">Tipo Empresas</div>
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-2xl font-bold text-lime-600">
               {companies.filter((c) => c.type === "empresa").length}
             </div>
           </div>

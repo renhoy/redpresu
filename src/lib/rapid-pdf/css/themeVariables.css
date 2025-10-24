@@ -1,0 +1,57 @@
+/* css/themeVariables.css */
+/* Global CSS variables for the budget application */
+
+:root {
+  /* Main colors - will be dynamically overwritten by load-styles.js */
+  --color-primary: #109c61;
+  --color-secondary: #e8951c;
+  --color-primary-dark: #0b7a4d;
+  --color-secondary-dark: #d68200;
+  --color-primary-light: #1ec98a;
+  --color-secondary-light: #ffa83e;
+
+  --color-chapter: white;
+  --bg-chapter: var(--color-secondary);
+  --border-chapter: var(--color-gray);
+  --font-chapter: 16px;
+
+  --color-subchapter: var(--color-primary);
+  --bg-subchapter: white;
+  --border-subchapter: var(--color-gray);
+  --font-subchapter: 16px;
+
+  --color-section: var(--color-secondary);
+  --bg-section: white;
+  --border-section: var(--color-gray);
+  --font-section: 16px;
+
+  --color-item: black;
+  --bg-item: var(--color-gray-light);
+  --border-item: var(--color-gray);
+  --font-item: 16px;
+
+  /* Interface colors */
+  --color-text: #333333;
+  --color-text-inverted: #ffffff;
+  --color-text-highlighted: #1a73e8;
+  --color-gray: #707070;
+  --color-gray-light: #e0e0e0;
+  --color-background-light: #f9f9f9;
+  --color-border: #dddddd;
+  --color-error: #d32f2f;
+  --color-success: #388e3c;
+  --color-warning: #f57c00;
+
+  /* Fonts */
+  --font-primary: Arial, sans-serif;
+  --font-secondary: Helvetica, sans-serif;
+  --font-titles: Arial, sans-serif;
+  --font-monospace: "Courier New", monospace;
+
+  /* Font sizes (in pixels) */
+  --font-size-title: 32px;
+  --font-size-normal: 12px;
+  --font-size-signature: 11px;
+  --font-size-footer: 10px;
+  --font-size-minimum: 8px;
+}

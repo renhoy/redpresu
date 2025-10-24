@@ -182,11 +182,7 @@ export function Header({
                   <Link
                     key={item.name}
                     href={item.href}
-                    className={`px-3 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${
-                      isTarifasButton
-                        ? "text-white bg-cyan-600 hover:bg-cyan-700"
-                        : "text-white bg-lime-500 hover:bg-lime-600"
-                    }`}
+                    className="px-3 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2 text-white bg-lime-500 hover:bg-lime-600"
                   >
                     <Icon className="w-4 h-4" />
                     {item.name}
@@ -212,54 +208,55 @@ export function Header({
             })}
           </nav>
 
-          {/* Navigation - Mobile/Tablet (solo iconos) */}
+          {/* Navigation - Mobile/Tablet (solo Tarifas y Presupuestos) */}
           <nav className="flex lg:hidden items-center gap-2">
             <TooltipProvider>
-              {navigation.map((item) => {
-                const isActive =
-                  pathname === item.href ||
-                  (item.href !== "/dashboard" &&
-                    pathname.startsWith(item.href));
-                const Icon = item.icon;
-                const isPresupuestosButton = item.href === "/budgets";
-                const isDisabled = isPresupuestosButton && !hasBudgets;
+              {navigation
+                .filter((item) => item.href === "/tariffs" || item.href === "/budgets")
+                .map((item) => {
+                  const Icon = item.icon;
+                  const isTarifasButton = item.href === "/tariffs";
+                  const isPresupuestosButton = item.href === "/budgets";
+                  const isDisabled = isPresupuestosButton && !hasBudgets;
 
-                // Si está deshabilitado, mostrar como span
-                if (isDisabled) {
+                  // Si está deshabilitado, mostrar como span
+                  if (isDisabled) {
+                    return (
+                      <Tooltip key={item.name}>
+                        <TooltipTrigger asChild>
+                          <span className="px-3 py-2 rounded-md bg-gray-300 text-gray-500 cursor-not-allowed opacity-60 flex items-center gap-2">
+                            <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                            <span className="hidden sm:inline text-sm font-medium">
+                              {item.name}
+                            </span>
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>No tienes presupuestos creados</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  }
+
                   return (
                     <Tooltip key={item.name}>
                       <TooltipTrigger asChild>
-                        <span className="p-2 rounded-md border bg-gray-200 text-gray-400 border-gray-300 cursor-not-allowed opacity-60">
-                          <Icon className="w-5 h-5" />
-                        </span>
+                        <Link
+                          href={item.href}
+                          className="px-3 py-2 rounded-md transition-colors flex items-center gap-2 bg-lime-500 text-white hover:bg-lime-600"
+                        >
+                          <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                          <span className="hidden sm:inline text-sm font-medium">
+                            {item.name}
+                          </span>
+                        </Link>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>No tienes presupuestos creados</p>
+                        <p>{item.name}</p>
                       </TooltipContent>
                     </Tooltip>
                   );
-                }
-
-                return (
-                  <Tooltip key={item.name}>
-                    <TooltipTrigger asChild>
-                      <Link
-                        href={item.href}
-                        className={`p-2 rounded-md transition-colors border ${
-                          isActive
-                            ? "text-lime-700 bg-lime-50 border-lime-500"
-                            : "text-green-600 bg-white border-green-600 hover:bg-green-50"
-                        }`}
-                      >
-                        <Icon className="w-5 h-5" />
-                      </Link>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{item.name}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                );
-              })}
+                })}
             </TooltipProvider>
           </nav>
 

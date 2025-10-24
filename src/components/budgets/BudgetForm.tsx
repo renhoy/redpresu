@@ -249,18 +249,29 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
 
   // Calcular IRPF y RE en tiempo real cuando cambian budgetData o totals
   useEffect(() => {
+    console.log('[IRPF Debug] Calculando IRPF...');
+    console.log('[IRPF Debug] totals.base:', totals.base);
+    console.log('[IRPF Debug] clientData.client_type:', clientData.client_type);
+    console.log('[IRPF Debug] issuerType:', issuerType);
+    console.log('[IRPF Debug] issuerIRPFPercentage:', issuerIRPFPercentage);
+
     // Calcular IRPF si aplica
     if (totals.base > 0 && clientData.client_type) {
       const aplica = shouldApplyIRPF(issuerType, clientData.client_type);
+      console.log('[IRPF Debug] shouldApplyIRPF result:', aplica);
+
       if (aplica) {
         const irpfAmount = calculateIRPF(totals.base, issuerIRPFPercentage);
+        console.log('[IRPF Debug] IRPF calculado:', irpfAmount);
         setCalculatedIRPF(irpfAmount);
         setCalculatedIRPFPercentage(issuerIRPFPercentage);
       } else {
+        console.log('[IRPF Debug] No aplica IRPF');
         setCalculatedIRPF(0);
         setCalculatedIRPFPercentage(0);
       }
     } else {
+      console.log('[IRPF Debug] Condiciones no cumplidas - totals.base:', totals.base, 'client_type:', clientData.client_type);
       setCalculatedIRPF(0);
       setCalculatedIRPFPercentage(0);
     }
@@ -962,27 +973,29 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="icon"
-                    style={{ backgroundColor: tariff.primary_color }}
-                    onClick={handleGeneratePDF}
-                    disabled={pdfStatus === "generating"}
-                  >
-                    {pdfStatus === "generating" ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <FileStack className="w-4 h-4" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Generar PDF</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            {budgetId && existingBudget?.status !== "borrador" && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      style={{ backgroundColor: tariff.primary_color }}
+                      onClick={handleGeneratePDF}
+                      disabled={pdfStatus === "generating"}
+                    >
+                      {pdfStatus === "generating" ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <FileStack className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Generar PDF</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
           <div className="flex gap-3">
             <TooltipProvider>
@@ -1104,7 +1117,7 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
 
             {/* Recargo de Equivalencia - Checkbox (solo si cliente es autónomo) */}
             {clientData.client_type === "autonomo" && (
-              <div className="space-y-3 p-4 border rounded-lg bg-blue-50">
+              <div className="space-y-3 p-4 border rounded-lg bg-lime-50">
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="aplica_recargo"
@@ -1544,7 +1557,7 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
         open={showOverwriteOrVersionDialog}
         onOpenChange={setShowOverwriteOrVersionDialog}
       >
-        <AlertDialogContent className="sm:max-w-[500px]">
+        <AlertDialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <AlertDialogHeader>
             <AlertDialogTitle>¿Sobreescribir o nueva versión?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -1558,10 +1571,10 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                 setShowOverwriteOrVersionDialog(false);
                 setShowOverwriteConfirm(true);
               }}
-              className="w-full flex flex-col items-start h-auto py-3"
+              className="w-full flex flex-col items-start h-auto py-3 px-4"
             >
-              <span className="font-semibold">Sobreescribir</span>
-              <span className="text-xs font-normal opacity-90">
+              <span className="font-semibold text-sm">Sobreescribir</span>
+              <span className="text-xs font-normal opacity-90 text-left">
                 ⚠️ Los datos anteriores de cliente y presupuesto serán
                 sobreescritos
                 {existingBudget?.pdf_url &&
@@ -1570,16 +1583,16 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
             </Button>
             <Button
               onClick={executeCreateVersion}
-              className="w-full flex flex-col items-start h-auto py-3"
+              className="w-full flex flex-col items-start h-auto py-3 px-4"
               style={{ backgroundColor: tariff.primary_color }}
             >
-              <span className="font-semibold">Nueva versión</span>
-              <span className="text-xs font-normal opacity-90">
+              <span className="font-semibold text-sm">Nueva versión</span>
+              <span className="text-xs font-normal opacity-90 text-left">
                 ✨ Crear nueva versión como hijo del presupuesto actual
               </span>
             </Button>
           </div>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
             <AlertDialogCancel onClick={() => setShowSaveAsOrSaveDialog(true)}>
               Volver atrás
             </AlertDialogCancel>

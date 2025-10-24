@@ -1,0 +1,10 @@
+/* template/bn/css/footerPagination.css */
+/* Styles for the pagination component in the footer */
+
+.footer-pagination {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 5px;
+  border-top: 11px solid var(--color-gray-light);
+}

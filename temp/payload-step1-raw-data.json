@@ -1,0 +1,540 @@
+{
+  "step": "Paso 1 - Datos crudos de json_budget_data",
+  "totalItems": 54,
+  "data": [
+    {
+      "id": "1",
+      "name": "Pescado Fresco",
+      "level": "chapter",
+      "amount": "256.00"
+    },
+    {
+      "id": "1.1",
+      "name": "Pescado Blanco",
+      "level": "subchapter",
+      "amount": "256.00"
+    },
+    {
+      "id": "1.1.1",
+      "name": "Pescados de Arrába",
+      "level": "section",
+      "amount": "256.00"
+    },
+    {
+      "id": "1.1.1.1",
+      "pvp": "10.80",
+      "name": "Merluza",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Filete de merluza fresca sin espinas.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "1.1.1.2",
+      "pvp": "25.00",
+      "name": "Lenguado",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Lenguado fresco limpio.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "1.1.1.3",
+      "pvp": "10.80",
+      "name": "Pescada",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Pescada fresca limpia.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "1.1.1.4",
+      "pvp": "12.80",
+      "name": "Acedías",
+      "unit": "kg",
+      "level": "item",
+      "amount": "256.00",
+      "quantity": "20.00",
+      "description": "Acedías frescas del golfo.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "1.1.2",
+      "name": "Pescados de Fondos",
+      "level": "section",
+      "amount": "0.00"
+    },
+    {
+      "id": "1.1.2.1",
+      "pvp": "22.00",
+      "name": "Bacalao",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Lomo de bacalao fresco desalado.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "1.1.2.2",
+      "pvp": "20.00",
+      "name": "Gallos",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Gallos frescos del Cantábrico.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "1.1.2.3",
+      "pvp": "13.80",
+      "name": "Gallineta",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Gallineta fresca limpia.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "1.1.2.4",
+      "pvp": "15.80",
+      "name": "Rosada",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Rosada fresca en filetes.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "1.1.2.5",
+      "pvp": "13.80",
+      "name": "Pijotas",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Pijotas frescas limpias.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "1.1.3",
+      "name": "Pescados de Piscifactoría",
+      "level": "section",
+      "amount": "0.00"
+    },
+    {
+      "id": "1.1.3.1",
+      "pvp": "11.80",
+      "name": "Dorada",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Dorada fresca de piscifactoría.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "1.1.3.2",
+      "pvp": "13.80",
+      "name": "Lubina",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Lubina fresca de piscifactoría.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "1.2",
+      "name": "Pescado Azul",
+      "level": "subchapter",
+      "amount": "0.00"
+    },
+    {
+      "id": "1.2.1",
+      "pvp": "8.00",
+      "name": "Sardinas",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Sardinas frescas limpias.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "1.2.2",
+      "pvp": "4.80",
+      "name": "Boquerones",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Boquerones frescos para fritura.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "1.2.3",
+      "pvp": "16.80",
+      "name": "Atún",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Filete de atún rojo fresco.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "1.2.4",
+      "pvp": "1.00",
+      "name": "Arenque",
+      "unit": "ud",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Arenque fresco limpio.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "1.2.5",
+      "pvp": "17.80",
+      "name": "Salmón",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Salmón fresco en filetes.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "1.2.6",
+      "pvp": "10.80",
+      "name": "Salmonetes",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Salmonetes frescos limpios.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "1.2.7",
+      "pvp": "13.80",
+      "name": "Pez Espada",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Rodajas de pez espada fresco.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "2",
+      "name": "Mariscos",
+      "level": "chapter",
+      "amount": "0.00"
+    },
+    {
+      "id": "2.1",
+      "name": "Crustáceos",
+      "level": "subchapter",
+      "amount": "0.00"
+    },
+    {
+      "id": "2.1.1",
+      "pvp": "10.80",
+      "name": "Gambas",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Gambas frescas pequeñas.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "2.1.2",
+      "pvp": "23.00",
+      "name": "Gamba Blanca de Mesa",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Gambas blancas frescas tamaño mediano/grande.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "2.1.3",
+      "pvp": "12.80",
+      "name": "Langostinos",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Langostinos rojos frescos.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "2.1.4",
+      "pvp": "30.00",
+      "name": "Cigalas",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Cigalas gallegas frescas.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "2.1.5",
+      "pvp": "19.50",
+      "name": "Patas Cocidas",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Patas de cangrejo cocidas.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "2.2",
+      "name": "Moluscos Bivalvos",
+      "level": "subchapter",
+      "amount": "0.00"
+    },
+    {
+      "id": "2.2.1",
+      "pvp": "5.80",
+      "name": "Mejillones",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Mejillones de Galicia frescos.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "2.2.2",
+      "pvp": "12.00",
+      "name": "Almejas",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Almejas finas frescas.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "2.2.3",
+      "pvp": "18.00",
+      "name": "Navajas",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Navajas frescas limpias.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "2.2.4",
+      "pvp": "8.80",
+      "name": "Chirla",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Chirlas frescas para guisos.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "2.2.5",
+      "pvp": "15.80",
+      "name": "Zamburiña",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Zamburiñas frescas limpias.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "3",
+      "name": "Productos Congelados",
+      "level": "chapter",
+      "amount": "200.00"
+    },
+    {
+      "id": "3.1",
+      "pvp": "18.00",
+      "name": "Gambón Argentino",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Gambón congelado grande.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "3.2",
+      "pvp": "10.00",
+      "name": "Calamares en Anillas",
+      "unit": "kg",
+      "level": "item",
+      "amount": "200.00",
+      "quantity": "20.00",
+      "description": "Calamar congelado limpio.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "3.3",
+      "pvp": "12.00",
+      "name": "Merluza Filetes",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Filetes de merluza congelados.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "4",
+      "name": "Cefalópodos",
+      "level": "chapter",
+      "amount": "0.00"
+    },
+    {
+      "id": "4.1",
+      "pvp": "16.00",
+      "name": "Pulpo",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Pulpo fresco gallego.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "4.2",
+      "pvp": "14.00",
+      "name": "Sepia",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Sepia fresca entera.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "4.3",
+      "pvp": "9.80",
+      "name": "Choco",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Choco fresco limpio.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "4.4",
+      "pvp": "14.80",
+      "name": "Calamares",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Calamares frescos enteros.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "4.5",
+      "pvp": "9.80",
+      "name": "Chipirones",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Chipirones frescos limpios.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "4.6",
+      "pvp": "12.80",
+      "name": "Patas de Calamar",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Patas de calamar frescas.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "4.7",
+      "pvp": "10.80",
+      "name": "Anillas",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Anillas de calamar preparadas.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "4.8",
+      "pvp": "15.80",
+      "name": "Huevos de Chocos",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Huevos de choco frescos.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "5",
+      "name": "Preparados y Ahumados",
+      "level": "chapter",
+      "amount": "500.00"
+    },
+    {
+      "id": "5.1",
+      "pvp": "25.00",
+      "name": "Salmón Ahumado",
+      "unit": "kg",
+      "level": "item",
+      "amount": "500.00",
+      "quantity": "20.00",
+      "description": "Lomo de salmón ahumado.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "5.2",
+      "pvp": "0.50",
+      "name": "Croquetas de Marisco",
+      "unit": "ud",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Croquetas caseras de marisco.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "5.3",
+      "pvp": "1.20",
+      "name": "Tortillitas de Camarones",
+      "unit": "kg",
+      "level": "item",
+      "amount": "0,00",
+      "quantity": "0,00",
+      "description": "Tortillitas de camarones caseras.",
+      "iva_percentage": "10.00"
+    }
+  ]
+}

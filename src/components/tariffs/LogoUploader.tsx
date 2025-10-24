@@ -263,13 +263,13 @@ export function LogoUploader({ value, onChange, error, disabled }: LogoUploaderP
         <TabsList className="grid w-full grid-cols-2 bg-muted">
           <TabsTrigger
             value="upload"
-            className="bg-cyan-600 text-white hover:bg-cyan-700 data-[state=active]:bg-white data-[state=active]:text-cyan-600"
+            className="bg-lime-500 text-white hover:bg-lime-600 data-[state=active]:bg-white data-[state=active]:text-lime-600"
           >
             Subir archivo
           </TabsTrigger>
           <TabsTrigger
             value="url"
-            className="bg-cyan-600 text-white hover:bg-cyan-700 data-[state=active]:bg-white data-[state=active]:text-cyan-600"
+            className="bg-lime-500 text-white hover:bg-lime-600 data-[state=active]:bg-white data-[state=active]:text-lime-600"
           >
             URL externa
           </TabsTrigger>
@@ -282,7 +282,7 @@ export function LogoUploader({ value, onChange, error, disabled }: LogoUploaderP
               <div>
                 <Label
                   htmlFor="logo-upload"
-                  className={`cursor-pointer inline-flex items-center gap-2 bg-cyan-600 text-white hover:bg-cyan-700 px-4 py-2 rounded-md text-sm font-medium ${disabled || isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`cursor-pointer inline-flex items-center gap-2 bg-lime-500 text-white hover:bg-lime-600 px-4 py-2 rounded-md text-sm font-medium ${disabled || isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {isUploading ? (
                     <>

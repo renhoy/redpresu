@@ -102,7 +102,7 @@ export function RichTextEditorDialog({
             size="sm"
             onClick={handleOpen}
             disabled={disabled}
-            className="gap-2 bg-cyan-600 text-white hover:bg-cyan-700 hover:text-white border-cyan-600"
+            className="gap-2 bg-lime-500 text-white hover:bg-lime-600 hover:text-white border-lime-500"
           >
             <Edit className="h-3 w-3" />
             Editar
@@ -159,7 +159,7 @@ export function RichTextEditorDialog({
               <Button
                 type="button"
                 onClick={handleSave}
-                className="bg-cyan-600 hover:bg-cyan-700 text-white"
+                className="bg-lime-500 hover:bg-lime-600 text-white"
               >
                 Guardar
               </Button>
@@ -245,7 +245,7 @@ export function RichTextEditorDialog({
               <Button
                 type="button"
                 onClick={handleSave}
-                className="bg-cyan-600 hover:bg-cyan-700 text-white"
+                className="bg-lime-500 hover:bg-lime-600 text-white"
               >
                 Guardar
               </Button>

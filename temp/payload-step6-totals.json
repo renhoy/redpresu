@@ -1,0 +1,19 @@
+{
+  "step": "Paso 6 - Totales calculados",
+  "data": {
+    "base": {
+      "name": "Base Imponible",
+      "amount": "869.09"
+    },
+    "ivas": [
+      {
+        "name": "10.00% IVA",
+        "amount": "86.91"
+      }
+    ],
+    "total": {
+      "name": "TOTAL PRESUPUESTO",
+      "amount": "956.00"
+    }
+  }
+}

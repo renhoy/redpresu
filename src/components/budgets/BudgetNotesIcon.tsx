@@ -23,9 +23,10 @@ import { es } from 'date-fns/locale'
 interface BudgetNotesIconProps {
   budgetId: string
   initialCount?: number
+  className?: string
 }
 
-export function BudgetNotesIcon({ budgetId, initialCount = 0 }: BudgetNotesIconProps) {
+export function BudgetNotesIcon({ budgetId, initialCount = 0, className = '' }: BudgetNotesIconProps) {
   const [notes, setNotes] = useState<BudgetNote[]>([])
   const [notesCount, setNotesCount] = useState(initialCount)
   const [loading, setLoading] = useState(false)
@@ -83,14 +84,15 @@ export function BudgetNotesIcon({ budgetId, initialCount = 0 }: BudgetNotesIconP
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  size="icon"
-                  className="relative h-8 w-8 border-lime-600 text-lime-600 hover:bg-lime-50 hover:text-lime-700"
+                  size="sm"
+                  className={`relative h-7 px-2 gap-1.5 text-xs border-lime-600 text-lime-600 hover:bg-lime-50 hover:text-lime-700 ${className}`}
                   onClick={(e) => {
                     console.log('[BudgetNotesIcon] Button clicked')
                     e.stopPropagation()
                   }}
                 >
-                  <NotebookPen className="h-4 w-4" />
+                  <NotebookPen className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span>Notas</span>
                   {notesCount > 0 && (
                     <Badge
                       variant="secondary"

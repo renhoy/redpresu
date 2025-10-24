@@ -149,7 +149,7 @@ export function TariffCard({ tariff, onStatusChange, onDelete, currentUserRole }
               <div className="min-w-0">
                 <div className="text-xs text-muted-foreground mb-1">Estado</div>
                 <Select value={tariff.status || 'Activa'} onValueChange={handleStatusChange}>
-                  <SelectTrigger className="w-full h-7 text-xs">
+                  <SelectTrigger data-tour="select-estado" className="w-full h-7 text-xs">
                     <SelectValue>
                       <Badge className={statusColors[tariff.status as keyof typeof statusColors] || 'bg-gray-200 text-gray-700'}>
                         {tariff.status || 'Activa'}
@@ -195,67 +195,72 @@ export function TariffCard({ tariff, onStatusChange, onDelete, currentUserRole }
             </div>
 
             {/* Acciones */}
-            <div className="flex items-center gap-1 border-t pt-3">
+            <div className="grid grid-cols-2 sm:grid-cols-5 lg:flex lg:justify-end gap-1.5 w-full border-t pt-3">
               {tariff.status === 'Activa' ? (
-                <Button variant="outline" size="sm" asChild className="flex-1 h-7 px-2">
+                <Button data-tour="btn-crear-presupuesto" variant="outline" size="sm" asChild className="w-full lg:w-auto h-7 px-2 gap-1.5 text-xs">
                   <Link href={`/budgets/create?tariff_id=${tariff.id}`} target="_blank" rel="noopener noreferrer">
-                    <Plus className="h-3 w-3 mr-1" />
-                    <Receipt className="h-3 w-3 mr-1" />
-                    <span className="text-xs">Presup.</span>
+                    <Plus className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span>Presup.</span>
                   </Link>
                 </Button>
               ) : (
-                <Button variant="outline" size="sm" disabled className="flex-1 h-7 px-2">
-                  <Plus className="h-3 w-3 mr-1" />
-                  <Receipt className="h-3 w-3 mr-1" />
-                  <span className="text-xs">Presup.</span>
+                <Button data-tour="btn-crear-presupuesto" variant="outline" size="sm" disabled className="w-full lg:w-auto h-7 px-2 gap-1.5 text-xs">
+                  <Plus className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span>Presup.</span>
                 </Button>
               )}
 
               {/* Contador de presupuestos */}
               {tariff.budget_count !== undefined && tariff.budget_count > 0 && (
-                <Button variant="outline" size="sm" asChild className="h-7 px-2">
+                <Button data-tour="btn-ver-presupuestos" variant="outline" size="sm" asChild className="w-full lg:w-auto h-7 px-2 gap-1.5 text-xs">
                   <Link href={`/budgets?tariff_id=${tariff.id}`}>
-                    <span className="text-xs font-medium">{tariff.budget_count}</span>
-                    <Eye className="h-3 w-3 ml-1" />
+                    <Eye className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span>{tariff.budget_count} Ver</span>
                   </Link>
                 </Button>
               )}
 
               {isAdmin && (
                 <Button
+                  data-tour="btn-marcar-plantilla"
                   variant={tariff.is_template ? "default" : "outline"}
                   size="sm"
                   onClick={() => setShowTemplateDialog(true)}
-                  className="h-7 px-2"
+                  className="w-full lg:w-auto h-7 px-2 gap-1.5 text-xs"
                 >
-                  <Star className={`h-3 w-3 ${tariff.is_template ? 'fill-current' : ''}`} />
+                  <Star className={`h-3.5 w-3.5 flex-shrink-0 ${tariff.is_template ? 'fill-current' : ''}`} />
+                  <span>Plantilla</span>
                 </Button>
               )}
 
-              <Button variant="outline" size="sm" asChild className="h-7 px-2">
+              <Button data-tour="btn-editar" variant="outline" size="sm" asChild className="w-full lg:w-auto h-7 px-2 gap-1.5 text-xs">
                 <Link href={`/tariffs/edit/${tariff.id}`}>
-                  <Pencil className="h-3 w-3" />
+                  <Pencil className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span>Editar</span>
                 </Link>
               </Button>
 
               <Button
+                data-tour="btn-duplicar"
                 variant="outline"
                 size="sm"
                 onClick={handleDuplicate}
                 disabled={isDuplicating}
-                className="h-7 px-2"
+                className="w-full lg:w-auto h-7 px-2 gap-1.5 text-xs"
               >
-                <Copy className="h-3 w-3" />
+                <Copy className="h-3.5 w-3.5 flex-shrink-0" />
+                <span>Duplicar</span>
               </Button>
 
               <Button
+                data-tour="btn-eliminar"
                 variant="outline"
                 size="sm"
                 onClick={() => setShowDeleteDialog(true)}
-                className="border-destructive text-destructive hover:bg-destructive/10 h-7 px-2"
+                className="border-destructive text-destructive hover:bg-destructive/10 w-full lg:w-auto h-7 px-2 gap-1.5 text-xs"
               >
-                <Trash2 className="h-3 w-3" />
+                <Trash2 className="h-3.5 w-3.5 flex-shrink-0" />
+                <span>Borrar</span>
               </Button>
             </div>
           </div>

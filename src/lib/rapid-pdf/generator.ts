@@ -3,7 +3,6 @@
  * Migrado desde: js/app.js
  */
 
-import { promises as fs } from "fs";
 import path from "path";
 import type {
   PDFPayload,
@@ -15,6 +14,10 @@ import type {
 import { PageManager } from "./core/page-manager";
 import { ElementProcessor } from "./core/element-processor";
 import { RenderEngine, getRenderEngine } from "./core/render-engine";
+import { getRapidPDFMode } from "@/lib/helpers/config-helpers";
+
+// Usar require para fs.promises (compatible con Next.js Server Actions)
+const fs = require("fs").promises;
 
 /**
  * Genera un PDF desde un payload
@@ -28,9 +31,24 @@ export async function generatePDF(
   let renderEngine: RenderEngine | null = null;
 
   try {
-    console.log("[generatePDF] Iniciando generación...");
-    console.log("[generatePDF] Template:", payload.company.template);
-    console.log("[generatePDF] Modo:", payload.mode || options.mode);
+    // Obtener modo desde configuración
+    const configMode = await getRapidPDFMode();
+    const isDevelopment = configMode === 'development';
+
+    if (isDevelopment) {
+      console.log("[generatePDF] Iniciando generación...");
+      console.log("[generatePDF] Template:", payload.company.template);
+      console.log("[generatePDF] Modo:", configMode);
+    }
+
+    // Guardar payload en modo desarrollo
+    if (isDevelopment) {
+      const payloadPath = path.join(process.cwd(), 'temp', 'last-payload.json');
+      await fs.writeFile(payloadPath, JSON.stringify(payload, null, 2), 'utf-8');
+      if (isDevelopment) {
+        console.log("[generatePDF] Payload guardado en:", payloadPath);
+      }
+    }
 
     // 1. VALIDAR TEMPLATE
     const templatePath = path.join(
@@ -84,37 +102,30 @@ export async function generatePDF(
     }
 
     // Calcular margin_bottom_total
-    calculateMarginBottomTotal(elementsData, structureData);
+    calculateMarginBottomTotal(elementsData, structureData, isDevelopment);
 
     await renderEngine.destroyTemporaryPage();
 
     // 6. RENDERIZAR DOCUMENTO
-    console.log("[generatePDF] Renderizando documento...");
+    if (isDevelopment) {
+      console.log("[generatePDF] Renderizando documento...");
+    }
     const finalHTML = await renderDocument(
       renderEngine,
       elementsData,
       structureData,
-      pageManager
+      pageManager,
+      isDevelopment
     );
 
-    // 7. DECIDIR MODO DE SALIDA
-    const mode = payload.mode || options.mode || "produccion";
+    // 7. GENERAR SALIDA SEGÚN MODO
+    if (isDevelopment) {
+      // Modo desarrollo: guardar HTML Y generar PDF
+      const htmlPath = path.join(process.cwd(), 'temp', 'last-generated.html');
+      await fs.writeFile(htmlPath, finalHTML, "utf-8");
+      console.log("[generatePDF] HTML guardado en:", htmlPath);
 
-    if (mode === "desarrollo") {
-      // Modo desarrollo: guardar HTML
-      if (options.outputPath) {
-        await fs.writeFile(options.outputPath, finalHTML, "utf-8");
-        console.log("[generatePDF] HTML guardado:", options.outputPath);
-      }
-
-      return {
-        success: true,
-        filePath: options.outputPath,
-        processingTime: Date.now() - startTime,
-      };
-    } else {
-      // Modo producción: generar PDF
-      console.log("[generatePDF] Generando PDF con Puppeteer...");
+      console.log("[generatePDF] Generando PDF...");
       const pdfBuffer = await renderEngine.generatePDFFromSavedHTML(finalHTML);
 
       // Guardar PDF si se especificó outputPath
@@ -131,6 +142,21 @@ export async function generatePDF(
         filePath: options.outputPath,
         buffer: options.returnBuffer ? pdfBuffer : undefined,
         processingTime,
+      };
+    } else {
+      // Modo producción: solo generar PDF (sin logs ni HTML guardado)
+      const pdfBuffer = await renderEngine.generatePDFFromSavedHTML(finalHTML);
+
+      // Guardar PDF si se especificó outputPath
+      if (options.outputPath) {
+        await fs.writeFile(options.outputPath, pdfBuffer);
+      }
+
+      return {
+        success: true,
+        filePath: options.outputPath,
+        buffer: options.returnBuffer ? pdfBuffer : undefined,
+        processingTime: Date.now() - startTime,
       };
     }
   } catch (error) {
@@ -198,39 +224,40 @@ function extractPageConfig(structureData: StructureData) {
 
 /**
  * Calcula margin_bottom_total para cada elemento
+ * Aplica margin_bottom al último elemento de cada SECUENCIA CONSECUTIVA del mismo componente
  */
 function calculateMarginBottomTotal(
   elementsData: ProcessedElement[][][],
-  structureData: StructureData
+  structureData: StructureData,
+  isDevelopment: boolean = false
 ): void {
   const generalMargin = structureData.document.page?.general_margin || 0;
 
   for (const sectionData of elementsData) {
     for (const areaData of sectionData) {
-      const componentGroups = new Map<string, ProcessedElement[]>();
+      // Procesar elementos en orden para detectar secuencias consecutivas
+      for (let i = 0; i < areaData.length; i++) {
+        const element = areaData[i];
+        const nextElement = areaData[i + 1];
 
-      // Agrupar elementos por componente
-      for (const element of areaData) {
-        if (!componentGroups.has(element.component)) {
-          componentGroups.set(element.component, []);
-        }
-        componentGroups.get(element.component)!.push(element);
-      }
+        // Es el último de su secuencia si:
+        // 1. Es el último elemento del área, O
+        // 2. El siguiente elemento es de un componente diferente
+        const isLastInSequence = !nextElement || nextElement.component !== element.component;
 
-      // Actualizar margen del último elemento de cada componente
-      for (const [componentName, elements] of componentGroups) {
-        for (let i = 0; i < elements.length; i++) {
-          const element = elements[i];
-          const isLastElement = i === elements.length - 1;
+        if (isLastInSequence) {
+          // Aplicar margin_bottom del componente
+          const componentConfig =
+            structureData.document.components[element.component]?.config || {};
+          const marginBottom = componentConfig.margin_bottom || 0;
+          element.margin_bottom_total = generalMargin + marginBottom;
 
-          if (isLastElement) {
-            const componentConfig =
-              structureData.document.components[componentName]?.config || {};
-            const marginBottom = componentConfig.margin_bottom || 0;
-            element.margin_bottom_total = generalMargin + marginBottom;
-          } else {
-            element.margin_bottom_total = generalMargin;
+          if (isDevelopment && marginBottom > 0) {
+            console.log(`[calculateMarginBottomTotal] ${element.component} último de secuencia - margin_bottom: ${marginBottom}, total: ${element.margin_bottom_total}`);
           }
+        } else {
+          // No es el último de la secuencia, solo general_margin
+          element.margin_bottom_total = generalMargin;
         }
       }
     }
@@ -244,12 +271,11 @@ async function renderDocument(
   renderEngine: RenderEngine,
   elementsData: ProcessedElement[][][],
   structureData: StructureData,
-  pageManager: PageManager
+  pageManager: PageManager,
+  isDevelopment: boolean
 ): Promise<string> {
-  console.log("=== RENDERIZANDO DOCUMENTO ===");
-
   // Inicializar página final
-  await renderEngine.initFinalPage();
+  await renderEngine.initFinalPage(isDevelopment);
 
   // Variables de control del algoritmo
   let currentY = structureData.document.page.margins.top;
@@ -259,7 +285,9 @@ async function renderDocument(
 
   // Procesar cada sección
   for (let sectionIndex = 0; sectionIndex < elementsData.length; sectionIndex++) {
-    console.log(`=== PROCESANDO SECCIÓN ${sectionIndex} ===`);
+    if (isDevelopment) {
+      console.log(`=== PROCESANDO SECCIÓN ${sectionIndex} ===`);
+    }
 
     // Reiniciar Y al inicio de cada sección
     currentY = structureData.document.page.margins.top;
@@ -273,7 +301,8 @@ async function renderDocument(
       currentY,
       pageBreakY,
       currentPage,
-      totalPages
+      totalPages,
+      isDevelopment
     );
 
     // 2. Renderizar contents con saltos de página
@@ -286,7 +315,8 @@ async function renderDocument(
       currentY,
       pageBreakY,
       currentPage,
-      totalPages
+      totalPages,
+      isDevelopment
     );
     currentY = contentResult.newY;
 
@@ -305,7 +335,8 @@ async function renderDocument(
       currentY,
       pageBreakY,
       currentPage,
-      totalPages
+      totalPages,
+      isDevelopment
     );
 
     // 4. Si hay más secciones, crear nueva página
@@ -336,10 +367,13 @@ async function renderArea(
   currentY: number,
   pageBreakY: number,
   currentPage: number,
-  totalPages: number
+  totalPages: number,
+  isDevelopment: boolean
 ): Promise<number> {
   const areaNames = ["header", "content", "footer"];
-  console.log(`=== RENDERIZANDO ${areaNames[areaIndex].toUpperCase()} ===`);
+  if (isDevelopment) {
+    console.log(`=== RENDERIZANDO ${areaNames[areaIndex].toUpperCase()} ===`);
+  }
 
   let workingY = currentY;
   const sectionData = elementsData[sectionIndex] || [];
@@ -349,10 +383,16 @@ async function renderArea(
     if (shouldRenderElement(element, currentPage, totalPages)) {
       if (element.elementY > 0) {
         // Elemento con posición fija
-        await renderEngine.renderElementAtPosition(element, element.elementY);
+        if (isDevelopment) {
+          console.log(`  ${element.component} | Y fijo: ${element.elementY}`);
+        }
+        await renderEngine.renderElementAtPosition(element, element.elementY, isDevelopment);
       } else {
         // Elemento dinámico
-        await renderEngine.renderElementAtPosition(element, workingY);
+        if (isDevelopment) {
+          console.log(`  ${element.component} | Y: ${workingY} + H: ${element.height} + MB: ${element.margin_bottom_total} = ${workingY + element.height + element.margin_bottom_total}`);
+        }
+        await renderEngine.renderElementAtPosition(element, workingY, isDevelopment);
         workingY += element.height + element.margin_bottom_total;
       }
     }
@@ -373,9 +413,12 @@ async function renderContentArea(
   currentY: number,
   pageBreakY: number,
   currentPage: number,
-  totalPages: number
+  totalPages: number,
+  isDevelopment: boolean
 ): Promise<{ newY: number; newPagesCreated: number }> {
-  console.log("=== RENDERIZANDO CONTENT CON SALTOS DE PÁGINA ===");
+  if (isDevelopment) {
+    console.log("=== RENDERIZANDO CONTENT CON SALTOS DE PÁGINA ===");
+  }
 
   let workingY = currentY;
   let newPagesCreated = 0;
@@ -387,7 +430,10 @@ async function renderContentArea(
 
     if (element.elementY > 0) {
       // Elemento con posición fija
-      await renderEngine.renderElementAtPosition(element, element.elementY);
+      if (isDevelopment) {
+        console.log(`  ${element.component} | Y fijo: ${element.elementY}`);
+      }
+      await renderEngine.renderElementAtPosition(element, element.elementY, isDevelopment);
       continue;
     }
 
@@ -397,13 +443,16 @@ async function renderContentArea(
 
     if (projectedY <= pageBreakY) {
       // Cabe en la página actual
-      await renderEngine.renderElementAtPosition(element, workingY);
+      if (isDevelopment) {
+        console.log(`  ${element.component} | Y: ${workingY} + H: ${element.height} + MB: ${element.margin_bottom_total} = ${projectedY}`);
+      }
+      await renderEngine.renderElementAtPosition(element, workingY, isDevelopment);
       workingY = projectedY;
     } else {
       // No cabe - crear nueva página
-      console.log(
-        `Salto de página requerido en Y=${workingY}, elemento necesita ${requiredSpace}px`
-      );
+      if (isDevelopment) {
+        console.log(`  ${element.component} | SALTO DE PÁGINA (necesita ${requiredSpace}px, disponible: ${pageBreakY - workingY}px)`);
+      }
 
       // Renderizar footers en página actual
       await renderArea(
@@ -414,7 +463,8 @@ async function renderContentArea(
         workingY,
         pageBreakY,
         currentPage + newPagesCreated,
-        totalPages + newPagesCreated
+        totalPages + newPagesCreated,
+        isDevelopment
       );
 
       // Crear nueva página
@@ -431,11 +481,12 @@ async function renderContentArea(
         workingY,
         pageBreakY,
         currentPage + newPagesCreated,
-        totalPages + newPagesCreated
+        totalPages + newPagesCreated,
+        isDevelopment
       );
 
       // Renderizar el elemento en la nueva página
-      await renderEngine.renderElementAtPosition(element, workingY);
+      await renderEngine.renderElementAtPosition(element, workingY, isDevelopment);
       workingY += requiredSpace;
     }
   }

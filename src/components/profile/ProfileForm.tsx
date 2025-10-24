@@ -282,7 +282,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
               variant="outline"
               size="sm"
               onClick={() => startTour("profile-page")}
-              className="border-cyan-600 text-cyan-600 hover:bg-blue-50 h-8 px-3 gap-1.5"
+              className="border-lime-500 text-lime-600 hover:bg-lime-50 h-8 px-3 gap-1.5"
             >
               <Play className="h-3.5 w-3.5" />
               <span className="text-xs font-medium">Tour</span>
@@ -331,7 +331,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
               variant="outline"
               size="sm"
               onClick={() => window.location.href = `/users/${profile.id}/edit`}
-              className="border-cyan-600 text-cyan-600 hover:bg-blue-50"
+              className="border-lime-500 text-lime-600 hover:bg-lime-50"
             >
               Editar usuario
             </Button>

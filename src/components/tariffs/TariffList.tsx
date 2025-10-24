@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Layers, Download, Upload } from "lucide-react";
+import { Plus, Layers, Download, Upload, Play } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { startTour, checkAndStartPendingTour } from "@/lib/helpers/tour-helpers";
 import {
   Dialog,
   DialogContent,
@@ -105,6 +106,11 @@ export function TariffList({
   useEffect(() => {
     loadTariffs();
   }, [filters]);
+
+  // Detectar y ejecutar tour pendiente
+  useEffect(() => {
+    checkAndStartPendingTour();
+  }, []);
 
   const handleFiltersChange = (newFilters: typeof filters) => {
     setFilters(newFilters);
@@ -226,25 +232,40 @@ export function TariffList({
   return (
     <>
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-cyan-600 flex items-center gap-2">
-            <Layers className="h-6 w-6" />
-            Tarifas
-          </h1>
-          <p className="text-sm text-cyan-600">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+        <div className="text-center md:text-left w-full md:w-auto">
+          <div className="flex items-center justify-center md:justify-start gap-3">
+            <h1 className="text-3xl font-bold text-lime-600 flex items-center gap-2">
+              <Layers className="h-6 w-6" />
+              Tarifas
+            </h1>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const tourId = filteredTariffs.length === 0 ? "tarifas-page-vacia" : "tarifas-page";
+                startTour(tourId);
+              }}
+              className="border-lime-500 text-lime-600 hover:bg-lime-50 h-8 px-3 gap-1.5"
+            >
+              <Play className="h-3.5 w-3.5" />
+              <span className="text-xs font-medium">Tour</span>
+            </Button>
+          </div>
+          <p className="text-sm text-lime-600">
             Gestiona tus tarifas y crea presupuestos
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 justify-center md:justify-end w-full md:w-auto">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
+                  id="btn-exportar-tarifa"
                   variant="outline"
                   disabled={!isSomeSelected || exporting}
                   onClick={handleExportClick}
-                  className="border-cyan-600 text-cyan-600 hover:bg-blue-50"
+                  className="border-lime-500 text-lime-600 hover:bg-lime-50"
                 >
                   <Download className="mr-2 h-4 w-4" />
                   {isSomeSelected
@@ -266,7 +287,7 @@ export function TariffList({
           <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
             <DialogContent className="max-w-xl">
               <DialogHeader>
-                <DialogTitle className="text-cyan-600">
+                <DialogTitle className="text-lime-600">
                   Exportar {isSingleSelection ? "Tarifa" : "Tarifas"}
                 </DialogTitle>
                 <DialogDescription>
@@ -277,13 +298,13 @@ export function TariffList({
               </DialogHeader>
               <div className="space-y-3 py-4">
                 <Button
-                  className="w-full justify-start h-auto py-2.5 px-3 border-cyan-600 hover:bg-blue-50"
+                  className="w-full justify-start h-auto py-2.5 px-3 border-lime-500 hover:bg-lime-50"
                   variant="outline"
                   onClick={() => handleExport("json")}
                   disabled={exporting}
                 >
                   <div className="flex flex-col items-start text-left w-full min-w-0">
-                    <div className="font-semibold text-cyan-600 text-xs leading-tight break-words w-full">
+                    <div className="font-semibold text-lime-600 text-xs leading-tight break-words w-full">
                       {isSingleSelection
                         ? "Tarifa completa (JSON)"
                         : `${selectedTariffs.length} Tarifas completas (JSON)`}
@@ -295,13 +316,13 @@ export function TariffList({
                 </Button>
 
                 <Button
-                  className="w-full justify-start h-auto py-2.5 px-3 border-cyan-600 hover:bg-blue-50"
+                  className="w-full justify-start h-auto py-2.5 px-3 border-lime-500 hover:bg-lime-50"
                   variant="outline"
                   onClick={() => handleExport("price-structure")}
                   disabled={exporting}
                 >
                   <div className="flex flex-col items-start text-left w-full min-w-0">
-                    <div className="font-semibold text-cyan-600 text-xs leading-tight break-words w-full">
+                    <div className="font-semibold text-lime-600 text-xs leading-tight break-words w-full">
                       {isSingleSelection
                         ? "Estructura de precios (CSV)"
                         : `Estructura de precios de cada tarifa (CSV)`}
@@ -326,8 +347,9 @@ export function TariffList({
                 disabled={importing}
               />
               <Button
+                id="btn-importar-tarifa"
                 variant="outline"
-                className="border-cyan-600 text-cyan-600 hover:bg-blue-50"
+                className="border-lime-500 text-lime-600 hover:bg-lime-50"
                 onClick={() =>
                   document.getElementById("import-file-input")?.click()
                 }
@@ -338,7 +360,7 @@ export function TariffList({
               </Button>
             </>
           )}
-          <Button asChild className="bg-cyan-600 hover:bg-cyan-700">
+          <Button id="btn-nueva-tarifa-list" asChild className="bg-lime-500 hover:bg-lime-600">
             <Link href="/tariffs/create">
               <Plus className="mr-2 h-4 w-4" />
               Nueva Tarifa
@@ -377,22 +399,27 @@ export function TariffList({
       <div className="hidden lg:block border rounded-lg overflow-hidden bg-white">
         <div className="overflow-x-auto">
           {filteredTariffs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center bg-white">
+            <div id="nota-crear-primera-tarifa" className="flex flex-col items-center justify-center py-12 text-center bg-white">
               <Layers className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-2">No hay tarifas</h3>
-              <p className="text-muted-foreground mb-4">
+              <p className="text-muted-foreground mb-2">
                 {filters.status !== "all" || filters.search?.trim()
                   ? "No se encontraron tarifas con los filtros aplicados"
                   : "Aún no has creado ninguna tarifa"}
               </p>
               {(!filters.status || filters.status === "all") &&
                 !filters.search?.trim() && (
-                  <Button asChild className="bg-cyan-600 hover:bg-cyan-700">
-                    <Link href="/tariffs/create">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Crear primera tarifa
-                    </Link>
-                  </Button>
+                  <>
+                    <p className="text-sm text-muted-foreground max-w-md mb-4">
+                      Las tarifas son necesarias para crear presupuestos. Contienen las partidas, precios y configuración (plantilla PDF, logo, etc.) que se usarán como base para generar presupuestos personalizados para tus clientes.
+                    </p>
+                    <Button asChild className="bg-lime-500 hover:bg-lime-600">
+                      <Link href="/tariffs/create">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Crear primera tarifa
+                      </Link>
+                    </Button>
+                  </>
                 )}
             </div>
           ) : (
@@ -440,19 +467,24 @@ export function TariffList({
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Layers className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium mb-2">No hay tarifas</h3>
-            <p className="text-muted-foreground mb-4">
+            <p className="text-muted-foreground mb-2">
               {filters.status !== "all" || filters.search?.trim()
                 ? "No se encontraron tarifas con los filtros aplicados"
                 : "Aún no has creado ninguna tarifa"}
             </p>
             {(!filters.status || filters.status === "all") &&
               !filters.search?.trim() && (
-                <Button asChild className="bg-cyan-600 hover:bg-cyan-700">
-                  <Link href="/tariffs/create">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Crear primera tarifa
-                  </Link>
-                </Button>
+                <>
+                  <p className="text-sm text-muted-foreground max-w-md mb-4 px-4">
+                    Las tarifas son necesarias para crear presupuestos. Contienen las partidas, precios y configuración (plantilla PDF, logo, etc.) que se usarán como base para generar presupuestos personalizados para tus clientes.
+                  </p>
+                  <Button asChild className="bg-lime-500 hover:bg-lime-600">
+                    <Link href="/tariffs/create">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Crear primera tarifa
+                    </Link>
+                  </Button>
+                </>
               )}
           </div>
         ) : (

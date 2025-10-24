@@ -49,8 +49,8 @@ export default async function SettingsPage() {
     <div className="min-h-screen bg-lime-50">
       <div className="container mx-auto px-4 py-6">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold flex items-center gap-2">
+        <div className="mb-6 text-center md:text-left">
+          <h1 className="text-3xl font-bold flex items-center justify-center md:justify-start gap-2">
             <Settings className="h-6 w-6" />
             Configuración del Sistema
           </h1>

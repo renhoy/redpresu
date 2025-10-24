@@ -385,7 +385,7 @@ export default function UserTable({
                                     <Button
                                       variant="outline"
                                       size="icon"
-                                      className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                                      className="border-blue-500 text-lime-600 hover:bg-lime-50"
                                     >
                                       <Mail className="h-4 w-4" />
                                     </Button>

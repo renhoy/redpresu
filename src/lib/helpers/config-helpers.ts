@@ -218,3 +218,12 @@ export async function getAppName(): Promise<string> {
   const name = await getConfigValue<string>('app_name')
   return name || 'Redpresu'
 }
+
+/**
+ * Obtiene el modo de generación de PDF
+ * @returns 'development' o 'production' (por defecto 'production')
+ */
+export async function getRapidPDFMode(): Promise<'development' | 'production'> {
+  const mode = await getConfigValue<string>('rapid_pdf_mode')
+  return (mode === 'development' ? 'development' : 'production') as 'development' | 'production'
+}

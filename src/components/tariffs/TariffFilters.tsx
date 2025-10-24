@@ -61,7 +61,7 @@ export function TariffFilters({
   const showUserFilter = currentUserRole && ['admin', 'superadmin'].includes(currentUserRole)
 
   return (
-    <div className="flex gap-4 mb-4 flex-wrap">
+    <div id="filtros-tarifa" className="flex gap-4 mb-4 flex-wrap">
       <Input
         placeholder="Buscar por título o descripción..."
         value={search}

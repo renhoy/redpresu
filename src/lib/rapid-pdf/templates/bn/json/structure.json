@@ -1,0 +1,289 @@
+{
+  "template": {
+    "id": "41200-00001",
+    "name": "Empresa 1 - Presupuestos Servicios",
+    "date": "2025-04-05 10:00:32",
+    "description": "Template corporativo con diseño moderno"
+  },
+  "document": {
+    "page": {
+      "format": "a4",
+      "orientation": "portrait",
+      "margins": {
+        "top": 40,
+        "bottom": 40,
+        "left": 54,
+        "right": 54
+      },
+      "dimensions": {
+        "width": 794,
+        "height": 1123
+      },
+      "general_margin": 1,
+      "content_bottom": 900
+    },
+    "sections": {
+      "summary": {
+        "header": [
+          {
+            "component": "company"
+          },
+          {
+            "component": "title"
+          }
+        ],
+        "content": [
+          {
+            "component": "client"
+          },
+          {
+            "component": "separator"
+          },
+          {
+            "component": "levels"
+          },
+          {
+            "component": "separator"
+          },
+          {
+            "component": "totals"
+          },
+          {
+            "component": "separator"
+          },
+          {
+            "component": "note"
+          }
+        ],
+        "footer": [
+          {
+            "component": "signatures"
+          },
+          {
+            "component": "pagination"
+          }
+        ]
+      },
+      "budget": {
+        "header": [
+          {
+            "component": "company"
+          },
+          {
+            "component": "title"
+          }
+        ],
+        "content": [
+          {
+            "component": "levels"
+          }
+        ],
+        "footer": [
+          {
+            "component": "pagination"
+          }
+        ]
+      },
+      "conditions": {
+        "header": [
+          {
+            "component": "company"
+          },
+          {
+            "component": "title"
+          }
+        ],
+        "content": [
+          {
+            "component": "note"
+          }
+        ],
+        "footer": [
+          {
+            "component": "pagination"
+          }
+        ]
+      }
+    },
+    "components": {
+      "company": {
+        "payload": {
+          "logo": "payload.company.logo",
+          "name": "payload.company.name",
+          "nif": "payload.company.nif",
+          "address": "payload.company.address",
+          "contact": "payload.company.contact"
+        },
+        "config": {
+          "file": "headerCompany.js",
+          "visibility": "all",
+          "y": 0,
+          "margin_bottom": 10
+        },
+        "variable": {
+          "margin_bottom_total": 0,
+          "height": 0
+        }
+      },
+      "title": {
+        "payload": {
+          "title": "payload.summary.title || payload.budget.title || payload.conditions.title"
+        },
+        "config": {
+          "file": "headerTitle.js",
+          "visibility": "all",
+          "y": 0,
+          "margin_bottom": 10
+        },
+        "variable": {
+          "margin_bottom_total": 0,
+          "height": 0
+        }
+      },
+      "client": {
+        "payload": {
+          "name": "payload.summary.client.name",
+          "nif_nie": "payload.summary.client.nif_nie",
+          "address": "payload.summary.client.address",
+          "contact": "payload.summary.client.contact"
+        },
+        "config": {
+          "file": "contentClient.js",
+          "visibility": null,
+          "y": 0,
+          "margin_bottom": 10
+        },
+        "variable": {
+          "margin_bottom_total": 0,
+          "height": 0
+        }
+      },
+      "separator": {
+        "payload": {},
+        "config": {
+          "file": "contentSeparator.js",
+          "visibility": null,
+          "y": 0,
+          "margin_bottom": 10
+        },
+        "variable": {
+          "margin_bottom_total": 0,
+          "height": 0
+        }
+      },
+      "levels": {
+        "payload": {
+          "levels": "payload.summary.levels || payload.budget.levels",
+          "fields": {
+            "common": {
+              "level": "payload.summary.levels[].level || payload.budget.levels[].level",
+              "id": "payload.summary.levels[].id || payload.budget.levels[].id",
+              "name": "payload.summary.levels[].name || payload.budget.levels[].name",
+              "amount": "payload.summary.levels[].amount || payload.budget.levels[].amount"
+            },
+            "item_specific": {
+              "unit": "payload.budget.levels[].unit",
+              "quantity": "payload.budget.levels[].quantity",
+              "pvp": "payload.budget.levels[].pvp",
+              "iva_percentage": "payload.budget.levels[].iva_percentage",
+              "description": "payload.budget.levels[].description"
+            }
+          }
+        },
+        "config": {
+          "file": "contentLevels.js",
+          "visibility": null,
+          "y": 0,
+          "margin_bottom": 10
+        },
+        "variable": {
+          "margin_bottom_total": 0,
+          "height": 0
+        }
+      },
+      "totals": {
+        "payload": {
+          "base": {
+            "name": "payload.summary.totals.base.name",
+            "amount": "payload.summary.totals.base.amount"
+          },
+          "ivas": [
+            {
+              "name": "payload.summary.totals.ivas[].name",
+              "amount": "payload.summary.totals.ivas[].amount"
+            }
+          ],
+          "total": {
+            "name": "payload.summary.totals.total.name",
+            "amount": "payload.summary.totals.total.amount"
+          }
+        },
+        "config": {
+          "file": "contentTotals.js",
+          "visibility": null,
+          "y": 0,
+          "margin_bottom": 10
+        },
+        "variable": {
+          "margin_bottom_total": 0,
+          "height": 0
+        }
+      },
+      "note": {
+        "payload": {
+          "notes": "payload.summary.note.split('\n\n') || payload.conditions.note.split('\n\n')"
+        },
+        "config": {
+          "file": "contentNote.js",
+          "visibility": null,
+          "y": 0,
+          "margin_bottom": 0
+        },
+        "variable": {
+          "margin_bottom_total": 0,
+          "height": 0
+        }
+      },
+      "signatures": {
+        "payload": {
+          "company_logo": "payload.company.logo",
+          "company_name": "payload.company.name",
+          "company_nif": "payload.company.nif",
+          "company_address": "payload.company.address",
+          "company_contact": "payload.company.contact",
+          "client_name": "payload.summary.client.name",
+          "client_nif_nie": "payload.summary.client.nif_nie",
+          "client_address": "payload.summary.client.address",
+          "client_contact": "payload.summary.client.contact"
+        },
+        "config": {
+          "file": "footerSignatures.js",
+          "visibility": "last",
+          "y": 908,
+          "margin_bottom": 0
+        },
+        "variable": {
+          "margin_bottom_total": 0,
+          "height": 0
+        }
+      },
+      "pagination": {
+        "payload": {
+          "budget_date": "payload.summary.client.budget_date",
+          "validity": "payload.summary.client.validity"
+        },
+        "config": {
+          "file": "footerPagination.js",
+          "visibility": "all",
+          "y": 1010,
+          "margin_bottom": 0
+        },
+        "variable": {
+          "current_page": 1,
+          "total_pages": 1,
+          "budget_validity_date": "budget_date + validity"
+        }
+      }
+    }
+  }
+}

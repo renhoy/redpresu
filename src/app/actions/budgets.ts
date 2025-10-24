@@ -10,7 +10,6 @@ import { Tariff, Budget, BudgetStatus } from '@/lib/types/database'
 import { revalidatePath } from 'next/cache'
 import { buildPDFPayload } from '@/lib/helpers/pdf-payload-builder'
 import { generatePDF } from '@/lib/rapid-pdf'
-import { promises as fs } from 'fs'
 import path from 'path'
 import { randomUUID } from 'crypto'
 import {
@@ -1175,7 +1174,7 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
 
     // 1. Construir payload
     log.info('[generateBudgetPDF] Construyendo payload...')
-    const payload = buildPDFPayload(budgetTyped, tariffTyped)
+    const payload = await buildPDFPayload(budgetTyped, tariffTyped)
 
     // Obtener modo de aplicación para logs
     const { isDevelopmentMode } = await import('@/lib/helpers/config-helpers')
@@ -1215,22 +1214,20 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
       log.info('[generateBudgetPDF] 🆕 Usando módulo interno Rapid-PDF...')
 
       try {
-        // Definir ruta temporal para el PDF
-        const tempDir = path.join(process.cwd(), 'temp', 'pdfs')
-        await fs.mkdir(tempDir, { recursive: true })
-
-        const tempFileName = `budget-${budgetId}-${randomUUID()}.pdf`
-        const tempFilePath = path.join(tempDir, tempFileName)
-
         // Generar PDF con módulo interno
+        // El módulo lee la configuración rapid_pdf_mode automáticamente
         const result = await generatePDF(payload, {
-          outputPath: tempFilePath,
-          mode: 'produccion',
+          returnBuffer: true, // Solicitar que retorne el buffer del PDF
         })
 
         if (!result.success) {
           log.error('[generateBudgetPDF] Error generando PDF:', result.error)
           return { success: false, error: result.error }
+        }
+
+        if (!result.buffer) {
+          log.error('[generateBudgetPDF] No se recibió buffer del PDF')
+          return { success: false, error: 'No se generó el buffer del PDF' }
         }
 
         log.info(
@@ -1239,19 +1236,8 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
           'ms'
         )
 
-        // Leer archivo generado
-        pdfBuffer = await fs.readFile(tempFilePath)
-        log.info('[generateBudgetPDF] PDF leído:', pdfBuffer.length, 'bytes')
-
-        // Limpiar archivo temporal
-        try {
-          await fs.unlink(tempFilePath)
-        } catch (cleanupError) {
-          log.warn(
-            '[generateBudgetPDF] No se pudo limpiar archivo temporal:',
-            cleanupError
-          )
-        }
+        // Asignar el buffer del PDF
+        pdfBuffer = result.buffer
 
       } catch (moduleError) {
         log.error('[generateBudgetPDF] Error con módulo interno:', moduleError)

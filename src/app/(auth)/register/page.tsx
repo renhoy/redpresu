@@ -38,7 +38,7 @@ export default async function RegisterPage() {
         >
           <div className="w-full max-w-md space-y-8">
             {/* Mensaje de registro deshabilitado */}
-            <Alert className="border-amber-500 bg-blue-50">
+            <Alert className="border-amber-500 bg-lime-50">
               <Lock className="h-4 w-4 text-amber-600" />
               <AlertDescription className="text-amber-800">
                 <p className="font-semibold mb-2">

@@ -563,6 +563,42 @@ export async function getAppNameAction(): Promise<{
 }
 
 /**
+ * Obtiene el modo de generación de PDF (público)
+ * @returns 'development' o 'production' (default: 'production')
+ */
+export async function getRapidPDFModeAction(): Promise<{
+  success: boolean
+  data?: 'development' | 'production'
+  error?: string
+}> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('redpresu_config')
+      .select('value')
+      .eq('key', 'rapid_pdf_mode')
+      .single()
+
+    if (error || !data) {
+      // Devolver modo por defecto si no existe en BD
+      return {
+        success: true,
+        data: 'production'
+      }
+    }
+
+    const mode = data.value as string
+    return {
+      success: true,
+      data: (mode === 'development' ? 'development' : 'production')
+    }
+  } catch (error) {
+    log.error('[getRapidPDFModeAction] Error:', error)
+    // En caso de error, devolver production por defecto
+    return { success: true, data: 'production' }
+  }
+}
+
+/**
  * Interfaz para datos del issuer
  */
 export interface IssuerData {

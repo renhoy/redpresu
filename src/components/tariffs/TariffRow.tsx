@@ -209,7 +209,7 @@ export function TariffRow({
                     variant="outline"
                     size="sm"
                     asChild
-                    className="h-9 px-2 border-cyan-600 text-cyan-600 hover:bg-blue-50"
+                    className="h-9 px-2 border-lime-500 text-lime-600 hover:bg-lime-50"
                   >
                     <Link
                       href={`/budgets/create?tariff_id=${tariff.id}`}
@@ -249,7 +249,7 @@ export function TariffRow({
                     variant="outline"
                     size="sm"
                     asChild
-                    className="h-9 px-2 border-cyan-600 text-cyan-600 hover:bg-blue-50"
+                    className="h-9 px-2 border-lime-500 text-lime-600 hover:bg-lime-50"
                   >
                     <Link href={`/budgets?tariff_id=${tariff.id}`}>
                       <span className="font-medium">{tariff.budget_count}</span>
@@ -346,8 +346,8 @@ export function TariffRow({
                       onClick={() => setShowTemplateDialog(true)}
                       className={
                         tariff.is_template
-                          ? "bg-cyan-600 hover:bg-cyan-700"
-                          : "border-cyan-600 text-cyan-600 hover:bg-blue-50"
+                          ? "bg-lime-500 hover:bg-lime-600"
+                          : "border-lime-500 text-lime-600 hover:bg-lime-50"
                       }
                     >
                       <Star
@@ -373,7 +373,7 @@ export function TariffRow({
                     variant="outline"
                     size="icon"
                     asChild
-                    className="border-cyan-600 text-cyan-600 hover:bg-blue-50"
+                    className="border-lime-500 text-lime-600 hover:bg-lime-50"
                   >
                     <Link href={`/tariffs/edit/${tariff.id}`}>
                       <Pencil className="h-4 w-4" />
@@ -392,7 +392,7 @@ export function TariffRow({
                     size="icon"
                     onClick={handleDuplicate}
                     disabled={isDuplicating}
-                    className="border-cyan-600 text-cyan-600 hover:bg-blue-50"
+                    className="border-lime-500 text-lime-600 hover:bg-lime-50"
                   >
                     <Copy className="h-4 w-4" />
                   </Button>

@@ -250,7 +250,7 @@ export function SubscriptionsClient({
         </div>
 
         {/* Información adicional */}
-        <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="mt-8 p-4 bg-lime-50 border border-blue-200 rounded-lg">
           <p className="text-sm text-gray-700">
             💡 <strong>Nota:</strong> Los cambios de plan se aplicarán
             inmediatamente. Si cambias de un plan superior a uno inferior, los

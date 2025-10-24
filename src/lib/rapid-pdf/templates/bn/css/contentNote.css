@@ -1,0 +1,140 @@
+/* Styles for the notes component with HTML support */
+/* template/bn/css/contentNote.css */
+/* IMPORTANT: These styles must match EXACTLY with calculateHeight.js DOM virtual styles */
+
+.content-note {
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  border: none;
+  border-radius: 0;
+  background-color: transparent;
+  padding: 0;
+  overflow: visible;
+}
+
+/* Contenedor principal del contenido */
+.content-note .note-content {
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1.5;
+  color: #333333;
+  box-sizing: border-box;
+}
+
+/* Estilos para párrafos - CRITICAL: must match calculateHeight.js */
+.content-note .note-content p {
+  margin: 0 0 10px 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1.5;
+  color: #333333;
+  box-sizing: border-box;
+}
+
+.content-note .note-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* Estilos para negrita - CRITICAL: must match calculateHeight.js */
+.content-note .note-content strong {
+  font-weight: bold;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+/* Estilos para cursiva - CRITICAL: must match calculateHeight.js */
+.content-note .note-content em {
+  font-style: italic;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+/* Estilos para enlaces - CRITICAL: must match calculateHeight.js */
+.content-note .note-content a {
+  color: #0066cc;
+  text-decoration: underline;
+  font-size: inherit;
+  line-height: inherit;
+  font-weight: inherit;
+}
+
+/* Estilos para listas con viñetas - CRITICAL: must match calculateHeight.js */
+.content-note .note-content ul {
+  margin: 0 0 10px 0;
+  padding: 0 0 0 20px;
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #333333;
+  list-style-type: disc;
+  list-style-position: outside;
+  box-sizing: border-box;
+}
+
+/* Estilos para listas numeradas - CRITICAL: must match calculateHeight.js */
+.content-note .note-content ol {
+  margin: 0 0 10px 0;
+  padding: 0 0 0 20px;
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #333333;
+  list-style-type: decimal;
+  list-style-position: outside;
+  box-sizing: border-box;
+}
+
+/* Estilos para items de lista - CRITICAL: must match calculateHeight.js */
+.content-note .note-content ul li,
+.content-note .note-content ol li {
+  margin: 3px 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1.5;
+  color: #333333;
+  box-sizing: border-box;
+}
+
+/* Listas anidadas - CRITICAL: must match calculateHeight.js */
+.content-note .note-content ul ul,
+.content-note .note-content ol ol,
+.content-note .note-content ul ol,
+.content-note .note-content ol ul {
+  margin: 3px 0;
+  padding-left: 20px;
+}
+
+/* Último elemento sin margen inferior - CRITICAL: must match calculateHeight.js */
+.content-note .note-content ul:last-child,
+.content-note .note-content ol:last-child {
+  margin-bottom: 0;
+}
+
+/* Reset de estilos que podrían heredarse */
+.content-note .note-content * {
+  box-sizing: border-box;
+}
+
+/* Compatibilidad con clase legacy (texto plano antiguo) */
+.content-note .note-paragraph {
+  margin: 0 0 10px 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1.5;
+  color: #333333;
+  box-sizing: border-box;
+}

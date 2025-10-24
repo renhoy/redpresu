@@ -112,9 +112,11 @@ export function UserCard({
           </div>
 
           {/* Fila 3: Acciones */}
-          <div className="flex justify-end items-center gap-1 border-t pt-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:justify-end gap-1.5 w-full border-t pt-3">
             {!canEdit ? (
-              <span className="text-muted-foreground text-sm">-</span>
+              <span className="text-muted-foreground text-sm col-span-2 sm:col-span-3 text-center">
+                Sin permisos
+              </span>
             ) : (
               <>
                 {/* Botón Editar */}
@@ -122,10 +124,11 @@ export function UserCard({
                   variant="outline"
                   size="sm"
                   asChild
-                  className="h-7 px-2"
+                  className="w-full lg:w-auto h-7 px-2 gap-1.5 text-xs"
                 >
                   <Link href={`/users/${user.id}/edit`}>
-                    <Pencil className="h-3 w-3" />
+                    <Pencil className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span>Editar</span>
                   </Link>
                 </Button>
 
@@ -135,16 +138,22 @@ export function UserCard({
                     variant="outline"
                     size="sm"
                     onClick={() => onToggleStatus(user)}
-                    className={`h-7 px-2 ${
+                    className={`w-full lg:w-auto h-7 px-2 gap-1.5 text-xs ${
                       user.status === "active"
                         ? "border-orange-500 text-orange-600 hover:bg-orange-50"
                         : "border-green-600 text-green-600 hover:bg-green-50"
                     }`}
                   >
                     {user.status === "active" ? (
-                      <Trash2 className="h-3 w-3" />
+                      <>
+                        <Trash2 className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span>Desactivar</span>
+                      </>
                     ) : (
-                      <UserCheck className="h-3 w-3" />
+                      <>
+                        <UserCheck className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span>Activar</span>
+                      </>
                     )}
                   </Button>
                 )}
@@ -155,9 +164,10 @@ export function UserCard({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-7 px-2 border-blue-500 text-blue-600 hover:bg-blue-50"
+                      className="w-full lg:w-auto h-7 px-2 gap-1.5 text-xs border-blue-500 text-lime-600 hover:bg-lime-50"
                     >
-                      <Mail className="h-3 w-3" />
+                      <Mail className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span>Reenviar</span>
                     </Button>
                   )}
               </>

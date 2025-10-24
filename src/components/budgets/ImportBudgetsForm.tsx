@@ -201,7 +201,7 @@ export function ImportBudgetsForm() {
           <div className="flex items-center gap-4">
             <label
               htmlFor="file-input"
-              className="flex-1 flex items-center justify-center gap-2 border-2 border-dashed border-gray-300 rounded-lg p-8 cursor-pointer hover:border-cyan-500 hover:bg-blue-50/50 transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 border-2 border-dashed border-gray-300 rounded-lg p-8 cursor-pointer hover:border-cyan-500 hover:bg-lime-50/50 transition-colors"
             >
               <FileJson className="h-8 w-8 text-muted-foreground" />
               <div className="text-center">
@@ -251,7 +251,7 @@ export function ImportBudgetsForm() {
             <Button
               onClick={handleImport}
               disabled={!file || importing}
-              className="bg-cyan-600 hover:bg-cyan-700"
+              className="bg-lime-500 hover:bg-lime-600"
             >
               <Upload className="mr-2 h-4 w-4" />
               {importing ? "Importando..." : "Importar Presupuestos"}

@@ -1,0 +1,146 @@
+{
+  "company": {
+    "logo": "https://img.freepik.com/vector-gratis/vector-degradado-logotipo-colorido-pajaro_343694-1365.jpg",
+    "name": "Empresa Demo",
+    "nif": "59101921V",
+    "address": "Alameda Picasso 95, 17032, Hostalric, (Girona)",
+    "contact": "665405002 - josivela+vicentecebrian@gmail.com",
+    "template": "color",
+    "styles": [
+      {
+        "primary_color": "#84cc16"
+      },
+      {
+        "secondary_color": "#0891b2"
+      }
+    ]
+  },
+  "pdf": {
+    "title": "Presupuesto - Luisa Mesa Munai (19350334C)",
+    "author": "Empresa Demo",
+    "subject": "Documento de Presupuesto",
+    "creator": "app server rapidPDF",
+    "keywords": "presupuesto"
+  },
+  "summary": {
+    "client": {
+      "name": "Luisa Mesa Munai",
+      "nif_nie": "19350334C",
+      "address": "Calle Diego Velázquez, 28953 Montejo de la Sierra, Madrid",
+      "contact": "604282030 - josivela+anabelen@gmail.com",
+      "budget_date": "23-10-2025",
+      "validity": "30"
+    },
+    "title": "Resumen del Presupuesto",
+    "note": "<p><strong>ACEPTACIÓN Y FORMAS DE PAGO</strong></p><p>Rogamos confirmar su aceptación mediante firma en la parte inferior de este documento.</p><p><br></p><p><strong>PAGO EN EFECTIVO:</strong></p><p>El importe total es de 2004 €, a abonar en 4 cuotas:</p><ul class=\"list-disc pl-4\"><li class=\"ml-2\"><p>30 de junio de 2025: 500 €</p></li><li class=\"ml-2\"><p>7 de julio de 2025: 500 €</p></li><li class=\"ml-2\"><p>14 de julio de 2025: 500 €</p></li><li class=\"ml-2\"><p>21 de julio de 2025: 504 €</p></li></ul><p></p><p>Los pagos pueden realizarse en efectivo en una de nuestras oficinas o mediante transferencia bancaria.</p><p></p><p><strong>Datos bancarios:</strong> Banco Santander ES12 3456 7890 1234 5678 9012</p><p><br></p><p>Requerimos que nos envíe el justificante de pago a: [<a target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-cyan-600 underline cursor-pointer hover:text-cyan-700\" href=\"mailto:facturacion@loremipsum.com\">facturacion@loremipsum.com</a>](<a target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-cyan-600 underline cursor-pointer hover:text-cyan-700\" href=\"mailto:facturacion@loremipsum.com\">mailto:facturacion@loremipsum.com</a>)</p><p><br></p><p>Quedamos a su disposición para cualquier consulta o aclaración.</p><p><br><strong>PROTECCIÓN DE DATOS</strong></p><p><em>Al firmar el presente presupuesto, el cliente acepta que, de conformidad con el REGLAMENTO (UE) 2016/679 del PARLAMENTO EUROPEO y del CONSEJO de 27 de abril de 2016, los datos personales facilitados voluntariamente a través de este documento serán tratados por Lorem Ipsum S.A. con la finalidad de gestionar la relación y prestación de los servicios señalados en este documento.</em></p><p><br></p><p>Los datos serán tratados de manera confidencial y el cliente podrá ejercer los derechos de acceso, rectificación, cancelación y oposición enviando una solicitud por escrito, acompañada de una fotocopia de su DNI, a: Calle Real, 325 - 41200, Alcalá del Río (Sevilla) o a <a target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-cyan-600 underline cursor-pointer hover:text-cyan-700\" href=\"mailto:info@loremipsum.com\">info@loremipsum.com</a></p>",
+    "levels": [
+      {
+        "level": "chapter",
+        "id": "1",
+        "name": "Pescado Fresco",
+        "amount": "256.00"
+      },
+      {
+        "level": "chapter",
+        "id": "2",
+        "name": "Productos Congelados",
+        "amount": "200.00"
+      },
+      {
+        "level": "chapter",
+        "id": "3",
+        "name": "Preparados y Ahumados",
+        "amount": "500.00"
+      }
+    ],
+    "totals": {
+      "base": {
+        "name": "Base Imponible",
+        "amount": "869.09"
+      },
+      "ivas": [
+        {
+          "name": "10.00% IVA",
+          "amount": "86.91"
+        }
+      ],
+      "total": {
+        "name": "TOTAL PRESUPUESTO",
+        "amount": "956.00"
+      }
+    }
+  },
+  "budget": {
+    "title": "Detalles del Presupuesto",
+    "levels": [
+      {
+        "id": "1",
+        "name": "Pescado Fresco",
+        "level": "chapter",
+        "amount": "256.00"
+      },
+      {
+        "id": "1.1",
+        "name": "Pescado Blanco",
+        "level": "subchapter",
+        "amount": "256.00"
+      },
+      {
+        "id": "1.1.1",
+        "name": "Pescados de Arrába",
+        "level": "section",
+        "amount": "256.00"
+      },
+      {
+        "id": "1.1.1.1",
+        "pvp": "12.80",
+        "name": "Acedías",
+        "unit": "kg",
+        "level": "item",
+        "amount": "256.00",
+        "quantity": "20.00",
+        "description": "Acedías frescas del golfo.",
+        "iva_percentage": "10.00"
+      },
+      {
+        "id": "2",
+        "name": "Productos Congelados",
+        "level": "chapter",
+        "amount": "200.00"
+      },
+      {
+        "id": "2.1",
+        "pvp": "10.00",
+        "name": "Calamares en Anillas",
+        "unit": "kg",
+        "level": "item",
+        "amount": "200.00",
+        "quantity": "20.00",
+        "description": "Calamar congelado limpio.",
+        "iva_percentage": "10.00"
+      },
+      {
+        "id": "3",
+        "name": "Preparados y Ahumados",
+        "level": "chapter",
+        "amount": "500.00"
+      },
+      {
+        "id": "3.1",
+        "pvp": "25.00",
+        "name": "Salmón Ahumado",
+        "unit": "kg",
+        "level": "item",
+        "amount": "500.00",
+        "quantity": "20.00",
+        "description": "Lomo de salmón ahumado.",
+        "iva_percentage": "10.00"
+      }
+    ]
+  },
+  "conditions": {
+    "title": "Condiciones del Presupuesto",
+    "note": "<p><strong>CONDICIONES GENERALES</strong></p><ul><li>Presupuesto válido por 30 días desde la fecha de emisión</li><li>Los precios incluyen IVA</li><li>Plazo de entrega: según acordado</li></ul>"
+  },
+  "mode": "produccion"
+}

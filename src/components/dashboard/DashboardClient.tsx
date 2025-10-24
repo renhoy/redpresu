@@ -57,8 +57,8 @@ interface DashboardClientProps {
 const statusColors = {
   borrador: "bg-black text-neutral-200",
   pendiente: "bg-orange-100 text-yellow-800",
-  enviado: "bg-slate-100 text-cyan-600",
-  aprobado: "bg-blue-50 text-green-600",
+  enviado: "bg-slate-100 text-lime-600",
+  aprobado: "bg-lime-50 text-green-600",
   rechazado: "bg-pink-100 text-rose-600",
   caducado: "bg-neutral-200 text-black",
 };
@@ -109,15 +109,15 @@ export function DashboardClient({
     <div className="min-h-screen bg-lime-50">
       <div className="container mx-auto px-4 py-6 space-y-8">
         {/* Header con filtro de período */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="text-center md:text-left w-full md:w-auto">
+            <h1 className="text-3xl font-bold flex items-center justify-center md:justify-start gap-2">
               <Home className="h-6 w-6" /> Panel de control
             </h1>
             <p className="text-sm">Información, resumen y estadísticas</p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full md:w-auto justify-center md:justify-end">
             <Calendar className="w-4 h-4 text-gray-500" />
             <Select
               value={periodo}

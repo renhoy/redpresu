@@ -1,0 +1,86 @@
+/*template/bn/css/budget.css */
+.chapter-l1 {
+  background-color: var(--bg-chapter);
+  color: var(--color-chapter);
+}
+
+.subchapter-l1 {
+  background-color: var(--bg-subchapter);
+  color: var(--color-subchapter);
+}
+
+.section-l1 {
+  background-color: var(--bg-section);
+  color: var(--color-section);
+}
+
+.item-l1 {
+  background-color: var(--bg-item);
+  border-top: 1px solid var(--border-item);
+  border-left: 1px solid var(--border-item);
+  border-right: 1px solid var(--border-item);
+}
+
+.item-l2 {
+  border-left: 1px solid var(--border-item);
+  border-right: 1px solid var(--border-item);
+}
+
+.item-l2 span {
+  font-weight: bold;
+}
+
+.item-l3 {
+  font-family: var(--font-primary);
+  font-size: var(--font-size-normal);
+  line-height: 1.5;
+  border-left: 1px solid var(--border-item);
+  border-right: 1px solid var(--border-item);
+  border-bottom: 1px solid var(--border-item);
+}
+
+.chapter-name,
+.subchapter-name,
+.section-name {
+  font-family: var(--font-primary);
+  font-size: var(--font-size-normal);
+  font-weight: bold;
+  font-style: italic;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.chapter-amount,
+.subchapter-amount,
+.section-amount {
+  font-family: var(--font-primary);
+  font-size: var(--font-size-normal);
+  font-weight: bold;
+  font-style: italic;
+  text-align: right;
+}
+
+.item-name {
+  font-family: var(--font-primary);
+  font-size: var(--font-size-normal);
+  font-weight: bold;
+  font-style: italic;
+  line-height: 1.1;
+}
+
+.item-amount {
+  font-family: var(--font-primary);
+  font-size: var(--font-size-normal);
+  font-weight: bold;
+  font-style: italic;
+  text-align: right;
+}
+
+.item-unit,
+.item-quantity,
+.item-pvp,
+.item-iva_percentage {
+  font-family: var(--font-primary);
+  font-size: var(--font-size-normal);
+  text-align: center;
+}

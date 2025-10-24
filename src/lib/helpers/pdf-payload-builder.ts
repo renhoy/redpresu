@@ -1,5 +1,9 @@
 import { Budget, Tariff } from '@/lib/types/database'
 import { formatCurrency } from './format'
+import path from 'path'
+
+// Usar require para fs.promises (compatible con Next.js Server Actions)
+const fs = require('fs').promises
 
 interface BudgetDataItem {
   level: 'chapter' | 'subchapter' | 'section' | 'item'
@@ -118,13 +122,35 @@ function formatSpanishNumber(value: number, decimals: number = 2): string {
 }
 
 /**
- * Filtra elementos con amount > 0
+ * Filtra elementos con amount > 0 y elimina ancestros vacíos
+ * Paso 2 del algoritmo correcto:
+ * - Elimina partidas con importe = 0
+ * - Elimina sus ancestros (secciones, subcapítulos, capítulos) que también tengan importe = 0
  */
 function filterNonZeroItems(items: BudgetDataItem[]): BudgetDataItem[] {
-  return items.filter(item => {
+  // Primero, filtrar todos los elementos con amount > 0
+  const nonZeroItems = items.filter(item => {
     const amount = parseSpanishNumber(item.amount)
     return amount > 0
   })
+
+  // Crear set de IDs que tienen descendientes con importe > 0
+  const idsWithChildren = new Set<string>()
+
+  nonZeroItems.forEach(item => {
+    // Añadir el ID del item
+    idsWithChildren.add(item.id)
+
+    // Añadir todos los ancestros
+    const parts = item.id.split('.')
+    for (let i = 1; i < parts.length; i++) {
+      const ancestorId = parts.slice(0, i).join('.')
+      idsWithChildren.add(ancestorId)
+    }
+  })
+
+  // Retornar solo los items que tienen importe > 0 O tienen descendientes con importe > 0
+  return items.filter(item => idsWithChildren.has(item.id))
 }
 
 /**
@@ -133,9 +159,8 @@ function filterNonZeroItems(items: BudgetDataItem[]): BudgetDataItem[] {
  */
 function renumberHierarchicalIds(items: BudgetDataItem[]): BudgetDataItem[] {
   const renumbered: BudgetDataItem[] = []
-  const idMap = new Map<string, string>() // oldId -> newId
 
-  // Agrupar por nivel jerárquico
+  // Agrupar por padre usando IDs ORIGINALES
   const itemsByParent = new Map<string, BudgetDataItem[]>()
 
   items.forEach(item => {
@@ -150,27 +175,29 @@ function renumberHierarchicalIds(items: BudgetDataItem[]): BudgetDataItem[] {
   })
 
   // Función recursiva para renumerar
-  function renumberLevel(parentId: string, counter = 1): void {
-    const key = parentId || 'root'
+  // originalParentId: ID original del padre (para buscar en itemsByParent)
+  // newParentId: Nuevo ID del padre (para construir nuevos IDs de hijos)
+  function renumberLevel(originalParentId: string, newParentId: string, counter = 1): void {
+    const key = originalParentId || 'root'
     const children = itemsByParent.get(key) || []
 
     children.forEach((item, index) => {
       const newNumber = counter + index
-      const newId = parentId ? `${parentId}.${newNumber}` : `${newNumber}`
-
-      idMap.set(item.id, newId)
+      const newId = newParentId ? `${newParentId}.${newNumber}` : `${newNumber}`
 
       renumbered.push({
         ...item,
         id: newId
       })
 
-      // Renumerar hijos
-      renumberLevel(newId, 1)
+      // Renumerar hijos: buscar usando el ID ORIGINAL del item actual
+      // pero construir IDs usando el NUEVO ID
+      renumberLevel(item.id, newId, 1)
     })
   }
 
-  renumberLevel('', 1)
+  // Iniciar desde la raíz
+  renumberLevel('', '', 1)
 
   return renumbered
 }
@@ -422,9 +449,33 @@ function formatItemNumbers(items: BudgetDataItem[]): BudgetDataItem[] {
 }
 
 /**
+ * Guarda un archivo JSON intermedio en temp/ para depuración
+ */
+async function saveIntermediateFile(filename: string, data: any): Promise<void> {
+  try {
+    const tempDir = path.join(process.cwd(), 'temp')
+
+    // Crear directorio temp si no existe
+    try {
+      await fs.access(tempDir)
+    } catch {
+      await fs.mkdir(tempDir, { recursive: true })
+    }
+
+    const filePath = path.join(tempDir, filename)
+    await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8')
+    console.log(`[buildPDFPayload] ✓ Guardado: ${filename}`)
+  } catch (error) {
+    console.error(`[buildPDFPayload] ✗ Error guardando ${filename}:`, error)
+  }
+}
+
+/**
  * Construye el payload completo para Rapid-PDF API
  */
-export function buildPDFPayload(budget: Budget, tariff: Tariff): PDFPayload {
+export async function buildPDFPayload(budget: Budget, tariff: Tariff): Promise<PDFPayload> {
+  console.log('[buildPDFPayload] === INICIANDO CONSTRUCCIÓN DE PAYLOAD ===')
+
   // 1. Obtener datos del presupuesto
   // Manejar dos formatos posibles:
   // - Formato simple: json_budget_data es directamente un array
@@ -434,20 +485,62 @@ export function buildPDFPayload(budget: Budget, tariff: Tariff): PDFPayload {
     ? rawData
     : rawData?.items || []
 
+  console.log(`[buildPDFPayload] Paso 1: Datos crudos - ${budgetData.length} elementos`)
+  await saveIntermediateFile('payload-step1-raw-data.json', {
+    step: 'Paso 1 - Datos crudos de json_budget_data',
+    totalItems: budgetData.length,
+    data: budgetData
+  })
+
   // 2. Filtrar elementos con amount > 0
   const filteredItems = filterNonZeroItems(budgetData)
+
+  console.log(`[buildPDFPayload] Paso 2: Filtrados - ${filteredItems.length} elementos (eliminados ${budgetData.length - filteredItems.length})`)
+  await saveIntermediateFile('payload-step2-filtered.json', {
+    step: 'Paso 2 - Después de filterNonZeroItems()',
+    totalItems: filteredItems.length,
+    removedItems: budgetData.length - filteredItems.length,
+    data: filteredItems
+  })
 
   // 3. Renumerar IDs jerárquicos
   const renumberedItems = renumberHierarchicalIds(filteredItems)
 
+  console.log(`[buildPDFPayload] Paso 3: Renumerados - ${renumberedItems.length} elementos`)
+  await saveIntermediateFile('payload-step3-renumbered.json', {
+    step: 'Paso 3 - Después de renumberHierarchicalIds()',
+    totalItems: renumberedItems.length,
+    data: renumberedItems
+  })
+
   // 4. Formatear números en formato español
   const formattedItems = formatItemNumbers(renumberedItems)
+
+  console.log(`[buildPDFPayload] Paso 4: Formateados - ${formattedItems.length} elementos`)
+  await saveIntermediateFile('payload-step4-formatted.json', {
+    step: 'Paso 4 - Después de formatItemNumbers() - budget.levels',
+    totalItems: formattedItems.length,
+    data: formattedItems
+  })
 
   // 5. Extraer solo capítulos para summary
   const summaryLevels = extractChapters(formattedItems)
 
+  console.log(`[buildPDFPayload] Paso 5: Capítulos extraídos - ${summaryLevels.length} elementos`)
+  await saveIntermediateFile('payload-step5-chapters.json', {
+    step: 'Paso 5 - Después de extractChapters() - summary.levels',
+    totalChapters: summaryLevels.length,
+    data: summaryLevels
+  })
+
   // 6. Calcular totales (incluye IRPF y RE del budget)
   const totals = calculateTotals(formattedItems, budget)
+
+  console.log('[buildPDFPayload] Paso 6: Totales calculados')
+  await saveIntermediateFile('payload-step6-totals.json', {
+    step: 'Paso 6 - Totales calculados',
+    data: totals
+  })
 
   // 6. Construir payload
   // Construir URL completa del logo para que Rapid-PDF pueda acceder

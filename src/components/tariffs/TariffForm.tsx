@@ -242,7 +242,7 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold text-cyan-600 flex items-center gap-2">
+                <h1 className="text-3xl font-bold text-lime-600 flex items-center gap-2">
                   <Layers className="h-6 w-6" />
                   {mode === "create" ? "Nueva Tarifa" : "Editar Tarifa"}
                 </h1>
@@ -250,13 +250,13 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
                   variant="outline"
                   size="sm"
                   onClick={() => startTour("tarifa-create")}
-                  className="border-cyan-600 text-cyan-600 hover:bg-blue-50 h-8 px-3 gap-1.5"
+                  className="border-lime-500 text-lime-600 hover:bg-lime-50 h-8 px-3 gap-1.5"
                 >
                   <Play className="h-3.5 w-3.5" />
                   <span className="text-xs font-medium">Tour</span>
                 </Button>
               </div>
-              <p className="text-sm text-cyan-600">
+              <p className="text-sm text-lime-600">
                 Complete los datos de la tarifa
               </p>
             </div>
@@ -265,14 +265,14 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
                 variant="outline"
                 onClick={handleCancel}
                 disabled={isLoading}
-                className="border-cyan-600 text-cyan-600 hover:bg-blue-50"
+                className="border-lime-500 text-lime-600 hover:bg-lime-50"
               >
                 Cancelar
               </Button>
               <Button
                 onClick={handleSave}
                 disabled={isLoading}
-                className="min-w-[100px] bg-cyan-600 hover:bg-cyan-700"
+                className="min-w-[100px] bg-lime-500 hover:bg-lime-600"
               >
                 {isLoading ? "Guardando..." : "Guardar"}
               </Button>

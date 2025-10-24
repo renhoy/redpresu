@@ -130,7 +130,7 @@ export function TemplateSelector({
               variant="outline"
               size="sm"
               onClick={() => setPreviewOpen(true)}
-              className="flex items-center gap-2 text-cyan-600 border-cyan-600 hover:bg-blue-50"
+              className="flex items-center gap-2 text-lime-600 border-lime-500 hover:bg-lime-50"
             >
               <Eye className="h-4 w-4" />
               Vista Previa de {selectedTemplate.name}

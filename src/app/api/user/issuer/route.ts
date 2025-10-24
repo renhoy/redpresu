@@ -17,13 +17,26 @@ export async function GET() {
       )
     }
 
+    // Verificar que el usuario tenga company_id
+    if (!user.company_id) {
+      return NextResponse.json({
+        issuer: {
+          type: 'empresa',
+          irpf_percentage: 15
+        }
+      })
+    }
+
+    // Buscar en redpresu_issuers por company_id
     const { data: issuer, error } = await supabaseAdmin
-      .from('issuers')
+      .from('redpresu_issuers')
       .select('type, irpf_percentage')
-      .eq('user_id', user.id)
+      .eq('company_id', user.company_id)
+      .is('deleted_at', null)
       .single()
 
     if (error || !issuer) {
+      console.log('[GET /api/user/issuer] No se encontró emisor para company_id:', user.company_id, error)
       // Si no tiene emisor, retornar valores por defecto
       return NextResponse.json({
         issuer: {
