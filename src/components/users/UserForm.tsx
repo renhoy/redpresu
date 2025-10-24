@@ -68,7 +68,7 @@ export default function UserForm({
     name: user?.name || "",
     last_name: user?.last_name || "",
     role: user?.role || "vendedor",
-    status: user?.status || "active",
+    status: user?.status || "pending", // Usuarios nuevos en pending hasta configurar password
     issuer_id: undefined,
   });
 

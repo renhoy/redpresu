@@ -358,7 +358,8 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
         email: data.email.trim().toLowerCase(),
         role: userRole,
         company_id: empresaId,
-        status: 'active'
+        status: 'pending', // Usuario debe configurar contraseña vía invitación
+        invited_by: null // Se asignará cuando acepte la invitación
       })
 
     if (userError) {
