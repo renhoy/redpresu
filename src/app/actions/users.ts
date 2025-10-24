@@ -181,6 +181,14 @@ export async function getUsers() {
     inviter_email: user.inviter?.email,
   }));
 
+  log.info("[getUsers] Usuarios formateados:", formattedUsers.map(u => ({
+    email: u.email,
+    status: u.status,
+    invited_by: u.invited_by,
+    inviter_name: u.inviter_name,
+    has_inviter_object: !!u.inviter
+  })));
+
   return {
     success: true,
     data: formattedUsers,
@@ -329,18 +337,22 @@ export async function createUser(data: CreateUserData) {
     }
 
     // 2. Crear registro en public.users
+    const userDataToInsert = {
+      id: authData.user.id,
+      email: data.email,
+      name: data.name,
+      last_name: data.last_name,
+      role: data.role,
+      company_id: data.company_id,
+      status: "pending" as const, // Usuario debe cambiar password en primer login
+      invited_by: null, // Se asignará cuando acepte la invitación
+    };
+
+    log.info("[createUser] Insertando usuario:", userDataToInsert);
+
     const { data: userData, error: userError } = await supabaseAdmin
       .from("redpresu_users")
-      .insert({
-        id: authData.user.id,
-        email: data.email,
-        name: data.name,
-        last_name: data.last_name,
-        role: data.role,
-        company_id: data.company_id,
-        status: "pending", // Usuario debe cambiar password en primer login
-        invited_by: null, // Se asignará cuando acepte la invitación
-      })
+      .insert(userDataToInsert)
       .select()
       .single();
 
@@ -354,6 +366,13 @@ export async function createUser(data: CreateUserData) {
         error: "Error al crear registro de usuario",
       };
     }
+
+    log.info("[createUser] Usuario creado exitosamente:", {
+      id: userData.id,
+      email: userData.email,
+      status: userData.status,
+      invited_by: userData.invited_by
+    });
 
     // TODO: Enviar email con password temporal
     // Por ahora retornamos el password para que el admin lo copie

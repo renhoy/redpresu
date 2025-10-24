@@ -55,6 +55,14 @@ export default function UserTable({
   currentUserId,
   currentUserRole,
 }: UserTableProps) {
+  // Debug: Log usuarios al cargar
+  console.log('[UserTable] Usuarios recibidos:', initialUsers.map(u => ({
+    email: u.email,
+    status: u.status,
+    invited_by: u.invited_by,
+    inviter_name: u.inviter_name
+  })));
+
   const [users, setUsers] = useState(initialUsers);
   const [selectedUser, setSelectedUser] = useState<UserWithInviter | null>(
     null
@@ -420,6 +428,18 @@ export default function UserTable({
 
                   {/* Columna Invitado por */}
                   <TableCell className="p-4 text-center">
+                    {(() => {
+                      // Debug log
+                      if (!user.inviter_name) {
+                        console.log(`[UserTable] Usuario ${user.email}:`, {
+                          inviter_name: user.inviter_name,
+                          status: user.status,
+                          currentUserRole,
+                          shouldShow: currentUserRole !== "vendedor" && user.status === "pending"
+                        });
+                      }
+                      return null;
+                    })()}
                     {user.inviter_name ? (
                       <div className="space-y-0.5">
                         <div className="text-xs font-medium">
