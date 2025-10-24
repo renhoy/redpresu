@@ -70,47 +70,48 @@ export function CompanyCard({ company }: CompanyCardProps) {
     <>
       <Card className="mb-4 hover:shadow-md transition-shadow">
         <CardContent className="p-4">
-          {/* Header */}
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex items-center gap-2 flex-1">
-              <Building2 className="h-5 w-5 text-muted-foreground shrink-0" />
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm truncate">{company.name}</div>
-                <div className="text-xs text-muted-foreground truncate">{company.address}</div>
+          {/* Fila 1: Grid 2 columnas */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-3 text-xs">
+            {/* Columna 1 */}
+            <div className="space-y-2">
+              {/* Línea 1: Nombre + Badge */}
+              <div className="flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="font-medium truncate">{company.name}</div>
+                {company.id === 1 && (
+                  <Badge className="bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0 shrink-0">
+                    Por defecto
+                  </Badge>
+                )}
+              </div>
+              {/* Línea 2: Dirección */}
+              <div className="text-muted-foreground truncate">{company.address}</div>
+              {/* Línea 3: Creada el */}
+              <div className="text-muted-foreground">Creada el {formatDate(company.created_at)}</div>
+            </div>
+
+            {/* Columna 2 */}
+            <div className="space-y-2">
+              {/* Línea 1: NIF/CIF */}
+              <div className="font-mono">{company.nif}</div>
+              {/* Línea 2: Tipo */}
+              <div>
+                <Badge
+                  className={
+                    tipoColors[company.type as keyof typeof tipoColors] ||
+                    "bg-gray-200 text-gray-700"
+                  }
+                >
+                  {getTipoLabel(company.type)}
+                </Badge>
               </div>
             </div>
-            {company.id === 1 && (
-              <Badge className="bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0 shrink-0">
-                Por defecto
-              </Badge>
-            )}
           </div>
 
-          {/* Info Grid */}
-          <div className="grid grid-cols-2 gap-3 mb-3 text-xs">
-            <div>
-              <div className="text-muted-foreground mb-1">Tipo</div>
-              <Badge
-                className={
-                  tipoColors[company.type as keyof typeof tipoColors] ||
-                  "bg-gray-200 text-gray-700"
-                }
-              >
-                {getTipoLabel(company.type)}
-              </Badge>
-            </div>
-            <div>
-              <div className="text-muted-foreground mb-1">NIF/CIF</div>
-              <div className="font-mono">{company.nif}</div>
-            </div>
-            <div>
-              <div className="text-muted-foreground mb-1">Teléfono</div>
-              <div>{company.phone}</div>
-            </div>
-            <div>
-              <div className="text-muted-foreground mb-1">Email</div>
-              <div className="truncate">{company.email}</div>
-            </div>
+          {/* Fila 2: Teléfono y Email */}
+          <div className="grid grid-cols-2 gap-x-4 mb-3 text-xs">
+            <div>{company.phone}</div>
+            <div className="truncate">{company.email}</div>
           </div>
 
           {/* Stats */}
@@ -138,11 +139,6 @@ export function CompanyCard({ company }: CompanyCardProps) {
             </div>
           </div>
 
-          {/* Metadata */}
-          <div className="text-xs text-muted-foreground mb-3">
-            Creada el {formatDate(company.created_at)}
-          </div>
-
           {/* Actions */}
           <div className="flex gap-2">
             <Button variant="outline" size="sm" className="flex-1" asChild>
@@ -162,7 +158,8 @@ export function CompanyCard({ company }: CompanyCardProps) {
                   : "border-red-500 text-red-600 hover:bg-red-50"
               }
             >
-              <Trash2 className="h-3 w-3" />
+              <Trash2 className="h-3 w-3 mr-1" />
+              Borrar
             </Button>
           </div>
         </CardContent>

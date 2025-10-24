@@ -23,7 +23,7 @@ export function HelpCard({ article }: HelpCardProps) {
             {article.tourId && (
               <Badge variant="secondary" className="gap-1 flex-shrink-0">
                 <Play className="w-3 h-3" />
-                Tour
+                Guía
               </Badge>
             )}
           </div>
