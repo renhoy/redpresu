@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Copy, Check, Search, Filter } from "lucide-react";
+import { Loader2, Search, Filter } from "lucide-react";
 import { toast } from "sonner";
 import { generateSecurePassword } from "@/lib/helpers/crypto-helpers";
 import { validateEmail } from "@/lib/helpers/email-validation";
@@ -74,10 +74,6 @@ export default function UserForm({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
-  const [temporaryPassword, setTemporaryPassword] = useState<string | null>(
-    null
-  );
-  const [copiedPassword, setCopiedPassword] = useState(false);
   const [issuers, setIssuers] = useState<IssuerData[]>([]);
   const [loadingIssuers, setLoadingIssuers] = useState(false);
   const [selectedIssuer, setSelectedIssuer] = useState<IssuerData | null>(null);
@@ -220,9 +216,11 @@ export default function UserForm({
             return;
           }
 
-          // Mostrar password temporal
-          setTemporaryPassword(temporaryPassword);
-          toast.success("Usuario creado correctamente");
+          toast.success("Usuario creado correctamente. Ahora puedes enviarle la invitación usando el botón [+ email]");
+
+          // Redirigir a lista de usuarios
+          router.push("/users");
+          router.refresh();
         } else {
           // Flujo normal para admin (crear usuario de su misma empresa)
           const createData: CreateUserData = {
@@ -240,15 +238,14 @@ export default function UserForm({
             return;
           }
 
-          // Mostrar password temporal
-          if (result.temporaryPassword) {
-            setTemporaryPassword(result.temporaryPassword);
-          }
+          toast.success("Usuario creado correctamente. Ahora puedes enviarle la invitación usando el botón [+ email]");
 
-          toast.success("Usuario creado correctamente");
+          // Redirigir a lista de usuarios
+          router.push("/users");
+          router.refresh();
         }
 
-        // No redirigir aún, mostrar password primero
+        // Redirigir después de crear
       } else {
         // Actualizar usuario
         const updateData: UpdateUserData = {
@@ -288,24 +285,6 @@ export default function UserForm({
     }
   };
 
-  const handleCopyPassword = async () => {
-    if (!temporaryPassword) return;
-
-    try {
-      await navigator.clipboard.writeText(temporaryPassword);
-      setCopiedPassword(true);
-      toast.success("Contraseña copiada al portapapeles");
-
-      setTimeout(() => setCopiedPassword(false), 2000);
-    } catch (error) {
-      toast.error("Error al copiar contraseña");
-    }
-  };
-
-  const handleGoToUsers = () => {
-    router.push("/users");
-    router.refresh();
-  };
 
   // Determinar qué roles puede asignar el usuario actual
   const getAvailableRoles = () => {
@@ -350,69 +329,6 @@ export default function UserForm({
 
     return true;
   });
-
-  // Si ya se creó el usuario y hay password temporal
-  if (mode === "create" && temporaryPassword) {
-    return (
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center text-green-600">
-            ✓ Usuario Creado
-          </CardTitle>
-          <CardDescription className="text-center">
-            El usuario ha sido creado correctamente
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent className="space-y-6">
-          <Alert>
-            <AlertDescription>
-              <strong>Importante:</strong> Esta es la única vez que verás esta
-              contraseña. Cópiala y envíala al usuario de forma segura.
-            </AlertDescription>
-          </Alert>
-
-          <div className="space-y-2">
-            <Label>Email del usuario</Label>
-            <div className="p-3 bg-muted rounded-md font-mono">
-              {formData.email}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Contraseña temporal</Label>
-            <div className="flex gap-2">
-              <div className="flex-1 p-3 bg-muted rounded-md font-mono text-lg">
-                {temporaryPassword}
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={handleCopyPassword}
-              >
-                {copiedPassword ? (
-                  <Check className="h-4 w-4 text-green-600" />
-                ) : (
-                  <Copy className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              El usuario deberá cambiar esta contraseña en su primer inicio de
-              sesión.
-            </p>
-          </div>
-        </CardContent>
-
-        <CardFooter>
-          <Button onClick={handleGoToUsers} className="w-full">
-            Volver a Usuarios
-          </Button>
-        </CardFooter>
-      </Card>
-    );
-  }
 
   // Formulario normal
   return (
