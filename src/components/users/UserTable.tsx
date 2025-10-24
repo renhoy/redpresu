@@ -585,7 +585,7 @@ export default function UserTable({
               ¿Estás seguro de que quieres{" "}
               {selectedUser?.status === "active" ? "desactivar" : "activar"} a{" "}
               <strong>
-                {selectedUser?.nombre} {selectedUser?.apellidos}
+                {selectedUser?.name} {selectedUser?.last_name}
               </strong>
               ?
               {selectedUser?.status === "active" && (
@@ -619,18 +619,18 @@ export default function UserTable({
               ⚠️ Borrar Usuario
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-4">
-              <p>
+              <div>
                 ¿Estás seguro de que quieres borrar a{" "}
                 <strong className="text-foreground">
                   {selectedUser?.name} {selectedUser?.last_name}
                 </strong>
                 ?
-              </p>
+              </div>
 
               <div className="bg-red-50 border border-red-200 rounded-md p-3">
-                <p className="text-sm text-red-800">
+                <div className="text-sm text-red-800">
                   <strong>⚠️ Advertencia:</strong> Esta acción no se puede deshacer.
-                </p>
+                </div>
               </div>
 
               <div className="space-y-3">
@@ -643,10 +643,10 @@ export default function UserTable({
                     <RadioGroupItem value="delete" id="delete" className="mt-1" />
                     <Label htmlFor="delete" className="flex-1 cursor-pointer">
                       <div className="space-y-1">
-                        <p className="font-semibold text-base">Borrar todos los datos</p>
-                        <p className="text-sm text-gray-600">
+                        <div className="font-semibold text-base">Borrar todos los datos</div>
+                        <div className="text-sm text-gray-600">
                           Se eliminarán permanentemente todas las tarifas, presupuestos y demás datos creados por este usuario.
-                        </p>
+                        </div>
                       </div>
                     </Label>
                   </div>
@@ -655,10 +655,10 @@ export default function UserTable({
                     <RadioGroupItem value="reassign" id="reassign" className="mt-1" />
                     <Label htmlFor="reassign" className="flex-1 cursor-pointer">
                       <div className="space-y-1">
-                        <p className="font-semibold text-base">Reasignar datos a otro usuario</p>
-                        <p className="text-sm text-gray-600">
+                        <div className="font-semibold text-base">Reasignar datos a otro usuario</div>
+                        <div className="text-sm text-gray-600">
                           Los datos del usuario (tarifas, presupuestos, etc.) se asignarán al usuario que selecciones.
-                        </p>
+                        </div>
                       </div>
                     </Label>
                   </div>
@@ -689,9 +689,9 @@ export default function UserTable({
                     </SelectContent>
                   </Select>
                   {!reassignUserId && (
-                    <p className="text-xs text-muted-foreground">
+                    <div className="text-xs text-muted-foreground">
                       Debes seleccionar un usuario para continuar
-                    </p>
+                    </div>
                   )}
                 </div>
               )}
@@ -722,16 +722,16 @@ export default function UserTable({
               Invitar Usuario
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-3">
-              <p>
+              <div>
                 Se enviará un email a{" "}
                 <strong className="text-foreground">{selectedUser?.email}</strong>{" "}
                 con un enlace para que configure su contraseña y acceda al sistema.
-              </p>
+              </div>
 
               <div className="bg-lime-50 border border-lime-200 rounded-md p-3">
-                <p className="text-sm font-medium text-lime-900 mb-2">
+                <div className="text-sm font-medium text-lime-900 mb-2">
                   Vista previa del mensaje:
-                </p>
+                </div>
                 <div className="bg-white border border-lime-100 rounded p-3 text-sm text-gray-700 whitespace-pre-wrap max-h-60 overflow-y-auto">
                   {invitationMessage}
                 </div>
@@ -750,12 +750,12 @@ export default function UserTable({
               </div>
 
               <div className="bg-lime-50 border border-blue-200 rounded-md p-3">
-                <p className="text-xs text-blue-800">
+                <div className="text-xs text-blue-800">
                   ℹ️ <strong>Nota:</strong> Al confirmar, se intentará abrir tu aplicación
                   de email predeterminada con el mensaje prellenado. Si no funciona,
                   el mensaje ya estará copiado en tu portapapeles para que puedas
                   pegarlo manualmente.
-                </p>
+                </div>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
