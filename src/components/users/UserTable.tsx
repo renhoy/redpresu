@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { UserWithInviter, toggleUserStatus } from "@/app/actions/users";
-import { createUserInvitation } from "@/app/actions/invitations";
+import { createUserInvitation, cancelInvitation } from "@/app/actions/invitations";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -65,6 +65,7 @@ export default function UserTable({
   const [reassignUserId, setReassignUserId] = useState<string>("");
   const [deleteAction, setDeleteAction] = useState<"delete" | "reassign">("reassign");
   const [invitationMessage, setInvitationMessage] = useState("");
+  const [invitationId, setInvitationId] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const router = useRouter();
@@ -219,55 +220,50 @@ export default function UserTable({
 
   const handleInviteUser = async (user: UserWithInviter) => {
     setSelectedUser(user);
+    setIsLoading(true);
 
-    // Generar mensaje de preview (sin crear invitación en BD aún)
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
-    const previewMessage = `Hola,
+    // Crear invitación para obtener token real y mensaje completo
+    const result = await createUserInvitation(user.email);
 
-Has sido invitado/a a unirte al Sistema de Gestión de Presupuestos.
+    if (!result.success) {
+      toast.error(result.error || "Error al crear invitación");
+      setIsLoading(false);
+      return;
+    }
 
-Para completar tu registro y configurar tu contraseña, haz clic en el siguiente enlace:
-
-${baseUrl}/accept-invitation?token=XXXXXX
-
-Este enlace es válido por 7 días.
-
-Si no solicitaste esta invitación, puedes ignorar este mensaje.
-
-Saludos,
-El equipo de Gestión de Presupuestos`;
-
-    setInvitationMessage(previewMessage);
+    // Guardar mensaje real con enlace completo e ID de invitación
+    setInvitationMessage(result.data?.emailMessage || "");
+    setInvitationId(result.data?.id || "");
+    setIsLoading(false);
     setIsInviteDialogOpen(true);
   };
 
+  const handleCancelInvitation = async () => {
+    // Si hay una invitación creada, cancelarla al cerrar el diálogo
+    if (invitationId) {
+      await cancelInvitation(invitationId);
+      setInvitationId("");
+    }
+
+    setIsInviteDialogOpen(false);
+    setSelectedUser(null);
+    setInvitationMessage("");
+  };
+
   const handleSendInvitation = async () => {
-    if (!selectedUser) return;
+    if (!selectedUser || !invitationMessage) return;
 
     setIsLoading(true);
 
     try {
-      // Crear invitación en BD (ahora que el usuario confirmó)
-      const result = await createUserInvitation(selectedUser.email);
-
-      if (!result.success) {
-        toast.error(result.error || "Error al crear invitación");
-        setIsLoading(false);
-        return;
-      }
-
-      const token = result.data?.token || "";
-      const emailMessage = result.data?.emailMessage || "";
-
-      // Intentar enviar email directamente (si está configurado)
-      // Por ahora, intentar abrir cliente de email
+      // La invitación ya está creada, solo enviar el email
       const subject = "Invitación al Sistema de Presupuestos";
-      const body = encodeURIComponent(emailMessage);
+      const body = encodeURIComponent(invitationMessage);
       const mailtoLink = `mailto:${selectedUser.email}?subject=${encodeURIComponent(subject)}&body=${body}`;
 
       // Copiar al portapapeles como fallback
       try {
-        await navigator.clipboard.writeText(emailMessage);
+        await navigator.clipboard.writeText(invitationMessage);
         toast.success("Mensaje copiado al portapapeles");
       } catch (clipboardError) {
         console.error("Error al copiar al portapapeles:", clipboardError);
@@ -282,6 +278,7 @@ El equipo de Gestión de Presupuestos`;
       setIsInviteDialogOpen(false);
       setSelectedUser(null);
       setInvitationMessage("");
+      setInvitationId("");
 
       // Refresh para actualizar lista
       router.refresh();
@@ -706,9 +703,13 @@ El equipo de Gestión de Presupuestos`;
       {/* Dialog invitar usuario */}
       <AlertDialog
         open={isInviteDialogOpen}
-        onOpenChange={setIsInviteDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleCancelInvitation();
+          }
+        }}
       >
-        <AlertDialogContent className="max-w-2xl">
+        <AlertDialogContent className="max-w-[80vw] max-h-[80vh] overflow-y-auto">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lime-600 flex items-center gap-2">
               <Mail className="h-5 w-5" />
@@ -753,7 +754,9 @@ El equipo de Gestión de Presupuestos`;
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isLoading}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={isLoading} onClick={handleCancelInvitation}>
+              Cancelar
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleSendInvitation}
               disabled={isLoading}

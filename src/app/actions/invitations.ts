@@ -199,8 +199,26 @@ export async function createUserInvitation(
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
     const invitationUrl = `${baseUrl}/accept-invitation?token=${token}`
 
-    // Construir mensaje de email
-    const emailMessage = `Hola,
+    // Obtener plantilla de email desde configuración
+    const { data: templateConfig } = await supabase
+      .from('redpresu_config')
+      .select('value')
+      .eq('key', 'invitation_email_template')
+      .single()
+
+    // Construir mensaje de email usando plantilla o fallback
+    let emailMessage: string
+
+    if (templateConfig?.value) {
+      // Usar plantilla de configuración
+      const template = typeof templateConfig.value === 'string'
+        ? templateConfig.value
+        : JSON.stringify(templateConfig.value).replace(/^"|"$/g, '')
+
+      emailMessage = template.replace(/\{\{invitationUrl\}\}/g, invitationUrl)
+    } else {
+      // Fallback: plantilla por defecto si no existe en config
+      emailMessage = `Hola,
 
 ${userData.name} (${userData.email}) te ha invitado a unirte al sistema de presupuestos.
 
@@ -220,6 +238,7 @@ Si no solicitaste esta invitación, puedes ignorar este mensaje.
 
 Saludos,
 El equipo de ${process.env.NEXT_PUBLIC_APP_NAME || 'Presupuestos'}`
+    }
 
     return {
       success: true,
