@@ -57,6 +57,8 @@ export default function UserTable({
     null
   );
   const [isToggleDialogOpen, setIsToggleDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [reassignUserId, setReassignUserId] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const router = useRouter();
@@ -162,6 +164,31 @@ export default function UserTable({
   const handleToggleStatusFromCard = (user: UserWithInviter) => {
     setSelectedUser(user);
     setIsToggleDialogOpen(true);
+  };
+
+  const handleDeleteFromCard = (user: UserWithInviter) => {
+    setSelectedUser(user);
+    setReassignUserId("");
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteUser = async () => {
+    if (!selectedUser || !reassignUserId) {
+      toast.error("Debe seleccionar un usuario para reasignar los registros");
+      return;
+    }
+
+    setIsLoading(true);
+
+    // TODO: Implementar deleteUser con reasignación
+    // const result = await deleteUser(selectedUser.id, reassignUserId);
+
+    toast.info("Funcionalidad de borrado en desarrollo");
+
+    setIsLoading(false);
+    setIsDeleteDialogOpen(false);
+    setSelectedUser(null);
+    setReassignUserId("");
   };
 
   // Filtrar usuarios por estado
@@ -422,6 +449,7 @@ export default function UserTable({
               currentUserRole={currentUserRole}
               onToggleStatus={handleToggleStatusFromCard}
               onStatusChange={handleStatusChange}
+              onDelete={handleDeleteFromCard}
               formatDate={formatDate}
             />
           ))
@@ -461,6 +489,76 @@ export default function UserTable({
               disabled={isLoading}
             >
               {isLoading ? "Procesando..." : "Confirmar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog confirmar borrado de usuario */}
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-600">
+              ⚠️ Borrar Usuario
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                ¿Estás seguro de que quieres borrar a{" "}
+                <strong className="text-foreground">
+                  {selectedUser?.name} {selectedUser?.apellidos}
+                </strong>
+                ?
+              </p>
+
+              <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                <p className="text-sm text-red-800">
+                  <strong>⚠️ Advertencia:</strong> Esta acción no se puede deshacer.
+                  Todos los registros del usuario (tarifas, presupuestos, etc.)
+                  serán reasignados al usuario seleccionado.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Reasignar registros a:
+                </label>
+                <Select value={reassignUserId} onValueChange={setReassignUserId}>
+                  <SelectTrigger className="w-full bg-white">
+                    <SelectValue placeholder="Selecciona un usuario" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    {users
+                      .filter(
+                        (u) =>
+                          u.id !== selectedUser?.id &&
+                          u.status === "active"
+                      )
+                      .map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.name} {user.apellidos} ({user.email})
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                {!reassignUserId && (
+                  <p className="text-xs text-muted-foreground">
+                    Debes seleccionar un usuario para continuar
+                  </p>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLoading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteUser}
+              disabled={isLoading || !reassignUserId}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isLoading ? "Borrando..." : "Sí, borrar usuario"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

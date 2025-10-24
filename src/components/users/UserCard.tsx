@@ -20,6 +20,7 @@ interface UserCardProps {
   currentUserRole: string;
   onToggleStatus: (user: UserWithInviter) => void;
   onStatusChange: (userId: string, status: "active" | "inactive" | "pending") => void;
+  onDelete: (user: UserWithInviter) => void;
   formatDate: (date: string | null) => string;
 }
 
@@ -29,6 +30,7 @@ export function UserCard({
   currentUserRole,
   onToggleStatus,
   onStatusChange,
+  onDelete,
   formatDate,
 }: UserCardProps) {
   const statusColors = {
@@ -43,7 +45,17 @@ export function UserCard({
     pending: "Pendiente",
   };
 
+  const getRoleLabel = (role: string) => {
+    const labels: Record<string, string> = {
+      superadmin: "Super Admin",
+      admin: "Admin",
+      vendedor: "Comercial",
+    };
+    return labels[role] || role;
+  };
+
   const canEdit = currentUserRole !== "vendedor" || user.id === currentUserId;
+  const canDelete = currentUserRole === "admin" || currentUserRole === "superadmin";
 
   return (
     <Card className="w-full mb-3">
@@ -60,6 +72,10 @@ export function UserCard({
               {/* Línea 2: Email */}
               <div className="text-xs text-muted-foreground truncate">
                 {user.email}
+              </div>
+              {/* Línea 3: Rol como texto */}
+              <div className="text-xs text-muted-foreground capitalize">
+                {getRoleLabel(user.role)}
               </div>
             </div>
 
@@ -154,29 +170,16 @@ export function UserCard({
                   </Link>
                 </Button>
 
-                {/* Botón Activar/Desactivar - Solo admin/superadmin */}
-                {currentUserRole !== "vendedor" && (
+                {/* Botón Borrar - Solo admin/superadmin */}
+                {canDelete && user.id !== currentUserId && (
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onToggleStatus(user)}
-                    className={`w-full lg:w-auto h-7 px-2 gap-1.5 text-xs ${
-                      user.status === "active"
-                        ? "border-orange-500 text-orange-600 hover:bg-orange-50"
-                        : "border-green-600 text-green-600 hover:bg-green-50"
-                    }`}
+                    onClick={() => onDelete(user)}
+                    className="w-full lg:w-auto h-7 px-2 gap-1.5 text-xs border-destructive text-destructive hover:bg-destructive/10"
                   >
-                    {user.status === "active" ? (
-                      <>
-                        <Trash2 className="h-3.5 w-3.5 flex-shrink-0" />
-                        <span>Desactivar</span>
-                      </>
-                    ) : (
-                      <>
-                        <UserCheck className="h-3.5 w-3.5 flex-shrink-0" />
-                        <span>Activar</span>
-                      </>
-                    )}
+                    <Trash2 className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span>Borrar</span>
                   </Button>
                 )}
 
