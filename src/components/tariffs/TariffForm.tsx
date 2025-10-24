@@ -239,9 +239,9 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
       {/* Línea 2: Título + Botones (sticky) */}
       <div className="sticky top-16 z-40 bg-lime-50 border-b shadow-sm">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-3">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 md:items-center">
+            <div className="text-center md:text-left w-full md:w-auto">
+              <div className="flex items-center justify-center md:justify-start gap-3">
                 <h1 className="text-3xl font-bold text-black flex items-center gap-2">
                   <Layers className="h-6 w-6" />
                   {mode === "create" ? "Nueva Tarifa" : "Editar Tarifa"}
@@ -260,7 +260,7 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
                 Complete los datos de la tarifa
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 justify-center md:justify-end w-full md:w-auto">
               <Button
                 variant="outline"
                 onClick={handleCancel}

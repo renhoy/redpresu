@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Database } from "@/lib/types/database.types";
 import { Button } from "@/components/ui/button";
 import { Pencil, Eye } from "lucide-react";
+import { ConfigCard } from "./ConfigCard";
 import {
   Table,
   TableBody,
@@ -105,7 +106,8 @@ export function ConfigTable({ config }: ConfigTableProps) {
 
   return (
     <>
-      <div className="border rounded-lg overflow-hidden">
+      {/* Vista Desktop - Tabla */}
+      <div className="hidden lg:block border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -170,6 +172,19 @@ export function ConfigTable({ config }: ConfigTableProps) {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Vista Mobile/Tablet - Cards */}
+      <div className="lg:hidden">
+        {config.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            No hay configuración en esta categoría
+          </div>
+        ) : (
+          config.map((item) => (
+            <ConfigCard key={item.key} item={item} onEdit={handleEdit} />
+          ))
+        )}
       </div>
 
       {/* Dialog de edición */}

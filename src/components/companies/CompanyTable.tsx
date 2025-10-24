@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Company, deleteCompany } from "@/app/actions/companies";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { CompanyCard } from "./CompanyCard";
 import {
   Table,
   TableBody,
@@ -97,7 +98,8 @@ export default function CompanyTable({
 
   return (
     <>
-      <div className="rounded-md border bg-lime-100">
+      {/* Vista Desktop - Tabla */}
+      <div className="hidden lg:block rounded-md border bg-lime-100">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
@@ -287,6 +289,19 @@ export default function CompanyTable({
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Vista Mobile/Tablet - Cards */}
+      <div className="lg:hidden">
+        {companies.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            No hay empresas registradas
+          </div>
+        ) : (
+          companies.map((company) => (
+            <CompanyCard key={company.id} company={company} />
+          ))
+        )}
       </div>
 
       {/* Dialog confirmar eliminación */}

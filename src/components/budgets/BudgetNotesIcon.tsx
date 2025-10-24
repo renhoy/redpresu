@@ -84,14 +84,15 @@ export function BudgetNotesIcon({ budgetId, initialCount = 0, className = '' }: 
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  size="icon"
-                  className={`relative h-7 w-7 border-lime-500 text-lime-500 hover:bg-lime-50 hover:text-lime-600 ${className}`}
+                  size="sm"
+                  className={`relative h-7 border-lime-500 text-lime-500 hover:bg-lime-50 hover:text-lime-600 px-2 gap-1.5 ${className}`}
                   onClick={(e) => {
                     console.log('[BudgetNotesIcon] Button clicked')
                     e.stopPropagation()
                   }}
                 >
                   <NotebookPen className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span className="lg:hidden text-xs">Notas</span>
                   {notesCount > 0 && (
                     <Badge
                       variant="secondary"
