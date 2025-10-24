@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { UserWithInviter, toggleUserStatus } from "@/app/actions/users";
+import { createUserInvitation } from "@/app/actions/invitations";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -36,7 +37,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Pencil, Trash2, UserCheck, Mail } from "lucide-react";
+import { Pencil, Trash2, UserCheck, Mail, Plus, Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { UserCard } from "./UserCard";
@@ -58,7 +59,10 @@ export default function UserTable({
   );
   const [isToggleDialogOpen, setIsToggleDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [reassignUserId, setReassignUserId] = useState<string>("");
+  const [invitationMessage, setInvitationMessage] = useState("");
+  const [invitationToken, setInvitationToken] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const router = useRouter();
@@ -189,6 +193,78 @@ export default function UserTable({
     setIsDeleteDialogOpen(false);
     setSelectedUser(null);
     setReassignUserId("");
+  };
+
+  const handleInviteUser = async (user: UserWithInviter) => {
+    setSelectedUser(user);
+    setIsLoading(true);
+
+    // Crear invitación
+    const result = await createUserInvitation(user.email, 7);
+
+    if (!result.success) {
+      toast.error(result.error || "Error al crear invitación");
+      setIsLoading(false);
+      return;
+    }
+
+    // Guardar mensaje y token
+    setInvitationMessage(result.data?.emailMessage || "");
+    setInvitationToken(result.data?.token || "");
+    setIsLoading(false);
+    setIsInviteDialogOpen(true);
+  };
+
+  const handleSendInvitation = async () => {
+    if (!selectedUser || !invitationMessage) return;
+
+    setIsLoading(true);
+
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+    const invitationUrl = `${baseUrl}/accept-invitation?token=${invitationToken}`;
+
+    try {
+      // Intentar enviar email directamente (si está configurado)
+      // Por ahora, intentar abrir cliente de email
+      const subject = "Invitación al Sistema de Presupuestos";
+      const body = encodeURIComponent(invitationMessage);
+      const mailtoLink = `mailto:${selectedUser.email}?subject=${encodeURIComponent(subject)}&body=${body}`;
+
+      // Copiar al portapapeles como fallback
+      try {
+        await navigator.clipboard.writeText(invitationMessage);
+        toast.success("Mensaje copiado al portapapeles");
+      } catch (clipboardError) {
+        console.error("Error al copiar al portapapeles:", clipboardError);
+      }
+
+      // Intentar abrir cliente de email
+      window.location.href = mailtoLink;
+
+      toast.success(`Invitación creada para ${selectedUser.email}`);
+
+      // Cerrar diálogo y limpiar
+      setIsInviteDialogOpen(false);
+      setSelectedUser(null);
+      setInvitationMessage("");
+      setInvitationToken("");
+
+      // Refresh para actualizar lista
+      router.refresh();
+    } catch (error) {
+      toast.error("Error al enviar invitación");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCopyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(invitationMessage);
+      toast.success("Mensaje copiado al portapapeles");
+    } catch (error) {
+      toast.error("Error al copiar al portapapeles");
+    }
   };
 
   // Filtrar usuarios por estado
@@ -331,7 +407,20 @@ export default function UserTable({
                         </div>
                       </div>
                     ) : (
-                      <span className="text-muted-foreground">-</span>
+                      <>
+                        {currentUserRole !== "vendedor" && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleInviteUser(user)}
+                            disabled={isLoading}
+                            className="border-cyan-600 text-cyan-600 hover:bg-cyan-50"
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            <Mail className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </>
                     )}
                   </TableCell>
 
@@ -559,6 +648,78 @@ export default function UserTable({
               className="bg-red-600 hover:bg-red-700"
             >
               {isLoading ? "Borrando..." : "Sí, borrar usuario"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog invitar usuario */}
+      <AlertDialog
+        open={isInviteDialogOpen}
+        onOpenChange={setIsInviteDialogOpen}
+      >
+        <AlertDialogContent className="max-w-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-cyan-600 flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Invitar Usuario
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                Se enviará un email a{" "}
+                <strong className="text-foreground">{selectedUser?.email}</strong>{" "}
+                con un enlace para que configure su contraseña y acceda al sistema.
+              </p>
+
+              <div className="bg-cyan-50 border border-cyan-200 rounded-md p-3">
+                <p className="text-sm font-medium text-cyan-900 mb-2">
+                  Vista previa del mensaje:
+                </p>
+                <div className="bg-white border border-cyan-100 rounded p-3 text-sm text-gray-700 whitespace-pre-wrap max-h-60 overflow-y-auto">
+                  {invitationMessage}
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyToClipboard}
+                  className="flex-1"
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copiar al portapapeles
+                </Button>
+              </div>
+
+              <div className="bg-lime-50 border border-blue-200 rounded-md p-3">
+                <p className="text-xs text-blue-800">
+                  ℹ️ <strong>Nota:</strong> Al confirmar, se intentará abrir tu aplicación
+                  de email predeterminada con el mensaje prellenado. Si no funciona,
+                  el mensaje ya estará copiado en tu portapapeles para que puedas
+                  pegarlo manualmente.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLoading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleSendInvitation}
+              disabled={isLoading}
+              className="bg-cyan-600 hover:bg-cyan-700"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  Enviar Invitación
+                </>
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
