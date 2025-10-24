@@ -40,7 +40,7 @@ interface ProfileFormData {
   nif: string;
   direccion_fiscal: string;
   codigo_postal: string;
-  ciudad: string;
+  localidad: string;
   provincia: string;
   pais: string;
   telefono: string;
@@ -59,6 +59,8 @@ interface ProfileFormErrors {
   nif?: string;
   direccion_fiscal?: string;
   codigo_postal?: string;
+  localidad?: string;
+  provincia?: string;
   telefono?: string;
   emailContacto?: string;
   web?: string;
@@ -76,7 +78,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
     nif: profile.emisor?.nif || "",
     direccion_fiscal: profile.emisor?.direccion_fiscal || "",
     codigo_postal: profile.emisor?.codigo_postal || "",
-    ciudad: profile.emisor?.ciudad || "",
+    localidad: profile.emisor?.ciudad || "",
     provincia: profile.emisor?.provincia || "",
     pais: profile.emisor?.pais || "España",
     telefono: profile.emisor?.telefono || "",
@@ -112,8 +114,18 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
       newErrors.direccion_fiscal = "La dirección fiscal es requerida";
     }
 
-    if (formData.codigo_postal && !/^\d{5}$/.test(formData.codigo_postal)) {
+    if (!formData.codigo_postal.trim()) {
+      newErrors.codigo_postal = "El código postal es requerido";
+    } else if (!/^\d{5}$/.test(formData.codigo_postal)) {
       newErrors.codigo_postal = "El código postal debe tener 5 dígitos";
+    }
+
+    if (!formData.localidad.trim()) {
+      newErrors.localidad = "La localidad es requerida";
+    }
+
+    if (!formData.provincia.trim()) {
+      newErrors.provincia = "La provincia es requerida";
     }
 
     if (formData.telefono && !/^[0-9\s\+\-\(\)]+$/.test(formData.telefono)) {
@@ -180,9 +192,9 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
         nombre_comercial: formData.nombre_comercial,
         nif: formData.nif,
         direccion_fiscal: formData.direccion_fiscal,
-        codigo_postal: formData.codigo_postal || undefined,
-        ciudad: formData.ciudad || undefined,
-        provincia: formData.provincia || undefined,
+        codigo_postal: formData.codigo_postal,
+        ciudad: formData.localidad,
+        provincia: formData.provincia,
         pais: formData.pais || undefined,
         telefono: formData.telefono || undefined,
         emailContacto: formData.emailContacto || undefined,
@@ -307,50 +319,54 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
       {/* Sección: Información Personal (Solo lectura) */}
       <Card id="card-info-personal">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Información Personal
-          </CardTitle>
-          <CardDescription>
-            Estos datos no se pueden modificar desde aquí
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Información Personal
+              </CardTitle>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => window.location.href = `/users/${profile.id}/edit`}
+              className="border-cyan-600 text-cyan-600 hover:bg-blue-50"
+            >
+              Editar usuario
+            </Button>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Nombre</Label>
-              <Input value={profile.name} disabled className="bg-gray-50" />
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Desktop: 25% - 45% - 15% - 15% */}
+            {/* Tablet: 50% - 50% - 50% - 50% */}
+            {/* Móvil: 100% - 100% - 50% - 50% */}
+            <div className="md:col-span-1">
+              <p className="text-sm">
+                <span className="font-bold">Nombre:</span> {profile.name}
+              </p>
             </div>
 
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input
-                type="email"
-                value={profile.email}
-                disabled
-                className="bg-gray-50"
-              />
+            <div className="md:col-span-2 lg:col-span-2">
+              <p className="text-sm">
+                <span className="font-bold">Email:</span> {profile.email}
+              </p>
             </div>
 
-            <div className="space-y-2">
-              <Label>Rol</Label>
-              <Input
-                value={profile.role}
-                disabled
-                className="bg-gray-50 capitalize"
-              />
+            <div className="md:col-span-1 lg:col-span-1">
+              <p className="text-sm">
+                <span className="font-bold">Rol:</span>{" "}
+                <span className="capitalize">{profile.role}</span>
+              </p>
             </div>
 
             {profile.emisor && (
-              <div className="space-y-2">
-                <Label>Tipo Emisor</Label>
-                <Input
-                  value={
-                    profile.emisor.tipo === "autonomo" ? "Autónomo" : "Empresa"
-                  }
-                  disabled
-                  className="bg-gray-50"
-                />
+              <div className="md:col-span-2 lg:col-span-4">
+                <p className="text-sm">
+                  <span className="font-bold">Tipo:</span>{" "}
+                  {profile.emisor.tipo === "autonomo" ? "Autónomo" : "Empresa"}
+                </p>
               </div>
             )}
           </div>
@@ -370,60 +386,113 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Nombre Comercial y NIF */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="nombre_comercial">Nombre Comercial *</Label>
+            {profile.emisor.tipo === "empresa" ? (
+              <>
+                {/* EMPRESA - Desktop/Tablet: Nombre Comercial* (75%) NIF/CIF* (25%) */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="md:col-span-4 lg:col-span-3 space-y-2">
+                    <Label htmlFor="nombre_comercial">Nombre Comercial *</Label>
+                    <Input
+                      id="nombre_comercial"
+                      value={formData.nombre_comercial}
+                      onChange={handleInputChange("nombre_comercial")}
+                      className={errors.nombre_comercial ? "border-red-500" : ""}
+                      disabled={isLoading}
+                    />
+                    {errors.nombre_comercial && (
+                      <p className="text-sm text-red-600">{errors.nombre_comercial}</p>
+                    )}
+                  </div>
+
+                  <div className="md:col-span-4 lg:col-span-1 space-y-2">
+                    <Label htmlFor="nif">NIF/CIF *</Label>
+                    <Input
+                      id="nif"
+                      value={formData.nif}
+                      onChange={handleInputChange("nif")}
+                      className={errors.nif ? "border-red-500" : ""}
+                      disabled={isLoading}
+                    />
+                    {errors.nif && (
+                      <p className="text-sm text-red-600">{errors.nif}</p>
+                    )}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* AUTÓNOMO - Desktop/Tablet: Nombre Comercial* (50%) NIF/CIF* (25%) IRPF (25%) */}
+                {/* Móvil: Nombre (100%), NIF (75%) IRPF (25%) */}
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="nombre_comercial">Nombre Comercial *</Label>
+                    <Input
+                      id="nombre_comercial"
+                      value={formData.nombre_comercial}
+                      onChange={handleInputChange("nombre_comercial")}
+                      className={errors.nombre_comercial ? "border-red-500" : ""}
+                      disabled={isLoading}
+                    />
+                    {errors.nombre_comercial && (
+                      <p className="text-sm text-red-600">{errors.nombre_comercial}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="col-span-3 space-y-2">
+                    <Label htmlFor="nif">NIF/CIF *</Label>
+                    <Input
+                      id="nif"
+                      value={formData.nif}
+                      onChange={handleInputChange("nif")}
+                      className={errors.nif ? "border-red-500" : ""}
+                      disabled={isLoading}
+                    />
+                    {errors.nif && (
+                      <p className="text-sm text-red-600">{errors.nif}</p>
+                    )}
+                  </div>
+
+                  <div className="col-span-1 space-y-2">
+                    <Label htmlFor="irpf_percentage">% IRPF</Label>
+                    <Input
+                      id="irpf_percentage"
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      value={formData.irpf_percentage ?? ""}
+                      onChange={handleInputChange("irpf_percentage")}
+                      className={errors.irpf_percentage ? "border-red-500" : ""}
+                      disabled={isLoading}
+                    />
+                    {errors.irpf_percentage && (
+                      <p className="text-sm text-red-600">{errors.irpf_percentage}</p>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Dirección Fiscal* (75%) Código Postal* (25%) */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="md:col-span-4 lg:col-span-3 space-y-2">
+                <Label htmlFor="direccion_fiscal">Dirección Fiscal *</Label>
                 <Input
-                  id="nombre_comercial"
-                  value={formData.nombre_comercial}
-                  onChange={handleInputChange("nombre_comercial")}
-                  className={errors.nombre_comercial ? "border-red-500" : ""}
+                  id="direccion_fiscal"
+                  value={formData.direccion_fiscal}
+                  onChange={handleInputChange("direccion_fiscal")}
+                  className={errors.direccion_fiscal ? "border-red-500" : ""}
                   disabled={isLoading}
                 />
-                {errors.nombre_comercial && (
-                  <p className="text-sm text-red-600">
-                    {errors.nombre_comercial}
-                  </p>
+                {errors.direccion_fiscal && (
+                  <p className="text-sm text-red-600">{errors.direccion_fiscal}</p>
                 )}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="nif">NIF/CIF *</Label>
-                <Input
-                  id="nif"
-                  value={formData.nif}
-                  onChange={handleInputChange("nif")}
-                  className={errors.nif ? "border-red-500" : ""}
-                  disabled={isLoading}
-                />
-                {errors.nif && (
-                  <p className="text-sm text-red-600">{errors.nif}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Dirección Fiscal */}
-            <div className="space-y-2">
-              <Label htmlFor="direccion_fiscal">Dirección Fiscal *</Label>
-              <Input
-                id="direccion_fiscal"
-                value={formData.direccion_fiscal}
-                onChange={handleInputChange("direccion_fiscal")}
-                className={errors.direccion_fiscal ? "border-red-500" : ""}
-                disabled={isLoading}
-              />
-              {errors.direccion_fiscal && (
-                <p className="text-sm text-red-600">
-                  {errors.direccion_fiscal}
-                </p>
-              )}
-            </div>
-
-            {/* CP, Ciudad, Provincia */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="codigo_postal">Código Postal</Label>
+              <div className="md:col-span-4 lg:col-span-1 space-y-2">
+                <Label htmlFor="codigo_postal">Código Postal *</Label>
                 <Input
                   id="codigo_postal"
                   maxLength={5}
@@ -436,31 +505,44 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
                   <p className="text-sm text-red-600">{errors.codigo_postal}</p>
                 )}
               </div>
+            </div>
 
+            {/* Localidad* (50%) Provincia* (50%) */}
+            {/* Móvil: Localidad (100%), Provincia (50%) Teléfono (50%) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="ciudad">Ciudad</Label>
+                <Label htmlFor="localidad">Localidad *</Label>
                 <Input
-                  id="ciudad"
-                  value={formData.ciudad}
-                  onChange={handleInputChange("ciudad")}
+                  id="localidad"
+                  value={formData.localidad}
+                  onChange={handleInputChange("localidad")}
+                  className={errors.localidad ? "border-red-500" : ""}
                   disabled={isLoading}
                 />
+                {errors.localidad && (
+                  <p className="text-sm text-red-600">{errors.localidad}</p>
+                )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="provincia">Provincia</Label>
+                <Label htmlFor="provincia">Provincia *</Label>
                 <Input
                   id="provincia"
                   value={formData.provincia}
                   onChange={handleInputChange("provincia")}
+                  className={errors.provincia ? "border-red-500" : ""}
                   disabled={isLoading}
                 />
+                {errors.provincia && (
+                  <p className="text-sm text-red-600">{errors.provincia}</p>
+                )}
               </div>
             </div>
 
-            {/* Contacto */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
+            {/* Desktop/Tablet: Teléfono (25%) Email de Contacto (50%) Sitio Web (25%) */}
+            {/* Móvil: Teléfono (50%), Email (100%), Web (100%) */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="md:col-span-1 space-y-2">
                 <Label htmlFor="telefono">Teléfono</Label>
                 <Input
                   id="telefono"
@@ -475,7 +557,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
                 )}
               </div>
 
-              <div className="space-y-2">
+              <div className="col-span-2 md:col-span-2 space-y-2">
                 <Label htmlFor="emailContacto">Email de Contacto</Label>
                 <Input
                   id="emailContacto"
@@ -489,50 +571,23 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
                   <p className="text-sm text-red-600">{errors.emailContacto}</p>
                 )}
               </div>
-            </div>
 
-            {/* Web */}
-            <div className="space-y-2">
-              <Label htmlFor="web">Sitio Web</Label>
-              <Input
-                id="web"
-                type="url"
-                placeholder="https://www.tuempresa.com"
-                value={formData.web}
-                onChange={handleInputChange("web")}
-                className={errors.web ? "border-red-500" : ""}
-                disabled={isLoading}
-              />
-              {errors.web && (
-                <p className="text-sm text-red-600">{errors.web}</p>
-              )}
-            </div>
-
-            {/* IRPF (solo autónomos) */}
-            {profile.emisor.tipo === "autonomo" && (
-              <div className="space-y-2">
-                <Label htmlFor="irpf_percentage">% IRPF</Label>
+              <div className="col-span-2 md:col-span-1 space-y-2">
+                <Label htmlFor="web">Sitio Web</Label>
                 <Input
-                  id="irpf_percentage"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  value={formData.irpf_percentage ?? ""}
-                  onChange={handleInputChange("irpf_percentage")}
-                  className={errors.irpf_percentage ? "border-red-500" : ""}
+                  id="web"
+                  type="url"
+                  placeholder="https://www.tuempresa.com"
+                  value={formData.web}
+                  onChange={handleInputChange("web")}
+                  className={errors.web ? "border-red-500" : ""}
                   disabled={isLoading}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Porcentaje de retención IRPF (por defecto 15%)
-                </p>
-                {errors.irpf_percentage && (
-                  <p className="text-sm text-red-600">
-                    {errors.irpf_percentage}
-                  </p>
+                {errors.web && (
+                  <p className="text-sm text-red-600">{errors.web}</p>
                 )}
               </div>
-            )}
+            </div>
           </CardContent>
         </Card>
       )}
