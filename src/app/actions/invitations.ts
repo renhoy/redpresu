@@ -4,6 +4,7 @@ import { log } from '@/lib/logger'
 import { cookies } from 'next/headers'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import crypto from 'crypto'
 
 /**
@@ -39,14 +40,28 @@ export interface InvitationResult {
  * Server Action para crear una invitación de usuario
  *
  * @param email - Email del usuario a invitar
- * @param expirationDays - Días hasta que expire la invitación (por defecto 7)
+ * @param expirationDays - Días hasta que expire la invitación (por defecto lee de config, fallback 7)
  * @returns InvitationResult con token y datos de la invitación
  */
 export async function createUserInvitation(
   email: string,
-  expirationDays: number = 7
+  expirationDays?: number
 ): Promise<InvitationResult> {
   try {
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+    // Obtener días de expiración desde configuración si no se proporciona
+    if (!expirationDays) {
+      const { data: configData } = await supabase
+        .from('redpresu_config')
+        .select('value')
+        .eq('key', 'invitation_token_expiration_days')
+        .single()
+
+      expirationDays = configData?.value ? Number(configData.value) : 7
+    }
+
     log.info('[createUserInvitation] Iniciando...', { email, expirationDays })
 
     // Validar email
@@ -64,9 +79,6 @@ export async function createUserInvitation(
         error: 'Email inválido'
       }
     }
-
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
 
     // Obtener usuario autenticado
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -464,15 +476,44 @@ export async function acceptInvitation(
 
     log.info('[acceptInvitation] Usuario creado exitosamente:', userId)
 
-    return {
-      success: true,
-      data: {
-        invitationId: invitation.id
+    // Iniciar sesión automáticamente
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: invitation.email,
+      password: password
+    })
+
+    if (signInError) {
+      log.error('[acceptInvitation] Error al iniciar sesión automática:', signInError)
+      // No es crítico, el usuario puede hacer login manual
+      return {
+        success: true,
+        data: {
+          invitationId: invitation.id,
+          userId: userId,
+          autoLoginFailed: true
+        }
       }
     }
 
+    // Actualizar last_login
+    await supabaseAdmin
+      .from('redpresu_users')
+      .update({ last_login: new Date().toISOString() })
+      .eq('id', userId)
+
+    // Redirect a editar perfil
+    redirect(`/users/${userId}/edit`)
+
   } catch (error) {
     log.error('[acceptInvitation] Error crítico:', error)
+
+    // Si es un redirect, Next.js lo maneja automáticamente
+    if (error && typeof error === 'object' && 'digest' in error) {
+      throw error
+    }
 
     return {
       success: false,

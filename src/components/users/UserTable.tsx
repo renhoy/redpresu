@@ -199,8 +199,8 @@ export default function UserTable({
     setSelectedUser(user);
     setIsLoading(true);
 
-    // Crear invitación
-    const result = await createUserInvitation(user.email, 7);
+    // Crear invitación (usa configuración de expiración de BD)
+    const result = await createUserInvitation(user.email);
 
     if (!result.success) {
       toast.error(result.error || "Error al crear invitación");
@@ -409,16 +409,25 @@ export default function UserTable({
                     ) : (
                       <>
                         {currentUserRole !== "vendedor" && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleInviteUser(user)}
-                            disabled={isLoading}
-                            className="border-cyan-600 text-cyan-600 hover:bg-cyan-50"
-                          >
-                            <Plus className="h-3 w-3 mr-1" />
-                            <Mail className="h-3 w-3" />
-                          </Button>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleInviteUser(user)}
+                                  disabled={isLoading}
+                                  className="border-lime-500 text-lime-600 hover:bg-lime-50"
+                                >
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  <Mail className="h-3 w-3" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Invitar por email</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         )}
                       </>
                     )}
@@ -660,7 +669,7 @@ export default function UserTable({
       >
         <AlertDialogContent className="max-w-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-cyan-600 flex items-center gap-2">
+            <AlertDialogTitle className="text-lime-600 flex items-center gap-2">
               <Mail className="h-5 w-5" />
               Invitar Usuario
             </AlertDialogTitle>
@@ -671,11 +680,11 @@ export default function UserTable({
                 con un enlace para que configure su contraseña y acceda al sistema.
               </p>
 
-              <div className="bg-cyan-50 border border-cyan-200 rounded-md p-3">
-                <p className="text-sm font-medium text-cyan-900 mb-2">
+              <div className="bg-lime-50 border border-lime-200 rounded-md p-3">
+                <p className="text-sm font-medium text-lime-900 mb-2">
                   Vista previa del mensaje:
                 </p>
-                <div className="bg-white border border-cyan-100 rounded p-3 text-sm text-gray-700 whitespace-pre-wrap max-h-60 overflow-y-auto">
+                <div className="bg-white border border-lime-100 rounded p-3 text-sm text-gray-700 whitespace-pre-wrap max-h-60 overflow-y-auto">
                   {invitationMessage}
                 </div>
               </div>
@@ -707,7 +716,7 @@ export default function UserTable({
             <AlertDialogAction
               onClick={handleSendInvitation}
               disabled={isLoading}
-              className="bg-cyan-600 hover:bg-cyan-700"
+              className="bg-lime-600 hover:bg-lime-700"
             >
               {isLoading ? (
                 <>

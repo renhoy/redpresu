@@ -102,6 +102,17 @@ COMMENT ON COLUMN public.redpresu_user_invitations.token IS 'Token único para v
 COMMENT ON COLUMN public.redpresu_user_invitations.expires_at IS 'Fecha de expiración del token';
 COMMENT ON COLUMN public.redpresu_user_invitations.status IS 'Estado: pending, accepted, expired, cancelled';
 
+-- 6. Añadir configuración de expiración de tokens de invitación
+INSERT INTO public.redpresu_config (key, value, description, category, is_system)
+VALUES (
+  'invitation_token_expiration_days',
+  '7'::jsonb,
+  'Días de validez de los tokens de invitación de usuarios (por defecto 7 días)',
+  'security',
+  false
+)
+ON CONFLICT (key) DO NOTHING;
+
 COMMIT;
 
 -- ============================================

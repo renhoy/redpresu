@@ -151,10 +151,14 @@ export default function AcceptInvitationForm() {
       // Éxito
       setSuccess(true);
 
-      // Redirigir a login después de 3 segundos
+      // Redirigir a editar perfil después de 2 segundos
       setTimeout(() => {
-        router.push("/login");
-      }, 3000);
+        if (result.data?.userId) {
+          router.push(`/users/${result.data.userId}/edit`);
+        } else {
+          router.push("/login");
+        }
+      }, 2000);
     } catch (error) {
       setErrors({
         general:
@@ -237,13 +241,13 @@ export default function AcceptInvitationForm() {
         <CardContent>
           <Alert className="bg-green-50 border-green-200">
             <AlertDescription className="text-green-800">
-              Tu cuenta ha sido creada correctamente. Ya puedes iniciar sesión con
-              tu email y contraseña.
+              Tu cuenta ha sido creada correctamente. Serás redirigido a tu perfil
+              para completar tu información.
             </AlertDescription>
           </Alert>
           <div className="mt-4 text-center text-muted-foreground">
             <Loader2 className="h-5 w-5 animate-spin inline mr-2" />
-            Redirigiendo al login...
+            Redirigiendo a tu perfil...
           </div>
         </CardContent>
       </Card>
