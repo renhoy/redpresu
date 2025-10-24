@@ -709,50 +709,52 @@ export default function UserTable({
           }
         }}
       >
-        <AlertDialogContent className="max-w-[80vw] max-h-[80vh] overflow-y-auto">
+        <AlertDialogContent className="w-[80vw] max-w-[80vw] h-[80vh] max-h-[80vh] flex flex-col">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lime-600 flex items-center gap-2">
               <Mail className="h-5 w-5" />
               Invitar Usuario
             </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-3">
-              <div>
-                Se enviará un email a{" "}
-                <strong className="text-foreground">{selectedUser?.email}</strong>{" "}
-                con un enlace para que configure su contraseña y acceda al sistema.
-              </div>
-
-              <div className="bg-lime-50 border border-lime-200 rounded-md p-3">
-                <div className="text-sm font-medium text-lime-900 mb-2">
-                  Vista previa del mensaje:
-                </div>
-                <div className="bg-white border border-lime-100 rounded p-3 text-sm text-gray-700 whitespace-pre-wrap max-h-60 overflow-y-auto">
-                  {invitationMessage}
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCopyToClipboard}
-                  className="flex-1"
-                >
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copiar al portapapeles
-                </Button>
-              </div>
-
-              <div className="bg-lime-50 border border-blue-200 rounded-md p-3">
-                <div className="text-xs text-blue-800">
-                  ℹ️ <strong>Nota:</strong> Al confirmar, se intentará abrir tu aplicación
-                  de email predeterminada con el mensaje prellenado. Si no funciona,
-                  el mensaje ya estará copiado en tu portapapeles para que puedas
-                  pegarlo manualmente.
-                </div>
-              </div>
-            </AlertDialogDescription>
           </AlertDialogHeader>
+
+          <div className="space-y-3 overflow-y-auto flex-1 px-1">
+            <div className="text-sm text-muted-foreground">
+              Se enviará un email a{" "}
+              <strong className="text-foreground">{selectedUser?.email}</strong>{" "}
+              con un enlace para que configure su contraseña y acceda al sistema.
+            </div>
+
+            <div className="bg-lime-50 border border-lime-200 rounded-md p-3">
+              <div className="text-sm font-medium text-lime-900 mb-2">
+                Vista previa del mensaje:
+              </div>
+              <div className="bg-white border border-lime-100 rounded p-3 text-sm text-gray-700 whitespace-pre-wrap max-h-60 overflow-y-auto">
+                {invitationMessage}
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyToClipboard}
+                className="flex-1"
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                Copiar al portapapeles
+              </Button>
+            </div>
+
+            <div className="bg-lime-50 border border-blue-200 rounded-md p-3">
+              <div className="text-xs text-blue-800">
+                ℹ️ <strong>Nota:</strong> Al confirmar, se intentará abrir tu aplicación
+                de email predeterminada con el mensaje prellenado. Si no funciona,
+                el mensaje ya estará copiado en tu portapapeles para que puedas
+                pegarlo manualmente.
+              </div>
+            </div>
+          </div>
+
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isLoading} onClick={handleCancelInvitation}>
               Cancelar
