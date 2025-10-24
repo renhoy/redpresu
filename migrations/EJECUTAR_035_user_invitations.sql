@@ -23,17 +23,18 @@ CREATE TABLE IF NOT EXISTS public.redpresu_user_invitations (
   CONSTRAINT invitations_status_check CHECK (status IN ('pending', 'accepted', 'expired', 'cancelled'))
 );
 
--- 2. Índices
-CREATE INDEX idx_invitations_token ON public.redpresu_user_invitations(token);
-CREATE INDEX idx_invitations_email ON public.redpresu_user_invitations(email);
-CREATE INDEX idx_invitations_inviter_id ON public.redpresu_user_invitations(inviter_id);
-CREATE INDEX idx_invitations_status ON public.redpresu_user_invitations(status);
-CREATE INDEX idx_invitations_expires_at ON public.redpresu_user_invitations(expires_at);
+-- 2. Índices (idempotente)
+CREATE INDEX IF NOT EXISTS idx_invitations_token ON public.redpresu_user_invitations(token);
+CREATE INDEX IF NOT EXISTS idx_invitations_email ON public.redpresu_user_invitations(email);
+CREATE INDEX IF NOT EXISTS idx_invitations_inviter_id ON public.redpresu_user_invitations(inviter_id);
+CREATE INDEX IF NOT EXISTS idx_invitations_status ON public.redpresu_user_invitations(status);
+CREATE INDEX IF NOT EXISTS idx_invitations_expires_at ON public.redpresu_user_invitations(expires_at);
 
--- 3. RLS policies
+-- 3. RLS policies (idempotente)
 ALTER TABLE public.redpresu_user_invitations ENABLE ROW LEVEL SECURITY;
 
 -- Política SELECT: Usuarios autenticados de la misma empresa pueden ver invitaciones
+DROP POLICY IF EXISTS "invitations_select_policy" ON public.redpresu_user_invitations;
 CREATE POLICY "invitations_select_policy"
 ON public.redpresu_user_invitations FOR SELECT
 USING (
@@ -46,6 +47,7 @@ USING (
 );
 
 -- Política INSERT: Solo admin y superadmin pueden crear invitaciones
+DROP POLICY IF EXISTS "invitations_insert_policy" ON public.redpresu_user_invitations;
 CREATE POLICY "invitations_insert_policy"
 ON public.redpresu_user_invitations FOR INSERT
 WITH CHECK (
@@ -58,6 +60,7 @@ WITH CHECK (
 );
 
 -- Política UPDATE: Solo el invitador o admin/superadmin pueden actualizar
+DROP POLICY IF EXISTS "invitations_update_policy" ON public.redpresu_user_invitations;
 CREATE POLICY "invitations_update_policy"
 ON public.redpresu_user_invitations FOR UPDATE
 USING (
@@ -71,6 +74,7 @@ USING (
 );
 
 -- Política DELETE: Solo el invitador o admin/superadmin pueden eliminar
+DROP POLICY IF EXISTS "invitations_delete_policy" ON public.redpresu_user_invitations;
 CREATE POLICY "invitations_delete_policy"
 ON public.redpresu_user_invitations FOR DELETE
 USING (

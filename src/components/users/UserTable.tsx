@@ -37,7 +37,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Pencil, Trash2, UserCheck, Mail, Plus, Copy, ExternalLink } from "lucide-react";
+import { Pencil, Trash2, UserCheck, Mail, Plus, Copy, ExternalLink, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { UserCard } from "./UserCard";
