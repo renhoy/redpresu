@@ -709,7 +709,7 @@ export default function UserTable({
           }
         }}
       >
-        <AlertDialogContent className="w-[80vw] max-w-[80vw] h-[80vh] max-h-[80vh] flex flex-col">
+        <AlertDialogContent className="w-[80vw] max-w-[80vw] sm:w-[80vw] sm:max-w-[80vw] h-[80vh] max-h-[80vh] flex flex-col">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lime-600 flex items-center gap-2">
               <Mail className="h-5 w-5" />
