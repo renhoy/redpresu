@@ -25,8 +25,10 @@ import {
   Building2,
   Lock,
   CheckCircle2,
+  Play,
 } from "lucide-react";
 import { toast } from "sonner";
+import { startTour } from "@/lib/helpers/tour-helpers";
 
 interface ProfileFormProps {
   profile: UserProfile;
@@ -258,16 +260,28 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <User className="h-6 w-6" />
-            Mi Perfil
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <User className="h-6 w-6" />
+              Mi Perfil
+            </h1>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => startTour("profile-page")}
+              className="border-cyan-600 text-cyan-600 hover:bg-blue-50 h-8 px-3 gap-1.5"
+            >
+              <Play className="h-3.5 w-3.5" />
+              <span className="text-xs font-medium">Tour</span>
+            </Button>
+          </div>
           <p className="text-sm">
             Administra tu información personal y configuración de cuenta
           </p>
         </div>
         <div className="flex gap-2">
-          <Button type="submit" disabled={isLoading}>
+          <Button id="btn-guardar-perfil" type="submit" disabled={isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -291,7 +305,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
       )}
 
       {/* Sección: Información Personal (Solo lectura) */}
-      <Card>
+      <Card id="card-info-personal">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
@@ -345,7 +359,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
 
       {/* Sección: Datos del Issuer (Emisor) - Editable */}
       {profile.emisor && (
-        <Card>
+        <Card id="card-datos-emisor">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Building2 className="h-5 w-5" />
@@ -524,7 +538,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
       )}
 
       {/* Sección: Cambiar Contraseña (Opcional) */}
-      <Card>
+      <Card id="card-cambiar-password">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Lock className="h-5 w-5" />
