@@ -59,6 +59,19 @@ export async function signInAction(email: string, password: string): Promise<Sig
       return { success: false, error: 'Usuario no encontrado en la base de datos' }
     }
 
+    // Actualizar last_login
+    const { error: updateError } = await supabase
+      .from('redpresu_users')
+      .update({ last_login: new Date().toISOString() })
+      .eq('id', data.user.id)
+
+    if (updateError) {
+      log.error('[Server Action] Error actualizando last_login:', updateError)
+      // No es crítico, continuar con el login
+    } else {
+      log.info(`[Server Action] last_login actualizado para ${data.user.email}`)
+    }
+
     log.info(`[Server Action] Login exitoso: ${data.user.email}, Rol: ${userData.role}`)
 
     // Redirect según rol usando Next.js redirect
