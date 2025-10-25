@@ -85,14 +85,14 @@ export function BudgetNotesIcon({ budgetId, initialCount = 0, className = '' }: 
                 <Button
                   variant="outline"
                   size="sm"
-                  className={`relative h-7 border-lime-500 text-lime-500 hover:bg-lime-50 hover:text-lime-600 px-2 gap-1.5 ${className}`}
+                  className={`relative h-7 px-2 gap-1.5 text-xs ${className}`}
                   onClick={(e) => {
                     console.log('[BudgetNotesIcon] Button clicked')
                     e.stopPropagation()
                   }}
                 >
                   <NotebookPen className="h-3.5 w-3.5 flex-shrink-0" />
-                  <span className="lg:hidden text-xs">Notas</span>
+                  <span>Notas</span>
                   {notesCount > 0 && (
                     <Badge
                       variant="secondary"

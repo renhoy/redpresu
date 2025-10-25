@@ -1,6 +1,7 @@
 /* template/color/css/summary.css */
 
 .content-client .tag,
+.content-client .budget-number,
 .content-client .name,
 .content-client .nif_nie,
 .content-client .address,
@@ -11,6 +12,7 @@
 }
 
 .content-client .tag,
+.content-client .budget-number,
 .content-client .name {
   font-weight: bold;
   text-transform: uppercase;
@@ -55,7 +57,6 @@
 .content-totals [class^="iva"] [class$="-amount"] {
   font-weight: normal;
 }
-
 
 .total {
   font-weight: bold;

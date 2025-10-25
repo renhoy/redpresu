@@ -13,6 +13,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { BudgetNotesIcon } from "./BudgetNotesIcon";
 import Link from "next/link";
 import { getBudgetPDFSignedUrl } from "@/app/actions/budgets";
@@ -67,17 +73,18 @@ export function BudgetCard({
 }: BudgetCardProps) {
   const days = getDaysRemaining(budget.start_date, budget.validity_days);
 
-  // Obtener título de la tarifa desde la relación redpresu_tariffs
+  // Obtener título de la tarifa desde la relación tariffs
   const tariffTitle =
-    (budget as any).redpresu_tariffs &&
-    typeof (budget as any).redpresu_tariffs === "object" &&
-    "title" in (budget as any).redpresu_tariffs
-      ? ((budget as any).redpresu_tariffs as { title: string }).title
+    budget.tariffs &&
+    typeof budget.tariffs === "object" &&
+    "title" in budget.tariffs
+      ? (budget.tariffs as { title: string }).title
       : "N/A";
 
   return (
-    <Card className="w-full mb-3">
-      <CardContent className="p-3">
+    <TooltipProvider>
+      <Card className="w-full mb-3">
+        <CardContent className="p-3">
         <div className="space-y-3">
           {/* Fila 1: Nombre/Datos Cliente + Total */}
           <div className="flex justify-between gap-3">
@@ -205,17 +212,23 @@ export function BudgetCard({
             <BudgetNotesIcon budgetId={budget.id} className="w-full" />
 
             {/* Tarifa */}
-            <Button
-              data-tour="btn-tarifa"
-              variant="outline"
-              size="sm"
-              onClick={() => window.open(`/tariffs?id=${budget.tariff_id}`, "_blank")}
-              className="h-7 px-2 gap-1.5 text-xs w-full lg:w-auto"
-              title={tariffTitle}
-            >
-              <Layers className="h-3.5 w-3.5 flex-shrink-0" />
-              <span>Tarifa</span>
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  data-tour="btn-tarifa"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(`/tariffs?id=${budget.tariff_id}`, "_blank")}
+                  className="h-7 px-2 gap-1.5 text-xs w-full lg:w-auto"
+                >
+                  <Layers className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span>Tarifa</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{tariffTitle}</p>
+              </TooltipContent>
+            </Tooltip>
 
             {/* Botón PDF - Solo si NO es borrador */}
             {budget.status !== "borrador" && (
@@ -299,5 +312,6 @@ export function BudgetCard({
         </div>
       </CardContent>
     </Card>
+    </TooltipProvider>
   );
 }

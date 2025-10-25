@@ -9,10 +9,12 @@ class ContentClient {
   render() {
     return `<div class="content-client">
       <div class="tag-budget-number">
-        <div class="tag">Número Presupuesto:</div>
+        <div class="tag">Presupuesto:</div>
       </div>
       <div class="data">
-        <div class="budget-number">${this.element.budget_number || "Sin Número"}</div>
+        <div class="budget-number">${
+          this.element.budget_number || "Sin Número"
+        }</div>
       </div>
 
       <div class="tag-client">
@@ -20,9 +22,15 @@ class ContentClient {
       </div>
       <div class="data">
         <div class="name">${this.element.client_name || "Sin nombre"}</div>
-        <div class="nif_nie">${this.element.client_nif_nie || "Sin NIF/NIE"}</div>
-        <div class="address">${this.element.client_address || "Sin dirección"}</div>
-        <div class="contact">${this.element.client_contact || "Sin contacto"}</div>
+        <div class="nif_nie">${
+          this.element.client_nif_nie || "Sin NIF/NIE"
+        }</div>
+        <div class="address">${
+          this.element.client_address || "Sin dirección"
+        }</div>
+        <div class="contact">${
+          this.element.client_contact || "Sin contacto"
+        }</div>
       </div>
     </div>`;
   }
