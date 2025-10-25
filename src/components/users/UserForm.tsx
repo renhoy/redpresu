@@ -52,7 +52,7 @@ interface FormData {
   email: string;
   name: string;
   last_name: string;
-  role: "vendedor" | "admin" | "superadmin";
+  role: "comercial" | "admin" | "superadmin";
   status?: "active" | "inactive" | "pending";
   issuer_id?: string; // ID del emisor al que se asignará el usuario (solo superadmin)
 }
@@ -67,7 +67,7 @@ export default function UserForm({
     email: user?.email || "",
     name: user?.name || "",
     last_name: user?.last_name || "",
-    role: user?.role || "vendedor",
+    role: user?.role || "comercial",
     status: user?.status || "pending", // Usuarios nuevos en pending hasta configurar password
     issuer_id: undefined,
   });
@@ -293,19 +293,19 @@ export default function UserForm({
     if (currentUserRole === "superadmin") {
       // Superadmin puede crear cualquier rol
       return [
-        { value: "vendedor", label: "Comercial" },
+        { value: "comercial", label: "Comercial" },
         { value: "admin", label: "Admin" },
         { value: "superadmin", label: "Superadmin" },
       ];
     } else if (currentUserRole === "admin") {
-      // Admin solo puede crear admin y vendedor (NO superadmin)
+      // Admin solo puede crear admin y comercial (NO superadmin)
       return [
-        { value: "vendedor", label: "Comercial" },
+        { value: "comercial", label: "Comercial" },
         { value: "admin", label: "Admin" },
       ];
     } else {
       // Comercial no puede crear usuarios (no debería llegar aquí)
-      return [{ value: "vendedor", label: "Comercial" }];
+      return [{ value: "comercial", label: "Comercial" }];
     }
   };
 
@@ -418,7 +418,7 @@ export default function UserForm({
 
             <div className="w-1/4 space-y-2">
               <Label htmlFor="role">Rol *</Label>
-              {mode === "edit" && currentUserRole === "vendedor" ? (
+              {mode === "edit" && currentUserRole === "comercial" ? (
                 <div className="p-3 bg-muted rounded-md text-muted-foreground text-sm">
                   {availableRoles.find((r) => r.value === formData.role)
                     ?.label || formData.role}
@@ -497,7 +497,7 @@ export default function UserForm({
           </div>
 
           {/* Status (solo en edición y solo admin/superadmin) */}
-          {mode === "edit" && currentUserRole !== "vendedor" && (
+          {mode === "edit" && currentUserRole !== "comercial" && (
             <div className="space-y-2">
               <Label htmlFor="status">Estado</Label>
               <Select

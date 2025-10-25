@@ -114,7 +114,7 @@ export async function createCheckoutSession(
     }
 
     // Solo admin/superadmin pueden cambiar plan
-    if (user.role === 'vendedor') {
+    if (user.role === 'comercial') {
       return { success: false, error: 'Sin permisos para cambiar plan' };
     }
 
@@ -216,7 +216,7 @@ export async function createPortalSession(
       return { success: false, error: 'No autenticado' };
     }
 
-    if (user.role === 'vendedor') {
+    if (user.role === 'comercial') {
       return { success: false, error: 'Sin permisos' };
     }
 

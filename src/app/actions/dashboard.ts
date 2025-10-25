@@ -87,7 +87,7 @@ export async function getDashboardStats(
       .eq("company_id", companyId);
 
     // Comercial: solo sus presupuestos
-    if (userData.role === "vendedor") {
+    if (userData.role === "comercial") {
       query = query.eq("user_id", user.id);
     }
 

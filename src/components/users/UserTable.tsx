@@ -139,7 +139,7 @@ export default function UserTable({
     const labels: Record<string, string> = {
       superadmin: "Super Admin",
       admin: "Admin",
-      vendedor: "Comercial",
+      comercial: "Comercial",
     };
     return labels[role] || role;
   };
@@ -365,7 +365,7 @@ export default function UserTable({
                       {/* Botón [+ email] - Solo si no tiene inviter y status=pending */}
                       {!user.inviter_name &&
                        user.status === "pending" &&
-                       currentUserRole !== "vendedor" && (
+                       currentUserRole !== "comercial" && (
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -413,7 +413,7 @@ export default function UserTable({
                           )
                         }
                         disabled={
-                          currentUserRole === "vendedor" &&
+                          currentUserRole === "comercial" &&
                           user.id !== currentUserId
                         }
                       >
@@ -482,7 +482,7 @@ export default function UserTable({
                     <TooltipProvider>
                       <div className="flex justify-end gap-2">
                         {/* Comercial solo puede editar su propio usuario */}
-                        {currentUserRole === "vendedor" &&
+                        {currentUserRole === "comercial" &&
                         user.id !== currentUserId ? (
                           <span className="text-muted-foreground text-sm">
                             -
@@ -504,7 +504,7 @@ export default function UserTable({
                             </Tooltip>
 
                             {/* Botón Borrar Usuario - Solo admin/superadmin */}
-                            {currentUserRole !== "vendedor" && (
+                            {currentUserRole !== "comercial" && (
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Button

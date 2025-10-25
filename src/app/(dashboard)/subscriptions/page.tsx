@@ -17,7 +17,7 @@ export default async function SubscriptionsPage() {
   }
 
   // Solo admin/superadmin pueden ver suscripciones
-  if (user.role === "vendedor") {
+  if (user.role === "comercial") {
     redirect("/dashboard");
   }
 

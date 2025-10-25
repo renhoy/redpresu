@@ -21,7 +21,7 @@ export interface User {
   email: string;
   name: string | null;
   last_name: string | null;
-  role: "vendedor" | "admin" | "superadmin";
+  role: "comercial" | "admin" | "superadmin";
   company_id: number;
   status: "active" | "inactive" | "pending";
   invited_by: string | null;
@@ -43,7 +43,7 @@ const createUserSchema = z.object({
   email: z.string().email("Email inválido").toLowerCase().trim(),
   name: z.string().min(1, "El nombre es requerido").max(100).trim(),
   last_name: z.string().min(1, "Los apellidos son requeridos").max(100).trim(),
-  role: z.enum(["vendedor", "admin", "superadmin"], {
+  role: z.enum(["comercial", "admin", "superadmin"], {
     required_error: "El rol es requerido",
   }),
   company_id: z.number().int().positive(),
@@ -57,7 +57,7 @@ const updateUserSchema = z.object({
     .max(100)
     .trim()
     .optional(),
-  role: z.enum(["vendedor", "admin", "superadmin"]).optional(),
+  role: z.enum(["comercial", "admin", "superadmin"]).optional(),
   status: z.enum(["active", "inactive", "pending"]).optional(),
 });
 
@@ -92,7 +92,7 @@ async function checkAdminPermission(): Promise<{
 }
 
 /**
- * Verifica si el usuario actual tiene acceso (incluye vendedor para lectura)
+ * Verifica si el usuario actual tiene acceso (incluye comercial para lectura)
  */
 async function checkUserAccess(): Promise<{
   allowed: boolean;
@@ -130,7 +130,7 @@ function generateTemporaryPassword(): string {
  * Obtener lista de usuarios de la empresa
  */
 export async function getUsers() {
-  // Permitir acceso a todos (vendedor verá la lista pero solo podrá editar su perfil)
+  // Permitir acceso a todos (comercial verá la lista pero solo podrá editar su perfil)
   const { allowed, currentUser } = await checkUserAccess();
 
   if (!allowed || !currentUser) {
@@ -191,7 +191,7 @@ export async function getUsers() {
  * Obtener un usuario por ID
  */
 export async function getUserById(userId: string) {
-  // Permitir acceso si es admin/superadmin O si es el mismo usuario (vendedor)
+  // Permitir acceso si es admin/superadmin O si es el mismo usuario (comercial)
   const { allowed, currentUser } = await checkUserAccess();
 
   if (!allowed || !currentUser) {
@@ -202,7 +202,7 @@ export async function getUserById(userId: string) {
   }
 
   // Comercial solo puede ver su propio usuario
-  if (currentUser.role === "vendedor" && userId !== currentUser.id) {
+  if (currentUser.role === "comercial" && userId !== currentUser.id) {
     return {
       success: false,
       error: "No tienes permisos para ver este usuario",

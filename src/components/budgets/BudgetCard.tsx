@@ -81,13 +81,17 @@ export function BudgetCard({
         <div className="space-y-3">
           {/* Fila 1: Nombre/Datos Cliente + Total */}
           <div className="flex justify-between gap-3">
-            {/* Fila 1 Columna 1: Nombre y datos cliente */}
+            {/* Fila 1 Columna 1: Número + Nombre y datos cliente */}
             <div className="flex-1 min-w-0 space-y-1">
-              {/* Fila 1: Nombre */}
+              {/* Fila 1: Número presupuesto */}
+              <div className="font-mono text-xs font-semibold text-primary">
+                {budget.budget_number}
+              </div>
+              {/* Fila 2: Nombre */}
               <div className="font-semibold text-sm truncate">
                 {budget.client_name}
               </div>
-              {/* Fila 2: (NIF) [tipo] [versión] */}
+              {/* Fila 3: (NIF) [tipo] [versión] */}
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="text-xs text-muted-foreground">
                   ({budget.client_nif_nie || "N/A"})

@@ -3,7 +3,7 @@ export type JsonValue = string | number | boolean | null | { [key: string]: Json
 export enum UserRole {
   SUPERADMIN = 'superadmin',
   ADMIN = 'admin',
-  VENDEDOR = 'vendedor'
+  COMERCIAL = 'comercial'
 }
 
 export enum TariffStatus {
@@ -110,6 +110,7 @@ export interface Budget {
   id: string
   company_id: number
   tariff_id: string
+  budget_number: string
   json_tariff_data: JsonValue
   client_type: string
   client_name: string

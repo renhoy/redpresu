@@ -8,7 +8,7 @@
 export const USER_ROLES = {
   SUPERADMIN: "superadmin",
   ADMIN: "admin",
-  VENDOR: "vendedor",
+  VENDOR: "comercial",
 } as const;
 
 /**
@@ -101,7 +101,7 @@ export const ROLE_PERMISSIONS = {
     PERMISSIONS.COMPANY_WRITE,
     PERMISSIONS.COMPANY_SETTINGS,
   ],
-  vendedor: [
+  comercial: [
     // Tarifas (solo lectura)
     PERMISSIONS.TARIFFS_READ,
 
@@ -126,7 +126,7 @@ export const ROLE_PERMISSIONS = {
 export const ROLE_DISPLAY_NAMES = {
   superadmin: "Super Administrador",
   admin: "Administrador",
-  vendedor: "Comercial",
+  comercial: "Comercial",
 } as const;
 
 /**
@@ -135,7 +135,7 @@ export const ROLE_DISPLAY_NAMES = {
 export const ROLE_DESCRIPTIONS = {
   superadmin: "Acceso completo a todo el sistema",
   admin: "Gestión completa de la empresa y usuarios",
-  vendedor: "Creación y gestión de presupuestos",
+  comercial: "Creación y gestión de presupuestos",
 } as const;
 
 /**
@@ -144,7 +144,7 @@ export const ROLE_DESCRIPTIONS = {
 export const ROLE_HIERARCHY = {
   superadmin: 3,
   admin: 2,
-  vendedor: 1,
+  comercial: 1,
 } as const;
 
 /**
@@ -225,7 +225,7 @@ export const ROLE_MODULE_ACCESS = {
     MODULE_PERMISSIONS.USERS_MODULE,
     MODULE_PERMISSIONS.SETTINGS_MODULE,
   ],
-  vendedor: [
+  comercial: [
     MODULE_PERMISSIONS.DASHBOARD_VIEW,
     MODULE_PERMISSIONS.BUDGETS_MODULE,
     MODULE_PERMISSIONS.CLIENTS_MODULE,
@@ -238,7 +238,7 @@ export const ROLE_MODULE_ACCESS = {
 export const PROTECTED_ROUTES = {
   superadmin: ["/admin/*", "/system/*"],
   admin: ["/admin/*", "/users/*", "/settings/*"],
-  vendedor: ["/budgets/*", "/clients/*"],
+  comercial: ["/budgets/*", "/clients/*"],
 } as const;
 
 /**
@@ -257,7 +257,7 @@ export const ROLE_LIMITS = {
     maxBudgets: Infinity,
     maxClients: 200,
   },
-  vendedor: {
+  comercial: {
     maxCompanies: 1,
     maxUsers: 1,
     maxBudgets: 100,
@@ -279,7 +279,7 @@ export const ROLE_SESSION_CONFIG = {
     sessionTimeout: 8 * 60 * 60 * 1000, // 8 horas
     requireMFA: false,
   },
-  vendedor: {
+  comercial: {
     maxSessions: 2,
     sessionTimeout: 4 * 60 * 60 * 1000, // 4 horas
     requireMFA: false,

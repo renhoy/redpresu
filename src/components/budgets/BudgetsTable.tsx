@@ -485,36 +485,47 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
                 </div>
               )}
 
-              {/* Datos del cliente */}
-              <div className="space-y-1 flex-1" style={{ marginLeft: depth > 0 ? `${depth * 24}px` : '0' }}>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-medium text-xs">
-                    {budget.client_name} ({budget.client_nif_nie || "N/A"})
-                  </span>
-                  <Badge variant="secondary" className="text-xs">
-                    {budget.client_type}
-                  </Badge>
-                  {isChild && (
-                    <Badge variant="outline" className="text-xs">
-                      v{budget.version_number}
+              {/* Datos del cliente - Grid 2 columnas */}
+              <div className="grid grid-cols-[1fr_auto] gap-2 flex-1" style={{ marginLeft: depth > 0 ? `${depth * 24}px` : '0' }}>
+                {/* Columna 1: Info cliente */}
+                <div className="space-y-1">
+                  {/* Fila 1: Número + Nombre + NIF + Tipo */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-mono text-xs font-semibold text-primary">
+                      {budget.budget_number}
+                    </span>
+                    <span className="font-medium text-xs">
+                      {budget.client_name} ({budget.client_nif_nie || "N/A"})
+                    </span>
+                    <Badge variant="secondary" className="text-xs">
+                      {budget.client_type}
                     </Badge>
+                    {isChild && (
+                      <Badge variant="outline" className="text-xs">
+                        v{budget.version_number}
+                      </Badge>
+                    )}
+                  </div>
+                  {/* Fila 2: Fecha y días restantes */}
+                  {days && budget.start_date && budget.end_date && (
+                    <div
+                      className={`text-xs ${
+                        days.isExpiring
+                          ? "text-orange-600 font-medium"
+                          : "text-muted-foreground"
+                      }`}
+                    >
+                      {formatDate(budget.start_date)} -{" "}
+                      {formatDate(budget.end_date)} ({days.remaining} de{" "}
+                      {days.total} días restantes)
+                    </div>
                   )}
-                  {/* Icono de notas */}
+                </div>
+
+                {/* Columna 2: Icono de notas (alineado derecha) */}
+                <div className="flex items-start justify-end">
                   <BudgetNotesIcon budgetId={budget.id} />
                 </div>
-                {days && budget.start_date && budget.end_date && (
-                  <div
-                    className={`text-xs ${
-                      days.isExpiring
-                        ? "text-orange-600 font-medium"
-                        : "text-muted-foreground"
-                    }`}
-                  >
-                    {formatDate(budget.start_date)} -{" "}
-                    {formatDate(budget.end_date)} ({days.remaining} de{" "}
-                    {days.total} días restantes)
-                  </div>
-                )}
               </div>
             </div>
           </td>

@@ -133,7 +133,7 @@ export function useAuth(): UseAuthReturn {
 
   const isAdmin = user?.role === 'admin'
   const isSuperAdmin = user?.role === 'superadmin'
-  const isVendedor = user?.role === 'vendedor'
+  const isVendedor = user?.role === 'comercial'
   const isAuthenticated = !!user && !error
 
   return {

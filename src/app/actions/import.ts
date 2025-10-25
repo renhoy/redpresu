@@ -42,7 +42,7 @@ export async function importTariffs(
     }
 
     // 2. Autorización (solo admin/superadmin)
-    if (user.role === 'vendedor') {
+    if (user.role === 'comercial') {
       return { success: false, error: 'Sin permisos para importar tarifas' }
     }
 

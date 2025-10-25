@@ -17,7 +17,7 @@ export default async function RegisterPage() {
       case "superadmin":
       case "admin":
         redirect("/dashboard");
-      case "vendedor":
+      case "comercial":
         redirect("/budgets");
       default:
         redirect("/dashboard");

@@ -51,12 +51,12 @@ export function UserCard({
     const labels: Record<string, string> = {
       superadmin: "Super Admin",
       admin: "Admin",
-      vendedor: "Comercial",
+      comercial: "Comercial",
     };
     return labels[role] || role;
   };
 
-  const canEdit = currentUserRole !== "vendedor" || user.id === currentUserId;
+  const canEdit = currentUserRole !== "comercial" || user.id === currentUserId;
   const canDelete = currentUserRole === "admin" || currentUserRole === "superadmin";
 
   return (
@@ -89,7 +89,7 @@ export function UserCard({
                   onStatusChange(user.id, value as "active" | "inactive" | "pending")
                 }
                 disabled={
-                  currentUserRole === "vendedor" && user.id !== currentUserId
+                  currentUserRole === "comercial" && user.id !== currentUserId
                 }
               >
                 <SelectTrigger className="w-[110px] h-7 bg-white">
@@ -162,7 +162,7 @@ export function UserCard({
                 {/* Botón [+ email] - Solo si no tiene inviter y status=pending */}
                 {!user.inviter_name &&
                  user.status === "pending" &&
-                 currentUserRole !== "vendedor" && (
+                 currentUserRole !== "comercial" && (
                   <Button
                     variant="outline"
                     size="sm"

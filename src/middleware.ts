@@ -104,7 +104,7 @@ export async function middleware(req: NextRequest) {
         console.error(`[Middleware] Error obteniendo rol:`, userError)
       }
 
-      const userRole = userData?.role || 'vendedor'
+      const userRole = userData?.role || 'comercial'
 
       console.log(`[Middleware] Verificando permisos - Path: ${pathname}, Rol: ${userRole} (desde BD), MultiEmpresa: ${multiempresa}`)
 

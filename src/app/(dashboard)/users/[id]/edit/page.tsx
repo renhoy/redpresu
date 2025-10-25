@@ -23,7 +23,7 @@ export default async function EditUserPage({ params }: EditUserPageProps) {
   }
 
   // Comercial solo puede editar su propio usuario
-  if (user.role === "vendedor" && userId !== user.id) {
+  if (user.role === "comercial" && userId !== user.id) {
     redirect("/users");
   }
 

@@ -75,7 +75,7 @@ export async function signInAction(email: string, password: string): Promise<Sig
     log.info(`[Server Action] Login exitoso: ${data.user.email}, Rol: ${userData.role}`)
 
     // Redirect según rol usando Next.js redirect
-    if (userData.role === 'vendedor') {
+    if (userData.role === 'comercial') {
       redirect('/budgets')
     } else {
       // admin o superadmin
@@ -167,7 +167,7 @@ export interface RegisterData {
   web?: string
   irpfPercentage?: number | null
   issuer_id?: string  // ID del emisor existente (solo para superadmin)
-  role?: 'admin' | 'vendedor'  // Rol del nuevo usuario (solo para superadmin)
+  role?: 'admin' | 'comercial'  // Rol del nuevo usuario (solo para superadmin)
 }
 
 /**
@@ -344,8 +344,8 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
     // Determinar el rol del usuario
     // - Si se proporciona role explícitamente (superadmin), usar ese
     // - Si no, y es el primer usuario de una nueva empresa: admin
-    // - Si no, y es usuario asignado a emisor existente: vendedor por defecto
-    const userRole = data.role || (data.issuer_id ? 'vendedor' : 'admin')
+    // - Si no, y es usuario asignado a emisor existente: comercial por defecto
+    const userRole = data.role || (data.issuer_id ? 'comercial' : 'admin')
 
     // 5. Crear registro en public.users
     // Usar supabaseAdmin para bypass RLS policies

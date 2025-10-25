@@ -19,7 +19,7 @@ export default async function UsersPage() {
     redirect("/login");
   }
 
-  // Permitir acceso a vendedores también (solo lectura de su propio usuario)
+  // Permitir acceso a comerciales también (solo lectura de su propio usuario)
   const canCreateUsers = ["admin", "superadmin"].includes(user.role);
 
   // Obtener usuarios

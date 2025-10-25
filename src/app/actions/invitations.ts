@@ -540,7 +540,7 @@ export async function acceptInvitation(
           name: name.trim(),
           last_name: lastName.trim(),
           email: invitation.email,
-          role: 'vendedor',
+          role: 'comercial',
           company_id: inviterData.company_id,
           status: 'active',
           invited_by: invitation.inviter_id

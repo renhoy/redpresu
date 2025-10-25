@@ -8,9 +8,9 @@
  * - all: Visible para todos los usuarios autenticados
  * - superadmin: Solo visible para superadmins
  * - admin: Visible para admins y superadmins
- * - vendedor: Visible para vendedores, admins y superadmins
+ * - comercial: Visible para comerciales, admins y superadmins
  */
-export type ArticleVisibility = 'all' | 'superadmin' | 'admin' | 'vendedor';
+export type ArticleVisibility = 'all' | 'superadmin' | 'admin' | 'comercial';
 
 export interface HelpArticle {
   id: string;
@@ -55,9 +55,9 @@ export function canUserViewArticle(
     return userRole === 'admin' || userRole === 'superadmin';
   }
 
-  // Si el artículo es para vendedor y superiores
-  if (articleVisibility === 'vendedor') {
-    return userRole === 'vendedor' || userRole === 'admin' || userRole === 'superadmin';
+  // Si el artículo es para comercial y superiores
+  if (articleVisibility === 'comercial') {
+    return userRole === 'comercial' || userRole === 'admin' || userRole === 'superadmin';
   }
 
   return false;

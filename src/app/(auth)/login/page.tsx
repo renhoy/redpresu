@@ -15,7 +15,7 @@ export default async function LoginPage() {
       case "superadmin":
       case "admin":
         redirect("/dashboard");
-      case "vendedor":
+      case "comercial":
         redirect("/budgets");
       default:
         redirect("/dashboard");
@@ -62,7 +62,7 @@ export default async function LoginPage() {
             </div>
             <div className="mt-1 text-xs text-gray-500">
               <div>Admin: admin@jeyca.net / Admin123!</div>
-              <div>Comercial: vendedor@jeyca.net / Vendedor123!</div>
+              <div>Comercial: comercial@jeyca.net / Vendedor123!</div>
             </div>
           </div>
         )}

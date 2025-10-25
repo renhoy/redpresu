@@ -117,7 +117,7 @@ export function Header({
         return "Super Admin";
       case "admin":
         return "Admin";
-      case "vendedor":
+      case "comercial":
         return "Comercial";
       default:
         return "Usuario";

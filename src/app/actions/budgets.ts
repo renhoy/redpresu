@@ -170,6 +170,7 @@ function calculateBudgetTotals(budgetData: BudgetDataItem[]): {
  */
 export async function createDraftBudget(data: {
   tariffId: string
+  budgetNumber: string
   clientData: ClientData
   tariffData: unknown[]
   validity: number | null
@@ -218,6 +219,28 @@ export async function createDraftBudget(data: {
       return { success: false, error: 'Usuario sin empresa asignada' }
     }
 
+    // Validar que budget_number no esté vacío
+    if (!data.budgetNumber || data.budgetNumber.trim() === '') {
+      return { success: false, error: 'El número de presupuesto es obligatorio' }
+    }
+
+    // Verificar unicidad de budget_number
+    const { data: existingBudget, error: checkError } = await supabaseAdmin
+      .from('redpresu_budgets')
+      .select('id')
+      .eq('budget_number', data.budgetNumber.trim())
+      .eq('company_id', empresaId)
+      .maybeSingle()
+
+    if (checkError) {
+      log.error('[createDraftBudget] Error verificando unicidad:', checkError)
+      return { success: false, error: 'Error al verificar número de presupuesto' }
+    }
+
+    if (existingBudget) {
+      return { success: false, error: `El número de presupuesto "${data.budgetNumber}" ya existe. Por favor, usa otro número.` }
+    }
+
     // Calcular IVA
     const iva = data.totals.total - data.totals.base
 
@@ -262,6 +285,7 @@ export async function createDraftBudget(data: {
         company_id: empresaId,
         tariff_id: data.tariffId,
         user_id: user.id,
+        budget_number: data.budgetNumber.trim(),
         json_tariff_data: data.tariffData,
         json_budget_data: initialBudgetData,
         json_client_data: jsonClientData,
@@ -1440,7 +1464,7 @@ export async function getBudgets(filters?: {
       `)
 
     // Filtrar según rol
-    if (userData.role === 'vendedor') {
+    if (userData.role === 'comercial') {
       // Comercial: solo sus presupuestos
       query = query.eq('user_id', userData.id)
     } else if (userData.role === 'admin') {

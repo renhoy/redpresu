@@ -93,6 +93,22 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
   const [budgetId, setBudgetId] = useState<string | null>(
     existingBudget?.id || null
   );
+
+  // Generar número de presupuesto por defecto
+  const generateBudgetNumber = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    return `${year}${month}${day}-${hours}${minutes}${seconds}`;
+  };
+
+  const [budgetNumber, setBudgetNumber] = useState(
+    existingBudget?.budget_number || generateBudgetNumber()
+  );
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
     "idle"
   );
@@ -468,6 +484,7 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
       if (!budgetId) {
         const createResult = await createDraftBudget({
           tariffId: tariff.id,
+          budgetNumber: budgetNumber,
           clientData: clientData,
           tariffData: budgetData,
           validity: tariff.validity,
@@ -1049,8 +1066,28 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6 pt-6">
+            {/* Número de presupuesto */}
+            <div className="space-y-2">
+              <Label htmlFor="budget_number">Número de presupuesto</Label>
+              <Input
+                id="budget_number"
+                type="text"
+                value={budgetNumber}
+                onChange={(e) => setBudgetNumber(e.target.value)}
+                placeholder="YYYYMMDD-HHMMSS"
+                className="font-mono"
+              />
+              {errors.budget_number && (
+                <p className="text-sm text-destructive">{errors.budget_number}</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Número único del presupuesto. Puedes editarlo según tu preferencia.
+              </p>
+            </div>
+
             {/* Línea 1: Tipo de cliente con botones */}
             <div className="space-y-2">
+              <Label>Tipo de cliente</Label>
               <div className="grid grid-cols-3 gap-3">
                 <Button
                   type="button"
