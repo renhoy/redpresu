@@ -25,9 +25,10 @@ interface BudgetNotesIconProps {
   initialCount?: number
   className?: string
   variant?: 'icon' | 'button'
+  'data-tour'?: string
 }
 
-export function BudgetNotesIcon({ budgetId, initialCount = 0, className = '', variant = 'icon' }: BudgetNotesIconProps) {
+export function BudgetNotesIcon({ budgetId, initialCount = 0, className = '', variant = 'icon', 'data-tour': dataTour }: BudgetNotesIconProps) {
   const [notes, setNotes] = useState<BudgetNote[]>([])
   const [notesCount, setNotesCount] = useState(initialCount)
   const [loading, setLoading] = useState(false)
@@ -91,6 +92,7 @@ export function BudgetNotesIcon({ budgetId, initialCount = 0, className = '', va
                     console.log('[BudgetNotesIcon] Button clicked')
                     e.stopPropagation()
                   }}
+                  data-tour={dataTour}
                 >
                   <NotebookPen className={variant === 'icon' ? 'h-4 w-4' : 'h-3.5 w-3.5 flex-shrink-0'} />
                   {variant === 'button' && <span>Notas</span>}

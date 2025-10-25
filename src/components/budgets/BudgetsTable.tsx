@@ -46,7 +46,10 @@ import {
   Copy,
   Play,
 } from "lucide-react";
-import { startTour, checkAndStartPendingTour } from "@/lib/helpers/tour-helpers";
+import {
+  startTour,
+  checkAndStartPendingTour,
+} from "@/lib/helpers/tour-helpers";
 import {
   deleteBudget,
   deleteBudgetPDF,
@@ -488,7 +491,10 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
               )}
 
               {/* Datos del cliente - Grid 2 columnas */}
-              <div className="grid grid-cols-[1fr_auto] gap-2 flex-1" style={{ marginLeft: depth > 0 ? `${depth * 24}px` : '0' }}>
+              <div
+                className="grid grid-cols-[1fr_auto] gap-2 flex-1"
+                style={{ marginLeft: depth > 0 ? `${depth * 24}px` : "0" }}
+              >
                 {/* Columna 1: Info cliente */}
                 <div className="space-y-1">
                   {/* Fila 1: Número + Nombre + NIF + Tipo */}
@@ -526,7 +532,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
 
                 {/* Columna 2: Icono de notas (alineado derecha) */}
                 <div className="flex items-start justify-end">
-                  <BudgetNotesIcon budgetId={budget.id} />
+                  <BudgetNotesIcon data-tour="btn-nota" budgetId={budget.id} />
                 </div>
               </div>
             </div>
@@ -536,7 +542,12 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button data-tour="btn-tarifa" variant="outline" size="icon" asChild>
+                  <Button
+                    data-tour="btn-tarifa"
+                    variant="outline"
+                    size="icon"
+                    asChild
+                  >
                     <Link href={`/tariffs?tariff_id=${budget.tariff_id}`}>
                       <Layers className="h-4 w-4" />
                     </Link>
@@ -553,7 +564,11 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span data-tour="columna-total" className="cursor-help" style={{ fontSize: "12px" }}>
+                  <span
+                    data-tour="columna-total"
+                    className="cursor-help"
+                    style={{ fontSize: "12px" }}
+                  >
                     {formatCurrency(budget.total || 0)}
                   </span>
                 </TooltipTrigger>
@@ -597,7 +612,10 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
                 )
               }
             >
-              <SelectTrigger data-tour="select-estado-presupuesto" className="w-[140px] bg-white">
+              <SelectTrigger
+                data-tour="select-estado-presupuesto"
+                className="w-[140px] bg-white"
+              >
                 <SelectValue>
                   <Badge
                     className={
@@ -791,7 +809,10 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
               variant="outline"
               size="sm"
               onClick={() => {
-                const tourId = filteredBudgets.length === 0 ? "presupuestos-page-vacia" : "presupuestos-page";
+                const tourId =
+                  filteredBudgets.length === 0
+                    ? "presupuestos-page-vacia"
+                    : "presupuestos-page";
                 startTour(tourId);
               }}
               className="border-lime-500 text-lime-600 hover:bg-lime-50 h-8 px-3 gap-1.5"
@@ -854,7 +875,11 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
             </Button>
           </>
 
-          <Button id="btn-nuevo-presupuesto-list" asChild className="bg-lime-500 hover:bg-lime-600">
+          <Button
+            id="btn-nuevo-presupuesto-list"
+            asChild
+            className="bg-lime-500 hover:bg-lime-600"
+          >
             <Link href="/budgets/create">
               <Plus className="mr-2 h-4 w-4" />
               Nuevo Presupuesto
@@ -947,11 +972,13 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
             </p>
             {!search && statusFilter === "all" && (
               <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                Para crear presupuestos, primero necesitas tener al menos una tarifa activa.{" "}
+                Para crear presupuestos, primero necesitas tener al menos una
+                tarifa activa.{" "}
                 <Link href="/tariffs" className="text-lime-600 hover:underline">
                   Ve a la página de Tarifas
                 </Link>
-                , crea una nueva tarifa, y luego podrás generar presupuestos basados en ella.
+                , crea una nueva tarifa, y luego podrás generar presupuestos
+                basados en ella.
               </p>
             )}
           </div>
@@ -971,11 +998,13 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
             </p>
             {!search && statusFilter === "all" && (
               <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                Para crear presupuestos, primero necesitas tener al menos una tarifa activa.{" "}
+                Para crear presupuestos, primero necesitas tener al menos una
+                tarifa activa.{" "}
                 <Link href="/tariffs" className="text-lime-600 hover:underline">
                   Ve a la página de Tarifas
                 </Link>
-                , crea una nueva tarifa, y luego podrás generar presupuestos basados en ella.
+                , crea una nueva tarifa, y luego podrás generar presupuestos
+                basados en ella.
               </p>
             )}
           </div>

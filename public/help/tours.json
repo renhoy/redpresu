@@ -228,55 +228,62 @@
         "element": "#filtros-presupuesto",
         "popover": {
           "title": "4. Campos de Filtros",
-          "description": "Filtra los presupuestos por estado (Borrador/Pendiente/Enviado/Aprobado/Rechazado), tarifa, texto de búsqueda, o usuario creador."
+          "description": "Filtra los presupuestos por estado (Borrador / Pendiente / Enviado / Aprobado / Rechazado), por número de presupuesto, nombre de cliente o NIF."
+        }
+      },
+      {
+        "element": "[data-tour='btn-nota']",
+        "popover": {
+          "title": "5. Botón Notas",
+          "description": "Haz clic para ver, crear o editar las notas del presupuesto. Las notas te permiten llevar un seguimiento interno de comentarios, cambios o información relevante sobre cada presupuesto. El badge indica el número de notas existentes."
         }
       },
       {
         "element": "[data-tour='btn-tarifa']",
         "popover": {
-          "title": "5. Botón Tarifa",
-          "description": "Muestra el nombre de la tarifa base utilizada para este presupuesto. Haz clic para ver los detalles de la tarifa."
+          "title": "6. Botón Tarifa",
+          "description": "Muestra el nombre de la tarifa base utilizada para este presupuesto. Haz clic para abrir la tarifa en una nueva pestaña y ver sus detalles completos."
         }
       },
       {
         "element": "[data-tour='columna-total']",
         "popover": {
-          "title": "6. Columna Total",
+          "title": "7. Columna Total",
           "description": "Muestra el importe total del presupuesto, incluyendo IVA y otros impuestos aplicables. Este es el precio final que verá el cliente."
         }
       },
       {
         "element": "[data-tour='select-estado-presupuesto']",
         "popover": {
-          "title": "7. Selector de Estado",
+          "title": "8. Selector de Estado",
           "description": "Cambia el estado del presupuesto: Borrador (editable sin PDF), Pendiente, Enviado, Aprobado o Rechazado. El estado ayuda a gestionar el flujo de trabajo."
         }
       },
       {
         "element": "[data-tour='btn-generar-pdf']",
         "popover": {
-          "title": "8. Columna PDF",
+          "title": "9. Columna PDF",
           "description": "Esta columna muestra el estado del PDF del presupuesto. Si está vacía, significa que aún no se ha generado el PDF (estado Borrador). Si aparece un icono, puedes generar el PDF (icono +) o ver el PDF ya generado (icono ojo). Solo disponible para presupuestos en estado Pendiente o superior."
         }
       },
       {
         "element": "[data-tour='btn-editar-presupuesto']",
         "popover": {
-          "title": "9. Botón Editar",
+          "title": "10. Botón Editar",
           "description": "Edita los datos del presupuesto: cliente, partidas seleccionadas y cantidades. Los cambios actualizan automáticamente los totales."
         }
       },
       {
         "element": "[data-tour='btn-duplicar-presupuesto']",
         "popover": {
-          "title": "10. Botón Duplicar",
+          "title": "11. Botón Duplicar",
           "description": "Crea una copia exacta de este presupuesto con el sufijo '(Copia)'. Útil para crear presupuestos similares para diferentes clientes."
         }
       },
       {
         "element": "[data-tour='btn-eliminar-presupuesto']",
         "popover": {
-          "title": "11. Botón Eliminar",
+          "title": "12. Botón Eliminar",
           "description": "Elimina permanentemente este presupuesto. ⚠️ Esta acción no se puede deshacer. El PDF generado en Storage también será eliminado."
         }
       }
