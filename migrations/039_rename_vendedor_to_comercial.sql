@@ -10,13 +10,7 @@
 
 BEGIN;
 
--- Actualizar todos los usuarios con rol 'vendedor' a 'comercial'
-UPDATE public.redpresu_users
-SET role = 'comercial'
-WHERE role = 'vendedor';
-
--- Actualizar constraint de la tabla si existe
--- Primero eliminar constraint antiguo si existe
+-- PASO 1: Eliminar constraint antiguo PRIMERO (antes del UPDATE)
 DO $$
 BEGIN
   IF EXISTS (
@@ -29,7 +23,12 @@ BEGIN
   END IF;
 END $$;
 
--- Crear nuevo constraint con 'comercial' en lugar de 'vendedor'
+-- PASO 2: Actualizar todos los usuarios con rol 'vendedor' a 'comercial'
+UPDATE public.redpresu_users
+SET role = 'comercial'
+WHERE role = 'vendedor';
+
+-- PASO 3: Crear nuevo constraint con 'comercial' en lugar de 'vendedor'
 ALTER TABLE public.redpresu_users
 ADD CONSTRAINT users_role_check
 CHECK (role IN ('superadmin', 'admin', 'comercial'));
