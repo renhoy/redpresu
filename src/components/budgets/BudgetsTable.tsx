@@ -104,7 +104,9 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
       !search ||
       budget.client_name.toLowerCase().includes(search.toLowerCase()) ||
       (budget.client_nif_nie &&
-        budget.client_nif_nie.toLowerCase().includes(search.toLowerCase()));
+        budget.client_nif_nie.toLowerCase().includes(search.toLowerCase())) ||
+      (budget.budget_number &&
+        budget.budget_number.toLowerCase().includes(search.toLowerCase()));
 
     const matchesStatus =
       statusFilter === "all" || budget.status === statusFilter;
@@ -880,7 +882,7 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
       {/* Filtros */}
       <div id="filtros-presupuesto" className="flex gap-4 items-center">
         <Input
-          placeholder="Buscar por cliente o NIF..."
+          placeholder="Buscar por número, cliente o NIF..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-xs bg-white"
