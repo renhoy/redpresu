@@ -1,12 +1,24 @@
 {
   "step": "Paso 5 - Después de extractChapters() - summary.levels",
-  "totalChapters": 1,
+  "totalChapters": 3,
   "data": [
     {
       "level": "chapter",
       "id": "1",
       "name": "Pescado Fresco",
-      "amount": "10.80"
+      "amount": "108.00"
+    },
+    {
+      "level": "chapter",
+      "id": "2",
+      "name": "Productos Congelados",
+      "amount": "180.00"
+    },
+    {
+      "level": "chapter",
+      "id": "3",
+      "name": "Preparados y Ahumados",
+      "amount": "5.00"
     }
   ]
 }

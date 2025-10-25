@@ -1,24 +1,24 @@
 {
   "step": "Paso 3 - Después de renumberHierarchicalIds()",
-  "totalItems": 4,
+  "totalItems": 8,
   "data": [
     {
       "id": "1",
       "name": "Pescado Fresco",
       "level": "chapter",
-      "amount": "10.80"
+      "amount": "108.00"
     },
     {
       "id": "1.1",
       "name": "Pescado Blanco",
       "level": "subchapter",
-      "amount": "10.80"
+      "amount": "108.00"
     },
     {
       "id": "1.1.1",
       "name": "Pescados de Arrába",
       "level": "section",
-      "amount": "10.80"
+      "amount": "108.00"
     },
     {
       "id": "1.1.1.1",
@@ -26,9 +26,43 @@
       "name": "Merluza",
       "unit": "kg",
       "level": "item",
-      "amount": "10.80",
-      "quantity": "1.00",
+      "amount": "108.00",
+      "quantity": "10.00",
       "description": "Filete de merluza fresca sin espinas.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "2",
+      "name": "Productos Congelados",
+      "level": "chapter",
+      "amount": "180.00"
+    },
+    {
+      "id": "2.1",
+      "pvp": "18.00",
+      "name": "Gambón Argentino",
+      "unit": "kg",
+      "level": "item",
+      "amount": "180.00",
+      "quantity": "10.00",
+      "description": "Gambón congelado grande.",
+      "iva_percentage": "10.00"
+    },
+    {
+      "id": "3",
+      "name": "Preparados y Ahumados",
+      "level": "chapter",
+      "amount": "5.00"
+    },
+    {
+      "id": "3.1",
+      "pvp": "0.50",
+      "name": "Croquetas de Marisco",
+      "unit": "ud",
+      "level": "item",
+      "amount": "5.00",
+      "quantity": "10.00",
+      "description": "Croquetas caseras de marisco.",
       "iva_percentage": "10.00"
     }
   ]

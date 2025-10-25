@@ -8,8 +8,12 @@
   justify-items: end;
 }
 
-.content-client .tag {
+.content-client .tag-budget-number,
+.content-client .tag-client {
   grid-column: 1;
+}
+
+.content-client .tag {
   width: 100%;
   display: flex;
   justify-content: flex-end;
@@ -22,6 +26,7 @@
 
 .content-client .data .budget-number {
   font-weight: bold;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   color: #000;
+  font-size: 1.1em;
 }
