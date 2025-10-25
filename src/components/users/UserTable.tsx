@@ -554,6 +554,7 @@ export default function UserTable({
               onToggleStatus={handleToggleStatusFromCard}
               onStatusChange={handleStatusChange}
               onDelete={handleDeleteFromCard}
+              onInviteUser={handleInviteUser}
               formatDate={formatDate}
             />
           ))

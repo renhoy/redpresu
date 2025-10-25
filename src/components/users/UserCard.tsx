@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Pencil, Trash2, Mail, UserCheck } from "lucide-react";
+import { Pencil, Trash2, Mail, UserCheck, Plus } from "lucide-react";
 import Link from "next/link";
 
 interface UserCardProps {
@@ -21,6 +21,7 @@ interface UserCardProps {
   onToggleStatus: (user: UserWithInviter) => void;
   onStatusChange: (userId: string, status: "active" | "inactive" | "pending") => void;
   onDelete: (user: UserWithInviter) => void;
+  onInviteUser: (user: UserWithInviter) => void;
   formatDate: (date: string | null) => string;
 }
 
@@ -31,6 +32,7 @@ export function UserCard({
   onToggleStatus,
   onStatusChange,
   onDelete,
+  onInviteUser,
   formatDate,
 }: UserCardProps) {
   const statusColors = {
@@ -157,6 +159,22 @@ export function UserCard({
               </span>
             ) : (
               <>
+                {/* Botón [+ email] - Solo si no tiene inviter y status=pending */}
+                {!user.inviter_name &&
+                 user.status === "pending" &&
+                 currentUserRole !== "vendedor" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onInviteUser(user)}
+                    className="w-full lg:w-auto h-7 px-2 gap-1.5 text-xs border-lime-500 text-lime-600 hover:bg-lime-50"
+                  >
+                    <Plus className="h-3.5 w-3.5 flex-shrink-0" />
+                    <Mail className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span>Email</span>
+                  </Button>
+                )}
+
                 {/* Botón Editar */}
                 <Button
                   variant="outline"
@@ -182,19 +200,6 @@ export function UserCard({
                     <span>Borrar</span>
                   </Button>
                 )}
-
-                {/* Botón Reenviar invitación - Solo si pending */}
-                {user.status === "pending" &&
-                  currentUserRole !== "vendedor" && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full lg:w-auto h-7 px-2 gap-1.5 text-xs border-blue-500 text-lime-600 hover:bg-lime-50"
-                    >
-                      <Mail className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span>Reenviar</span>
-                    </Button>
-                  )}
               </>
             )}
           </div>
