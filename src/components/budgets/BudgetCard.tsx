@@ -73,12 +73,12 @@ export function BudgetCard({
 }: BudgetCardProps) {
   const days = getDaysRemaining(budget.start_date, budget.validity_days);
 
-  // Obtener título de la tarifa desde la relación tariffs
+  // Obtener título de la tarifa desde la relación redpresu_tariffs
   const tariffTitle =
-    budget.tariffs &&
-    typeof budget.tariffs === "object" &&
-    "title" in budget.tariffs
-      ? (budget.tariffs as { title: string }).title
+    (budget as any).redpresu_tariffs &&
+    typeof (budget as any).redpresu_tariffs === "object" &&
+    "title" in (budget as any).redpresu_tariffs
+      ? ((budget as any).redpresu_tariffs as { title: string }).title
       : "N/A";
 
   return (
@@ -209,7 +209,7 @@ export function BudgetCard({
           {/* Fila 4: Botones de acción */}
           <div className="grid grid-cols-2 sm:grid-cols-5 lg:flex lg:justify-end gap-1.5 w-full">
             {/* Notas */}
-            <BudgetNotesIcon budgetId={budget.id} className="w-full" />
+            <BudgetNotesIcon budgetId={budget.id} variant="button" className="w-full lg:w-auto" />
 
             {/* Tarifa */}
             <Tooltip>

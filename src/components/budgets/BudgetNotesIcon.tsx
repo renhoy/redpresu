@@ -24,9 +24,10 @@ interface BudgetNotesIconProps {
   budgetId: string
   initialCount?: number
   className?: string
+  variant?: 'icon' | 'button'
 }
 
-export function BudgetNotesIcon({ budgetId, initialCount = 0, className = '' }: BudgetNotesIconProps) {
+export function BudgetNotesIcon({ budgetId, initialCount = 0, className = '', variant = 'icon' }: BudgetNotesIconProps) {
   const [notes, setNotes] = useState<BudgetNote[]>([])
   const [notesCount, setNotesCount] = useState(initialCount)
   const [loading, setLoading] = useState(false)
@@ -84,15 +85,15 @@ export function BudgetNotesIcon({ budgetId, initialCount = 0, className = '' }: 
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  size="sm"
-                  className={`relative h-7 px-2 gap-1.5 text-xs ${className}`}
+                  size={variant === 'icon' ? 'icon' : 'sm'}
+                  className={variant === 'icon' ? `relative h-9 w-9 ${className}` : `relative h-7 px-2 gap-1.5 text-xs ${className}`}
                   onClick={(e) => {
                     console.log('[BudgetNotesIcon] Button clicked')
                     e.stopPropagation()
                   }}
                 >
-                  <NotebookPen className="h-3.5 w-3.5 flex-shrink-0" />
-                  <span>Notas</span>
+                  <NotebookPen className={variant === 'icon' ? 'h-4 w-4' : 'h-3.5 w-3.5 flex-shrink-0'} />
+                  {variant === 'button' && <span>Notas</span>}
                   {notesCount > 0 && (
                     <Badge
                       variant="secondary"
