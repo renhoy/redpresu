@@ -21,20 +21,6 @@ class ContentClient {
     </div>`;
   }
 
-  static async create(budgetData, structureData, section = null, componentData = null, pageInfo = null) {
-    // Para compatibilidad con el sistema anterior
-    return new ContentClient({
-      budget_number: budgetData[section]?.budget_number,
-      client_name: budgetData[section]?.client?.name,
-      client_nif_nie: budgetData[section]?.client?.nif_nie,
-      client_address: budgetData[section]?.client?.address,
-      client_contact: budgetData[section]?.client?.contact
-    });
-  }
-
-  static async createFromElement(element) {
-    return new ContentClient(element);
-  }
 }
 
 module.exports = ContentClient;

@@ -302,6 +302,7 @@ export class ElementProcessor {
         const clientData =
           (this.budgetData as any)[sectionKey]?.client || {};
         Object.assign(mappedData, {
+          budget_number: (this.budgetData as any)[sectionKey]?.budget_number,
           client_name: clientData.name,
           client_nif_nie: clientData.nif_nie,
           client_address: clientData.address,

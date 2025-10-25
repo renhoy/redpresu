@@ -593,15 +593,9 @@ export class RenderEngine {
           total_amount: totalsData.total?.amount || "0.00",
         });
       } else if (componentName === "client") {
-        // Para client, pasar datos del cliente directamente como propiedades
-        const clientData = this.budgetData.summary?.client;
-        console.log(`[generateComponentHTML] client - clientData:`, clientData);
-        componentInstance = new ComponentClass({
-          client_name: clientData?.name,
-          client_nif_nie: clientData?.nif_nie,
-          client_address: clientData?.address,
-          client_contact: clientData?.contact
-        });
+        // Para client, usar los datos del element (que ya incluyen budget_number)
+        console.log(`[generateComponentHTML] client - usando datos del element`);
+        componentInstance = new ComponentClass(element);
       } else if (componentName === "note") {
         // Para note, usar el paragraphData del elemento (cada elemento es un párrafo individual)
         const paragraphData = (element as any).paragraphData || (element as any).paragraph_text || "";
