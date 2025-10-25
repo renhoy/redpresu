@@ -35,6 +35,7 @@ interface PDFPayload {
     keywords: string
   }
   summary: {
+    budget_number: string
     client: {
       name: string
       nif_nie: string
@@ -572,6 +573,7 @@ export async function buildPDFPayload(budget: Budget, tariff: Tariff): Promise<P
       keywords: 'presupuesto'
     },
     summary: {
+      budget_number: budget.budget_number,
       client: {
         name: budget.client_name,
         nif_nie: budget.client_nif_nie || '',

@@ -166,6 +166,71 @@ function calculateBudgetTotals(budgetData: BudgetDataItem[]): {
 }
 
 /**
+ * Verificar si un número de presupuesto ya existe
+ */
+export async function checkBudgetNumberExists(
+  budgetNumber: string,
+  excludeBudgetId?: string
+): Promise<{ exists: boolean; error?: string }> {
+  try {
+    if (!budgetNumber || budgetNumber.trim() === '') {
+      return { exists: false }
+    }
+
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+    // Obtener usuario y empresa
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return { exists: false, error: 'No autenticado' }
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from('redpresu_users')
+      .select('company_id')
+      .eq('id', user.id)
+      .single()
+
+    if (userError) {
+      return { exists: false, error: 'Error obteniendo usuario' }
+    }
+
+    let empresaId: number
+    try {
+      empresaId = requireValidCompanyId(userData, '[checkBudgetNumberExists]')
+    } catch (error) {
+      return { exists: false, error: 'Usuario sin empresa asignada' }
+    }
+
+    // Verificar unicidad
+    let query = supabaseAdmin
+      .from('redpresu_budgets')
+      .select('id')
+      .eq('budget_number', budgetNumber.trim())
+      .eq('company_id', empresaId)
+
+    // Si estamos editando, excluir el presupuesto actual
+    if (excludeBudgetId) {
+      query = query.neq('id', excludeBudgetId)
+    }
+
+    const { data: existingBudget, error: checkError } = await query.maybeSingle()
+
+    if (checkError) {
+      log.error('[checkBudgetNumberExists] Error verificando:', checkError)
+      return { exists: false, error: 'Error al verificar número' }
+    }
+
+    return { exists: !!existingBudget }
+
+  } catch (error) {
+    log.error('[checkBudgetNumberExists] Error crítico:', error)
+    return { exists: false, error: 'Error inesperado' }
+  }
+}
+
+/**
  * Crear borrador inicial (al completar paso 1)
  */
 export async function createDraftBudget(data: {

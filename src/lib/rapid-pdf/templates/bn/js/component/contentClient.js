@@ -12,6 +12,7 @@ class ContentClient {
         <div class="tag">Cliente:</div>
       </div>
       <div class="data">
+        ${this.element.budget_number ? `<div class="budget-number">Número Presupuesto: ${this.element.budget_number}</div>` : ''}
         <div class="name">${this.element.client_name || 'Sin nombre'}</div>
         <div class="nif_nie">${this.element.client_nif_nie || 'Sin NIF/NIE'}</div>
         <div class="address">${this.element.client_address || 'Sin dirección'}</div>
@@ -23,6 +24,7 @@ class ContentClient {
   static async create(budgetData, structureData, section = null, componentData = null, pageInfo = null) {
     // Para compatibilidad con el sistema anterior
     return new ContentClient({
+      budget_number: budgetData[section]?.budget_number,
       client_name: budgetData[section]?.client?.name,
       client_nif_nie: budgetData[section]?.client?.nif_nie,
       client_address: budgetData[section]?.client?.address,

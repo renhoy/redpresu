@@ -19,3 +19,9 @@
   grid-column: 2;
   width: 100%;
 }
+
+.content-client .data .budget-number {
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: var(--primary-color, #000);
+}
