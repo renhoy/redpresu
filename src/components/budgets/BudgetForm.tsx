@@ -39,6 +39,7 @@ import {
   saveBudget,
   generateBudgetPDF,
   duplicateBudget,
+  checkBudgetNumberExists,
 } from "@/app/actions/budgets";
 import { getIVAtoREEquivalencesAction } from "@/app/actions/config";
 import {
@@ -109,6 +110,7 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
   const [budgetNumber, setBudgetNumber] = useState(
     existingBudget?.budget_number || generateBudgetNumber()
   );
+  const [isCheckingBudgetNumber, setIsCheckingBudgetNumber] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
     "idle"
   );
@@ -775,6 +777,38 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
     }
   };
 
+  const handleBudgetNumberBlur = async () => {
+    // Limpiar espacios en blanco
+    const trimmedNumber = budgetNumber.trim();
+    setBudgetNumber(trimmedNumber);
+
+    // Validar que no esté vacío
+    if (!trimmedNumber) {
+      setErrors((prev) => ({ ...prev, budget_number: "El número de presupuesto es obligatorio" }));
+      return;
+    }
+
+    // Verificar unicidad
+    setIsCheckingBudgetNumber(true);
+    const result = await checkBudgetNumberExists(trimmedNumber, budgetId || undefined);
+    setIsCheckingBudgetNumber(false);
+
+    if (result.error) {
+      setErrors((prev) => ({ ...prev, budget_number: result.error || "Error al verificar número" }));
+      return;
+    }
+
+    if (result.exists) {
+      setErrors((prev) => ({
+        ...prev,
+        budget_number: `El número "${trimmedNumber}" ya existe. Por favor, usa otro número.`
+      }));
+    } else {
+      // Limpiar error si el número es válido
+      setErrors((prev) => ({ ...prev, budget_number: "" }));
+    }
+  };
+
   const handleClientDataChange = (
     field: keyof ClientData,
     value: string | boolean
@@ -1074,8 +1108,10 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
                 type="text"
                 value={budgetNumber}
                 onChange={(e) => setBudgetNumber(e.target.value)}
+                onBlur={handleBudgetNumberBlur}
                 placeholder="YYYYMMDD-HHMMSS"
                 className="font-mono"
+                disabled={isCheckingBudgetNumber}
               />
               {errors.budget_number && (
                 <p className="text-sm text-destructive">{errors.budget_number}</p>
