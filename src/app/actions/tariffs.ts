@@ -110,8 +110,8 @@ export async function getTariffs(
       query = query.eq('status', filters.status)
     }
 
-    // Filtro por usuario creador
-    if (filters?.user_id) {
+    // Filtro por usuario creador (ignorar si es 'all' o undefined)
+    if (filters?.user_id && filters.user_id !== 'all') {
       query = query.eq('user_id', filters.user_id)
     }
 

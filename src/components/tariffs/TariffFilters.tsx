@@ -1,83 +1,121 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Input } from '@/components/ui/input'
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from "@/components/ui/select";
 
 interface User {
-  id: string
-  name: string | null
-  last_name: string | null
+  id: string;
+  name: string | null;
+  last_name: string | null;
 }
 
 interface TariffFiltersProps {
   onFiltersChange: (filters: {
-    status?: 'Activa' | 'Inactiva' | 'all'
-    search?: string
-    user_id?: string
-  }) => void
-  defaultStatus?: 'Activa' | 'Inactiva' | 'all'
-  defaultSearch?: string
-  defaultUserId?: string
-  users?: User[]
-  currentUserRole?: string
+    status?: "Activa" | "Inactiva" | "all";
+    search?: string;
+    user_id?: string;
+  }) => void;
+  defaultStatus?: "Activa" | "Inactiva" | "all";
+  defaultSearch?: string;
+  defaultUserId?: string;
+  users?: User[];
+  currentUserRole?: string;
 }
 
 export function TariffFilters({
   onFiltersChange,
-  defaultStatus = 'all',
-  defaultSearch = '',
-  defaultUserId = 'all',
+  defaultStatus = "all",
+  defaultSearch = "",
+  defaultUserId = "all",
   users = [],
-  currentUserRole
+  currentUserRole,
 }: TariffFiltersProps) {
-  const [status, setStatus] = useState<'Activa' | 'Inactiva' | 'all'>(defaultStatus)
-  const [search, setSearch] = useState(defaultSearch)
-  const [userId, setUserId] = useState(defaultUserId)
+  const [status, setStatus] = useState<"Activa" | "Inactiva" | "all">(
+    defaultStatus
+  );
+  const [search, setSearch] = useState(defaultSearch);
+  const [userId, setUserId] = useState(defaultUserId);
 
-  const handleStatusChange = (value: 'Activa' | 'Inactiva' | 'all') => {
-    setStatus(value)
-    onFiltersChange({ status: value, search, user_id: userId || undefined })
-  }
+  const handleStatusChange = (value: "Activa" | "Inactiva" | "all") => {
+    setStatus(value);
+    onFiltersChange({ status: value, search, user_id: userId || undefined });
+  };
 
   const handleSearchChange = (value: string) => {
-    setSearch(value)
-    onFiltersChange({ status, search: value, user_id: userId || undefined })
-  }
+    setSearch(value);
+    onFiltersChange({ status, search: value, user_id: userId || undefined });
+  };
 
   const handleUserChange = (value: string) => {
-    setUserId(value)
+    setUserId(value);
     // Si value es 'all', pasar undefined para no filtrar
-    onFiltersChange({ status, search, user_id: value === 'all' ? undefined : value })
-  }
+    onFiltersChange({
+      status,
+      search,
+      user_id: value === "all" ? undefined : value,
+    });
+  };
 
   // Solo mostrar filtro de usuario si es admin/superadmin
-  const showUserFilter = currentUserRole && ['admin', 'superadmin'].includes(currentUserRole)
+  const showUserFilter =
+    currentUserRole && ["admin", "superadmin"].includes(currentUserRole);
 
   return (
-    <div id="filtros-tarifa" className="flex gap-4 mb-4 flex-wrap">
+    <div id="filtros-tarifa" className="flex gap-4 mb-4 flex-wrap items-center">
       <Input
         placeholder="Buscar por título o descripción..."
         value={search}
         onChange={(e) => handleSearchChange(e.target.value)}
         className="max-w-xs bg-white"
       />
-      <Select value={status} onValueChange={handleStatusChange}>
-        <SelectTrigger className="max-w-[200px] bg-white">
-          <SelectValue placeholder="Estado" />
-        </SelectTrigger>
-        <SelectContent className="bg-white">
-          <SelectItem value="all">Todos los estados</SelectItem>
-          <SelectItem value="Activa">Activas</SelectItem>
-          <SelectItem value="Inactiva">Inactivas</SelectItem>
-        </SelectContent>
-      </Select>
+
+      {/* Botones de filtro de estado */}
+      <div data-tour="filtro-estado-tarifas" className="flex gap-2">
+        <Button
+          variant={status === "all" ? "default" : "outline"}
+          size="sm"
+          onClick={() => handleStatusChange("all")}
+          className={
+            status === "all"
+              ? "bg-lime-500 hover:bg-lime-600"
+              : "border-lime-500 text-lime-600 hover:bg-lime-50"
+          }
+        >
+          Todas
+        </Button>
+        <Button
+          variant={status === "Activa" ? "default" : "outline"}
+          size="sm"
+          onClick={() => handleStatusChange("Activa")}
+          className={
+            status === "Activa"
+              ? "bg-lime-500 hover:bg-lime-600"
+              : "border-lime-500 text-lime-600 hover:bg-lime-50"
+          }
+        >
+          Activas
+        </Button>
+        <Button
+          variant={status === "Inactiva" ? "default" : "outline"}
+          size="sm"
+          onClick={() => handleStatusChange("Inactiva")}
+          className={
+            status === "Inactiva"
+              ? "bg-lime-500 hover:bg-lime-600"
+              : "border-lime-500 text-lime-600 hover:bg-lime-50"
+          }
+        >
+          Inactivas
+        </Button>
+      </div>
 
       {showUserFilter && users.length > 0 && (
         <Select value={userId} onValueChange={handleUserChange}>
@@ -86,7 +124,7 @@ export function TariffFilters({
           </SelectTrigger>
           <SelectContent className="bg-white">
             <SelectItem value="all">Todos los usuarios</SelectItem>
-            {users.map(user => (
+            {users.map((user) => (
               <SelectItem key={user.id} value={user.id}>
                 {user.name} {user.last_name}
               </SelectItem>
@@ -95,5 +133,5 @@ export function TariffFilters({
         </Select>
       )}
     </div>
-  )
+  );
 }
