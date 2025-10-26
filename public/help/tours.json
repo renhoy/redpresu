@@ -292,59 +292,59 @@
   "profile-page": {
     "steps": [
       {
+        "element": "#btn-guardar-perfil",
+        "popover": {
+          "title": "1. Guardar Cambios",
+          "description": "Haz clic aquí para guardar todos los cambios realizados en tu perfil. Los cambios se aplicarán inmediatamente."
+        }
+      },
+      {
         "element": "#card-info-personal",
         "popover": {
-          "title": "1. Información Personal",
+          "title": "2. Información Personal",
           "description": "Datos básicos de tu cuenta: nombre, email y rol. Estos datos no se pueden modificar desde aquí, contacta con un administrador si necesitas cambiarlos."
         }
       },
       {
         "element": "#card-datos-emisor",
         "popover": {
-          "title": "2. Datos del Emisor",
+          "title": "3. Datos del Emisor",
           "description": "Información fiscal de tu empresa o negocio autónomo. Estos datos aparecerán en todos los presupuestos que generes."
         }
       },
       {
         "element": "#nombre_comercial",
         "popover": {
-          "title": "3. Nombre Comercial",
+          "title": "4. Nombre Comercial",
           "description": "Nombre de tu empresa o razón social que aparecerá en los presupuestos. Campo obligatorio."
         }
       },
       {
         "element": "#nif",
         "popover": {
-          "title": "4. NIF/CIF",
+          "title": "5. NIF/CIF",
           "description": "Número de identificación fiscal de tu empresa (CIF) o tu DNI/NIE si eres autónomo. Campo obligatorio."
         }
       },
       {
         "element": "#direccion_fiscal",
         "popover": {
-          "title": "5. Dirección Fiscal",
+          "title": "6. Dirección Fiscal",
           "description": "Dirección fiscal completa de tu empresa o domicilio fiscal. Aparecerá en los presupuestos generados."
         }
       },
       {
         "element": "#irpf_percentage",
         "popover": {
-          "title": "6. Porcentaje IRPF",
+          "title": "7. Porcentaje IRPF",
           "description": "Porcentaje de retención IRPF aplicable (solo para autónomos). Por defecto es 15%. Este valor se aplicará automáticamente en los presupuestos cuando corresponda."
         }
       },
       {
         "element": "#card-cambiar-password",
         "popover": {
-          "title": "7. Cambiar Contraseña",
+          "title": "8. Cambiar Contraseña",
           "description": "Puedes cambiar tu contraseña desde aquí. Necesitarás ingresar tu contraseña actual y la nueva contraseña que deseas usar."
-        }
-      },
-      {
-        "element": "#btn-guardar-perfil",
-        "popover": {
-          "title": "8. Guardar Cambios",
-          "description": "Haz clic aquí para guardar todos los cambios realizados en tu perfil. Los cambios se aplicarán inmediatamente."
         }
       }
     ]
@@ -361,8 +361,8 @@
       {
         "element": "[data-tour='filtro-estado-usuarios']",
         "popover": {
-          "title": "2. Filtro de Estado",
-          "description": "Filtra los usuarios por estado: Todos, Activos o Inactivos. Facilita encontrar rápidamente los usuarios según su estado actual."
+          "title": "2. Barra de Filtros",
+          "description": "Busca usuarios por email o nombre, y filtra por estado: Todos, Activos o Inactivos. Facilita encontrar rápidamente cualquier usuario de tu empresa."
         }
       },
       {

@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Play } from "lucide-react";
-import { setPendingTour, loadToursConfig } from "@/lib/helpers/tour-helpers";
+import { setPendingTour, loadToursConfig, startTour } from "@/lib/helpers/tour-helpers";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -27,17 +27,18 @@ export function TourButton({ tourId, targetPath }: TourButtonProps) {
         return;
       }
 
-      // Guardar tour pendiente
-      setPendingTour(tourId);
-
-      // Redirigir a la ruta objetivo si se especificó
-      if (targetPath) {
+      // Si no hay targetPath, iniciar tour directamente (ya estamos en la página)
+      if (!targetPath) {
         toast.info("Iniciando tour interactivo...");
-        window.location.href = targetPath;
-      } else {
-        toast.info("Tour configurado. Navega a la página correspondiente.");
+        await startTour(tourId, toursData);
         setLoading(false);
+        return;
       }
+
+      // Si hay targetPath, guardar tour pendiente y redirigir
+      setPendingTour(tourId);
+      toast.info("Iniciando tour interactivo...");
+      window.location.href = targetPath;
     } catch (error) {
       console.error("[TourButton] Error:", error);
       toast.error("Error al iniciar el tour");

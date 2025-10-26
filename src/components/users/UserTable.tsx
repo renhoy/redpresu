@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { UserWithInviter, toggleUserStatus } from "@/app/actions/users";
 import { createUserInvitation, cancelInvitation } from "@/app/actions/invitations";
+import { checkAndStartPendingTour } from "@/lib/helpers/tour-helpers";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -71,6 +72,11 @@ export default function UserTable({
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [search, setSearch] = useState("");
   const router = useRouter();
+
+  // Detectar y ejecutar tour pendiente
+  useEffect(() => {
+    checkAndStartPendingTour();
+  }, []);
 
   // Calcular contadores por estado
   const statusCounts = users.reduce((acc, user) => {
@@ -322,7 +328,7 @@ export default function UserTable({
   return (
     <>
       {/* Filtros */}
-      <div className="flex gap-4 mb-4 flex-wrap items-center">
+      <div className="flex gap-4 mb-4 flex-wrap items-center" data-tour="filtro-estado-usuarios">
         <Input
           placeholder="Buscar por email o nombre..."
           value={search}
@@ -331,7 +337,7 @@ export default function UserTable({
         />
 
         {/* Botones de filtro de estado */}
-        <div data-tour="filtro-estado-usuarios" className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap">
           <Button
             variant={statusFilter === "all" && search === "" ? "default" : "outline"}
             size="sm"
