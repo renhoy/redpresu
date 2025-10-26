@@ -105,7 +105,7 @@ export function TariffFilters({
           className={
             status === "all" && search === ""
               ? "bg-lime-500 hover:bg-lime-600"
-              : "border-lime-500 text-lime-600 hover:bg-lime-50"
+              : "border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
           }
         >
           Todas ({tariffs.length})
@@ -118,7 +118,7 @@ export function TariffFilters({
           className={
             status === "Activa"
               ? "bg-lime-500 hover:bg-lime-600"
-              : "border-lime-500 text-lime-600 hover:bg-lime-50"
+              : "border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
           }
         >
           Activas{statusCounts["Activa"] ? ` (${statusCounts["Activa"]})` : ""}
@@ -131,7 +131,7 @@ export function TariffFilters({
           className={
             status === "Inactiva"
               ? "bg-lime-500 hover:bg-lime-600"
-              : "border-lime-500 text-lime-600 hover:bg-lime-50"
+              : "border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
           }
         >
           Inactivas{statusCounts["Inactiva"] ? ` (${statusCounts["Inactiva"]})` : ""}

@@ -234,7 +234,7 @@ export function DashboardClient({
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               <Link href="/tariffs/create">
                 <Button
-                  className="w-full h-16 flex items-center gap-2 justify-center"
+                  className="w-full h-16 flex items-center gap-2 justify-center border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
                   variant="outline"
                 >
                   <PlusCircle className="w-5 h-5" />
@@ -244,7 +244,7 @@ export function DashboardClient({
 
               <Link href="/tariffs">
                 <Button
-                  className="w-full h-16 flex items-center gap-2 justify-center"
+                  className="w-full h-16 flex items-center gap-2 justify-center border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
                   variant="outline"
                 >
                   <Layers className="w-5 h-5" />
@@ -255,7 +255,7 @@ export function DashboardClient({
               {hasBudgets ? (
                 <Link href="/budgets">
                   <Button
-                    className="w-full h-16 flex items-center gap-2 justify-center"
+                    className="w-full h-16 flex items-center gap-2 justify-center border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
                     variant="outline"
                   >
                     <FileText className="w-5 h-5" />

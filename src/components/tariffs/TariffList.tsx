@@ -315,13 +315,13 @@ export function TariffList({
               </DialogHeader>
               <div className="space-y-3 py-4">
                 <Button
-                  className="w-full justify-start h-auto py-2.5 px-3 border-lime-500 hover:bg-lime-50"
+                  className="w-full justify-start h-auto py-2.5 px-3 border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
                   variant="outline"
                   onClick={() => handleExport("json")}
                   disabled={exporting}
                 >
                   <div className="flex flex-col items-start text-left w-full min-w-0">
-                    <div className="font-semibold text-lime-600 text-xs leading-tight break-words w-full">
+                    <div className="font-semibold text-xs leading-tight break-words w-full">
                       {isSingleSelection
                         ? "Tarifa completa (JSON)"
                         : `${selectedTariffs.length} Tarifas completas (JSON)`}
@@ -333,7 +333,7 @@ export function TariffList({
                 </Button>
 
                 <Button
-                  className="w-full justify-start h-auto py-2.5 px-3 border-lime-500 hover:bg-lime-50"
+                  className="w-full justify-start h-auto py-2.5 px-3 border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
                   variant="outline"
                   onClick={() => handleExport("price-structure")}
                   disabled={exporting}
