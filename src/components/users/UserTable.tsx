@@ -6,6 +6,7 @@ import { UserWithInviter, toggleUserStatus } from "@/app/actions/users";
 import { createUserInvitation, cancelInvitation } from "@/app/actions/invitations";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -68,7 +69,14 @@ export default function UserTable({
   const [invitationId, setInvitationId] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+  const [search, setSearch] = useState("");
   const router = useRouter();
+
+  // Calcular contadores por estado
+  const statusCounts = users.reduce((acc, user) => {
+    acc[user.status] = (acc[user.status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
 
   const handleStatusChange = async (
     userId: string,
@@ -298,26 +306,74 @@ export default function UserTable({
     }
   };
 
-  // Filtrar usuarios por estado
-  const filteredUsers = statusFilter === "all"
-    ? users
-    : users.filter(u => u.status === statusFilter);
+  // Filtrar usuarios por estado y búsqueda
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch =
+      !search ||
+      user.email.toLowerCase().includes(search.toLowerCase()) ||
+      (user.nombre && user.nombre.toLowerCase().includes(search.toLowerCase())) ||
+      (user.apellidos && user.apellidos.toLowerCase().includes(search.toLowerCase()));
+
+    const matchesStatus = statusFilter === "all" || user.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <>
-      {/* Filtro de Estado */}
-      <div className="mb-4 flex items-center gap-3" data-tour="filtro-estado-usuarios">
-        <span className="text-sm font-medium text-gray-700">Filtrar por estado:</span>
-        <Select value={statusFilter} onValueChange={(value: "all" | "active" | "inactive") => setStatusFilter(value)}>
-          <SelectTrigger className="w-[180px] bg-white">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="bg-white">
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="active">Activos</SelectItem>
-            <SelectItem value="inactive">Inactivos</SelectItem>
-          </SelectContent>
-        </Select>
+      {/* Filtros */}
+      <div className="flex gap-4 mb-4 flex-wrap items-center">
+        <Input
+          placeholder="Buscar por email o nombre..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="max-w-xs bg-white"
+        />
+
+        {/* Botones de filtro de estado */}
+        <div data-tour="filtro-estado-usuarios" className="flex gap-2 flex-wrap">
+          <Button
+            variant={statusFilter === "all" && search === "" ? "default" : "outline"}
+            size="sm"
+            onClick={() => {
+              setStatusFilter("all");
+              setSearch("");
+            }}
+            className={
+              statusFilter === "all" && search === ""
+                ? "bg-lime-500 hover:bg-lime-600"
+                : "border-lime-500 text-lime-600 hover:bg-lime-50"
+            }
+          >
+            Todos ({users.length})
+          </Button>
+          <Button
+            variant={statusFilter === "active" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter("active")}
+            disabled={!statusCounts["active"]}
+            className={
+              statusFilter === "active"
+                ? "bg-lime-500 hover:bg-lime-600"
+                : "border-lime-500 text-lime-600 hover:bg-lime-50"
+            }
+          >
+            Activos{statusCounts["active"] ? ` (${statusCounts["active"]})` : ""}
+          </Button>
+          <Button
+            variant={statusFilter === "inactive" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter("inactive")}
+            disabled={!statusCounts["inactive"]}
+            className={
+              statusFilter === "inactive"
+                ? "bg-lime-500 hover:bg-lime-600"
+                : "border-lime-500 text-lime-600 hover:bg-lime-50"
+            }
+          >
+            Inactivos{statusCounts["inactive"] ? ` (${statusCounts["inactive"]})` : ""}
+          </Button>
+        </div>
       </div>
 
       {/* Vista Desktop - Tabla */}
@@ -340,7 +396,9 @@ export default function UserTable({
                   colSpan={6}
                   className="text-center text-muted-foreground py-4"
                 >
-                  {statusFilter === "all" ? "No hay usuarios registrados" : `No hay usuarios ${statusFilter === "active" ? "activos" : "inactivos"}`}
+                  {search || statusFilter !== "all"
+                    ? "No se encontraron usuarios con los filtros aplicados"
+                    : "No hay usuarios registrados"}
                 </TableCell>
               </TableRow>
             ) : (
@@ -542,7 +600,9 @@ export default function UserTable({
       <div className="lg:hidden">
         {filteredUsers.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground border rounded-lg">
-            {statusFilter === "all" ? "No hay usuarios registrados" : `No hay usuarios ${statusFilter === "active" ? "activos" : "inactivos"}`}
+            {search || statusFilter !== "all"
+              ? "No se encontraron usuarios con los filtros aplicados"
+              : "No hay usuarios registrados"}
           </div>
         ) : (
           filteredUsers.map((user) => (

@@ -100,6 +100,12 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Calcular contadores por estado
+  const statusCounts = budgets.reduce((acc, budget) => {
+    acc[budget.status] = (acc[budget.status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
   // Filtrado local
   const filteredBudgets = budgets.filter((budget) => {
     const matchesSearch =
@@ -911,79 +917,85 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                 : "border-lime-500 text-lime-600 hover:bg-lime-50"
             }
           >
-            Todos
+            Todos ({budgets.length})
           </Button>
           <Button
             variant={statusFilter === "borrador" ? "default" : "outline"}
             size="sm"
             onClick={() => setStatusFilter("borrador")}
+            disabled={!statusCounts["borrador"]}
             className={
               statusFilter === "borrador"
                 ? "bg-lime-500 hover:bg-lime-600"
                 : "border-lime-500 text-lime-600 hover:bg-lime-50"
             }
           >
-            Borradores
+            Borradores{statusCounts["borrador"] ? ` (${statusCounts["borrador"]})` : ""}
           </Button>
           <Button
             variant={statusFilter === "pendiente" ? "default" : "outline"}
             size="sm"
             onClick={() => setStatusFilter("pendiente")}
+            disabled={!statusCounts["pendiente"]}
             className={
               statusFilter === "pendiente"
                 ? "bg-lime-500 hover:bg-lime-600"
                 : "border-lime-500 text-lime-600 hover:bg-lime-50"
             }
           >
-            Pendientes
+            Pendientes{statusCounts["pendiente"] ? ` (${statusCounts["pendiente"]})` : ""}
           </Button>
           <Button
             variant={statusFilter === "enviado" ? "default" : "outline"}
             size="sm"
             onClick={() => setStatusFilter("enviado")}
+            disabled={!statusCounts["enviado"]}
             className={
               statusFilter === "enviado"
                 ? "bg-lime-500 hover:bg-lime-600"
                 : "border-lime-500 text-lime-600 hover:bg-lime-50"
             }
           >
-            Enviados
+            Enviados{statusCounts["enviado"] ? ` (${statusCounts["enviado"]})` : ""}
           </Button>
           <Button
             variant={statusFilter === "aprobado" ? "default" : "outline"}
             size="sm"
             onClick={() => setStatusFilter("aprobado")}
+            disabled={!statusCounts["aprobado"]}
             className={
               statusFilter === "aprobado"
                 ? "bg-lime-500 hover:bg-lime-600"
                 : "border-lime-500 text-lime-600 hover:bg-lime-50"
             }
           >
-            Aprobados
+            Aprobados{statusCounts["aprobado"] ? ` (${statusCounts["aprobado"]})` : ""}
           </Button>
           <Button
             variant={statusFilter === "rechazado" ? "default" : "outline"}
             size="sm"
             onClick={() => setStatusFilter("rechazado")}
+            disabled={!statusCounts["rechazado"]}
             className={
               statusFilter === "rechazado"
                 ? "bg-lime-500 hover:bg-lime-600"
                 : "border-lime-500 text-lime-600 hover:bg-lime-50"
             }
           >
-            Rechazados
+            Rechazados{statusCounts["rechazado"] ? ` (${statusCounts["rechazado"]})` : ""}
           </Button>
           <Button
             variant={statusFilter === "caducado" ? "default" : "outline"}
             size="sm"
             onClick={() => setStatusFilter("caducado")}
+            disabled={!statusCounts["caducado"]}
             className={
               statusFilter === "caducado"
                 ? "bg-lime-500 hover:bg-lime-600"
                 : "border-lime-500 text-lime-600 hover:bg-lime-50"
             }
           >
-            Caducados
+            Caducados{statusCounts["caducado"] ? ` (${statusCounts["caducado"]})` : ""}
           </Button>
         </div>
       </div>

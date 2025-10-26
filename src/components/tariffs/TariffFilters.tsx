@@ -17,6 +17,11 @@ interface User {
   last_name: string | null;
 }
 
+interface Tariff {
+  id: string;
+  status: string;
+}
+
 interface TariffFiltersProps {
   onFiltersChange: (filters: {
     status?: "Activa" | "Inactiva" | "all";
@@ -28,6 +33,7 @@ interface TariffFiltersProps {
   defaultUserId?: string;
   users?: User[];
   currentUserRole?: string;
+  tariffs?: Tariff[];
 }
 
 export function TariffFilters({
@@ -37,12 +43,19 @@ export function TariffFilters({
   defaultUserId = "all",
   users = [],
   currentUserRole,
+  tariffs = [],
 }: TariffFiltersProps) {
   const [status, setStatus] = useState<"Activa" | "Inactiva" | "all">(
     defaultStatus
   );
   const [search, setSearch] = useState(defaultSearch);
   const [userId, setUserId] = useState(defaultUserId);
+
+  // Calcular contadores por estado
+  const statusCounts = tariffs.reduce((acc, tariff) => {
+    acc[tariff.status] = (acc[tariff.status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
 
   const handleStatusChange = (value: "Activa" | "Inactiva" | "all") => {
     setStatus(value);
@@ -95,31 +108,33 @@ export function TariffFilters({
               : "border-lime-500 text-lime-600 hover:bg-lime-50"
           }
         >
-          Todas
+          Todas ({tariffs.length})
         </Button>
         <Button
           variant={status === "Activa" ? "default" : "outline"}
           size="sm"
           onClick={() => handleStatusChange("Activa")}
+          disabled={!statusCounts["Activa"]}
           className={
             status === "Activa"
               ? "bg-lime-500 hover:bg-lime-600"
               : "border-lime-500 text-lime-600 hover:bg-lime-50"
           }
         >
-          Activas
+          Activas{statusCounts["Activa"] ? ` (${statusCounts["Activa"]})` : ""}
         </Button>
         <Button
           variant={status === "Inactiva" ? "default" : "outline"}
           size="sm"
           onClick={() => handleStatusChange("Inactiva")}
+          disabled={!statusCounts["Inactiva"]}
           className={
             status === "Inactiva"
               ? "bg-lime-500 hover:bg-lime-600"
               : "border-lime-500 text-lime-600 hover:bg-lime-50"
           }
         >
-          Inactivas
+          Inactivas{statusCounts["Inactiva"] ? ` (${statusCounts["Inactiva"]})` : ""}
         </Button>
       </div>
 

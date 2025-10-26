@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Company, deleteCompany } from "@/app/actions/companies";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { CompanyCard } from "./CompanyCard";
 import {
   Table,
@@ -52,7 +53,28 @@ export default function CompanyTable({
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState<"all" | "empresa" | "autonomo">("all");
   const router = useRouter();
+
+  // Calcular contadores por tipo
+  const typeCounts = companies.reduce((acc, company) => {
+    acc[company.type] = (acc[company.type] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Filtrado local
+  const filteredCompanies = companies.filter((company) => {
+    const matchesSearch =
+      !search ||
+      company.name.toLowerCase().includes(search.toLowerCase()) ||
+      (company.nif && company.nif.toLowerCase().includes(search.toLowerCase())) ||
+      (company.email && company.email.toLowerCase().includes(search.toLowerCase()));
+
+    const matchesType = typeFilter === "all" || company.type === typeFilter;
+
+    return matchesSearch && matchesType;
+  });
 
   const handleDelete = async () => {
     if (!selectedCompany || !selectedCompany.uuid) return;
@@ -98,6 +120,61 @@ export default function CompanyTable({
 
   return (
     <>
+      {/* Filtros */}
+      <div className="flex gap-4 mb-4 flex-wrap items-center">
+        <Input
+          placeholder="Buscar por nombre, NIF/CIF o email..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="max-w-xs bg-white"
+        />
+
+        {/* Botones de filtro de tipo */}
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            variant={typeFilter === "all" && search === "" ? "default" : "outline"}
+            size="sm"
+            onClick={() => {
+              setTypeFilter("all");
+              setSearch("");
+            }}
+            className={
+              typeFilter === "all" && search === ""
+                ? "bg-lime-500 hover:bg-lime-600"
+                : "border-lime-500 text-lime-600 hover:bg-lime-50"
+            }
+          >
+            Todas ({companies.length})
+          </Button>
+          <Button
+            variant={typeFilter === "empresa" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setTypeFilter("empresa")}
+            disabled={!typeCounts["empresa"]}
+            className={
+              typeFilter === "empresa"
+                ? "bg-lime-500 hover:bg-lime-600"
+                : "border-lime-500 text-lime-600 hover:bg-lime-50"
+            }
+          >
+            Empresas{typeCounts["empresa"] ? ` (${typeCounts["empresa"]})` : ""}
+          </Button>
+          <Button
+            variant={typeFilter === "autonomo" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setTypeFilter("autonomo")}
+            disabled={!typeCounts["autonomo"]}
+            className={
+              typeFilter === "autonomo"
+                ? "bg-lime-500 hover:bg-lime-600"
+                : "border-lime-500 text-lime-600 hover:bg-lime-50"
+            }
+          >
+            Autónomos{typeCounts["autonomo"] ? ` (${typeCounts["autonomo"]})` : ""}
+          </Button>
+        </div>
+      </div>
+
       {/* Vista Desktop - Tabla */}
       <div className="hidden lg:block rounded-md border bg-lime-100">
         <Table>
@@ -113,17 +190,19 @@ export default function CompanyTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {companies.length === 0 ? (
+            {filteredCompanies.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={7}
                   className="text-center text-muted-foreground py-8"
                 >
-                  No hay empresas registradas
+                  {search || typeFilter !== "all"
+                    ? "No se encontraron empresas con los filtros aplicados"
+                    : "No hay empresas registradas"}
                 </TableCell>
               </TableRow>
             ) : (
-              companies.map((company) => (
+              filteredCompanies.map((company) => (
                 <TableRow
                   key={company.id}
                   className="bg-white border-t hover:bg-lime-100/100"
@@ -293,12 +372,14 @@ export default function CompanyTable({
 
       {/* Vista Mobile/Tablet - Cards */}
       <div className="lg:hidden">
-        {companies.length === 0 ? (
+        {filteredCompanies.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
-            No hay empresas registradas
+            {search || typeFilter !== "all"
+              ? "No se encontraron empresas con los filtros aplicados"
+              : "No hay empresas registradas"}
           </div>
         ) : (
-          companies.map((company) => (
+          filteredCompanies.map((company) => (
             <CompanyCard key={company.id} company={company} />
           ))
         )}

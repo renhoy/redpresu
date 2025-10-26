@@ -393,6 +393,7 @@ export function TariffList({
         defaultUserId={filters.user_id}
         users={users}
         currentUserRole={currentUserRole}
+        tariffs={tariffs}
       />
 
       {/* Vista Desktop - Tabla */}
