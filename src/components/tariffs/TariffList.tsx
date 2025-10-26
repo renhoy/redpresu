@@ -68,6 +68,7 @@ export function TariffList({
 }: TariffListProps) {
   const router = useRouter();
   const [tariffs, setTariffs] = useState<Tariff[]>(initialTariffs);
+  const [allTariffs, setAllTariffs] = useState<Tariff[]>(initialTariffs); // Array completo sin filtrar para contadores
   const [loading, setLoading] = useState(false);
   const [selectedTariffs, setSelectedTariffs] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
@@ -90,6 +91,10 @@ export function TariffList({
     try {
       const data = await getTariffs(empresaId, filters);
       setTariffs(data);
+      // Si los filtros están en "all", actualizar allTariffs
+      if (filters.status === "all" && !filters.search && !filters.user_id) {
+        setAllTariffs(data);
+      }
     } catch (error) {
       console.error("Error loading tariffs:", error);
     } finally {
@@ -97,10 +102,22 @@ export function TariffList({
     }
   };
 
+  // Cargar todas las tarifas al inicio para los contadores
+  const loadAllTariffs = async () => {
+    try {
+      const data = await getTariffs(empresaId, { status: "all", search: "", user_id: undefined });
+      setAllTariffs(data);
+    } catch (error) {
+      console.error("Error loading all tariffs:", error);
+    }
+  };
+
   useEffect(() => {
     if (initialTariffs.length === 0) {
       loadTariffs();
     }
+    // Cargar todas las tarifas para los contadores al inicio
+    loadAllTariffs();
   }, []);
 
   useEffect(() => {
@@ -393,7 +410,7 @@ export function TariffList({
         defaultUserId={filters.user_id}
         users={users}
         currentUserRole={currentUserRole}
-        tariffs={tariffs}
+        tariffs={allTariffs}
       />
 
       {/* Vista Desktop - Tabla */}
