@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { checkAndStartPendingTour } from "@/lib/helpers/tour-helpers";
 import {
   Card,
   CardContent,
@@ -38,6 +39,7 @@ import { getDashboardStats } from "@/app/actions/dashboard";
 import { Budget } from "@/lib/types/database";
 import { formatCurrency } from "@/lib/helpers/format";
 import type { HelpArticleMeta } from "@/lib/helpers/markdown-types";
+import { TourButton } from "@/components/help/TourButton";
 
 interface DashboardClientProps {
   initialStats: {
@@ -84,6 +86,11 @@ export function DashboardClient({
   const [periodo, setPeriodo] = useState<Periodo>("mes");
   const [loading, setLoading] = useState(false);
 
+  // Detectar y ejecutar tour pendiente
+  useEffect(() => {
+    checkAndStartPendingTour();
+  }, []);
+
   const handlePeriodoChange = async (newPeriodo: Periodo) => {
     setPeriodo(newPeriodo);
     setLoading(true);
@@ -111,13 +118,16 @@ export function DashboardClient({
         {/* Header con filtro de período */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-center md:text-left w-full md:w-auto">
-            <h1 className="text-3xl font-bold flex items-center justify-center md:justify-start gap-2">
-              <Home className="h-6 w-6" /> Panel de control
-            </h1>
+            <div className="flex items-center justify-center md:justify-start gap-3">
+              <h1 className="text-3xl font-bold flex items-center gap-2" data-tour="titulo-dashboard">
+                <Home className="h-6 w-6" /> Panel de control
+              </h1>
+              <TourButton tourId="dashboard-page" />
+            </div>
             <p className="text-sm">Información, resumen y estadísticas</p>
           </div>
 
-          <div className="flex items-center gap-2 w-full md:w-auto justify-center md:justify-end">
+          <div className="flex items-center gap-2 w-full md:w-auto justify-center md:justify-end" data-tour="selector-periodo">
             <Calendar className="w-4 h-4 text-gray-500" />
             <Select
               value={periodo}
@@ -137,7 +147,7 @@ export function DashboardClient({
         </div>
 
         {/* Estadísticas principales - Grid 2x2 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8" data-tour="estadisticas-principales">
           {/* Total presupuestos */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
@@ -211,7 +221,7 @@ export function DashboardClient({
         </div>
 
         {/* Accesos rápidos */}
-        <Card>
+        <Card data-tour="accesos-rapidos">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Zap className="w-5 h-5" />
@@ -269,7 +279,7 @@ export function DashboardClient({
 
         {/* Primeros Pasos - Solo si hay artículos */}
         {helpArticles.length > 0 && (
-          <Card>
+          <Card data-tour="primeros-pasos">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BookOpen className="w-5 h-5" />
@@ -284,7 +294,7 @@ export function DashboardClient({
                 {helpArticles.map((article) => (
                   <Link key={article.id} href={`/help/${article.id}`}>
                     <Button
-                      className="w-full h-16 flex items-center gap-2 justify-center bg-gray-600 hover:bg-gray-800 text-white hover:text-white"
+                      className="w-full h-16 flex items-center gap-2 justify-center bg-lime-600 hover:bg-lime-700 text-white hover:text-white"
                       variant="outline"
                     >
                       <BookOpen className="w-5 h-5" />
@@ -300,7 +310,7 @@ export function DashboardClient({
         {/* Listados */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Últimos presupuestos */}
-          <Card>
+          <Card data-tour="ultimos-presupuestos">
             <CardHeader>
               <CardTitle>Últimos 5 Presupuestos</CardTitle>
               <CardDescription>
@@ -356,7 +366,7 @@ export function DashboardClient({
           </Card>
 
           {/* Próximos a caducar */}
-          <Card>
+          <Card data-tour="proximos-caducar">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <AlertCircle className="w-5 h-5 text-orange-600" />

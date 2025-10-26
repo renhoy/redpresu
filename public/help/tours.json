@@ -1,4 +1,57 @@
 {
+  "dashboard-page": {
+    "steps": [
+      {
+        "element": "[data-tour='titulo-dashboard']",
+        "popover": {
+          "title": "1. Panel de Control",
+          "description": "Bienvenido al panel de control. Aquí encontrarás un resumen completo de tus presupuestos y estadísticas del periodo seleccionado."
+        }
+      },
+      {
+        "element": "[data-tour='selector-periodo']",
+        "popover": {
+          "title": "2. Selector de Periodo",
+          "description": "Filtra las estadísticas por periodo: Hoy, Esta semana, Este mes o Este año. Las tarjetas y listas se actualizarán automáticamente."
+        }
+      },
+      {
+        "element": "[data-tour='estadisticas-principales']",
+        "popover": {
+          "title": "3. Estadísticas Principales",
+          "description": "Visualiza 4 métricas clave: Total de presupuestos, Valor total en euros, Presupuestos del mes actual y Tasa de conversión (aprobados/enviados)."
+        }
+      },
+      {
+        "element": "[data-tour='accesos-rapidos']",
+        "popover": {
+          "title": "4. Accesos Rápidos",
+          "description": "Accede directamente a las acciones más frecuentes: Crear Tarifa, Ver Tarifas y Ver Presupuestos. Agiliza tu flujo de trabajo."
+        }
+      },
+      {
+        "element": "[data-tour='primeros-pasos']",
+        "popover": {
+          "title": "5. Primeros Pasos",
+          "description": "Guías interactivas para comenzar a usar la aplicación. Cada botón te lleva a un artículo de ayuda detallado según tu rol."
+        }
+      },
+      {
+        "element": "[data-tour='ultimos-presupuestos']",
+        "popover": {
+          "title": "6. Últimos 5 Presupuestos",
+          "description": "Lista de los 5 presupuestos más recientes con su estado, cliente, fecha y valor. Haz clic en cualquiera para editarlo."
+        }
+      },
+      {
+        "element": "[data-tour='proximos-caducar']",
+        "popover": {
+          "title": "7. Próximos a Caducar",
+          "description": "Presupuestos con menos de 7 días restantes de validez. Aparecen destacados en naranja para que puedas actuar a tiempo."
+        }
+      }
+    ]
+  },
   "crear-tarifa": {
     "steps": [
       {
