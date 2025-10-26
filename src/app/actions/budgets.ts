@@ -1985,6 +1985,54 @@ export async function duplicateBudgetCopy(budgetId: string): Promise<{
       return { success: false, error: 'No tienes permisos para duplicar este presupuesto' }
     }
 
+    // Generar nuevo budget_number único sumando 1 segundo al original
+    let newBudgetNumber: string
+    try {
+      // Parsear el budget_number original (formato: YYYYMMDD-HHMMSS)
+      const originalNumber = originalBudget.budget_number
+      const datePart = originalNumber.substring(0, 8) // YYYYMMDD
+      const timePart = originalNumber.substring(9, 15) // HHMMSS
+
+      // Crear fecha a partir del número original
+      const year = parseInt(datePart.substring(0, 4))
+      const month = parseInt(datePart.substring(4, 6)) - 1 // 0-indexed
+      const day = parseInt(datePart.substring(6, 8))
+      const hour = parseInt(timePart.substring(0, 2))
+      const minute = parseInt(timePart.substring(2, 4))
+      const second = parseInt(timePart.substring(4, 6))
+
+      const originalDate = new Date(year, month, day, hour, minute, second)
+
+      // Sumar 1 segundo
+      originalDate.setSeconds(originalDate.getSeconds() + 1)
+
+      // Formatear nuevo número: YYYYMMDD-HHMMSS
+      const newYear = originalDate.getFullYear()
+      const newMonth = String(originalDate.getMonth() + 1).padStart(2, '0')
+      const newDay = String(originalDate.getDate()).padStart(2, '0')
+      const newHour = String(originalDate.getHours()).padStart(2, '0')
+      const newMinute = String(originalDate.getMinutes()).padStart(2, '0')
+      const newSecond = String(originalDate.getSeconds()).padStart(2, '0')
+
+      newBudgetNumber = `${newYear}${newMonth}${newDay}-${newHour}${newMinute}${newSecond}`
+
+      log.info('[duplicateBudgetCopy] Nuevo budget_number generado:', {
+        original: originalNumber,
+        nuevo: newBudgetNumber
+      })
+    } catch (error) {
+      // Fallback: usar timestamp actual si falla el parsing
+      log.warn('[duplicateBudgetCopy] Error parseando budget_number, usando timestamp actual:', error)
+      const now = new Date()
+      const year = now.getFullYear()
+      const month = String(now.getMonth() + 1).padStart(2, '0')
+      const day = String(now.getDate()).padStart(2, '0')
+      const hour = String(now.getHours()).padStart(2, '0')
+      const minute = String(now.getMinutes()).padStart(2, '0')
+      const second = String(now.getSeconds()).padStart(2, '0')
+      newBudgetNumber = `${year}${month}${day}-${hour}${minute}${second}`
+    }
+
     // Crear copia del presupuesto como nuevo presupuesto independiente (no versión)
     const { data: newBudget, error: insertError } = await supabaseAdmin
       .from('redpresu_budgets')
@@ -1996,6 +2044,9 @@ export async function duplicateBudgetCopy(budgetId: string): Promise<{
         // Nueva copia independiente (no versión)
         parent_budget_id: null,
         version_number: 1,
+
+        // Nuevo número de presupuesto único
+        budget_number: newBudgetNumber,
 
         // Estado borrador sin PDF
         status: BudgetStatus.BORRADOR,
