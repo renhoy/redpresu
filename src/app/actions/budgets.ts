@@ -1064,21 +1064,24 @@ export async function updateBudgetStatus(
       return { success: false, error: 'No autorizado' }
     }
 
-    // Validar transición de estado
+    // Permitir transición a cualquier estado
+    // Ya no se validan transiciones específicas - se puede cambiar de cualquier estado a cualquier otro
     const currentStatus = budget.status
-    const validTransitions: Record<string, string[]> = {
-      [BudgetStatus.BORRADOR]: [BudgetStatus.PENDIENTE, BudgetStatus.ENVIADO],
-      [BudgetStatus.PENDIENTE]: [BudgetStatus.BORRADOR, BudgetStatus.ENVIADO],
-      [BudgetStatus.ENVIADO]: [BudgetStatus.PENDIENTE, BudgetStatus.APROBADO, BudgetStatus.RECHAZADO],
-      [BudgetStatus.APROBADO]: [BudgetStatus.BORRADOR],
-      [BudgetStatus.RECHAZADO]: [BudgetStatus.BORRADOR],
-      [BudgetStatus.CADUCADO]: [BudgetStatus.BORRADOR]
-    }
 
-    if (!validTransitions[currentStatus]?.includes(newStatus)) {
+    // Validar que el nuevo estado sea válido
+    const validStatuses = [
+      BudgetStatus.BORRADOR,
+      BudgetStatus.PENDIENTE,
+      BudgetStatus.ENVIADO,
+      BudgetStatus.APROBADO,
+      BudgetStatus.RECHAZADO,
+      BudgetStatus.CADUCADO
+    ]
+
+    if (!validStatuses.includes(newStatus as BudgetStatus)) {
       return {
         success: false,
-        error: `No se puede cambiar de ${currentStatus} a ${newStatus}`
+        error: `Estado "${newStatus}" no válido`
       }
     }
 

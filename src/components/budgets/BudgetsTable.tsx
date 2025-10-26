@@ -390,17 +390,12 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
     }
   };
 
-  // Transiciones válidas de estado
+  // Transiciones válidas de estado - Permitir cambiar a cualquier estado
   const getValidTransitions = (currentStatus: string): string[] => {
-    const transitions: Record<string, string[]> = {
-      borrador: ["pendiente", "enviado"],
-      pendiente: ["borrador", "enviado"],
-      enviado: ["pendiente", "aprobado", "rechazado"],
-      aprobado: ["borrador"],
-      rechazado: ["borrador"],
-      caducado: ["borrador"],
-    };
-    return transitions[currentStatus] || [];
+    // Todos los estados disponibles
+    const allStatuses = ["borrador", "pendiente", "enviado", "aprobado", "rechazado", "caducado"];
+    // Retornar todos los estados (incluyendo el actual, ya que el Select lo necesita)
+    return allStatuses;
   };
 
   const handleStatusChange = async (
