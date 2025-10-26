@@ -235,7 +235,7 @@ export async function checkBudgetNumberExists(
  */
 export async function createDraftBudget(data: {
   tariffId: string
-  budgetNumber: string
+  budgetNumber?: string  // OPCIONAL: Si no se proporciona, se genera automáticamente
   clientData: ClientData
   tariffData: unknown[]
   validity: number | null
@@ -284,26 +284,92 @@ export async function createDraftBudget(data: {
       return { success: false, error: 'Usuario sin empresa asignada' }
     }
 
-    // Validar que budget_number no esté vacío
-    if (!data.budgetNumber || data.budgetNumber.trim() === '') {
-      return { success: false, error: 'El número de presupuesto es obligatorio' }
-    }
+    // Generar budget_number único si no se proporcionó
+    let finalBudgetNumber: string
 
-    // Verificar unicidad de budget_number
-    const { data: existingBudget, error: checkError } = await supabaseAdmin
-      .from('redpresu_budgets')
-      .select('id')
-      .eq('budget_number', data.budgetNumber.trim())
-      .eq('company_id', empresaId)
-      .maybeSingle()
+    if (data.budgetNumber && data.budgetNumber.trim() !== '') {
+      // Usuario proporcionó un número personalizado, verificar unicidad
+      const trimmedNumber = data.budgetNumber.trim()
 
-    if (checkError) {
-      log.error('[createDraftBudget] Error verificando unicidad:', checkError)
-      return { success: false, error: 'Error al verificar número de presupuesto' }
-    }
+      const { data: existingBudget, error: checkError } = await supabaseAdmin
+        .from('redpresu_budgets')
+        .select('id')
+        .eq('budget_number', trimmedNumber)
+        .eq('company_id', empresaId)
+        .maybeSingle()
 
-    if (existingBudget) {
-      return { success: false, error: `El número de presupuesto "${data.budgetNumber}" ya existe. Por favor, usa otro número.` }
+      if (checkError) {
+        log.error('[createDraftBudget] Error verificando unicidad:', checkError)
+        return { success: false, error: 'Error al verificar número de presupuesto' }
+      }
+
+      if (existingBudget) {
+        return { success: false, error: `El número de presupuesto "${trimmedNumber}" ya existe. Por favor, usa otro número.` }
+      }
+
+      finalBudgetNumber = trimmedNumber
+      log.info('[createDraftBudget] Usando budget_number proporcionado:', finalBudgetNumber)
+    } else {
+      // Generar automáticamente un budget_number único
+      const now = new Date()
+      let secondsToAdd = 0
+      const maxAttempts = 100
+      let found = false
+
+      for (let attempt = 0; attempt < maxAttempts && !found; attempt++) {
+        const candidateDate = new Date(now)
+        candidateDate.setSeconds(candidateDate.getSeconds() + secondsToAdd)
+
+        // Formatear: YYYYMMDD-HHMMSS
+        const year = candidateDate.getFullYear()
+        const month = String(candidateDate.getMonth() + 1).padStart(2, '0')
+        const day = String(candidateDate.getDate()).padStart(2, '0')
+        const hour = String(candidateDate.getHours()).padStart(2, '0')
+        const minute = String(candidateDate.getMinutes()).padStart(2, '0')
+        const second = String(candidateDate.getSeconds()).padStart(2, '0')
+
+        const candidateNumber = `${year}${month}${day}-${hour}${minute}${second}`
+
+        // Verificar si existe en BD
+        const { data: existingBudget, error: checkError } = await supabaseAdmin
+          .from('redpresu_budgets')
+          .select('id')
+          .eq('budget_number', candidateNumber)
+          .eq('company_id', empresaId)
+          .maybeSingle()
+
+        if (checkError) {
+          log.error('[createDraftBudget] Error verificando budget_number:', checkError)
+          // Continuar con el intento actual
+        }
+
+        if (!existingBudget) {
+          // Número disponible
+          finalBudgetNumber = candidateNumber
+          found = true
+          log.info('[createDraftBudget] Budget_number único generado:', {
+            numero: finalBudgetNumber,
+            intentos: attempt + 1,
+            segundos_sumados: secondsToAdd
+          })
+        } else {
+          // Ya existe, probar siguiente
+          secondsToAdd++
+        }
+      }
+
+      if (!found) {
+        // Fallback: usar timestamp con milisegundos
+        log.warn('[createDraftBudget] No se encontró número único tras ' + maxAttempts + ' intentos, usando milisegundos')
+        const year = now.getFullYear()
+        const month = String(now.getMonth() + 1).padStart(2, '0')
+        const day = String(now.getDate()).padStart(2, '0')
+        const hour = String(now.getHours()).padStart(2, '0')
+        const minute = String(now.getMinutes()).padStart(2, '0')
+        const second = String(now.getSeconds()).padStart(2, '0')
+        const millisecond = String(now.getMilliseconds()).padStart(3, '0')
+        finalBudgetNumber = `${year}${month}${day}-${hour}${minute}${second}${millisecond.substring(0, 1)}`
+      }
     }
 
     // Calcular IVA
@@ -343,49 +409,101 @@ export async function createDraftBudget(data: {
       client_acceptance: data.clientData.client_acceptance
     }
 
-    // Crear borrador
-    const { data: budget, error: insertError } = await supabaseAdmin
-      .from('redpresu_budgets')
-      .insert({
-        company_id: empresaId,
-        tariff_id: data.tariffId,
-        user_id: user.id,
-        budget_number: data.budgetNumber.trim(),
-        json_tariff_data: data.tariffData,
-        json_budget_data: initialBudgetData,
-        json_client_data: jsonClientData,
-        parent_budget_id: null,
-        version_number: 1,
-        client_type: data.clientData.client_type,
-        client_name: data.clientData.client_name,
-        client_nif_nie: data.clientData.client_nif_nie,
-        client_phone: data.clientData.client_phone,
-        client_email: data.clientData.client_email,
-        client_web: data.clientData.client_web || null,
-        client_address: data.clientData.client_address,
-        client_postal_code: data.clientData.client_postal_code,
-        client_locality: data.clientData.client_locality,
-        client_province: data.clientData.client_province,
-        client_acceptance: data.clientData.client_acceptance,
-        status: BudgetStatus.BORRADOR,
-        total: data.totals.total,
-        iva: iva,
-        base: data.totals.base,
-        irpf: 0,
-        irpf_percentage: 0,
-        re_apply: false,
-        re_total: 0,
-        total_pay: data.totals.total,
-        validity_days: data.validity,
-        start_date: null,
-        end_date: null
-      })
-      .select()
-      .single()
+    // Crear borrador con retry en caso de race condition
+    let budget: any = null
+    let insertSuccess = false
+    const maxInsertRetries = 10
+    let currentBudgetNumber = finalBudgetNumber
+    const baseTimestamp = new Date()
 
-    if (insertError || !budget) {
-      log.error('[createDraftBudget] Error creando borrador:', insertError)
-      return { success: false, error: 'Error al crear borrador' }
+    for (let retryCount = 0; retryCount < maxInsertRetries && !insertSuccess; retryCount++) {
+      const { data: insertedBudget, error: insertError } = await supabaseAdmin
+        .from('redpresu_budgets')
+        .insert({
+          company_id: empresaId,
+          tariff_id: data.tariffId,
+          user_id: user.id,
+          budget_number: currentBudgetNumber,
+          json_tariff_data: data.tariffData,
+          json_budget_data: initialBudgetData,
+          json_client_data: jsonClientData,
+          parent_budget_id: null,
+          version_number: 1,
+          client_type: data.clientData.client_type,
+          client_name: data.clientData.client_name,
+          client_nif_nie: data.clientData.client_nif_nie,
+          client_phone: data.clientData.client_phone,
+          client_email: data.clientData.client_email,
+          client_web: data.clientData.client_web || null,
+          client_address: data.clientData.client_address,
+          client_postal_code: data.clientData.client_postal_code,
+          client_locality: data.clientData.client_locality,
+          client_province: data.clientData.client_province,
+          client_acceptance: data.clientData.client_acceptance,
+          status: BudgetStatus.BORRADOR,
+          total: data.totals.total,
+          iva: iva,
+          base: data.totals.base,
+          irpf: 0,
+          irpf_percentage: 0,
+          re_apply: false,
+          re_total: 0,
+          total_pay: data.totals.total,
+          validity_days: data.validity,
+          start_date: null,
+          end_date: null
+        })
+        .select()
+        .single()
+
+      if (insertedBudget && !insertError) {
+        // Éxito
+        budget = insertedBudget
+        insertSuccess = true
+        if (retryCount > 0) {
+          log.info('[createDraftBudget] INSERT exitoso tras race condition:', {
+            budget_number: currentBudgetNumber,
+            intentos: retryCount + 1
+          })
+        }
+      } else if (insertError) {
+        // Verificar si el error es por duplicate key (race condition)
+        const isDuplicateError = insertError.code === '23505' ||
+                                insertError.message?.includes('duplicate') ||
+                                insertError.message?.includes('unique')
+
+        if (isDuplicateError && retryCount < maxInsertRetries - 1) {
+          // Race condition detectada, generar nuevo número y reintentar
+          const newDate = new Date(baseTimestamp)
+          newDate.setSeconds(newDate.getSeconds() + retryCount + 1)
+
+          const year = newDate.getFullYear()
+          const month = String(newDate.getMonth() + 1).padStart(2, '0')
+          const day = String(newDate.getDate()).padStart(2, '0')
+          const hour = String(newDate.getHours()).padStart(2, '0')
+          const minute = String(newDate.getMinutes()).padStart(2, '0')
+          const second = String(newDate.getSeconds()).padStart(2, '0')
+
+          currentBudgetNumber = `${year}${month}${day}-${hour}${minute}${second}`
+
+          log.warn('[createDraftBudget] Race condition detectada, reintentando:', {
+            intento: retryCount + 1,
+            nuevo_numero: currentBudgetNumber,
+            error: insertError.message
+          })
+        } else {
+          // Error diferente o se agotaron los reintentos
+          log.error('[createDraftBudget] Error creando borrador:', insertError)
+          return { success: false, error: isDuplicateError
+            ? 'No se pudo generar un número único después de ' + maxInsertRetries + ' intentos'
+            : 'Error al crear borrador' }
+        }
+      }
+    }
+
+    if (!insertSuccess || !budget) {
+      log.error('[createDraftBudget] Falló INSERT tras ' + maxInsertRetries + ' intentos')
+      return { success: false, error: 'Error al crear presupuesto después de múltiples intentos' }
     }
 
     log.info('[createDraftBudget] Borrador creado:', budget.id)
@@ -2026,11 +2144,12 @@ export async function duplicateBudgetCopy(budgetId: string): Promise<{
 
         const candidateNumber = `${newYear}${newMonth}${newDay}-${newHour}${newMinute}${newSecond}`
 
-        // Verificar si el budget_number ya existe en la BD
+        // Verificar si el budget_number ya existe en la BD (filtrar por empresa)
         const { data: existingBudget, error: checkError } = await supabaseAdmin
           .from('redpresu_budgets')
           .select('id')
           .eq('budget_number', candidateNumber)
+          .eq('company_id', originalBudget.company_id)
           .maybeSingle()
 
         if (checkError) {
@@ -2090,66 +2209,133 @@ export async function duplicateBudgetCopy(budgetId: string): Promise<{
       }
     }
 
-    // Crear copia del presupuesto como nuevo presupuesto independiente (no versión)
-    const { data: newBudget, error: insertError } = await supabaseAdmin
-      .from('redpresu_budgets')
-      .insert({
-        company_id: originalBudget.company_id,
-        user_id: user.id, // Usuario que crea la copia
-        tariff_id: originalBudget.tariff_id,
+    // Crear copia con retry en caso de race condition
+    let newBudget: any = null
+    let insertSuccess = false
+    const maxInsertRetries = 10
+    let currentBudgetNumber = newBudgetNumber
 
-        // Nueva copia independiente (no versión)
-        parent_budget_id: null,
-        version_number: 1,
+    for (let retryCount = 0; retryCount < maxInsertRetries && !insertSuccess; retryCount++) {
+      const { data: insertedBudget, error: insertError } = await supabaseAdmin
+        .from('redpresu_budgets')
+        .insert({
+          company_id: originalBudget.company_id,
+          user_id: user.id, // Usuario que crea la copia
+          tariff_id: originalBudget.tariff_id,
 
-        // Nuevo número de presupuesto único
-        budget_number: newBudgetNumber,
+          // Nueva copia independiente (no versión)
+          parent_budget_id: null,
+          version_number: 1,
 
-        // Estado borrador sin PDF
-        status: BudgetStatus.BORRADOR,
-        pdf_url: null,
+          // Nuevo número de presupuesto único
+          budget_number: currentBudgetNumber,
 
-        // Copiar datos del cliente (añadir "Copia" al nombre)
-        client_type: originalBudget.client_type,
-        client_name: `${originalBudget.client_name} (Copia)`,
-        client_nif_nie: originalBudget.client_nif_nie,
-        client_phone: originalBudget.client_phone,
-        client_email: originalBudget.client_email,
-        client_web: originalBudget.client_web,
-        client_address: originalBudget.client_address,
-        client_postal_code: originalBudget.client_postal_code,
-        client_locality: originalBudget.client_locality,
-        client_province: originalBudget.client_province,
-        client_acceptance: originalBudget.client_acceptance,
+          // Estado borrador sin PDF
+          status: BudgetStatus.BORRADOR,
+          pdf_url: null,
 
-        // Copiar snapshots JSON (con client_name actualizado)
-        json_tariff_data: originalBudget.json_tariff_data,
-        json_budget_data: originalBudget.json_budget_data,
-        json_client_data: updatedJsonClientData,
+          // Copiar datos del cliente (añadir "Copia" al nombre)
+          client_type: originalBudget.client_type,
+          client_name: `${originalBudget.client_name} (Copia)`,
+          client_nif_nie: originalBudget.client_nif_nie,
+          client_phone: originalBudget.client_phone,
+          client_email: originalBudget.client_email,
+          client_web: originalBudget.client_web,
+          client_address: originalBudget.client_address,
+          client_postal_code: originalBudget.client_postal_code,
+          client_locality: originalBudget.client_locality,
+          client_province: originalBudget.client_province,
+          client_acceptance: originalBudget.client_acceptance,
 
-        // Copiar totales y cálculos
-        total: originalBudget.total,
-        iva: originalBudget.iva,
-        base: originalBudget.base,
-        irpf: originalBudget.irpf,
-        irpf_percentage: originalBudget.irpf_percentage,
-        re_apply: originalBudget.re_apply,
-        re_total: originalBudget.re_total,
-        total_pay: originalBudget.total_pay,
+          // Copiar snapshots JSON (con client_name actualizado)
+          json_tariff_data: originalBudget.json_tariff_data,
+          json_budget_data: originalBudget.json_budget_data,
+          json_client_data: updatedJsonClientData,
 
-        // Copiar validez
-        validity_days: originalBudget.validity_days,
-        start_date: originalBudget.start_date,
-        end_date: originalBudget.end_date
+          // Copiar totales y cálculos
+          total: originalBudget.total,
+          iva: originalBudget.iva,
+          base: originalBudget.base,
+          irpf: originalBudget.irpf,
+          irpf_percentage: originalBudget.irpf_percentage,
+          re_apply: originalBudget.re_apply,
+          re_total: originalBudget.re_total,
+          total_pay: originalBudget.total_pay,
 
-        // created_at se establece automáticamente con la fecha actual
-      })
-      .select()
-      .single()
+          // Copiar validez
+          validity_days: originalBudget.validity_days,
+          start_date: originalBudget.start_date,
+          end_date: originalBudget.end_date
 
-    if (insertError || !newBudget) {
-      log.error('[duplicateBudgetCopy] Error creando copia:', insertError)
-      return { success: false, error: 'Error al duplicar presupuesto' }
+          // created_at se establece automáticamente con la fecha actual
+        })
+        .select()
+        .single()
+
+      if (insertedBudget && !insertError) {
+        // Éxito
+        newBudget = insertedBudget
+        insertSuccess = true
+        if (retryCount > 0) {
+          log.info('[duplicateBudgetCopy] INSERT exitoso tras race condition:', {
+            budget_number: currentBudgetNumber,
+            intentos: retryCount + 1
+          })
+        }
+      } else if (insertError) {
+        // Verificar si el error es por duplicate key (race condition)
+        const isDuplicateError = insertError.code === '23505' ||
+                                insertError.message?.includes('duplicate') ||
+                                insertError.message?.includes('unique')
+
+        if (isDuplicateError && retryCount < maxInsertRetries - 1) {
+          // Race condition detectada, generar nuevo número y reintentar
+          // Parsear el número actual para sumar 1 segundo
+          try {
+            const datePart = currentBudgetNumber.substring(0, 8)
+            const timePart = currentBudgetNumber.substring(9, 15)
+
+            const year = parseInt(datePart.substring(0, 4))
+            const month = parseInt(datePart.substring(4, 6)) - 1
+            const day = parseInt(datePart.substring(6, 8))
+            const hour = parseInt(timePart.substring(0, 2))
+            const minute = parseInt(timePart.substring(2, 4))
+            const second = parseInt(timePart.substring(4, 6))
+
+            const currentDate = new Date(year, month, day, hour, minute, second)
+            currentDate.setSeconds(currentDate.getSeconds() + 1)
+
+            const newYear = currentDate.getFullYear()
+            const newMonth = String(currentDate.getMonth() + 1).padStart(2, '0')
+            const newDay = String(currentDate.getDate()).padStart(2, '0')
+            const newHour = String(currentDate.getHours()).padStart(2, '0')
+            const newMinute = String(currentDate.getMinutes()).padStart(2, '0')
+            const newSecond = String(currentDate.getSeconds()).padStart(2, '0')
+
+            currentBudgetNumber = `${newYear}${newMonth}${newDay}-${newHour}${newMinute}${newSecond}`
+
+            log.warn('[duplicateBudgetCopy] Race condition detectada, reintentando:', {
+              intento: retryCount + 1,
+              nuevo_numero: currentBudgetNumber,
+              error: insertError.message
+            })
+          } catch (parseError) {
+            log.error('[duplicateBudgetCopy] Error parseando número para retry:', parseError)
+            return { success: false, error: 'Error al generar número único' }
+          }
+        } else {
+          // Error diferente o se agotaron los reintentos
+          log.error('[duplicateBudgetCopy] Error creando copia:', insertError)
+          return { success: false, error: isDuplicateError
+            ? 'No se pudo generar un número único después de ' + maxInsertRetries + ' intentos'
+            : 'Error al duplicar presupuesto' }
+        }
+      }
+    }
+
+    if (!insertSuccess || !newBudget) {
+      log.error('[duplicateBudgetCopy] Falló INSERT tras ' + maxInsertRetries + ' intentos')
+      return { success: false, error: 'Error al duplicar presupuesto después de múltiples intentos' }
     }
 
     log.info('[duplicateBudgetCopy] Presupuesto duplicado exitosamente:', newBudget.id)
