@@ -8,33 +8,11 @@ interface PageProps {
 }
 
 export default async function BudgetsPage({ searchParams }: PageProps) {
-  const { budget_id, tariff_id } = await searchParams
+  const { tariff_id } = await searchParams
   const budgets = await getBudgets()
 
-  // Filtrar por budget_id si se proporciona
-  let filteredBudgets = budgets
-  if (budget_id) {
-    // Encontrar el presupuesto específico y todos sus descendientes
-    const findBudgetAndChildren = (id: string, list: typeof budgets): typeof budgets => {
-      const budget = list.find(b => b.id === id)
-      if (!budget) return []
-
-      const result = [budget]
-
-      // Si tiene children, incluirlos recursivamente
-      if (budget.children && budget.children.length > 0) {
-        budget.children.forEach(child => {
-          result.push(...findBudgetAndChildren(child.id, list))
-        })
-      }
-
-      return result
-    }
-
-    filteredBudgets = findBudgetAndChildren(budget_id, budgets)
-  }
-
   // Filtrar por tariff_id si se proporciona
+  let filteredBudgets = budgets
   if (tariff_id) {
     filteredBudgets = filteredBudgets.filter(b => b.tariff_id === tariff_id)
   }
@@ -61,7 +39,7 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
         )}
 
         {/* Tabla de presupuestos */}
-        <BudgetsTable budgets={filteredBudgets} budgetId={budget_id} />
+        <BudgetsTable budgets={filteredBudgets} />
       </div>
     </div>
   )

@@ -46,7 +46,13 @@ export function TariffFilters({
 
   const handleStatusChange = (value: "Activa" | "Inactiva" | "all") => {
     setStatus(value);
-    onFiltersChange({ status: value, search, user_id: userId || undefined });
+    // Si el valor es "all", también limpiamos la búsqueda
+    if (value === "all") {
+      setSearch("");
+      onFiltersChange({ status: value, search: "", user_id: userId || undefined });
+    } else {
+      onFiltersChange({ status: value, search, user_id: userId || undefined });
+    }
   };
 
   const handleSearchChange = (value: string) => {
@@ -80,11 +86,11 @@ export function TariffFilters({
       {/* Botones de filtro de estado */}
       <div data-tour="filtro-estado-tarifas" className="flex gap-2">
         <Button
-          variant={status === "all" ? "default" : "outline"}
+          variant={status === "all" && search === "" ? "default" : "outline"}
           size="sm"
           onClick={() => handleStatusChange("all")}
           className={
-            status === "all"
+            status === "all" && search === ""
               ? "bg-lime-500 hover:bg-lime-600"
               : "border-lime-500 text-lime-600 hover:bg-lime-50"
           }

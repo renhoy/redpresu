@@ -70,7 +70,6 @@ import { BudgetCard } from "./BudgetCard";
 
 interface BudgetsTableProps {
   budgets: Budget[];
-  budgetId?: string;
 }
 
 const statusColors = {
@@ -82,12 +81,12 @@ const statusColors = {
   caducado: "bg-neutral-200 text-black",
 };
 
-export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
+export function BudgetsTable({ budgets }: BudgetsTableProps) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [expandedBudgets, setExpandedBudgets] = useState<Set<string>>(
-    new Set(budgetId ? [budgetId] : [])
+    new Set()
   );
   const [selectedBudgets, setSelectedBudgets] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
@@ -888,22 +887,6 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
         </div>
       </div>
 
-      {/* Filtro activo por budgetId */}
-      {budgetId && (
-        <div className="flex items-center gap-2">
-          <p className="text-sm text-muted-foreground">
-            Mostrando presupuesto específico
-          </p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.push("/budgets")}
-          >
-            Ver todos los presupuestos
-          </Button>
-        </div>
-      )}
-
       {/* Filtros */}
       <div id="filtros-presupuesto" className="flex gap-4 mb-4 flex-wrap items-center">
         <Input
@@ -916,11 +899,14 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
         {/* Botones de filtro de estado */}
         <div className="flex gap-2 flex-wrap">
           <Button
-            variant={statusFilter === "all" ? "default" : "outline"}
+            variant={statusFilter === "all" && search === "" ? "default" : "outline"}
             size="sm"
-            onClick={() => setStatusFilter("all")}
+            onClick={() => {
+              setStatusFilter("all");
+              setSearch("");
+            }}
             className={
-              statusFilter === "all"
+              statusFilter === "all" && search === ""
                 ? "bg-lime-500 hover:bg-lime-600"
                 : "border-lime-500 text-lime-600 hover:bg-lime-50"
             }
