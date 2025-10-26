@@ -294,7 +294,7 @@ export function DashboardClient({
                 {helpArticles.map((article) => (
                   <Link key={article.id} href={`/help/${article.id}`}>
                     <Button
-                      className="w-full h-16 flex items-center gap-2 justify-center bg-lime-600 hover:bg-lime-700 text-white hover:text-white"
+                      className="w-full h-16 flex items-center gap-2 justify-center bg-lime-500 hover:bg-lime-600 text-white hover:text-white"
                       variant="outline"
                     >
                       <BookOpen className="w-5 h-5" />
@@ -334,7 +334,7 @@ export function DashboardClient({
                     <Link
                       key={budget.id}
                       href={`/budgets/create?tariff_id=${budget.tariff_id}&budget_id=${budget.id}`}
-                      className="block p-3 rounded-lg border hover:bg-gray-50 transition-colors"
+                      className="block p-3 rounded-lg border bg-lime-50 hover:bg-lime-100 transition-colors"
                     >
                       <div className="flex justify-between items-start">
                         <div>

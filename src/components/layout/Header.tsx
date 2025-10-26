@@ -182,7 +182,11 @@ export function Header({
                   <Link
                     key={item.name}
                     href={item.href}
-                    className="px-3 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2 text-white bg-lime-500 hover:bg-lime-600"
+                    className={`px-3 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${
+                      isActive
+                        ? "bg-lime-50 text-black"
+                        : "text-white bg-lime-500 hover:bg-lime-600"
+                    }`}
                   >
                     <Icon className="w-4 h-4" />
                     {item.name}
@@ -195,9 +199,9 @@ export function Header({
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`px-3 py-2 text-sm font-medium transition-colors flex items-center gap-2 ${
+                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${
                     isActive
-                      ? "text-lime-700"
+                      ? "bg-lime-50 text-black"
                       : "text-gray-700 hover:text-lime-600"
                   }`}
                 >
@@ -218,6 +222,9 @@ export function Header({
                   const isTarifasButton = item.href === "/tariffs";
                   const isPresupuestosButton = item.href === "/budgets";
                   const isDisabled = isPresupuestosButton && !hasBudgets;
+                  const isActive =
+                    pathname === item.href ||
+                    (item.href !== "/dashboard" && pathname.startsWith(item.href));
 
                   // Si está deshabilitado, mostrar como span
                   if (isDisabled) {
@@ -243,7 +250,11 @@ export function Header({
                       <TooltipTrigger asChild>
                         <Link
                           href={item.href}
-                          className="px-3 py-2 rounded-md transition-colors flex items-center gap-2 bg-lime-500 text-white hover:bg-lime-600"
+                          className={`px-3 py-2 rounded-md transition-colors flex items-center gap-2 ${
+                            isActive
+                              ? "bg-lime-50 text-black"
+                              : "bg-lime-500 text-white hover:bg-lime-600"
+                          }`}
                         >
                           <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                           <span className="hidden sm:inline text-sm font-medium">
