@@ -86,66 +86,71 @@ export function BudgetCard({
       <Card className="w-full mb-3">
         <CardContent className="p-3">
         <div className="space-y-3">
-          {/* Fila 1: Nombre/Datos Cliente + Total */}
-          <div className="flex justify-between gap-3">
-            {/* Fila 1 Columna 1: Número + Nombre y datos cliente */}
-            <div className="flex-1 min-w-0 space-y-1">
-              {/* Fila 1: Número presupuesto */}
-              <div className="font-mono text-xs font-semibold text-primary">
+          {/* Fila 1: Número de presupuesto + Total */}
+          <div className="grid grid-cols-2 gap-4 items-start">
+            {/* Columna 1 Línea 1: Número de presupuesto */}
+            <div>
+              <span className="font-mono text-sm font-semibold text-primary">
                 {budget.budget_number}
-              </div>
-              {/* Fila 2: Nombre */}
-              <div className="font-semibold text-sm truncate">
-                {budget.client_name}
-              </div>
-              {/* Fila 3: (NIF) [tipo] [versión] */}
-              <div className="flex items-center gap-1.5 flex-wrap">
+              </span>
+            </div>
+
+            {/* Columna 2 Línea 1: Total sin label */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="text-right cursor-help">
+                  <div data-tour="columna-total" className="font-mono text-lg font-semibold">
+                    {formatCurrency(budget.total || 0)}
+                  </div>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="text-sm">
+                <div className="space-y-1">
+                  <div className="flex justify-between gap-4">
+                    <span className="text-muted-foreground">Base Imponible:</span>
+                    <span className="font-medium">
+                      {formatCurrency(budget.base || 0)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <span className="text-muted-foreground">IVA:</span>
+                    <span className="font-medium">
+                      {formatCurrency(budget.iva || 0)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between gap-4 border-t pt-1">
+                    <span className="font-semibold">Total:</span>
+                    <span className="font-semibold">
+                      {formatCurrency(budget.total || 0)}
+                    </span>
+                  </div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+
+          {/* Fila 2: Nombre cliente (NIF) Tipo + Estado */}
+          <div className="grid grid-cols-2 gap-4 items-start">
+            {/* Columna 1 Línea 2: Nombre cliente (NIF) Tipo */}
+            <div className="space-y-1">
+              <div className="font-medium text-sm">{budget.client_name}</div>
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs text-muted-foreground">
                   ({budget.client_nif_nie || "N/A"})
                 </span>
-                <Badge variant="secondary" className="text-xs flex-shrink-0">
+                <Badge variant="secondary" className="text-xs">
                   {budget.client_type}
                 </Badge>
                 {budget.parent_budget_id && (
-                  <Badge variant="outline" className="text-xs flex-shrink-0">
+                  <Badge variant="outline" className="text-xs">
                     v{budget.version_number}
                   </Badge>
                 )}
               </div>
             </div>
 
-            {/* Fila 1 Columna 2: Total e Importe */}
-            <div className="flex-shrink-0 text-right space-y-1">
-              {/* Fila 1: Total */}
-              <div className="text-xs text-muted-foreground">Total</div>
-              {/* Fila 2: Importe € */}
-              <div data-tour="columna-total" className="font-semibold text-base whitespace-nowrap">
-                {formatCurrency(budget.total || 0)}
-              </div>
-            </div>
-          </div>
-
-          {/* Fila 2: Fechas */}
-          <div className="flex justify-start gap-3">
-            {days && budget.start_date && budget.end_date && (
-              <div
-                className={`text-xs ${
-                  days.isExpiring
-                    ? "text-orange-600 font-medium"
-                    : "text-muted-foreground"
-                }`}
-              >
-                {formatDate(budget.start_date)} -{" "}
-                {formatDate(budget.end_date)} ({days.remaining}/{days.total}{" "}
-                días)
-              </div>
-            )}
-          </div>
-
-          {/* Fila 3: Estado + Usuario y Role */}
-          <div className="flex justify-between items-center gap-3 border-t pt-3">
-            {/* Estado */}
-            <div className="flex-shrink-0">
+            {/* Columna 2 Línea 2: Estado */}
+            <div className="flex items-center justify-end">
               <Select
                 value={budget.status}
                 onValueChange={(newStatus) =>
@@ -194,14 +199,31 @@ export function BudgetCard({
                 </SelectContent>
               </Select>
             </div>
+          </div>
 
-            {/* Usuario y Role */}
-            <div className="flex flex-col gap-0.5 text-right">
-              <span className="text-xs font-medium text-foreground">
-                {getUserName(budget)}
-              </span>
-              <span className="text-[10px] text-muted-foreground capitalize">
-                {getUserRole(budget)}
+          {/* Fila 3: Fecha y días restantes + Usuario y rol */}
+          <div className="grid grid-cols-2 gap-4 items-start">
+            {/* Columna 1 Línea 3: Fecha y días restantes */}
+            <div>
+              {days && budget.start_date && budget.end_date && (
+                <div
+                  className={`text-xs ${
+                    days.isExpiring
+                      ? "text-orange-600 font-medium"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  {formatDate(budget.start_date)} - {formatDate(budget.end_date)}{" "}
+                  ({days.remaining} de {days.total} días restantes)
+                </div>
+              )}
+            </div>
+
+            {/* Columna 2 Línea 3: Usuario y rol en la misma línea */}
+            <div className="text-right text-xs">
+              <span className="font-medium">{getUserName(budget)}</span>
+              <span className="text-muted-foreground capitalize">
+                {" "}({getUserRole(budget)})
               </span>
             </div>
           </div>

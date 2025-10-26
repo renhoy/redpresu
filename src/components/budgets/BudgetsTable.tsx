@@ -905,27 +905,101 @@ export function BudgetsTable({ budgets, budgetId }: BudgetsTableProps) {
       )}
 
       {/* Filtros */}
-      <div id="filtros-presupuesto" className="flex gap-4 items-center">
+      <div id="filtros-presupuesto" className="flex gap-4 mb-4 flex-wrap items-center">
         <Input
           placeholder="Buscar por número, cliente o NIF..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-xs bg-white"
         />
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="max-w-[200px] bg-white">
-            <SelectValue placeholder="Estado" />
-          </SelectTrigger>
-          <SelectContent className="bg-white">
-            <SelectItem value="all">Todos los estados</SelectItem>
-            <SelectItem value="borrador">Borrador</SelectItem>
-            <SelectItem value="pendiente">Pendiente</SelectItem>
-            <SelectItem value="enviado">Enviado</SelectItem>
-            <SelectItem value="aprobado">Aprobado</SelectItem>
-            <SelectItem value="rechazado">Rechazado</SelectItem>
-            <SelectItem value="caducado">Caducado</SelectItem>
-          </SelectContent>
-        </Select>
+
+        {/* Botones de filtro de estado */}
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            variant={statusFilter === "all" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter("all")}
+            className={
+              statusFilter === "all"
+                ? "bg-lime-500 hover:bg-lime-600"
+                : "border-lime-500 text-lime-600 hover:bg-lime-50"
+            }
+          >
+            Todos
+          </Button>
+          <Button
+            variant={statusFilter === "borrador" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter("borrador")}
+            className={
+              statusFilter === "borrador"
+                ? "bg-lime-500 hover:bg-lime-600"
+                : "border-lime-500 text-lime-600 hover:bg-lime-50"
+            }
+          >
+            Borradores
+          </Button>
+          <Button
+            variant={statusFilter === "pendiente" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter("pendiente")}
+            className={
+              statusFilter === "pendiente"
+                ? "bg-lime-500 hover:bg-lime-600"
+                : "border-lime-500 text-lime-600 hover:bg-lime-50"
+            }
+          >
+            Pendientes
+          </Button>
+          <Button
+            variant={statusFilter === "enviado" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter("enviado")}
+            className={
+              statusFilter === "enviado"
+                ? "bg-lime-500 hover:bg-lime-600"
+                : "border-lime-500 text-lime-600 hover:bg-lime-50"
+            }
+          >
+            Enviados
+          </Button>
+          <Button
+            variant={statusFilter === "aprobado" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter("aprobado")}
+            className={
+              statusFilter === "aprobado"
+                ? "bg-lime-500 hover:bg-lime-600"
+                : "border-lime-500 text-lime-600 hover:bg-lime-50"
+            }
+          >
+            Aprobados
+          </Button>
+          <Button
+            variant={statusFilter === "rechazado" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter("rechazado")}
+            className={
+              statusFilter === "rechazado"
+                ? "bg-lime-500 hover:bg-lime-600"
+                : "border-lime-500 text-lime-600 hover:bg-lime-50"
+            }
+          >
+            Rechazados
+          </Button>
+          <Button
+            variant={statusFilter === "caducado" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter("caducado")}
+            className={
+              statusFilter === "caducado"
+                ? "bg-lime-500 hover:bg-lime-600"
+                : "border-lime-500 text-lime-600 hover:bg-lime-50"
+            }
+          >
+            Caducados
+          </Button>
+        </div>
       </div>
 
       {/* Vista Desktop - Tabla */}
