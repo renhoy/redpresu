@@ -452,7 +452,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
     return (
       <React.Fragment key={budget.id}>
         <tr
-          className={`bg-white border-t hover:bg-lime-50/50 ${
+          className={`bg-white border-t hover:bg-lime-100/100 ${
             isChild ? "bg-lime-50/30" : ""
           }`}
         >
@@ -773,7 +773,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                           !!budget.pdf_url
                         )
                       }
-                      className="border-destructive text-destructive hover:bg-destructive/10"
+                      className="border-red-500 text-red-600 hover:bg-red-50"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -815,7 +815,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                     : "presupuestos-page";
                 startTour(tourId);
               }}
-              className="border-lime-500 text-lime-600 hover:bg-lime-50 h-8 px-3 gap-1.5"
+              className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white0 hover:text-white h-8 px-3 gap-1.5"
             >
               <Play className="h-3.5 w-3.5" />
               <span className="text-xs font-medium">Guía</span>
@@ -834,7 +834,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                   variant="outline"
                   disabled={!isSomeSelected || exporting}
                   onClick={handleExport}
-                  className="border-lime-500 text-lime-600 hover:bg-lime-50"
+                  className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
                 >
                   <Download className="mr-2 h-4 w-4" />
                   {isSomeSelected
@@ -864,7 +864,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
             <Button
               id="btn-importar-presupuesto"
               variant="outline"
-              className="border-lime-500 text-lime-600 hover:bg-lime-50"
+              className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
               onClick={() =>
                 document.getElementById("import-budget-file-input")?.click()
               }
@@ -909,7 +909,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
             className={
               statusFilter === "all" && search === ""
                 ? "bg-lime-500 hover:bg-lime-600"
-                : "border-lime-500 text-lime-600 hover:bg-lime-50"
+                : "border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
             }
           >
             Todos ({budgets.length})
@@ -922,7 +922,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
             className={
               statusFilter === "borrador"
                 ? "bg-lime-500 hover:bg-lime-600"
-                : "border-lime-500 text-lime-600 hover:bg-lime-50"
+                : "border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
             }
           >
             Borradores{statusCounts["borrador"] ? ` (${statusCounts["borrador"]})` : ""}
@@ -935,7 +935,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
             className={
               statusFilter === "pendiente"
                 ? "bg-lime-500 hover:bg-lime-600"
-                : "border-lime-500 text-lime-600 hover:bg-lime-50"
+                : "border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
             }
           >
             Pendientes{statusCounts["pendiente"] ? ` (${statusCounts["pendiente"]})` : ""}
@@ -948,7 +948,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
             className={
               statusFilter === "enviado"
                 ? "bg-lime-500 hover:bg-lime-600"
-                : "border-lime-500 text-lime-600 hover:bg-lime-50"
+                : "border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
             }
           >
             Enviados{statusCounts["enviado"] ? ` (${statusCounts["enviado"]})` : ""}
@@ -961,7 +961,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
             className={
               statusFilter === "aprobado"
                 ? "bg-lime-500 hover:bg-lime-600"
-                : "border-lime-500 text-lime-600 hover:bg-lime-50"
+                : "border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
             }
           >
             Aprobados{statusCounts["aprobado"] ? ` (${statusCounts["aprobado"]})` : ""}
@@ -974,7 +974,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
             className={
               statusFilter === "rechazado"
                 ? "bg-lime-500 hover:bg-lime-600"
-                : "border-lime-500 text-lime-600 hover:bg-lime-50"
+                : "border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
             }
           >
             Rechazados{statusCounts["rechazado"] ? ` (${statusCounts["rechazado"]})` : ""}
@@ -987,7 +987,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
             className={
               statusFilter === "caducado"
                 ? "bg-lime-500 hover:bg-lime-600"
-                : "border-lime-500 text-lime-600 hover:bg-lime-50"
+                : "border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
             }
           >
             Caducados{statusCounts["caducado"] ? ` (${statusCounts["caducado"]})` : ""}

@@ -263,7 +263,7 @@ export function TariffList({
                 const tourId = filteredTariffs.length === 0 ? "tarifas-page-vacia" : "tarifas-page";
                 startTour(tourId);
               }}
-              className="border-lime-500 text-lime-600 hover:bg-lime-50 h-8 px-3 gap-1.5"
+              className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white h-8 px-3 gap-1.5"
             >
               <Play className="h-3.5 w-3.5" />
               <span className="text-xs font-medium">Guía</span>
@@ -282,7 +282,7 @@ export function TariffList({
                   variant="outline"
                   disabled={!isSomeSelected || exporting}
                   onClick={handleExportClick}
-                  className="border-lime-500 text-lime-600 hover:bg-lime-50"
+                  className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
                 >
                   <Download className="mr-2 h-4 w-4" />
                   {isSomeSelected
@@ -366,7 +366,7 @@ export function TariffList({
               <Button
                 id="btn-importar-tarifa"
                 variant="outline"
-                className="border-lime-500 text-lime-600 hover:bg-lime-50"
+                className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
                 onClick={() =>
                   document.getElementById("import-file-input")?.click()
                 }

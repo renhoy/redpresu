@@ -348,7 +348,7 @@ export default function UserTable({
             className={
               statusFilter === "all" && search === ""
                 ? "bg-lime-500 hover:bg-lime-600"
-                : "border-lime-500 text-lime-600 hover:bg-lime-50"
+                : "border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
             }
           >
             Todos ({users.length})
@@ -361,7 +361,7 @@ export default function UserTable({
             className={
               statusFilter === "active"
                 ? "bg-lime-500 hover:bg-lime-600"
-                : "border-lime-500 text-lime-600 hover:bg-lime-50"
+                : "border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
             }
           >
             Activos{statusCounts["active"] ? ` (${statusCounts["active"]})` : ""}
@@ -374,7 +374,7 @@ export default function UserTable({
             className={
               statusFilter === "inactive"
                 ? "bg-lime-500 hover:bg-lime-600"
-                : "border-lime-500 text-lime-600 hover:bg-lime-50"
+                : "border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
             }
           >
             Inactivos{statusCounts["inactive"] ? ` (${statusCounts["inactive"]})` : ""}
@@ -411,7 +411,7 @@ export default function UserTable({
               filteredUsers.map((user) => (
                 <TableRow
                   key={user.id}
-                  className="bg-white border-t hover:bg-lime-50/50"
+                  className="bg-white border-t hover:bg-lime-100/100"
                 >
                   {/* Columna Email */}
                   <TableCell className="p-4">
@@ -438,7 +438,7 @@ export default function UserTable({
                                 size="sm"
                                 onClick={() => handleInviteUser(user)}
                                 disabled={isLoading}
-                                className="border-lime-500 text-lime-600 hover:bg-lime-50 ml-2"
+                                className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white ml-2"
                               >
                                 <Plus className="h-3 w-3 mr-1" />
                                 <Mail className="h-3 w-3" />

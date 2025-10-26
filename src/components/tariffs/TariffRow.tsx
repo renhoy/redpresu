@@ -175,7 +175,7 @@ export function TariffRow({
 
   return (
     <>
-      <TableRow className="bg-white border-t hover:bg-lime-50/50">
+      <TableRow className="bg-white border-t hover:bg-lime-100/100">
         {/* Checkbox */}
         <TableCell className="p-4 w-12">
           <Checkbox checked={selected} onCheckedChange={onSelectChange} />
@@ -209,7 +209,7 @@ export function TariffRow({
                     variant="outline"
                     size="sm"
                     asChild
-                    className="h-9 px-2 border-lime-500 text-lime-600 hover:bg-lime-50"
+                    className="h-9 px-2 border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
                   >
                     <Link
                       href={`/budgets/create?tariff_id=${tariff.id}`}
@@ -249,7 +249,7 @@ export function TariffRow({
                     variant="outline"
                     size="sm"
                     asChild
-                    className="h-9 px-2 border-lime-500 text-lime-600 hover:bg-lime-50"
+                    className="h-9 px-2 border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
                   >
                     <Link href={`/budgets?tariff_id=${tariff.id}`}>
                       <span className="font-medium">{tariff.budget_count}</span>
@@ -347,7 +347,7 @@ export function TariffRow({
                       className={
                         tariff.is_template
                           ? "bg-lime-500 hover:bg-lime-600"
-                          : "border-lime-500 text-lime-600 hover:bg-lime-50"
+                          : "border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
                       }
                     >
                       <Star
@@ -373,7 +373,7 @@ export function TariffRow({
                     variant="outline"
                     size="icon"
                     asChild
-                    className="border-lime-500 text-lime-600 hover:bg-lime-50"
+                    className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
                   >
                     <Link href={`/tariffs/edit/${tariff.id}`}>
                       <Pencil className="h-4 w-4" />
@@ -392,7 +392,7 @@ export function TariffRow({
                     size="icon"
                     onClick={handleDuplicate}
                     disabled={isDuplicating}
-                    className="border-lime-500 text-lime-600 hover:bg-lime-50"
+                    className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
                   >
                     <Copy className="h-4 w-4" />
                   </Button>
@@ -408,7 +408,7 @@ export function TariffRow({
                     variant="outline"
                     size="icon"
                     onClick={() => setShowDeleteDialog(true)}
-                    className="border-destructive text-destructive hover:bg-destructive/10"
+                    className="border-red-500 text-red-600 hover:bg-red-50"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

@@ -141,7 +141,7 @@ export default function CompanyTable({
             className={
               typeFilter === "all" && search === ""
                 ? "bg-lime-500 hover:bg-lime-600"
-                : "border-lime-500 text-lime-600 hover:bg-lime-50"
+                : "border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
             }
           >
             Todas ({companies.length})
@@ -154,7 +154,7 @@ export default function CompanyTable({
             className={
               typeFilter === "empresa"
                 ? "bg-lime-500 hover:bg-lime-600"
-                : "border-lime-500 text-lime-600 hover:bg-lime-50"
+                : "border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
             }
           >
             Empresas{typeCounts["empresa"] ? ` (${typeCounts["empresa"]})` : ""}
@@ -167,7 +167,7 @@ export default function CompanyTable({
             className={
               typeFilter === "autonomo"
                 ? "bg-lime-500 hover:bg-lime-600"
-                : "border-lime-500 text-lime-600 hover:bg-lime-50"
+                : "border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
             }
           >
             Autónomos{typeCounts["autonomo"] ? ` (${typeCounts["autonomo"]})` : ""}
