@@ -556,7 +556,13 @@ export default function UserTable({
                             {/* Botón Editar */}
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Button variant="outline" size="icon" asChild data-tour="btn-editar-usuario">
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  asChild
+                                  data-tour="btn-editar-usuario"
+                                  className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
+                                >
                                   <Link href={`/users/${user.id}/edit`}>
                                     <Pencil className="h-4 w-4" />
                                   </Link>

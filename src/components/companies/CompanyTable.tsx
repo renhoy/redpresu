@@ -321,7 +321,12 @@ export default function CompanyTable({
                         {/* Botón Editar */}
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon" asChild>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              asChild
+                              className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
+                            >
                               <Link href={`/companies/${company.uuid}/edit`}>
                                 <Pencil className="h-4 w-4" />
                               </Link>
@@ -346,7 +351,7 @@ export default function CompanyTable({
                               className={
                                 company.id === 1
                                   ? "opacity-50 cursor-not-allowed"
-                                  : "border-red-500 text-red-600 hover:bg-red-50"
+                                  : "border-red-500 text-red-600 hover:bg-red-500 hover:text-white"
                               }
                             >
                               <Trash2 className="h-4 w-4" />

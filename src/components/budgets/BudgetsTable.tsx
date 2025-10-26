@@ -547,6 +547,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                     variant="outline"
                     size="icon"
                     asChild
+                    className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
                   >
                     <Link href={`/tariffs?tariff_id=${budget.tariff_id}`}>
                       <Layers className="h-4 w-4" />
@@ -683,6 +684,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                               );
                             }
                           }}
+                          className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -703,6 +705,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                           size="icon"
                           onClick={() => handleGeneratePDF(budget.id)}
                           disabled={generatingPdf === budget.id}
+                          className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
                         >
                           <FilePlus className="h-4 w-4" />
                         </Button>
@@ -732,6 +735,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                           "_blank"
                         )
                       }
+                      className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -751,6 +755,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                         handleDuplicate(budget.id, budget.client_name)
                       }
                       disabled={duplicating === budget.id}
+                      className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
                     >
                       <Copy className="h-4 w-4" />
                     </Button>
@@ -773,7 +778,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                           !!budget.pdf_url
                         )
                       }
-                      className="border-red-500 text-red-600 hover:bg-red-50"
+                      className="border-red-500 text-red-600 hover:bg-red-500 hover:text-white"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
