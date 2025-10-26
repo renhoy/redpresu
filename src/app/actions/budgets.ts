@@ -1985,8 +1985,11 @@ export async function duplicateBudgetCopy(budgetId: string): Promise<{
       return { success: false, error: 'No tienes permisos para duplicar este presupuesto' }
     }
 
-    // Generar nuevo budget_number único sumando 1 segundo al original
+    // Generar nuevo budget_number único sumando segundos hasta encontrar uno disponible
     let newBudgetNumber: string
+    let secondsToAdd = 1
+    const maxAttempts = 100 // Máximo 100 intentos para evitar bucles infinitos
+
     try {
       // Parsear el budget_number original (formato: YYYYMMDD-HHMMSS)
       const originalNumber = originalBudget.budget_number
@@ -2003,26 +2006,60 @@ export async function duplicateBudgetCopy(budgetId: string): Promise<{
 
       const originalDate = new Date(year, month, day, hour, minute, second)
 
-      // Sumar 1 segundo
-      originalDate.setSeconds(originalDate.getSeconds() + 1)
+      // Intentar generar un budget_number único sumando segundos
+      let found = false
+      for (let attempt = 0; attempt < maxAttempts && !found; attempt++) {
+        // Sumar segundos incrementales
+        const newDate = new Date(originalDate)
+        newDate.setSeconds(newDate.getSeconds() + secondsToAdd)
 
-      // Formatear nuevo número: YYYYMMDD-HHMMSS
-      const newYear = originalDate.getFullYear()
-      const newMonth = String(originalDate.getMonth() + 1).padStart(2, '0')
-      const newDay = String(originalDate.getDate()).padStart(2, '0')
-      const newHour = String(originalDate.getHours()).padStart(2, '0')
-      const newMinute = String(originalDate.getMinutes()).padStart(2, '0')
-      const newSecond = String(originalDate.getSeconds()).padStart(2, '0')
+        // Formatear nuevo número: YYYYMMDD-HHMMSS
+        const newYear = newDate.getFullYear()
+        const newMonth = String(newDate.getMonth() + 1).padStart(2, '0')
+        const newDay = String(newDate.getDate()).padStart(2, '0')
+        const newHour = String(newDate.getHours()).padStart(2, '0')
+        const newMinute = String(newDate.getMinutes()).padStart(2, '0')
+        const newSecond = String(newDate.getSeconds()).padStart(2, '0')
 
-      newBudgetNumber = `${newYear}${newMonth}${newDay}-${newHour}${newMinute}${newSecond}`
+        const candidateNumber = `${newYear}${newMonth}${newDay}-${newHour}${newMinute}${newSecond}`
 
-      log.info('[duplicateBudgetCopy] Nuevo budget_number generado:', {
-        original: originalNumber,
-        nuevo: newBudgetNumber
-      })
+        // Verificar si el budget_number ya existe en la BD
+        const { data: existingBudget, error: checkError } = await supabaseAdmin
+          .from('redpresu_budgets')
+          .select('id')
+          .eq('budget_number', candidateNumber)
+          .maybeSingle()
+
+        if (checkError) {
+          log.error('[duplicateBudgetCopy] Error verificando budget_number:', checkError)
+          // En caso de error, continuar con el intento actual (puede ser seguro)
+        }
+
+        if (!existingBudget) {
+          // Budget number disponible, usar este
+          newBudgetNumber = candidateNumber
+          found = true
+          log.info('[duplicateBudgetCopy] Budget_number único encontrado:', {
+            original: originalNumber,
+            nuevo: newBudgetNumber,
+            intentos: attempt + 1,
+            segundos_sumados: secondsToAdd
+          })
+        } else {
+          // Ya existe, probar con +1 segundo más
+          secondsToAdd++
+          log.debug('[duplicateBudgetCopy] Budget_number ocupado, intentando +' + secondsToAdd + ' segundos')
+        }
+      }
+
+      if (!found) {
+        // Si no se encontró después de maxAttempts, usar timestamp actual como fallback
+        throw new Error('No se pudo generar budget_number único después de ' + maxAttempts + ' intentos')
+      }
+
     } catch (error) {
-      // Fallback: usar timestamp actual si falla el parsing
-      log.warn('[duplicateBudgetCopy] Error parseando budget_number, usando timestamp actual:', error)
+      // Fallback: usar timestamp actual si falla el parsing o no se encuentra número único
+      log.warn('[duplicateBudgetCopy] Error generando budget_number, usando timestamp actual:', error)
       const now = new Date()
       const year = now.getFullYear()
       const month = String(now.getMonth() + 1).padStart(2, '0')
@@ -2030,7 +2067,24 @@ export async function duplicateBudgetCopy(budgetId: string): Promise<{
       const hour = String(now.getHours()).padStart(2, '0')
       const minute = String(now.getMinutes()).padStart(2, '0')
       const second = String(now.getSeconds()).padStart(2, '0')
-      newBudgetNumber = `${year}${month}${day}-${hour}${minute}${second}`
+      const millisecond = String(now.getMilliseconds()).padStart(3, '0')
+      newBudgetNumber = `${year}${month}${day}-${hour}${minute}${second}${millisecond.substring(0, 1)}`
+    }
+
+    // Actualizar json_client_data con nombre modificado
+    let updatedJsonClientData = originalBudget.json_client_data
+    if (updatedJsonClientData && typeof updatedJsonClientData === 'object') {
+      try {
+        // Crear copia del objeto y modificar client_name
+        updatedJsonClientData = {
+          ...updatedJsonClientData,
+          client_name: `${originalBudget.client_name} (Copia)`
+        }
+      } catch (error) {
+        log.warn('[duplicateBudgetCopy] Error actualizando json_client_data:', error)
+        // Si falla, usar el original
+        updatedJsonClientData = originalBudget.json_client_data
+      }
     }
 
     // Crear copia del presupuesto como nuevo presupuesto independiente (no versión)
@@ -2052,9 +2106,9 @@ export async function duplicateBudgetCopy(budgetId: string): Promise<{
         status: BudgetStatus.BORRADOR,
         pdf_url: null,
 
-        // Copiar datos del cliente
+        // Copiar datos del cliente (añadir "Copia" al nombre)
         client_type: originalBudget.client_type,
-        client_name: originalBudget.client_name,
+        client_name: `${originalBudget.client_name} (Copia)`,
         client_nif_nie: originalBudget.client_nif_nie,
         client_phone: originalBudget.client_phone,
         client_email: originalBudget.client_email,
@@ -2065,10 +2119,10 @@ export async function duplicateBudgetCopy(budgetId: string): Promise<{
         client_province: originalBudget.client_province,
         client_acceptance: originalBudget.client_acceptance,
 
-        // Copiar snapshots JSON
+        // Copiar snapshots JSON (con client_name actualizado)
         json_tariff_data: originalBudget.json_tariff_data,
         json_budget_data: originalBudget.json_budget_data,
-        json_client_data: originalBudget.json_client_data,
+        json_client_data: updatedJsonClientData,
 
         // Copiar totales y cálculos
         total: originalBudget.total,
