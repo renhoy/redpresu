@@ -152,7 +152,7 @@ export function UserCard({
           </div>
 
           {/* Fila 3: Acciones */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:justify-end gap-1.5 w-full border-t pt-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 w-full border-t pt-3">
             {!canEdit ? (
               <span className="text-muted-foreground text-sm col-span-2 sm:col-span-3 text-center">
                 Sin permisos
@@ -167,7 +167,7 @@ export function UserCard({
                     variant="outline"
                     size="sm"
                     onClick={() => onInviteUser(user)}
-                    className="w-full lg:w-auto h-7 px-2 gap-1.5 text-xs border-lime-500 text-lime-600 hover:bg-lime-50"
+                    className="w-full h-7 px-2 gap-1.5 text-xs border-lime-500 text-lime-600 hover:bg-lime-50"
                   >
                     <Plus className="h-3.5 w-3.5 flex-shrink-0" />
                     <Mail className="h-3.5 w-3.5 flex-shrink-0" />
@@ -180,7 +180,7 @@ export function UserCard({
                   variant="outline"
                   size="sm"
                   asChild
-                  className="w-full lg:w-auto h-7 px-2 gap-1.5 text-xs"
+                  className="w-full h-7 px-2 gap-1.5 text-xs"
                 >
                   <Link href={`/users/${user.id}/edit`}>
                     <Pencil className="h-3.5 w-3.5 flex-shrink-0" />
@@ -194,7 +194,7 @@ export function UserCard({
                     variant="outline"
                     size="sm"
                     onClick={() => onDelete(user)}
-                    className="w-full lg:w-auto h-7 px-2 gap-1.5 text-xs border-destructive text-destructive hover:bg-destructive/10"
+                    className="w-full h-7 px-2 gap-1.5 text-xs border-destructive text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-3.5 w-3.5 flex-shrink-0" />
                     <span>Borrar</span>

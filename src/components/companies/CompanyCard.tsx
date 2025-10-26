@@ -72,7 +72,7 @@ export function CompanyCard({ company }: CompanyCardProps) {
         <CardContent className="p-4">
           {/* Fila 1: Grid 2 columnas */}
           <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-3 text-xs">
-            {/* Columna 1 */}
+            {/* Columna 1 - Alineada izquierda */}
             <div className="space-y-2">
               {/* Línea 1: Nombre + Badge */}
               <div className="flex items-center gap-2">
@@ -90,12 +90,12 @@ export function CompanyCard({ company }: CompanyCardProps) {
               <div className="text-muted-foreground">Creada el {formatDate(company.created_at)}</div>
             </div>
 
-            {/* Columna 2 */}
+            {/* Columna 2 - Alineada derecha */}
             <div className="space-y-2 text-right">
               {/* Línea 1: NIF/CIF */}
               <div className="font-mono">{company.nif}</div>
               {/* Línea 2: Tipo */}
-              <div>
+              <div className="flex justify-end">
                 <Badge
                   className={
                     tipoColors[company.type as keyof typeof tipoColors] ||
@@ -111,7 +111,7 @@ export function CompanyCard({ company }: CompanyCardProps) {
           {/* Fila 2: Teléfono y Email */}
           <div className="grid grid-cols-2 gap-x-4 mb-3 text-xs">
             <div>{company.phone}</div>
-            <div className="truncate">{company.email}</div>
+            <div className="text-right truncate">{company.email}</div>
           </div>
 
           {/* Stats */}
@@ -140,11 +140,11 @@ export function CompanyCard({ company }: CompanyCardProps) {
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="flex-1" asChild>
+          <div className="grid grid-cols-2 gap-1.5 w-full border-t pt-3">
+            <Button variant="outline" size="sm" className="w-full h-7 px-2 gap-1.5 text-xs" asChild>
               <Link href={`/companies/${company.uuid}/edit`}>
-                <Pencil className="h-3 w-3 mr-1" />
-                Editar
+                <Pencil className="h-3.5 w-3.5 flex-shrink-0" />
+                <span>Editar</span>
               </Link>
             </Button>
             <Button
@@ -154,12 +154,12 @@ export function CompanyCard({ company }: CompanyCardProps) {
               disabled={company.id === 1}
               className={
                 company.id === 1
-                  ? "border-destructive/50 text-destructive/50 cursor-not-allowed"
-                  : "border-destructive text-destructive hover:bg-destructive/10"
+                  ? "w-full h-7 px-2 gap-1.5 text-xs border-destructive/50 text-destructive/50 cursor-not-allowed"
+                  : "w-full h-7 px-2 gap-1.5 text-xs border-destructive text-destructive hover:bg-destructive/10"
               }
             >
-              <Trash2 className="h-3 w-3 mr-1" />
-              Borrar
+              <Trash2 className="h-3.5 w-3.5 flex-shrink-0" />
+              <span>Borrar</span>
             </Button>
           </div>
         </CardContent>

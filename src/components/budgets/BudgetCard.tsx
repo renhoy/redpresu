@@ -219,19 +219,17 @@ export function BudgetCard({
               )}
             </div>
 
-            {/* Columna 2 Línea 3: Usuario y rol en la misma línea */}
-            <div className="text-right text-xs">
+            {/* Columna 2 Línea 3: Usuario (rol) en la misma línea */}
+            <div className="text-right text-sm">
               <span className="font-medium">{getUserName(budget)}</span>
-              <span className="text-muted-foreground capitalize">
-                {" "}({getUserRole(budget)})
-              </span>
+              <span className="text-muted-foreground capitalize"> ({getUserRole(budget)})</span>
             </div>
           </div>
 
           {/* Fila 4: Botones de acción */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 lg:flex lg:justify-end gap-1.5 w-full">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 w-full border-t pt-3">
             {/* Notas */}
-            <BudgetNotesIcon budgetId={budget.id} variant="button" className="w-full lg:w-auto" />
+            <BudgetNotesIcon budgetId={budget.id} variant="button" className="w-full" />
 
             {/* Tarifa */}
             <Tooltip>
@@ -241,7 +239,7 @@ export function BudgetCard({
                   variant="outline"
                   size="sm"
                   onClick={() => window.open(`/tariffs?id=${budget.tariff_id}`, "_blank")}
-                  className="h-7 px-2 gap-1.5 text-xs w-full lg:w-auto"
+                  className="h-7 px-2 gap-1.5 text-xs w-full"
                 >
                   <Layers className="h-3.5 w-3.5 flex-shrink-0" />
                   <span>Tarifa</span>
@@ -268,7 +266,7 @@ export function BudgetCard({
                         toast.error(result.error || "Error obteniendo PDF");
                       }
                     }}
-                    className="h-7 px-2 gap-1.5 text-xs w-full lg:w-auto"
+                    className="h-7 px-2 gap-1.5 text-xs w-full"
                   >
                     <Eye className="h-3.5 w-3.5 flex-shrink-0" />
                     <span>Ver</span>
@@ -280,7 +278,7 @@ export function BudgetCard({
                     size="sm"
                     onClick={() => onGeneratePDF(budget.id)}
                     disabled={generatingPdf === budget.id}
-                    className="h-7 px-2 gap-1.5 text-xs w-full lg:w-auto"
+                    className="h-7 px-2 gap-1.5 text-xs w-full"
                   >
                     <FilePlus className="h-3.5 w-3.5 flex-shrink-0" />
                     <span>PDF</span>
@@ -300,7 +298,7 @@ export function BudgetCard({
                   "_blank"
                 )
               }
-              className="h-7 px-2 gap-1.5 text-xs w-full lg:w-auto"
+              className="h-7 px-2 gap-1.5 text-xs w-full"
             >
               <Pencil className="h-3.5 w-3.5 flex-shrink-0" />
               <span>Editar</span>
@@ -313,7 +311,7 @@ export function BudgetCard({
               size="sm"
               onClick={() => onDuplicate(budget.id, budget.client_name)}
               disabled={duplicating === budget.id}
-              className="h-7 px-2 gap-1.5 text-xs w-full lg:w-auto"
+              className="h-7 px-2 gap-1.5 text-xs w-full"
             >
               <Copy className="h-3.5 w-3.5 flex-shrink-0" />
               <span>Duplicar</span>
@@ -325,7 +323,7 @@ export function BudgetCard({
               variant="outline"
               size="sm"
               onClick={() => onDelete(budget.id, budget.client_name, !!budget.pdf_url)}
-              className="h-7 px-2 gap-1.5 text-xs border-destructive text-destructive hover:bg-destructive/10 w-full lg:w-auto"
+              className="h-7 px-2 gap-1.5 text-xs border-destructive text-destructive hover:bg-destructive/10 w-full"
             >
               <Trash2 className="h-3.5 w-3.5 flex-shrink-0" />
               <span>Borrar</span>
