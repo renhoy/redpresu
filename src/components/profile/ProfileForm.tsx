@@ -3,6 +3,7 @@
 import { useState } from "react";
 import {
   updateUserProfile,
+  updateUserProfileById,
   type UserProfile,
   type UpdateProfileData,
 } from "@/app/actions/auth";
@@ -32,6 +33,7 @@ import { startTour } from "@/lib/helpers/tour-helpers";
 
 interface ProfileFormProps {
   profile: UserProfile;
+  userId?: string; // Si está presente, se está editando otro usuario (admin/superadmin)
 }
 
 interface ProfileFormData {
@@ -71,7 +73,8 @@ interface ProfileFormErrors {
   general?: string;
 }
 
-export default function ProfileForm({ profile }: ProfileFormProps) {
+export default function ProfileForm({ profile, userId }: ProfileFormProps) {
+  const isEditingOtherUser = !!userId; // true si admin está editando otro usuario
   const [formData, setFormData] = useState<ProfileFormData>({
     // Pre-cargar datos del emisor
     nombre_comercial: profile.emisor?.nombre_comercial || "",
@@ -148,7 +151,8 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
       formData.confirmPassword;
 
     if (hasPasswordChange) {
-      if (!formData.currentPassword) {
+      // Si es admin editando otro usuario, NO necesita currentPassword
+      if (!isEditingOtherUser && !formData.currentPassword) {
         newErrors.currentPassword = "Debes ingresar tu contraseña actual";
       }
 
@@ -203,12 +207,18 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
       };
 
       // Incluir cambio de contraseña si se proporcionó
-      if (formData.currentPassword && formData.newPassword) {
-        updateData.currentPassword = formData.currentPassword;
+      if (formData.newPassword) {
+        // Si es admin editando otro usuario, NO necesita currentPassword
+        if (!isEditingOtherUser && formData.currentPassword) {
+          updateData.currentPassword = formData.currentPassword;
+        }
         updateData.newPassword = formData.newPassword;
       }
 
-      const result = await updateUserProfile(updateData);
+      // Usar la action adecuada según si se está editando otro usuario o no
+      const result = isEditingOtherUser
+        ? await updateUserProfileById(userId, updateData)
+        : await updateUserProfile(updateData);
 
       if (!result.success) {
         setErrors({
@@ -679,23 +689,26 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
             </Button>
           ) : (
             <>
-              <div className="space-y-2">
-                <Label htmlFor="currentPassword">Contraseña Actual</Label>
-                <Input
-                  id="currentPassword"
-                  type="password"
-                  value={formData.currentPassword}
-                  onChange={handleInputChange("currentPassword")}
-                  className={errors.currentPassword ? "border-red-500" : ""}
-                  disabled={isLoading}
-                  autoComplete="current-password"
-                />
-                {errors.currentPassword && (
-                  <p className="text-sm text-red-600">
-                    {errors.currentPassword}
-                  </p>
-                )}
-              </div>
+              {/* Campo contraseña actual solo si NO se está editando otro usuario */}
+              {!isEditingOtherUser && (
+                <div className="space-y-2">
+                  <Label htmlFor="currentPassword">Contraseña Actual</Label>
+                  <Input
+                    id="currentPassword"
+                    type="password"
+                    value={formData.currentPassword}
+                    onChange={handleInputChange("currentPassword")}
+                    className={errors.currentPassword ? "border-red-500" : ""}
+                    disabled={isLoading}
+                    autoComplete="current-password"
+                  />
+                  {errors.currentPassword && (
+                    <p className="text-sm text-red-600">
+                      {errors.currentPassword}
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">

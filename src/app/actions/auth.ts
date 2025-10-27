@@ -1016,3 +1016,312 @@ export async function getIssuers(): Promise<{
     }
   }
 }
+
+/**
+ * Server Action para obtener el perfil de otro usuario (solo superadmin/admin)
+ *
+ * @param userId - ID del usuario cuyo perfil se quiere obtener
+ * @returns ProfileResult con el perfil del usuario o error
+ */
+export async function getUserProfileById(userId: string): Promise<ProfileResult> {
+  try {
+    log.info('[getUserProfileById] Iniciando...', { userId })
+
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+    // Obtener usuario autenticado
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      log.error('[getUserProfileById] No autenticado:', authError)
+      return {
+        success: false,
+        error: 'No estás autenticado'
+      }
+    }
+
+    // Obtener datos del usuario autenticado
+    const { data: currentUserData, error: currentUserError } = await supabase
+      .from('redpresu_users')
+      .select('role, company_id')
+      .eq('id', user.id)
+      .single()
+
+    if (currentUserError || !currentUserData) {
+      log.error('[getUserProfileById] Error al obtener usuario actual:', currentUserError)
+      return {
+        success: false,
+        error: 'Error al verificar permisos'
+      }
+    }
+
+    // Obtener datos del usuario a editar
+    const { data: targetUserData, error: targetUserError } = await supabase
+      .from('redpresu_users')
+      .select('*')
+      .eq('id', userId)
+      .single()
+
+    if (targetUserError || !targetUserData) {
+      log.error('[getUserProfileById] Error al obtener usuario:', targetUserError)
+      return {
+        success: false,
+        error: 'Usuario no encontrado'
+      }
+    }
+
+    // Verificar permisos:
+    // - Superadmin puede editar cualquier usuario
+    // - Admin solo puede editar usuarios de su empresa
+    // - Comercial no tiene acceso (verificado en UI pero también aquí)
+    if (currentUserData.role === 'comercial') {
+      return {
+        success: false,
+        error: 'No tienes permisos para acceder a esta funcionalidad'
+      }
+    }
+
+    if (
+      currentUserData.role === 'admin' &&
+      targetUserData.company_id !== currentUserData.company_id
+    ) {
+      return {
+        success: false,
+        error: 'No tienes permisos para editar usuarios de otra empresa'
+      }
+    }
+
+    // Obtener datos del issuer usando supabaseAdmin para bypass RLS
+    const { data: issuerData, error: issuerError } = await supabaseAdmin
+      .from('redpresu_issuers')
+      .select('*')
+      .eq('user_id', userId)
+      .single()
+
+    if (issuerError) {
+      log.info('[getUserProfileById] No se encontró issuer para el usuario')
+    }
+
+    const profile: UserProfile = {
+      ...targetUserData,
+      emisor: issuerData ? {
+        id: issuerData.id,
+        tipo: issuerData.type,
+        nombre_comercial: issuerData.name,
+        nif: issuerData.nif,
+        direccion_fiscal: issuerData.address,
+        codigo_postal: issuerData.postal_code,
+        ciudad: issuerData.locality,
+        provincia: issuerData.province,
+        pais: issuerData.country,
+        telefono: issuerData.phone,
+        email: issuerData.email,
+        web: issuerData.web,
+        irpf_percentage: issuerData.irpf_percentage,
+        created_at: issuerData.created_at,
+        updated_at: issuerData.updated_at
+      } : null
+    }
+
+    log.info('[getUserProfileById] Perfil obtenido exitosamente')
+
+    return {
+      success: true,
+      data: profile
+    }
+  } catch (error) {
+    log.error('[getUserProfileById] Error crítico:', error)
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error inesperado al obtener perfil'
+    }
+  }
+}
+
+/**
+ * Server Action para actualizar el perfil de otro usuario (solo superadmin/admin)
+ *
+ * @param userId - ID del usuario a actualizar
+ * @param data - Datos a actualizar (emisor y/o contraseña)
+ * @returns ProfileResult indicando éxito o error
+ */
+export async function updateUserProfileById(
+  userId: string,
+  data: UpdateProfileData
+): Promise<ProfileResult> {
+  try {
+    log.info('[updateUserProfileById] Iniciando...', {
+      userId,
+      hasPasswordChange: !!data.newPassword
+    })
+
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+    // Obtener usuario autenticado
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      log.error('[updateUserProfileById] No autenticado:', authError)
+      return {
+        success: false,
+        error: 'No estás autenticado'
+      }
+    }
+
+    // Obtener datos del usuario autenticado
+    const { data: currentUserData, error: currentUserError } = await supabase
+      .from('redpresu_users')
+      .select('role, company_id')
+      .eq('id', user.id)
+      .single()
+
+    if (currentUserError || !currentUserData) {
+      log.error('[updateUserProfileById] Error al obtener usuario actual:', currentUserError)
+      return {
+        success: false,
+        error: 'Error al verificar permisos'
+      }
+    }
+
+    // Obtener datos del usuario a editar
+    const { data: targetUserData, error: targetUserError } = await supabase
+      .from('redpresu_users')
+      .select('email, company_id')
+      .eq('id', userId)
+      .single()
+
+    if (targetUserError || !targetUserData) {
+      log.error('[updateUserProfileById] Error al obtener usuario:', targetUserError)
+      return {
+        success: false,
+        error: 'Usuario no encontrado'
+      }
+    }
+
+    // Verificar permisos
+    if (currentUserData.role === 'comercial') {
+      return {
+        success: false,
+        error: 'No tienes permisos para modificar perfiles de otros usuarios'
+      }
+    }
+
+    if (
+      currentUserData.role === 'admin' &&
+      targetUserData.company_id !== currentUserData.company_id
+    ) {
+      return {
+        success: false,
+        error: 'No tienes permisos para editar usuarios de otra empresa'
+      }
+    }
+
+    // Si hay cambio de contraseña, usar supabaseAdmin para actualizar
+    if (data.newPassword) {
+      log.info('[updateUserProfileById] Cambiando contraseña...')
+
+      // Validar contraseña nueva
+      if (data.newPassword.length < 8) {
+        return {
+          success: false,
+          error: 'La nueva contraseña debe tener al menos 8 caracteres'
+        }
+      }
+
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/
+      if (!passwordRegex.test(data.newPassword)) {
+        return {
+          success: false,
+          error: 'La contraseña debe contener al menos una mayúscula, una minúscula y un número'
+        }
+      }
+
+      // Actualizar contraseña usando supabaseAdmin (admin bypass)
+      const { error: updatePasswordError } = await supabaseAdmin.auth.admin.updateUserById(
+        userId,
+        { password: data.newPassword }
+      )
+
+      if (updatePasswordError) {
+        log.error('[updateUserProfileById] Error al actualizar contraseña:', updatePasswordError)
+        return {
+          success: false,
+          error: 'Error al actualizar la contraseña'
+        }
+      }
+
+      log.info('[updateUserProfileById] Contraseña actualizada exitosamente')
+    }
+
+    // Actualizar datos del emisor si se proporcionaron
+    const hasEmisorData = data.nombre_comercial || data.nif || data.direccion_fiscal ||
+                          data.codigo_postal || data.ciudad || data.provincia ||
+                          data.telefono || data.emailContacto || data.web ||
+                          data.irpf_percentage !== undefined
+
+    if (hasEmisorData) {
+      log.info('[updateUserProfileById] Actualizando datos emisor...')
+
+      // Construir objeto de actualización solo con campos proporcionados
+      const updateData: any = {}
+
+      if (data.nombre_comercial) updateData.name = data.nombre_comercial.trim()
+      if (data.nif) updateData.nif = data.nif.trim().toUpperCase()
+      if (data.direccion_fiscal) updateData.address = data.direccion_fiscal.trim()
+      if (data.codigo_postal !== undefined) updateData.postal_code = data.codigo_postal?.trim() || null
+      if (data.ciudad !== undefined) updateData.locality = data.ciudad?.trim() || null
+      if (data.provincia !== undefined) updateData.province = data.provincia?.trim() || null
+      if (data.pais !== undefined) updateData.country = data.pais?.trim() || null
+      if (data.telefono !== undefined) updateData.phone = data.telefono?.trim() || null
+      if (data.emailContacto !== undefined) updateData.email = data.emailContacto?.trim() || null
+      if (data.web !== undefined) updateData.web = data.web?.trim() || null
+      if (data.irpf_percentage !== undefined) updateData.irpf_percentage = data.irpf_percentage
+
+      // Añadir updated_at
+      updateData.updated_at = new Date().toISOString()
+
+      // Actualizar issuer usando supabaseAdmin para bypass RLS
+      const { error: issuerError } = await supabaseAdmin
+        .from('redpresu_issuers')
+        .update(updateData)
+        .eq('user_id', userId)
+
+      if (issuerError) {
+        log.error('[updateUserProfileById] Error al actualizar issuer:', issuerError)
+        return {
+          success: false,
+          error: 'Error al actualizar los datos del emisor'
+        }
+      }
+
+      log.info('[updateUserProfileById] Datos issuer actualizados exitosamente')
+    }
+
+    // Obtener perfil actualizado
+    const profileResult = await getUserProfileById(userId)
+
+    if (!profileResult.success) {
+      return {
+        success: false,
+        error: 'Error al obtener el perfil actualizado'
+      }
+    }
+
+    log.info('[updateUserProfileById] Perfil actualizado exitosamente')
+
+    return {
+      success: true,
+      data: profileResult.data
+    }
+  } catch (error) {
+    log.error('[updateUserProfileById] Error crítico:', error)
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error inesperado al actualizar perfil'
+    }
+  }
+}
