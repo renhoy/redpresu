@@ -586,7 +586,7 @@ export default function UserTable({
                                       setReassignUserId("");
                                       setIsDeleteDialogOpen(true);
                                     }}
-                                    className="border-red-500 text-red-600 hover:bg-red-50"
+                                    className="border-red-500 text-red-600 hover:bg-red-500 hover:text-white"
                                   >
                                     <Trash2 className="h-4 w-4" />
                                   </Button>

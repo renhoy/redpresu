@@ -87,7 +87,7 @@ export function BudgetNotesIcon({ budgetId, initialCount = 0, className = '', va
                 <Button
                   variant="outline"
                   size={variant === 'icon' ? 'icon' : 'sm'}
-                  className={variant === 'icon' ? `relative h-9 w-9 ${className}` : `relative h-7 px-2 gap-1.5 text-xs ${className}`}
+                  className={variant === 'icon' ? `relative h-9 w-9 border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white ${className}` : `relative h-7 px-2 gap-1.5 text-xs border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white ${className}`}
                   onClick={(e) => {
                     console.log('[BudgetNotesIcon] Button clicked')
                     e.stopPropagation()
