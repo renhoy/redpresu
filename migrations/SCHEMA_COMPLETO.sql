@@ -105,14 +105,14 @@ BEGIN
   -- Si se está marcando como plantilla (is_template = true)
   IF NEW.is_template = true THEN
     -- Desmarcar todas las demás plantillas de la misma empresa
-    UPDATE public.tariffs
+    UPDATE public.redpresu_tariffs
     SET is_template = false
-    WHERE empresa_id = NEW.empresa_id
+    WHERE company_id = NEW.company_id
       AND id != NEW.id
       AND is_template = true;
 
     -- Log para debugging
-    RAISE NOTICE 'Plantilla establecida: tariff_id=%, empresa_id=%', NEW.id, NEW.empresa_id;
+    RAISE NOTICE 'Plantilla establecida: tariff_id=%, company_id=%', NEW.id, NEW.company_id;
   END IF;
 
   RETURN NEW;
@@ -755,6 +755,7 @@ CREATE TABLE public.redpresu_budgets (
     version_number integer DEFAULT 1,
     re_apply boolean DEFAULT false NOT NULL,
     re_total numeric(10,2) DEFAULT 0.00 NOT NULL,
+    budget_number character varying(100) NOT NULL,
     CONSTRAINT budgets_client_type_check CHECK ((client_type = ANY (ARRAY['particular'::text, 'autonomo'::text, 'empresa'::text]))),
     CONSTRAINT budgets_status_check CHECK ((status = ANY (ARRAY['borrador'::text, 'pendiente'::text, 'enviado'::text, 'aprobado'::text, 'rechazado'::text, 'caducado'::text]))),
     CONSTRAINT chk_budgets_irpf CHECK ((irpf >= (0)::numeric)),
@@ -1001,6 +1002,13 @@ COMMENT ON COLUMN public.redpresu_budgets.re_apply IS 'Indica si se aplica Recar
 --
 
 COMMENT ON COLUMN public.redpresu_budgets.re_total IS 'Importe total del Recargo de Equivalencia aplicado';
+
+
+--
+-- Name: COLUMN redpresu_budgets.budget_number; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_budgets.budget_number IS 'Número único del presupuesto (alfanumérico, editable). Formato por defecto: YYYYMMDD-HHMMSS. Único dentro de cada empresa (no global).';
 
 
 --
@@ -1343,7 +1351,7 @@ CREATE TABLE public.redpresu_users (
     invited_by uuid,
     last_login timestamp with time zone,
     last_name text,
-    CONSTRAINT users_role_check CHECK ((role = ANY (ARRAY['superadmin'::text, 'admin'::text, 'vendedor'::text]))),
+    CONSTRAINT users_role_check CHECK ((role = ANY (ARRAY['superadmin'::text, 'admin'::text, 'comercial'::text]))),
     CONSTRAINT users_status_check CHECK ((status = ANY (ARRAY['active'::text, 'inactive'::text, 'pending'::text])))
 );
 
@@ -1598,6 +1606,13 @@ CREATE INDEX idx_budgets_created_at ON public.redpresu_budgets USING btree (crea
 --
 
 CREATE INDEX idx_budgets_empresa_id ON public.redpresu_budgets USING btree (company_id);
+
+
+--
+-- Name: idx_budgets_number_unique_by_company; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_budgets_number_unique_by_company ON public.redpresu_budgets USING btree (company_id, budget_number);
 
 
 --

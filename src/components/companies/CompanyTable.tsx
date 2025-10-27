@@ -110,7 +110,9 @@ export default function CompanyTable({
 
     const result = await duplicateCompany(company.uuid);
 
-    if (result.success) {
+    if (result.success && result.data) {
+      // Actualizar lista local inmediatamente (optimistic update)
+      setCompanies((prev) => [...prev, result.data as Company]);
       toast.success(`Empresa "${company.name}" duplicada exitosamente`);
       router.refresh();
     } else {

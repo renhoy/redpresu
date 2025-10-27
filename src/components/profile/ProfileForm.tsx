@@ -341,7 +341,9 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => window.location.href = `/users/${profile.id}/edit`}
+              onClick={() =>
+                (window.location.href = `/users/${profile.id}/edit`)
+              }
               className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
             >
               Editar usuario
@@ -394,7 +396,8 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Building2 className="h-5 w-5" />
-              Datos de {profile.emisor.tipo === "autonomo" ? "Autónomo" : "Empresa"}
+              Datos de{" "}
+              {profile.emisor.tipo === "autonomo" ? "Autónomo" : "Empresa"}
             </CardTitle>
             <CardDescription>
               Información fiscal que aparecerá en tus presupuestos
@@ -414,11 +417,15 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
                       id="nombre_comercial"
                       value={formData.nombre_comercial}
                       onChange={handleInputChange("nombre_comercial")}
-                      className={errors.nombre_comercial ? "border-red-500" : ""}
+                      className={
+                        errors.nombre_comercial ? "border-red-500" : ""
+                      }
                       disabled={isLoading}
                     />
                     {errors.nombre_comercial && (
-                      <p className="text-sm text-red-600">{errors.nombre_comercial}</p>
+                      <p className="text-sm text-red-600">
+                        {errors.nombre_comercial}
+                      </p>
                     )}
                   </div>
 
@@ -452,11 +459,15 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
                       id="nombre_comercial"
                       value={formData.nombre_comercial}
                       onChange={handleInputChange("nombre_comercial")}
-                      className={errors.nombre_comercial ? "border-red-500" : ""}
+                      className={
+                        errors.nombre_comercial ? "border-red-500" : ""
+                      }
                       disabled={isLoading}
                     />
                     {errors.nombre_comercial && (
-                      <p className="text-sm text-red-600">{errors.nombre_comercial}</p>
+                      <p className="text-sm text-red-600">
+                        {errors.nombre_comercial}
+                      </p>
                     )}
                   </div>
 
@@ -488,7 +499,9 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
                       disabled={isLoading}
                     />
                     {errors.irpf_percentage && (
-                      <p className="text-sm text-red-600">{errors.irpf_percentage}</p>
+                      <p className="text-sm text-red-600">
+                        {errors.irpf_percentage}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -502,11 +515,15 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
                       id="nombre_comercial"
                       value={formData.nombre_comercial}
                       onChange={handleInputChange("nombre_comercial")}
-                      className={errors.nombre_comercial ? "border-red-500" : ""}
+                      className={
+                        errors.nombre_comercial ? "border-red-500" : ""
+                      }
                       disabled={isLoading}
                     />
                     {errors.nombre_comercial && (
-                      <p className="text-sm text-red-600">{errors.nombre_comercial}</p>
+                      <p className="text-sm text-red-600">
+                        {errors.nombre_comercial}
+                      </p>
                     )}
                   </div>
 
@@ -537,11 +554,15 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
                         step="0.01"
                         value={formData.irpf_percentage ?? ""}
                         onChange={handleInputChange("irpf_percentage")}
-                        className={errors.irpf_percentage ? "border-red-500" : ""}
+                        className={
+                          errors.irpf_percentage ? "border-red-500" : ""
+                        }
                         disabled={isLoading}
                       />
                       {errors.irpf_percentage && (
-                        <p className="text-sm text-red-600">{errors.irpf_percentage}</p>
+                        <p className="text-sm text-red-600">
+                          {errors.irpf_percentage}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -562,7 +583,9 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
                   disabled={isLoading}
                 />
                 {errors.direccion_fiscal && (
-                  <p className="text-sm text-red-600">{errors.direccion_fiscal}</p>
+                  <p className="text-sm text-red-600">
+                    {errors.direccion_fiscal}
+                  </p>
                 )}
               </div>
 
@@ -769,9 +792,9 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
                 confirmPassword: undefined,
               }));
             }}
-            className="border-gray-300 text-gray-700 hover:bg-gray-50"
+            className="border-lime-500 hover:bg-lime-500 hover:text-white"
           >
-            Cancelar Cambio de Contraseña
+            Cancelar
           </Button>
         )}
 

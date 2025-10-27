@@ -1002,12 +1002,23 @@ export async function duplicateCompany(sourceCompanyUuid: string): Promise<Actio
 
     revalidatePath("/companies");
 
+    // Retornar objeto completo para actualizar UI sin recargar
     return {
       success: true,
       data: {
         id: newCompany.id,
         uuid: newIssuer.id,
         name: newIssuer.name,
+        type: newIssuer.type,
+        nif: newIssuer.nif,
+        address: newIssuer.address,
+        email: newIssuer.email,
+        phone: newIssuer.phone,
+        created_at: newIssuer.created_at,
+        // Nueva empresa sin datos aún
+        user_count: 0,
+        tariff_count: 0,
+        budget_count: 0,
       },
     };
   } catch (error) {
