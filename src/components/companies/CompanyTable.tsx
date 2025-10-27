@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Company, deleteCompany, duplicateCompany } from "@/app/actions/companies";
+import { Company, deleteCompany, duplicateCompany, permanentDeleteCompany } from "@/app/actions/companies";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -39,6 +39,7 @@ import {
   Trash2,
   Users,
   Copy,
+  XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -53,6 +54,7 @@ export default function CompanyTable({
   const [companies, setCompanies] = useState(initialCompanies);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isPermanentDeleteDialogOpen, setIsPermanentDeleteDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -120,6 +122,31 @@ export default function CompanyTable({
     }
 
     setIsDuplicating(null);
+  };
+
+  const handlePermanentDelete = async () => {
+    if (!selectedCompany || !selectedCompany.uuid) return;
+
+    setIsLoading(true);
+
+    const result = await permanentDeleteCompany(selectedCompany.uuid);
+
+    if (result.success) {
+      toast.success(
+        `Empresa "${selectedCompany.name}" eliminada definitivamente`
+      );
+
+      // Remover de lista local
+      setCompanies((prev) => prev.filter((c) => c.id !== selectedCompany.id));
+
+      router.refresh();
+    } else {
+      toast.error(result.error || "Error al eliminar empresa definitivamente");
+    }
+
+    setIsLoading(false);
+    setIsPermanentDeleteDialogOpen(false);
+    setSelectedCompany(null);
   };
 
   const getTipoLabel = (type: string) => {
@@ -245,6 +272,11 @@ export default function CompanyTable({
                               Por defecto
                             </Badge>
                           )}
+                          {company.deleted_at && (
+                            <Badge className="bg-red-100 text-red-800 text-[10px] px-1.5 py-0">
+                              Eliminada
+                            </Badge>
+                          )}
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {company.address}
@@ -339,71 +371,107 @@ export default function CompanyTable({
                   <TableCell className="p-4">
                     <TooltipProvider>
                       <div className="flex justify-end gap-2">
-                        {/* Botón Editar */}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              asChild
-                              className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
-                            >
-                              <Link href={`/companies/${company.uuid}/edit`}>
-                                <Pencil className="h-4 w-4" />
-                              </Link>
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Editar</p>
-                          </TooltipContent>
-                        </Tooltip>
+                        {/* Botón Editar - Solo para empresas activas */}
+                        {!company.deleted_at && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                asChild
+                                className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
+                              >
+                                <Link href={`/companies/${company.uuid}/edit`}>
+                                  <Pencil className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Editar</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
 
-                        {/* Botón Duplicar - Solo superadmin */}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => handleDuplicate(company)}
-                              disabled={isDuplicating === company.uuid}
-                              className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
-                            >
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Duplicar empresa</p>
-                          </TooltipContent>
-                        </Tooltip>
+                        {/* Botón Duplicar - Solo para empresas activas */}
+                        {!company.deleted_at && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => handleDuplicate(company)}
+                                disabled={isDuplicating === company.uuid}
+                                className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Duplicar empresa</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
 
-                        {/* Botón Eliminar */}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => {
-                                setSelectedCompany(company);
-                                setIsDeleteDialogOpen(true);
-                              }}
-                              disabled={company.id === 1}
-                              className={
-                                company.id === 1
-                                  ? "opacity-50 cursor-not-allowed"
-                                  : "border-red-500 text-red-600 hover:bg-red-500 hover:text-white"
-                              }
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>
-                              {company.id === 1
-                                ? "Empresa por defecto - No se puede eliminar"
-                                : "Eliminar"}
-                            </p>
-                          </TooltipContent>
-                        </Tooltip>
+                        {/* Botón Eliminar / Eliminar Definitivamente */}
+                        {!company.deleted_at ? (
+                          // Empresa activa: Botón Eliminar (soft delete)
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => {
+                                  setSelectedCompany(company);
+                                  setIsDeleteDialogOpen(true);
+                                }}
+                                disabled={company.id === 1}
+                                className={
+                                  company.id === 1
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : "border-red-500 text-red-600 hover:bg-red-500 hover:text-white"
+                                }
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>
+                                {company.id === 1
+                                  ? "Empresa por defecto - No se puede eliminar"
+                                  : "Eliminar"}
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          // Empresa eliminada: Botón Eliminar Definitivamente (hard delete)
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => {
+                                  setSelectedCompany(company);
+                                  setIsPermanentDeleteDialogOpen(true);
+                                }}
+                                disabled={company.id === 1}
+                                className={
+                                  company.id === 1
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : "border-red-700 text-red-700 hover:bg-red-700 hover:text-white"
+                                }
+                              >
+                                <XCircle className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>
+                                {company.id === 1
+                                  ? "Empresa por defecto - No se puede eliminar"
+                                  : "Eliminar definitivamente (irreversible)"}
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
                       </div>
                     </TooltipProvider>
                   </TableCell>
@@ -487,6 +555,74 @@ export default function CompanyTable({
               className="bg-red-600 hover:bg-red-700"
             >
               {isLoading ? "Eliminando..." : "Sí, marcar como eliminada"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog confirmar eliminación PERMANENTE */}
+      <AlertDialog
+        open={isPermanentDeleteDialogOpen}
+        onOpenChange={setIsPermanentDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-700">
+              🚨 ELIMINAR DEFINITIVAMENTE
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p className="text-base font-semibold">
+                ¿Estás COMPLETAMENTE seguro de eliminar definitivamente la empresa{" "}
+                <strong className="text-foreground">
+                  {selectedCompany?.name}
+                </strong>
+                ?
+              </p>
+
+              <div className="bg-red-100 border-2 border-red-600 rounded-md p-4 space-y-2">
+                <p className="font-bold text-red-900 text-base">
+                  ⚠️ ESTA ACCIÓN ES IRREVERSIBLE
+                </p>
+                <p className="text-sm text-red-800">
+                  Se eliminarán PERMANENTEMENTE todos los datos:
+                </p>
+                <ul className="text-sm text-red-800 space-y-1 list-disc list-inside ml-2">
+                  <li>
+                    <strong>{selectedCompany?.user_count || 0}</strong> usuarios y sus accesos
+                  </li>
+                  <li>
+                    <strong>{selectedCompany?.tariff_count || 0}</strong> tarifas
+                  </li>
+                  <li>
+                    <strong>{selectedCompany?.budget_count || 0}</strong> presupuestos
+                  </li>
+                  <li>Todas las versiones de presupuestos</li>
+                  <li>Todas las notas</li>
+                  <li>Todos los PDFs generados</li>
+                  <li>Todos los archivos y configuraciones</li>
+                </ul>
+              </div>
+
+              <div className="bg-yellow-50 border-2 border-yellow-400 rounded-md p-3">
+                <p className="text-sm text-yellow-900 font-semibold">
+                  ⚡ NO PODRÁS RECUPERAR ESTOS DATOS
+                </p>
+                <p className="text-xs text-yellow-800 mt-1">
+                  El sistema quedará limpio como si esta empresa nunca se hubiera registrado.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLoading}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handlePermanentDelete}
+              disabled={isLoading}
+              className="bg-red-700 hover:bg-red-800 font-bold"
+            >
+              {isLoading ? "Eliminando definitivamente..." : "SÍ, ELIMINAR DEFINITIVAMENTE"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

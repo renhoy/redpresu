@@ -987,10 +987,11 @@ export async function getIssuers(): Promise<{
       }
     }
 
-    // Obtener lista de emisores
+    // Obtener lista de emisores ACTIVOS (excluir empresas eliminadas)
     const { data: issuers, error: issuersError } = await supabase
       .from('redpresu_issuers')
       .select('id, company_id, type, name, nif, address, postal_code, locality, province, phone, email, web')
+      .is('deleted_at', null)
       .order('name')
 
     if (issuersError) {

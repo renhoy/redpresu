@@ -75,11 +75,10 @@ export async function getCompanies(): Promise<ActionResult> {
       return { success: false, error: "Sin permisos" };
     }
 
-    // Obtener todos los emisores ACTIVOS (no eliminados)
+    // Obtener TODAS las empresas (incluyendo eliminadas) para que superadmin pueda gestionarlas
     const { data: issuers, error } = await supabaseAdmin
       .from("redpresu_issuers")
       .select("*")
-      .is("deleted_at", null) // Solo empresas activas
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -1024,5 +1023,234 @@ export async function duplicateCompany(sourceCompanyUuid: string): Promise<Actio
   } catch (error) {
     log.error("[duplicateCompany] Error inesperado:", error);
     return { success: false, error: "Error inesperado al duplicar empresa" };
+  }
+}
+
+/**
+ * Eliminar empresa de forma PERMANENTE (hard delete) - Solo superadmin
+ * ADVERTENCIA: Esta operación es IRREVERSIBLE
+ * Solo se puede aplicar a empresas ya marcadas como eliminadas (deleted_at != null)
+ */
+export async function permanentDeleteCompany(companyUuid: string): Promise<ActionResult> {
+  try {
+    log.info("[permanentDeleteCompany] Iniciando eliminación permanente...", { companyUuid });
+
+    // 1. Autenticación y autorización
+    const { getServerUser } = await import("@/lib/auth/server");
+    const user = await getServerUser();
+
+    if (!user) {
+      return { success: false, error: "No autenticado" };
+    }
+
+    // Solo superadmin puede eliminar permanentemente
+    if (user.role !== "superadmin") {
+      log.error("[permanentDeleteCompany] Intento sin permisos por usuario:", user.id);
+      return { success: false, error: "Solo superadmin puede eliminar empresas permanentemente" };
+    }
+
+    // 2. Obtener empresa a eliminar (debe estar ya marcada como eliminada)
+    const { data: issuer, error: fetchError } = await supabaseAdmin
+      .from("redpresu_issuers")
+      .select("*")
+      .eq("id", companyUuid)
+      .not("deleted_at", "is", null) // Solo empresas YA eliminadas (soft-deleted)
+      .single();
+
+    if (fetchError || !issuer) {
+      log.error("[permanentDeleteCompany] Empresa no encontrada o no está eliminada:", fetchError);
+      return {
+        success: false,
+        error: "Solo se pueden eliminar permanentemente empresas ya marcadas como eliminadas"
+      };
+    }
+
+    // PROTECCIÓN: No permitir eliminar la empresa por defecto (company_id = 1)
+    if (issuer.company_id === 1) {
+      log.error("[permanentDeleteCompany] Intento de eliminar empresa por defecto");
+      return {
+        success: false,
+        error: "No se puede eliminar la empresa por defecto del sistema",
+      };
+    }
+
+    log.info("[permanentDeleteCompany] Eliminando permanentemente empresa:", {
+      name: issuer.name,
+      company_id: issuer.company_id,
+      issuer_id: issuer.id
+    });
+
+    // 3. Obtener estadísticas para auditoría final
+    const { data: companyData } = await supabaseAdmin
+      .from("redpresu_companies")
+      .select("*")
+      .eq("id", issuer.company_id)
+      .single();
+
+    const { count: usersCount } = await supabaseAdmin
+      .from("redpresu_users")
+      .select("*", { count: "exact", head: true })
+      .eq("company_id", issuer.company_id);
+
+    const { count: tariffsCount } = await supabaseAdmin
+      .from("redpresu_tariffs")
+      .select("*", { count: "exact", head: true })
+      .eq("company_id", issuer.company_id);
+
+    const { count: budgetsCount } = await supabaseAdmin
+      .from("redpresu_budgets")
+      .select("*", { count: "exact", head: true })
+      .eq("company_id", issuer.company_id);
+
+    // 4. Registrar en audit log ANTES de eliminar
+    const { error: auditError } = await supabaseAdmin
+      .from("redpresu_company_deletion_log")
+      .insert({
+        company_id: issuer.company_id,
+        issuer_id: issuer.id,
+        deleted_by: user.id,
+        deletion_type: "permanent_delete",
+        company_snapshot: companyData || {},
+        issuer_snapshot: issuer,
+        users_count: usersCount || 0,
+        tariffs_count: tariffsCount || 0,
+        budgets_count: budgetsCount || 0,
+      });
+
+    if (auditError) {
+      log.error("[permanentDeleteCompany] Error registrando auditoría:", auditError);
+      return { success: false, error: "Error al registrar auditoría de eliminación" };
+    }
+
+    // 5. HARD DELETE EN CASCADA: Eliminar TODOS los datos relacionados
+    log.info("[permanentDeleteCompany] Eliminando datos en cascada...");
+
+    // 5.1. Obtener todos los presupuestos para eliminar sus notas y versiones
+    const { data: budgets } = await supabaseAdmin
+      .from("redpresu_budgets")
+      .select("id")
+      .eq("company_id", issuer.company_id);
+
+    if (budgets && budgets.length > 0) {
+      const budgetIds = budgets.map(b => b.id);
+
+      // Eliminar notas de presupuestos
+      const { error: notesError } = await supabaseAdmin
+        .from("redpresu_budget_notes")
+        .delete()
+        .in("budget_id", budgetIds);
+
+      if (notesError) {
+        log.warn("[permanentDeleteCompany] Error al eliminar notas:", notesError);
+      }
+
+      // Eliminar versiones de presupuestos
+      const { error: versionsError } = await supabaseAdmin
+        .from("redpresu_budget_versions")
+        .delete()
+        .in("budget_id", budgetIds);
+
+      if (versionsError) {
+        log.warn("[permanentDeleteCompany] Error al eliminar versiones:", versionsError);
+      }
+    }
+
+    // 5.2. Eliminar presupuestos
+    const { error: budgetsError } = await supabaseAdmin
+      .from("redpresu_budgets")
+      .delete()
+      .eq("company_id", issuer.company_id);
+
+    if (budgetsError) {
+      log.error("[permanentDeleteCompany] Error al eliminar presupuestos:", budgetsError);
+      return { success: false, error: "Error al eliminar presupuestos" };
+    }
+
+    // 5.3. Eliminar relaciones cliente-tarifa
+    const { error: clientTariffsError } = await supabaseAdmin
+      .from("redpresu_client_tariffs")
+      .delete()
+      .eq("company_id", issuer.company_id);
+
+    if (clientTariffsError) {
+      log.warn("[permanentDeleteCompany] Error al eliminar client_tariffs:", clientTariffsError);
+    }
+
+    // 5.4. Eliminar tarifas
+    const { error: tariffsError } = await supabaseAdmin
+      .from("redpresu_tariffs")
+      .delete()
+      .eq("company_id", issuer.company_id);
+
+    if (tariffsError) {
+      log.error("[permanentDeleteCompany] Error al eliminar tarifas:", tariffsError);
+      return { success: false, error: "Error al eliminar tarifas" };
+    }
+
+    // 5.5. Obtener usuarios para eliminar sus cuentas de auth
+    const { data: users } = await supabaseAdmin
+      .from("redpresu_users")
+      .select("id")
+      .eq("company_id", issuer.company_id);
+
+    if (users && users.length > 0) {
+      // Eliminar usuarios de Supabase Auth (esto también eliminará sus sesiones)
+      for (const userRecord of users) {
+        const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(
+          userRecord.id
+        );
+
+        if (authError) {
+          log.warn(`[permanentDeleteCompany] Error al eliminar auth user ${userRecord.id}:`, authError);
+        }
+      }
+
+      // Eliminar registros de usuarios en redpresu_users (si quedan)
+      const { error: usersError } = await supabaseAdmin
+        .from("redpresu_users")
+        .delete()
+        .eq("company_id", issuer.company_id);
+
+      if (usersError) {
+        log.warn("[permanentDeleteCompany] Error al eliminar users:", usersError);
+      }
+    }
+
+    // 5.6. Eliminar emisor
+    const { error: deleteIssuerError } = await supabaseAdmin
+      .from("redpresu_issuers")
+      .delete()
+      .eq("id", companyUuid);
+
+    if (deleteIssuerError) {
+      log.error("[permanentDeleteCompany] Error al eliminar emisor:", deleteIssuerError);
+      return { success: false, error: "Error al eliminar emisor permanentemente" };
+    }
+
+    // 5.7. Eliminar entrada en redpresu_companies
+    const { error: deleteCompanyError } = await supabaseAdmin
+      .from("redpresu_companies")
+      .delete()
+      .eq("id", issuer.company_id);
+
+    if (deleteCompanyError) {
+      log.error("[permanentDeleteCompany] Error al eliminar company:", deleteCompanyError);
+      return { success: false, error: "Error al eliminar company" };
+    }
+
+    log.info("[permanentDeleteCompany] Empresa eliminada permanentemente:", issuer.name);
+
+    revalidatePath("/companies");
+
+    return {
+      success: true,
+      data: {
+        id: issuer.company_id,
+        name: issuer.name,
+      },
+    };
+  } catch (error) {
+    log.error("[permanentDeleteCompany] Error inesperado:", error);
+    return { success: false, error: "Error inesperado al eliminar empresa permanentemente" };
   }
 }
