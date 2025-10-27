@@ -925,33 +925,36 @@ export async function duplicateCompany(sourceCompanyUuid: string): Promise<Actio
       return { success: false, error: "Empresa origen no encontrada" };
     }
 
-    // 3. Obtener el company_id más alto para generar el siguiente
+    // 3. Obtener el id más alto para generar el siguiente
+    // NOTA: En redpresu_companies la columna se llama 'id', no 'company_id'
     const { data: companiesData, error: maxError } = await supabaseAdmin
       .from("redpresu_companies")
-      .select("company_id")
-      .order("company_id", { ascending: false })
+      .select("id")
+      .order("id", { ascending: false })
       .limit(1);
 
     if (maxError) {
-      log.error("[duplicateCompany] Error al obtener max company_id:", maxError);
-      return { success: false, error: "Error al generar nuevo company_id" };
+      log.error("[duplicateCompany] Error al obtener max id:", maxError);
+      return { success: false, error: "Error al generar nuevo id de empresa" };
     }
 
     // Si hay empresas, tomar el máximo + 1, sino empezar en 2 (1 es la empresa por defecto)
-    const maxCompanyId = companiesData && companiesData.length > 0 ? companiesData[0].company_id : 1;
+    const maxCompanyId = companiesData && companiesData.length > 0 ? companiesData[0].id : 1;
     const newCompanyId = maxCompanyId + 1;
 
     // 4. Crear entrada en redpresu_companies
-    const { error: companyError } = await supabaseAdmin
+    // La columna 'id' es auto-generada (serial), así que no la pasamos
+    const { data: newCompany, error: companyError } = await supabaseAdmin
       .from("redpresu_companies")
       .insert({
-        company_id: newCompanyId,
         name: `${sourceCompany.name} (Copia)`,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      });
+      })
+      .select("id")
+      .single();
 
-    if (companyError) {
+    if (companyError || !newCompany) {
       log.error("[duplicateCompany] Error al crear company:", companyError);
       return { success: false, error: "Error al crear nueva empresa" };
     }
@@ -961,7 +964,7 @@ export async function duplicateCompany(sourceCompanyUuid: string): Promise<Actio
       .from("redpresu_issuers")
       .insert({
         user_id: user.id, // Asignar al superadmin que crea la copia
-        company_id: newCompanyId,
+        company_id: newCompany.id, // Usar el id generado automáticamente
         type: sourceCompany.type,
         name: `${sourceCompany.name} (Copia)`,
         nif: sourceCompany.nif,
@@ -988,12 +991,12 @@ export async function duplicateCompany(sourceCompanyUuid: string): Promise<Actio
       await supabaseAdmin
         .from("redpresu_companies")
         .delete()
-        .eq("company_id", newCompanyId);
+        .eq("id", newCompany.id);
       return { success: false, error: "Error al crear emisor de la nueva empresa" };
     }
 
     log.info("[duplicateCompany] Empresa duplicada exitosamente:", {
-      newCompanyId,
+      newCompanyId: newCompany.id,
       newIssuerId: newIssuer.id,
     });
 
@@ -1002,7 +1005,7 @@ export async function duplicateCompany(sourceCompanyUuid: string): Promise<Actio
     return {
       success: true,
       data: {
-        id: newCompanyId,
+        id: newCompany.id,
         uuid: newIssuer.id,
         name: newIssuer.name,
       },
