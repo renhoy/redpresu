@@ -9,6 +9,7 @@ import {
 } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import {
   Card,
@@ -693,9 +694,8 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
               {!isEditingOtherUser && (
                 <div className="space-y-2">
                   <Label htmlFor="currentPassword">Contraseña Actual</Label>
-                  <Input
+                  <PasswordInput
                     id="currentPassword"
-                    type="password"
                     value={formData.currentPassword}
                     onChange={handleInputChange("currentPassword")}
                     className={errors.currentPassword ? "border-red-500" : ""}
@@ -713,9 +713,8 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="newPassword">Nueva Contraseña</Label>
-                  <Input
+                  <PasswordInput
                     id="newPassword"
-                    type="password"
                     value={formData.newPassword}
                     onChange={handleInputChange("newPassword")}
                     className={errors.newPassword ? "border-red-500" : ""}
@@ -729,9 +728,8 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
 
                 <div className="space-y-2">
                   <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
-                  <Input
+                  <PasswordInput
                     id="confirmPassword"
-                    type="password"
                     value={formData.confirmPassword}
                     onChange={handleInputChange("confirmPassword")}
                     className={errors.confirmPassword ? "border-red-500" : ""}

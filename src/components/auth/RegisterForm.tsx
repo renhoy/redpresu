@@ -5,6 +5,7 @@ import Link from "next/link";
 import { registerUser, type RegisterData } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import {
   Card,
@@ -369,9 +370,8 @@ export default function RegisterForm() {
               <div className="md:col-span-6">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Input
+                    <PasswordInput
                       id="password"
-                      type="password"
                       placeholder="Contraseña *"
                       value={formData.password}
                       onChange={handleInputChange("password")}
@@ -393,9 +393,8 @@ export default function RegisterForm() {
               <div className="md:col-span-6">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Input
+                    <PasswordInput
                       id="confirmPassword"
-                      type="password"
                       placeholder="Confirmar Contraseña *"
                       value={formData.confirmPassword}
                       onChange={handleInputChange("confirmPassword")}

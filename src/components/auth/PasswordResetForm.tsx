@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { resetPassword } from '@/app/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -166,9 +167,8 @@ export default function PasswordResetForm() {
           {/* Nueva Contraseña */}
           <div className="space-y-2">
             <Label htmlFor="password">Nueva Contraseña</Label>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               placeholder="Mínimo 8 caracteres"
               value={formData.password}
               onChange={handleInputChange('password')}
@@ -188,9 +188,8 @@ export default function PasswordResetForm() {
           {/* Confirmar Contraseña */}
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
-            <Input
+            <PasswordInput
               id="confirmPassword"
-              type="password"
               placeholder="Repite tu contraseña"
               value={formData.confirmPassword}
               onChange={handleInputChange('confirmPassword')}
