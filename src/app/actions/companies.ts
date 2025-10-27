@@ -926,20 +926,20 @@ export async function duplicateCompany(sourceCompanyUuid: string): Promise<Actio
     }
 
     // 3. Obtener el company_id más alto para generar el siguiente
-    const { data: maxCompanyData, error: maxError } = await supabaseAdmin
+    const { data: companiesData, error: maxError } = await supabaseAdmin
       .from("redpresu_companies")
       .select("company_id")
       .order("company_id", { ascending: false })
-      .limit(1)
-      .single();
+      .limit(1);
 
-    if (maxError && maxError.code !== "PGRST116") {
-      // PGRST116 = no rows found (tabla vacía)
+    if (maxError) {
       log.error("[duplicateCompany] Error al obtener max company_id:", maxError);
       return { success: false, error: "Error al generar nuevo company_id" };
     }
 
-    const newCompanyId = maxCompanyData ? maxCompanyData.company_id + 1 : 2;
+    // Si hay empresas, tomar el máximo + 1, sino empezar en 2 (1 es la empresa por defecto)
+    const maxCompanyId = companiesData && companiesData.length > 0 ? companiesData[0].company_id : 1;
+    const newCompanyId = maxCompanyId + 1;
 
     // 4. Crear entrada en redpresu_companies
     const { error: companyError } = await supabaseAdmin
