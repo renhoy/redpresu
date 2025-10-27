@@ -102,53 +102,68 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
   const validateForm = (): boolean => {
     const newErrors: ProfileFormErrors = {};
 
-    // Validar datos emisor
-    if (!formData.nombre_comercial.trim()) {
-      newErrors.nombre_comercial = "El nombre comercial es requerido";
-    }
-
-    if (!formData.nif.trim()) {
-      newErrors.nif = "El NIF/CIF es requerido";
-    } else if (!/^[A-Z0-9]+$/i.test(formData.nif)) {
-      newErrors.nif = "El NIF/CIF solo puede contener letras y números";
-    }
-
-    if (!formData.direccion_fiscal.trim()) {
-      newErrors.direccion_fiscal = "La dirección fiscal es requerida";
-    }
-
-    if (!formData.codigo_postal.trim()) {
-      newErrors.codigo_postal = "El código postal es requerido";
-    } else if (!/^\d{5}$/.test(formData.codigo_postal)) {
-      newErrors.codigo_postal = "El código postal debe tener 5 dígitos";
-    }
-
-    if (!formData.localidad.trim()) {
-      newErrors.localidad = "La localidad es requerida";
-    }
-
-    if (!formData.provincia.trim()) {
-      newErrors.provincia = "La provincia es requerida";
-    }
-
-    if (formData.telefono && !/^[0-9\s\+\-\(\)]+$/.test(formData.telefono)) {
-      newErrors.telefono = "Teléfono inválido";
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (formData.emailContacto && !emailRegex.test(formData.emailContacto)) {
-      newErrors.emailContacto = "Email inválido";
-    }
-
-    if (formData.web && !/^https?:\/\/.+/.test(formData.web)) {
-      newErrors.web = "La URL debe comenzar con http:// o https://";
-    }
-
-    // Validar cambio de contraseña (solo si se proporcionó algún campo)
+    // Verificar si se está intentando cambiar contraseña
     const hasPasswordChange =
       formData.currentPassword ||
       formData.newPassword ||
       formData.confirmPassword;
+
+    // Verificar si hay datos de emisor a guardar
+    const hasEmisorData =
+      formData.nombre_comercial.trim() ||
+      formData.nif.trim() ||
+      formData.direccion_fiscal.trim() ||
+      formData.codigo_postal.trim() ||
+      formData.localidad.trim() ||
+      formData.provincia.trim();
+
+    // Solo validar emisor si hay datos de emisor O si NO hay cambio de contraseña
+    // Esto permite cambiar solo la contraseña sin necesidad de rellenar datos del emisor
+    const shouldValidateEmisor = hasEmisorData || !hasPasswordChange;
+
+    if (shouldValidateEmisor) {
+      // Validar datos emisor
+      if (!formData.nombre_comercial.trim()) {
+        newErrors.nombre_comercial = "El nombre comercial es requerido";
+      }
+
+      if (!formData.nif.trim()) {
+        newErrors.nif = "El NIF/CIF es requerido";
+      } else if (!/^[A-Z0-9]+$/i.test(formData.nif)) {
+        newErrors.nif = "El NIF/CIF solo puede contener letras y números";
+      }
+
+      if (!formData.direccion_fiscal.trim()) {
+        newErrors.direccion_fiscal = "La dirección fiscal es requerida";
+      }
+
+      if (!formData.codigo_postal.trim()) {
+        newErrors.codigo_postal = "El código postal es requerido";
+      } else if (!/^\d{5}$/.test(formData.codigo_postal)) {
+        newErrors.codigo_postal = "El código postal debe tener 5 dígitos";
+      }
+
+      if (!formData.localidad.trim()) {
+        newErrors.localidad = "La localidad es requerida";
+      }
+
+      if (!formData.provincia.trim()) {
+        newErrors.provincia = "La provincia es requerida";
+      }
+
+      if (formData.telefono && !/^[0-9\s\+\-\(\)]+$/.test(formData.telefono)) {
+        newErrors.telefono = "Teléfono inválido";
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (formData.emailContacto && !emailRegex.test(formData.emailContacto)) {
+        newErrors.emailContacto = "Email inválido";
+      }
+
+      if (formData.web && !/^https?:\/\/.+/.test(formData.web)) {
+        newErrors.web = "La URL debe comenzar con http:// o https://";
+      }
+    }
 
     if (hasPasswordChange) {
       // Si es admin editando otro usuario, NO necesita currentPassword
@@ -301,21 +316,6 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
           <p className="text-sm">
             Administra tu información personal y configuración de cuenta
           </p>
-        </div>
-        <div className="flex justify-center md:justify-end gap-2">
-          <Button id="btn-guardar-perfil" type="submit" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Guardando...
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                Guardar Cambios
-              </>
-            )}
-          </Button>
         </div>
       </div>
 
@@ -745,32 +745,57 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
                   )}
                 </div>
               </div>
-
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => {
-                  setShowPasswordSection(false);
-                  setFormData((prev) => ({
-                    ...prev,
-                    currentPassword: "",
-                    newPassword: "",
-                    confirmPassword: "",
-                  }));
-                  setErrors((prev) => ({
-                    ...prev,
-                    currentPassword: undefined,
-                    newPassword: undefined,
-                    confirmPassword: undefined,
-                  }));
-                }}
-              >
-                Cancelar Cambio de Contraseña
-              </Button>
             </>
           )}
         </CardContent>
       </Card>
+
+      {/* Botones de acción al final de la página */}
+      <div className="flex justify-end gap-3 mt-6">
+        {showPasswordSection && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setShowPasswordSection(false);
+              setFormData((prev) => ({
+                ...prev,
+                currentPassword: "",
+                newPassword: "",
+                confirmPassword: "",
+              }));
+              setErrors((prev) => ({
+                ...prev,
+                currentPassword: undefined,
+                newPassword: undefined,
+                confirmPassword: undefined,
+              }));
+            }}
+            className="border-gray-300 text-gray-700 hover:bg-gray-50"
+          >
+            Cancelar Cambio de Contraseña
+          </Button>
+        )}
+
+        <Button
+          id="btn-guardar-perfil"
+          type="submit"
+          disabled={isLoading}
+          className="bg-lime-500 hover:bg-lime-600 text-white"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Guardando...
+            </>
+          ) : (
+            <>
+              <Save className="mr-2 h-4 w-4" />
+              Guardar Cambios
+            </>
+          )}
+        </Button>
+      </div>
     </form>
   );
 }
