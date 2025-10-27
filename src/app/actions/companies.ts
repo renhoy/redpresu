@@ -885,3 +885,130 @@ export async function getDeletedCompanies(): Promise<ActionResult> {
     return { success: false, error: "Error inesperado" };
   }
 }
+
+/**
+ * Duplicar empresa - Solo superadmin
+ * Crea una nueva empresa copiando los datos de una empresa existente
+ * Útil cuando public_registration_enabled = false
+ *
+ * @param sourceCompanyUuid - UUID del emisor (company) a duplicar
+ * @returns ActionResult con la nueva empresa creada
+ */
+export async function duplicateCompany(sourceCompanyUuid: string): Promise<ActionResult> {
+  try {
+    log.info("[duplicateCompany] Iniciando duplicación...", { sourceCompanyUuid });
+
+    // 1. Autenticación y autorización
+    const { getServerUser } = await import("@/lib/auth/server");
+    const user = await getServerUser();
+
+    if (!user) {
+      return { success: false, error: "No autenticado" };
+    }
+
+    // Solo superadmin puede duplicar empresas
+    if (user.role !== "superadmin") {
+      log.error("[duplicateCompany] Intento sin permisos por usuario:", user.id);
+      return { success: false, error: "Solo superadmin puede duplicar empresas" };
+    }
+
+    // 2. Obtener empresa origen
+    const { data: sourceCompany, error: fetchError } = await supabaseAdmin
+      .from("redpresu_issuers")
+      .select("*")
+      .eq("id", sourceCompanyUuid)
+      .is("deleted_at", null)
+      .single();
+
+    if (fetchError || !sourceCompany) {
+      log.error("[duplicateCompany] Error al obtener empresa origen:", fetchError);
+      return { success: false, error: "Empresa origen no encontrada" };
+    }
+
+    // 3. Obtener el company_id más alto para generar el siguiente
+    const { data: maxCompanyData, error: maxError } = await supabaseAdmin
+      .from("redpresu_companies")
+      .select("company_id")
+      .order("company_id", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (maxError && maxError.code !== "PGRST116") {
+      // PGRST116 = no rows found (tabla vacía)
+      log.error("[duplicateCompany] Error al obtener max company_id:", maxError);
+      return { success: false, error: "Error al generar nuevo company_id" };
+    }
+
+    const newCompanyId = maxCompanyData ? maxCompanyData.company_id + 1 : 2;
+
+    // 4. Crear entrada en redpresu_companies
+    const { error: companyError } = await supabaseAdmin
+      .from("redpresu_companies")
+      .insert({
+        company_id: newCompanyId,
+        name: `${sourceCompany.name} (Copia)`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+
+    if (companyError) {
+      log.error("[duplicateCompany] Error al crear company:", companyError);
+      return { success: false, error: "Error al crear nueva empresa" };
+    }
+
+    // 5. Crear emisor duplicado (copia de datos)
+    const { data: newIssuer, error: issuerError } = await supabaseAdmin
+      .from("redpresu_issuers")
+      .insert({
+        user_id: user.id, // Asignar al superadmin que crea la copia
+        company_id: newCompanyId,
+        type: sourceCompany.type,
+        name: `${sourceCompany.name} (Copia)`,
+        nif: sourceCompany.nif,
+        address: sourceCompany.address,
+        postal_code: sourceCompany.postal_code,
+        locality: sourceCompany.locality,
+        province: sourceCompany.province,
+        country: sourceCompany.country,
+        phone: sourceCompany.phone,
+        email: sourceCompany.email,
+        web: sourceCompany.web,
+        irpf_percentage: sourceCompany.irpf_percentage,
+        logo_url: null, // No copiar logo (podría requerir copia de archivo)
+        note: `Duplicado de: ${sourceCompany.name}`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (issuerError || !newIssuer) {
+      log.error("[duplicateCompany] Error al crear emisor:", issuerError);
+      // Rollback: eliminar company creada
+      await supabaseAdmin
+        .from("redpresu_companies")
+        .delete()
+        .eq("company_id", newCompanyId);
+      return { success: false, error: "Error al crear emisor de la nueva empresa" };
+    }
+
+    log.info("[duplicateCompany] Empresa duplicada exitosamente:", {
+      newCompanyId,
+      newIssuerId: newIssuer.id,
+    });
+
+    revalidatePath("/companies");
+
+    return {
+      success: true,
+      data: {
+        id: newCompanyId,
+        uuid: newIssuer.id,
+        name: newIssuer.name,
+      },
+    };
+  } catch (error) {
+    log.error("[duplicateCompany] Error inesperado:", error);
+    return { success: false, error: "Error inesperado al duplicar empresa" };
+  }
+}

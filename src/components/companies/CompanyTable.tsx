@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Company, deleteCompany } from "@/app/actions/companies";
+import { Company, deleteCompany, duplicateCompany } from "@/app/actions/companies";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,7 @@ import {
   Pencil,
   Trash2,
   Users,
+  Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -53,6 +54,7 @@ export default function CompanyTable({
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | "empresa" | "autonomo">("all");
   const router = useRouter();
@@ -99,6 +101,23 @@ export default function CompanyTable({
     setIsLoading(false);
     setIsDeleteDialogOpen(false);
     setSelectedCompany(null);
+  };
+
+  const handleDuplicate = async (company: Company) => {
+    if (!company.uuid || isDuplicating) return;
+
+    setIsDuplicating(company.uuid);
+
+    const result = await duplicateCompany(company.uuid);
+
+    if (result.success) {
+      toast.success(`Empresa "${company.name}" duplicada exitosamente`);
+      router.refresh();
+    } else {
+      toast.error(result.error || "Error al duplicar empresa");
+    }
+
+    setIsDuplicating(null);
   };
 
   const getTipoLabel = (type: string) => {
@@ -334,6 +353,24 @@ export default function CompanyTable({
                           </TooltipTrigger>
                           <TooltipContent>
                             <p>Editar</p>
+                          </TooltipContent>
+                        </Tooltip>
+
+                        {/* Botón Duplicar - Solo superadmin */}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => handleDuplicate(company)}
+                              disabled={isDuplicating === company.uuid}
+                              className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Duplicar empresa</p>
                           </TooltipContent>
                         </Tooltip>
 
