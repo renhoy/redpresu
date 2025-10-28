@@ -129,8 +129,8 @@ export async function middleware(req: NextRequest) {
 
       console.log(`[Middleware] Verificando permisos - Path: ${pathname}, Rol: ${userRole} (desde BD), Status: ${userStatus}, MultiEmpresa: ${multiempresa}`)
 
-      // Verificar si el usuario está inactivo
-      if (userStatus === 'inactive') {
+      // Verificar si el usuario está inactivo (excepto si ya está en /inactive-logout)
+      if (userStatus === 'inactive' && pathname !== '/inactive-logout') {
         console.warn(`[Middleware] Usuario inactivo detectado: ${session.user.email}`)
         // Redirigir a página especial de logout para usuario inactivo
         const redirectUrl = req.nextUrl.clone()
