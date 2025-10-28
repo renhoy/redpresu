@@ -592,14 +592,22 @@ export async function acceptInvitation(
       }
     }
 
-    // Actualizar last_login
-    await supabaseAdmin
+    // Actualizar last_login y obtener rol para redirect
+    const { data: userDataForRedirect } = await supabaseAdmin
       .from('redpresu_users')
       .update({ last_login: new Date().toISOString() })
       .eq('id', userId)
+      .select('role')
+      .single()
 
-    // Redirect a editar perfil
-    redirect(`/users/${userId}/edit`)
+    // Redirect según rol (como en signInAction)
+    const userRole = userDataForRedirect?.role || 'comercial'
+    if (userRole === 'comercial') {
+      redirect('/budgets')
+    } else {
+      // admin o superadmin
+      redirect('/dashboard')
+    }
 
   } catch (error) {
     log.error('[acceptInvitation] Error crítico:', error)

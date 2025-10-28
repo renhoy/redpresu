@@ -152,14 +152,14 @@ export default function AcceptInvitationForm() {
       // Éxito
       setSuccess(true);
 
-      // Redirigir a editar perfil después de 2 segundos
-      setTimeout(() => {
-        if (result.data?.userId) {
-          router.push(`/users/${result.data.userId}/edit`);
-        } else {
+      // Si el auto-login falló, redirigir al login después de 2 segundos
+      // Si el auto-login fue exitoso, el server action ya habrá hecho redirect
+      if (result.data?.autoLoginFailed) {
+        setTimeout(() => {
           router.push("/login");
-        }
-      }, 2000);
+        }, 2000);
+      }
+      // Si no hay autoLoginFailed, el redirect lo maneja el server action
     } catch (error) {
       setErrors({
         general:
@@ -242,13 +242,13 @@ export default function AcceptInvitationForm() {
         <CardContent>
           <Alert className="bg-green-50 border-green-200">
             <AlertDescription className="text-green-800">
-              Tu cuenta ha sido creada correctamente. Serás redirigido a tu perfil
-              para completar tu información.
+              Tu cuenta ha sido creada correctamente y has iniciado sesión
+              automáticamente. Serás redirigido en breve.
             </AlertDescription>
           </Alert>
           <div className="mt-4 text-center text-muted-foreground">
             <Loader2 className="h-5 w-5 animate-spin inline mr-2" />
-            Redirigiendo a tu perfil...
+            Redirigiendo...
           </div>
         </CardContent>
       </Card>
