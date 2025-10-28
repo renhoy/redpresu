@@ -28,6 +28,19 @@ export function InactiveUserDialog({ showDialog }: InactiveUserDialogProps) {
       // Cerrar sesión silenciosamente cuando se muestra el diálogo
       supabase.auth.signOut().catch((error) => {
         console.error("[InactiveUserDialog] Error en signOut:", error);
+
+        // Si falla el signOut (problemas de red, token inválido, etc.),
+        // limpiar cookies manualmente como fallback
+        try {
+          document.cookie.split(";").forEach((c) => {
+            document.cookie = c
+              .replace(/^ +/, "")
+              .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+          });
+          console.log("[InactiveUserDialog] Cookies limpiadas manualmente");
+        } catch (cookieError) {
+          console.error("[InactiveUserDialog] Error limpiando cookies:", cookieError);
+        }
       });
     }
   }, [showDialog, supabase.auth]);
