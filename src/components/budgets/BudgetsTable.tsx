@@ -70,6 +70,7 @@ import { BudgetCard } from "./BudgetCard";
 
 interface BudgetsTableProps {
   budgets: Budget[];
+  tariffId?: string;
 }
 
 const statusColors = {
@@ -81,7 +82,7 @@ const statusColors = {
   caducado: "bg-neutral-200 text-black",
 };
 
-export function BudgetsTable({ budgets }: BudgetsTableProps) {
+export function BudgetsTable({ budgets, tariffId }: BudgetsTableProps) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -931,15 +932,19 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
         <div className="flex gap-2 flex-wrap">
           <Button
             variant={
-              statusFilter === "all" && search === "" ? "default" : "outline"
+              statusFilter === "all" && search === "" && !tariffId ? "default" : "outline"
             }
             size="sm"
             onClick={() => {
               setStatusFilter("all");
               setSearch("");
+              // Si hay tariffId, navegar a /budgets para limpiar filtro
+              if (tariffId) {
+                router.push("/budgets");
+              }
             }}
             className={
-              statusFilter === "all" && search === ""
+              statusFilter === "all" && search === "" && !tariffId
                 ? "bg-lime-500 hover:bg-lime-600"
                 : "border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
             }

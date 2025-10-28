@@ -1,5 +1,3 @@
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
 import { getBudgets } from '@/app/actions/budgets'
 import { BudgetsTable } from '@/components/budgets/BudgetsTable'
 
@@ -20,26 +18,8 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
   return (
     <div className="min-h-screen bg-lime-50">
       <div className="container mx-auto px-4 py-6">
-        {/* Filtro activo por tariff_id */}
-        {tariff_id && (
-          <div className="mb-4 flex items-center gap-2">
-            <p className="text-sm text-muted-foreground">
-              Mostrando presupuestos de esta tarifa
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              asChild
-            >
-              <Link href="/budgets">
-                Ver todos los presupuestos
-              </Link>
-            </Button>
-          </div>
-        )}
-
         {/* Tabla de presupuestos */}
-        <BudgetsTable budgets={filteredBudgets} />
+        <BudgetsTable budgets={filteredBudgets} tariffId={tariff_id} />
       </div>
     </div>
   )
