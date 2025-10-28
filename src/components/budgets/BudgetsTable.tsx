@@ -70,6 +70,7 @@ import { BudgetCard } from "./BudgetCard";
 
 interface BudgetsTableProps {
   budgets: Budget[];
+  allBudgets: Budget[];
   tariffId?: string;
 }
 
@@ -82,7 +83,7 @@ const statusColors = {
   caducado: "bg-neutral-200 text-black",
 };
 
-export function BudgetsTable({ budgets, tariffId }: BudgetsTableProps) {
+export function BudgetsTable({ budgets, allBudgets, tariffId }: BudgetsTableProps) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -105,8 +106,8 @@ export function BudgetsTable({ budgets, tariffId }: BudgetsTableProps) {
     "presupuesto"
   );
 
-  // Calcular contadores por estado
-  const statusCounts = budgets.reduce((acc, budget) => {
+  // Calcular contadores por estado SOBRE TODOS LOS BUDGETS (sin filtrar)
+  const statusCounts = allBudgets.reduce((acc, budget) => {
     acc[budget.status] = (acc[budget.status] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
@@ -949,7 +950,7 @@ export function BudgetsTable({ budgets, tariffId }: BudgetsTableProps) {
                 : "border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
             }
           >
-            Todos ({budgets.length})
+            Todos ({allBudgets.length})
           </Button>
           <Button
             variant={statusFilter === "borrador" ? "default" : "outline"}
@@ -1039,9 +1040,9 @@ export function BudgetsTable({ budgets, tariffId }: BudgetsTableProps) {
       </div>
 
       {/* Contador de resultados */}
-      {budgets.length > 0 && (
+      {allBudgets.length > 0 && (
         <div className="mb-4 text-sm text-muted-foreground">
-          Mostrando {filteredBudgets.length} de {budgets.length} Presupuestos
+          Mostrando {filteredBudgets.length} de {allBudgets.length} Presupuestos
         </div>
       )}
 

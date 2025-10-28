@@ -7,10 +7,10 @@ interface PageProps {
 
 export default async function BudgetsPage({ searchParams }: PageProps) {
   const { tariff_id } = await searchParams
-  const budgets = await getBudgets()
+  const allBudgets = await getBudgets()
 
   // Filtrar por tariff_id si se proporciona
-  let filteredBudgets = budgets
+  let filteredBudgets = allBudgets
   if (tariff_id) {
     filteredBudgets = filteredBudgets.filter(b => b.tariff_id === tariff_id)
   }
@@ -19,7 +19,11 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
     <div className="min-h-screen bg-lime-50">
       <div className="container mx-auto px-4 py-6">
         {/* Tabla de presupuestos */}
-        <BudgetsTable budgets={filteredBudgets} tariffId={tariff_id} />
+        <BudgetsTable
+          budgets={filteredBudgets}
+          allBudgets={allBudgets}
+          tariffId={tariff_id}
+        />
       </div>
     </div>
   )
