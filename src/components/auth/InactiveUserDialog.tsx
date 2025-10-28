@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,31 +18,16 @@ interface InactiveUserDialogProps {
 
 export function InactiveUserDialog({ showDialog }: InactiveUserDialogProps) {
   const router = useRouter();
-  const supabase = createClientComponentClient();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (showDialog) {
       setOpen(true);
-      // Cerrar sesión silenciosamente cuando se muestra el diálogo
-      supabase.auth.signOut().catch((error) => {
-        console.error("[InactiveUserDialog] Error en signOut:", error);
-
-        // Si falla el signOut (problemas de red, token inválido, etc.),
-        // limpiar cookies manualmente como fallback
-        try {
-          document.cookie.split(";").forEach((c) => {
-            document.cookie = c
-              .replace(/^ +/, "")
-              .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-          });
-          console.log("[InactiveUserDialog] Cookies limpiadas manualmente");
-        } catch (cookieError) {
-          console.error("[InactiveUserDialog] Error limpiando cookies:", cookieError);
-        }
-      });
+      // El signOut ya se hizo desde el servidor (signInAction o middleware)
+      // No intentamos hacer signOut aquí para evitar NetworkError
+      console.log("[InactiveUserDialog] Mostrando diálogo de usuario inactivo");
     }
-  }, [showDialog, supabase.auth]);
+  }, [showDialog]);
 
   const handleClose = () => {
     setOpen(false);
