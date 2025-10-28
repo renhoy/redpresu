@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { TariffFormFields } from "./TariffFormFields";
 import { CSVUploadPreview } from "./CSVUploadPreview";
-import { Layers, Play } from "lucide-react";
+import { Layers, Play, X, Save } from "lucide-react";
 import {
   createTariff,
   updateTariff,
@@ -267,6 +267,7 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
                 disabled={isLoading}
                 className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
               >
+                <X className="mr-2 h-4 w-4" />
                 Cancelar
               </Button>
               <Button
@@ -274,6 +275,7 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
                 disabled={isLoading}
                 className="min-w-[100px] bg-lime-500 hover:bg-lime-600"
               >
+                <Save className="mr-2 h-4 w-4" />
                 {isLoading ? "Guardando..." : "Guardar"}
               </Button>
             </div>
@@ -310,6 +312,27 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
               secondaryColor={formData.secondary_color}
             />
           </div>
+        </div>
+
+        {/* Botones al final de la página */}
+        <div className="flex gap-2 justify-center md:justify-end mt-6">
+          <Button
+            variant="outline"
+            onClick={handleCancel}
+            disabled={isLoading}
+            className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
+          >
+            <X className="mr-2 h-4 w-4" />
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={isLoading}
+            className="min-w-[100px] bg-lime-500 hover:bg-lime-600"
+          >
+            <Save className="mr-2 h-4 w-4" />
+            {isLoading ? "Guardando..." : "Guardar"}
+          </Button>
         </div>
       </div>
     </div>
