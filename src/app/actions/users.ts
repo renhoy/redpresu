@@ -497,6 +497,19 @@ export async function updateUser(userId: string, data: UpdateUserData) {
     };
   }
 
+  // Si se cambió el status a 'inactive', invalidar sesión del usuario
+  if (data.status === 'inactive') {
+    try {
+      log.info(`[updateUser] Invalidando sesión del usuario ${userId} (desactivado)`);
+      // Cerrar todas las sesiones del usuario
+      await supabaseAdmin.auth.admin.signOut(userId);
+      log.info(`[updateUser] Sesión invalidada correctamente para ${userId}`);
+    } catch (signOutError) {
+      // No fallar si el signOut falla, solo logear
+      log.error("[updateUser] Error al invalidar sesión:", signOutError);
+    }
+  }
+
   return {
     success: true,
     data: updatedUser,
