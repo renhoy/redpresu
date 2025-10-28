@@ -29,16 +29,18 @@ export async function middleware(req: NextRequest) {
     // Crear cliente de Supabase pasando req y res para manejo correcto de cookies
     const supabase = createMiddlewareClient({ req, res })
 
-    // Obtener sesión actual desde cookies
-    const { data: { session }, error } = await supabase.auth.getSession()
+    // Obtener usuario actual y validar token con el servidor
+    // IMPORTANTE: getUser() valida el token con Supabase, getSession() solo lee cookies
+    const { data: { user }, error } = await supabase.auth.getUser()
 
     const pathname = req.nextUrl.pathname
 
     // Verificar modo de operación
     const multiempresa = await isMultiEmpresa()
 
-    // Verificar si hay sesión válida
-    const isAuthenticated = !error && !!session
+    // Verificar si hay sesión válida (usuario autenticado con token válido)
+    const isAuthenticated = !error && !!user
+    const session = user ? { user } : null
 
     // MODO MONOEMPRESA: Bloquear rutas específicas y redirigir home a login
     if (!multiempresa) {
