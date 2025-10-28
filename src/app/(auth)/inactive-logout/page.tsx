@@ -10,11 +10,23 @@ export default function InactiveLogoutPage() {
 
   useEffect(() => {
     async function logout() {
-      // Cerrar sesión
-      await supabase.auth.signOut();
+      try {
+        // Intentar cerrar sesión en Supabase
+        await supabase.auth.signOut();
+      } catch (error) {
+        // Si falla el signOut (error de red, etc), continuar igual
+        console.error("[inactive-logout] Error en signOut:", error);
 
-      // Redirigir al login con parámetro reason
-      router.replace("/login?reason=inactive");
+        // Limpiar cookies manualmente
+        document.cookie.split(";").forEach((c) => {
+          document.cookie = c
+            .replace(/^ +/, "")
+            .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+        });
+      } finally {
+        // Siempre redirigir al login, incluso si falló el signOut
+        router.replace("/login?reason=inactive");
+      }
     }
 
     logout();
