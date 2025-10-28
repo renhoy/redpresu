@@ -25,7 +25,7 @@ export function TariffSelector({ tariffs }: TariffSelectorProps) {
 
   const handleContinue = () => {
     if (selectedTariffId) {
-      router.push(`/budgets/create?tariff_id=${selectedTariffId}`);
+      window.open(`/budgets/create?tariff_id=${selectedTariffId}`, "_blank");
     }
   };
 
@@ -49,7 +49,7 @@ export function TariffSelector({ tariffs }: TariffSelectorProps) {
                 <Link href="/budgets">Cancelar</Link>
               </Button>
               <Button asChild className="flex-1 bg-lime-500 hover:bg-lime-600">
-                <Link href="/tariffs/create">
+                <Link href="/tariffs/create" target="_blank">
                   <Plus className="mr-2 h-4 w-4" />
                   Crear Tarifa
                 </Link>

@@ -907,7 +907,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
             asChild
             className="bg-lime-500 hover:bg-lime-600"
           >
-            <Link href="/budgets/create">
+            <Link href="/budgets/create" target="_blank">
               <Plus className="mr-2 h-4 w-4" />
               Nuevo Presupuesto
             </Link>
