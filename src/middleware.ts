@@ -4,6 +4,23 @@ import type { NextRequest } from 'next/server'
 import { isMultiEmpresa } from '@/lib/helpers/app-mode'
 import { supabaseAdmin } from '@/lib/supabase/server'
 
+/**
+ * Helper para crear redirección preservando cookies de Supabase
+ */
+function createRedirectWithCookies(
+  url: URL,
+  sourceResponse: NextResponse
+): NextResponse {
+  const redirectRes = NextResponse.redirect(url)
+
+  // Copiar todas las cookies de la respuesta original
+  sourceResponse.cookies.getAll().forEach(cookie => {
+    redirectRes.cookies.set(cookie.name, cookie.value)
+  })
+
+  return redirectRes
+}
+
 export async function middleware(req: NextRequest) {
   try {
     // CRÍTICO: Crear response de Next.js ANTES de obtener la sesión
@@ -48,7 +65,7 @@ export async function middleware(req: NextRequest) {
         console.log(`[Middleware] Modo mono: / → ${target}`)
         const redirectUrl = req.nextUrl.clone()
         redirectUrl.pathname = target
-        return NextResponse.redirect(redirectUrl)
+        return createRedirectWithCookies(redirectUrl, res)
       }
 
       // Bloquear /pricing en modo mono
@@ -57,7 +74,7 @@ export async function middleware(req: NextRequest) {
         console.log(`[Middleware] Modo mono: bloqueando /pricing → ${target}`)
         const redirectUrl = req.nextUrl.clone()
         redirectUrl.pathname = target
-        return NextResponse.redirect(redirectUrl)
+        return createRedirectWithCookies(redirectUrl, res)
       }
     }
 
@@ -88,7 +105,7 @@ export async function middleware(req: NextRequest) {
       const redirectUrl = req.nextUrl.clone()
       redirectUrl.pathname = '/dashboard'
       redirectUrl.searchParams.delete('redirectedFrom') // Limpiar parámetros previos
-      return NextResponse.redirect(redirectUrl)
+      return createRedirectWithCookies(redirectUrl, res)
     }
 
     // Verificar acceso a rutas restringidas por rol
@@ -115,7 +132,7 @@ export async function middleware(req: NextRequest) {
         // Redirigir a página especial de logout para usuario inactivo
         const redirectUrl = req.nextUrl.clone()
         redirectUrl.pathname = '/inactive-logout'
-        return NextResponse.redirect(redirectUrl)
+        return createRedirectWithCookies(redirectUrl, res)
       }
 
       // /companies - Solo superadmin en modo multiempresa
@@ -131,19 +148,19 @@ export async function middleware(req: NextRequest) {
           console.log(`[Middleware] Admin en modo mono: /companies → /companies/edit`)
           const redirectUrl = req.nextUrl.clone()
           redirectUrl.pathname = '/companies/edit'
-          return NextResponse.redirect(redirectUrl)
+          return createRedirectWithCookies(redirectUrl, res)
         } else if (userRole === 'admin' && multiempresa) {
           // Admin en modo multi no puede ver lista
           console.log(`[Middleware] Admin en modo multi: acceso denegado a /companies → /dashboard`)
           const redirectUrl = req.nextUrl.clone()
           redirectUrl.pathname = '/dashboard'
-          return NextResponse.redirect(redirectUrl)
+          return createRedirectWithCookies(redirectUrl, res)
         } else {
           // Otros roles no tienen acceso
           console.log(`[Middleware] Rol ${userRole}: acceso denegado a /companies → /dashboard`)
           const redirectUrl = req.nextUrl.clone()
           redirectUrl.pathname = '/dashboard'
-          return NextResponse.redirect(redirectUrl)
+          return createRedirectWithCookies(redirectUrl, res)
         }
       }
 
@@ -153,7 +170,7 @@ export async function middleware(req: NextRequest) {
           console.log(`[Middleware] Acceso denegado a ${pathname} (rol: ${userRole}) → /dashboard`)
           const redirectUrl = req.nextUrl.clone()
           redirectUrl.pathname = '/dashboard'
-          return NextResponse.redirect(redirectUrl)
+          return createRedirectWithCookies(redirectUrl, res)
         }
       }
 
@@ -162,7 +179,7 @@ export async function middleware(req: NextRequest) {
         console.log(`[Middleware] Acceso denegado a /companies/edit (rol: ${userRole}) → /dashboard`)
         const redirectUrl = req.nextUrl.clone()
         redirectUrl.pathname = '/dashboard'
-        return NextResponse.redirect(redirectUrl)
+        return createRedirectWithCookies(redirectUrl, res)
       }
 
       // /settings - Solo superadmin
@@ -170,7 +187,7 @@ export async function middleware(req: NextRequest) {
         console.log(`[Middleware] Acceso denegado a /settings (rol: ${userRole}) → /dashboard`)
         const redirectUrl = req.nextUrl.clone()
         redirectUrl.pathname = '/dashboard'
-        return NextResponse.redirect(redirectUrl)
+        return createRedirectWithCookies(redirectUrl, res)
       }
 
       // /users/create - Solo admin y superadmin
@@ -178,7 +195,7 @@ export async function middleware(req: NextRequest) {
         console.log(`[Middleware] Acceso denegado a /users/create (rol: ${userRole}) → /dashboard`)
         const redirectUrl = req.nextUrl.clone()
         redirectUrl.pathname = '/dashboard'
-        return NextResponse.redirect(redirectUrl)
+        return createRedirectWithCookies(redirectUrl, res)
       }
     }
 
