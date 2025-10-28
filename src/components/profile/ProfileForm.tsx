@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { startTour } from "@/lib/helpers/tour-helpers";
+import { ActionButtons } from "@/components/shared/ActionButtons";
 
 interface ProfileFormProps {
   profile: UserProfile;
@@ -294,9 +295,9 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
     };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form id="profile-form" onSubmit={handleSubmit} className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col items-center md:items-start md:flex-row md:justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
         <div className="text-center md:text-left">
           <div className="flex items-center justify-center md:justify-start gap-3">
             <h1 className="text-3xl font-bold flex items-center gap-2">
@@ -317,6 +318,16 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
           <p className="text-sm">
             Administra tu información personal y configuración de cuenta
           </p>
+        </div>
+
+        {/* Botones de acción - Header */}
+        <div className="w-full md:w-auto">
+          <ActionButtons
+            primaryAction="save"
+            isLoading={isLoading}
+            isHeader={true}
+            formId="profile-form"
+          />
         </div>
       </div>
 
@@ -770,50 +781,13 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
       </Card>
 
       {/* Botones de acción al final de la página */}
-      <div className="flex justify-end gap-3 mt-6">
-        {showPasswordSection && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              setShowPasswordSection(false);
-              setFormData((prev) => ({
-                ...prev,
-                currentPassword: "",
-                newPassword: "",
-                confirmPassword: "",
-              }));
-              setErrors((prev) => ({
-                ...prev,
-                currentPassword: undefined,
-                newPassword: undefined,
-                confirmPassword: undefined,
-              }));
-            }}
-            className="border-lime-500 hover:bg-lime-500 hover:text-white"
-          >
-            Cancelar
-          </Button>
-        )}
-
-        <Button
-          id="btn-guardar-perfil"
-          type="submit"
-          disabled={isLoading}
-          className="bg-lime-500 hover:bg-lime-600 text-white"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Guardando...
-            </>
-          ) : (
-            <>
-              <Save className="mr-2 h-4 w-4" />
-              Guardar Cambios
-            </>
-          )}
-        </Button>
+      <div className="mt-6">
+        <ActionButtons
+          primaryAction="save"
+          isLoading={isLoading}
+          isHeader={false}
+          formId="profile-form"
+        />
       </div>
     </form>
   );
