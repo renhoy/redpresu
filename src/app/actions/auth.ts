@@ -59,6 +59,20 @@ export async function signInAction(email: string, password: string): Promise<Sig
       return { success: false, error: 'Usuario no encontrado en la base de datos' }
     }
 
+    // CRÍTICO: Verificar si el usuario está inactivo
+    if (userData.status === 'inactive') {
+      log.warn(`[Server Action] Intento de login con usuario inactivo: ${data.user.email}`)
+
+      // Cerrar sesión inmediatamente
+      await supabase.auth.signOut()
+
+      // Retornar error específico para mostrar diálogo
+      return {
+        success: false,
+        error: 'INACTIVE_USER' // Flag especial para mostrar diálogo
+      }
+    }
+
     // Actualizar last_login
     const { error: updateError } = await supabase
       .from('redpresu_users')

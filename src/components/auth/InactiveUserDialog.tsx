@@ -47,8 +47,8 @@ export function InactiveUserDialog({ showDialog }: InactiveUserDialogProps) {
 
   const handleClose = () => {
     setOpen(false);
-    // Limpiar el parámetro reason de la URL
-    router.replace("/login");
+    // Redirigir a la página principal (home)
+    router.replace("/");
   };
 
   return (
