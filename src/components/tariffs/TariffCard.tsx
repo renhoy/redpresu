@@ -264,7 +264,7 @@ export function TariffCard({
                     rel="noopener noreferrer"
                   >
                     <Plus className="h-3.5 w-3.5 flex-shrink-0" />
-                    <span>Presup.</span>
+                    <span>Presupuesto</span>
                   </Link>
                 </Button>
               ) : (
@@ -276,7 +276,7 @@ export function TariffCard({
                   className="w-full lg:w-auto h-7 px-2 gap-1.5 text-xs"
                 >
                   <Plus className="h-3.5 w-3.5 flex-shrink-0" />
-                  <span>Presup.</span>
+                  <span>Presupuesto</span>
                 </Button>
               )}
 
@@ -424,9 +424,7 @@ export function TariffCard({
                   <div>-</div>
                 )}
               </div>
-              <div className="text-right">
-                {formatDate(tariff.created_at)}
-              </div>
+              <div className="text-right">{formatDate(tariff.created_at)}</div>
             </div>
 
             {/* Acciones Tablet */}
@@ -445,7 +443,7 @@ export function TariffCard({
                     rel="noopener noreferrer"
                   >
                     <Plus className="h-3.5 w-3.5 flex-shrink-0" />
-                    <span>Presup.</span>
+                    <span>Presupuesto</span>
                   </Link>
                 </Button>
               ) : (
@@ -457,7 +455,7 @@ export function TariffCard({
                   className="h-7 px-2 gap-1.5 text-xs"
                 >
                   <Plus className="h-3.5 w-3.5 flex-shrink-0" />
-                  <span>Presup.</span>
+                  <span>Presupuesto</span>
                 </Button>
               )}
 
