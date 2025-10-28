@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { TiptapEditor } from "@/components/shared/TiptapEditor";
+import { RichTextEditor } from "@/components/shared/RichTextEditor";
 import { updateBudgetNotes } from "@/app/actions/budgets";
 import { toast } from "sonner";
 import { ArrowLeft, Save } from "lucide-react";
@@ -75,7 +75,7 @@ export function BudgetNotesForm({
             (aparecerá en la página de resumen del PDF)
           </span>
         </Label>
-        <TiptapEditor
+        <RichTextEditor
           content={summaryNote}
           onChange={setSummaryNote}
           placeholder="Escribe la nota del sumario aquí..."
@@ -91,7 +91,7 @@ export function BudgetNotesForm({
             (aparecerá en la página de condiciones del PDF)
           </span>
         </Label>
-        <TiptapEditor
+        <RichTextEditor
           content={conditionsNote}
           onChange={setConditionsNote}
           placeholder="Escribe las condiciones del presupuesto aquí..."

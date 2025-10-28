@@ -5,7 +5,7 @@ import { formatCurrency } from "@/lib/helpers/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Pencil, Trash2, FileStack, FileText, Eye, FilePlus, Copy, Layers } from "lucide-react";
+import { Pencil, Trash2, FileStack, FileText, Eye, FilePlus, Copy, Layers, FileEdit } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -302,6 +302,22 @@ export function BudgetCard({
             >
               <Pencil className="h-3.5 w-3.5 flex-shrink-0" />
               <span>Editar</span>
+            </Button>
+
+            {/* Editar Notas */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                window.open(
+                  `/budgets/${budget.id}/edit-notes`,
+                  "_blank"
+                )
+              }
+              className="h-7 px-2 gap-1.5 text-xs w-full"
+            >
+              <FileEdit className="h-3.5 w-3.5 flex-shrink-0" />
+              <span>Editar Notas</span>
             </Button>
 
             {/* Duplicar */}
