@@ -29,13 +29,19 @@ export default async function BudgetEditNotesPage({
   }
 
   // Obtener rol del usuario
-  const { data: userData } = await supabase
-    .from("users")
+  const { data: userData, error: userError } = await supabase
+    .from("redpresu_users")
     .select("role")
     .eq("id", user.id)
     .single();
 
-  const userRole = userData?.role || "vendedor";
+  if (userError || !userData) {
+    console.error("[edit-notes] Error obteniendo rol usuario:", userError);
+    redirect("/budgets");
+  }
+
+  const userRole = userData.role || "vendedor";
+  console.log("[edit-notes] User role:", userRole);
 
   // Obtener presupuesto
   const { data: budget, error } = await supabase
@@ -45,8 +51,11 @@ export default async function BudgetEditNotesPage({
     .single();
 
   if (error || !budget) {
+    console.error("[edit-notes] Error obteniendo presupuesto:", error);
     redirect("/budgets");
   }
+
+  console.log("[edit-notes] Budget found:", budget.id, "Owner:", budget.user_id, "Current user:", user.id);
 
   // Verificar permisos: superadmin y admin pueden editar todo, otros solo sus presupuestos
   const canEdit =
@@ -54,9 +63,14 @@ export default async function BudgetEditNotesPage({
     userRole === "admin" ||
     budget.user_id === user.id;
 
+  console.log("[edit-notes] Can edit?", canEdit, "Role:", userRole);
+
   if (!canEdit) {
+    console.error("[edit-notes] Usuario sin permisos para editar");
     redirect("/budgets");
   }
+
+  console.log("[edit-notes] Renderizando BudgetNotesForm");
 
   return (
     <BudgetNotesForm

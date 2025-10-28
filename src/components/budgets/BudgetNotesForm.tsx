@@ -33,7 +33,9 @@ export function BudgetNotesForm({
 }: BudgetNotesFormProps) {
   const router = useRouter();
   const [summaryNote, setSummaryNote] = useState(initialSummaryNote || "");
-  const [conditionsNote, setConditionsNote] = useState(initialConditionsNote || "");
+  const [conditionsNote, setConditionsNote] = useState(
+    initialConditionsNote || ""
+  );
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -79,7 +81,10 @@ export function BudgetNotesForm({
 
   return (
     <div className="min-h-screen bg-lime-50">
-      <form onSubmit={handleSubmit} className="container mx-auto py-8 max-w-5xl space-y-6">
+      <form
+        onSubmit={handleSubmit}
+        className="container mx-auto py-8 max-w-5xl space-y-6"
+      >
         {/* Header con botones superiores */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white rounded-lg p-6 shadow-sm">
           <div>
@@ -87,14 +92,19 @@ export function BudgetNotesForm({
               Editar Notas del Presupuesto
             </h1>
             <p className="text-muted-foreground mt-1">
-              Presupuesto: <span className="font-mono font-semibold">{budgetNumber}</span>
+              Presupuesto:{" "}
+              <span className="font-mono font-semibold">{budgetNumber}</span>
             </p>
           </div>
           <div className="flex gap-3 w-full md:w-auto">
-            <Link href="/budgets" className="flex-1 md:flex-initial">
-              <Button type="button" variant="outline" className="w-full">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Volver
+            <Link href="/budgets" className="w-full md:w-auto">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={loading}
+                className="w-full"
+              >
+                Cancelar
               </Button>
             </Link>
             <Button
@@ -168,7 +178,8 @@ export function BudgetNotesForm({
                     <TooltipContent>
                       <p className="max-w-xs">
                         Condiciones generales que aparecerán en el PDF. Por
-                        ejemplo: forma de pago, plazos de entrega, garantías, etc.
+                        ejemplo: forma de pago, plazos de entrega, garantías,
+                        etc.
                       </p>
                     </TooltipContent>
                   </Tooltip>
@@ -193,7 +204,12 @@ export function BudgetNotesForm({
         {/* Botones inferiores (duplicados para mejor UX) */}
         <div className="flex flex-col md:flex-row justify-end gap-3 bg-white rounded-lg p-6 shadow-sm">
           <Link href="/budgets" className="w-full md:w-auto">
-            <Button type="button" variant="outline" disabled={loading} className="w-full">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={loading}
+              className="w-full"
+            >
               Cancelar
             </Button>
           </Link>
