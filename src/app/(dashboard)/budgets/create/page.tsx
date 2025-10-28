@@ -1,6 +1,8 @@
-import { getTariffById } from '@/app/actions/tariffs'
+import { getTariffById, getTariffs } from '@/app/actions/tariffs'
 import { getBudgetById } from '@/app/actions/budgets'
 import { BudgetForm } from '@/components/budgets/BudgetForm'
+import { TariffSelector } from '@/components/budgets/TariffSelector'
+import { getServerUser } from '@/lib/auth/server'
 import { redirect } from 'next/navigation'
 
 interface PageProps {
@@ -10,9 +12,24 @@ interface PageProps {
 export default async function CreateBudgetPage({ searchParams }: PageProps) {
   const { tariff_id, budget_id } = await searchParams
 
-  // Si no hay tariff_id, redirigir a tariffs
+  // Obtener usuario para company_id
+  const user = await getServerUser()
+  if (!user || !user.company_id) {
+    redirect('/login')
+  }
+
+  // Si no hay tariff_id, mostrar selector de tarifas
   if (!tariff_id) {
-    redirect('/tariffs?message=select-tariff')
+    const allTariffs = await getTariffs(user.company_id)
+    const activeTariffs = allTariffs
+      .filter(t => t.status === 'Activa')
+      .map(t => ({
+        id: t.id,
+        title: t.title,
+        description: t.description
+      }))
+
+    return <TariffSelector tariffs={activeTariffs} />
   }
 
   // Si hay budget_id, cargar borrador existente

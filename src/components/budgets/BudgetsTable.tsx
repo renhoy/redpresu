@@ -70,11 +70,6 @@ import { BudgetCard } from "./BudgetCard";
 
 interface BudgetsTableProps {
   budgets: Budget[];
-  activeTariffs: Array<{
-    id: string;
-    title: string;
-    description: string | null;
-  }>;
 }
 
 const statusColors = {
@@ -86,7 +81,7 @@ const statusColors = {
   caducado: "bg-neutral-200 text-black",
 };
 
-export function BudgetsTable({ budgets, activeTariffs }: BudgetsTableProps) {
+export function BudgetsTable({ budgets }: BudgetsTableProps) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -108,8 +103,6 @@ export function BudgetsTable({ budgets, activeTariffs }: BudgetsTableProps) {
   const [editAction, setEditAction] = useState<"presupuesto" | "notas">(
     "presupuesto"
   );
-  const [newBudgetDialogOpen, setNewBudgetDialogOpen] = useState(false);
-  const [selectedTariffId, setSelectedTariffId] = useState<string>("");
 
   // Calcular contadores por estado
   const statusCounts = budgets.reduce((acc, budget) => {
@@ -232,28 +225,6 @@ export function BudgetsTable({ budgets, activeTariffs }: BudgetsTableProps) {
 
     setEditDialogBudget(null);
     setEditAction("presupuesto"); // Reset to default
-  };
-
-  const handleNewBudget = () => {
-    if (activeTariffs.length === 0) {
-      // Si no hay tarifas, abrir dialog para ir a crear una
-      setNewBudgetDialogOpen(true);
-    } else {
-      // Si hay tarifas, seleccionar la primera por defecto y abrir dialog
-      setSelectedTariffId(activeTariffs[0].id);
-      setNewBudgetDialogOpen(true);
-    }
-  };
-
-  const handleCreateBudget = () => {
-    if (activeTariffs.length === 0) {
-      // Ir a crear tarifa
-      router.push("/tariffs/create");
-    } else if (selectedTariffId) {
-      // Crear presupuesto con la tarifa seleccionada
-      router.push(`/budgets/create?tariff_id=${selectedTariffId}`);
-    }
-    setNewBudgetDialogOpen(false);
   };
 
   const getDaysRemaining = (
@@ -933,11 +904,13 @@ export function BudgetsTable({ budgets, activeTariffs }: BudgetsTableProps) {
 
           <Button
             id="btn-nuevo-presupuesto-list"
-            onClick={handleNewBudget}
+            asChild
             className="bg-lime-500 hover:bg-lime-600"
           >
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo Presupuesto
+            <Link href="/budgets/create">
+              <Plus className="mr-2 h-4 w-4" />
+              Nuevo Presupuesto
+            </Link>
           </Button>
         </div>
       </div>
@@ -1279,71 +1252,6 @@ export function BudgetsTable({ budgets, activeTariffs }: BudgetsTableProps) {
               className="bg-lime-500 hover:bg-lime-600"
             >
               Aceptar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Dialog para crear nuevo presupuesto */}
-      <AlertDialog
-        open={newBudgetDialogOpen}
-        onOpenChange={(open) => {
-          setNewBudgetDialogOpen(open);
-          if (!open && activeTariffs.length > 0) {
-            setSelectedTariffId(activeTariffs[0].id);
-          }
-        }}
-      >
-        <AlertDialogContent className="max-w-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {activeTariffs.length === 0
-                ? "No hay tarifas disponibles"
-                : "Seleccione una tarifa"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {activeTariffs.length === 0
-                ? "Para crear un presupuesto, primero tiene que crear una tarifa. ¿Desea crearla?"
-                : "Seleccione la tarifa a partir de la cual desea crear el presupuesto"}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          {activeTariffs.length > 0 && (
-            <div className="space-y-3 py-4 max-h-[400px] overflow-y-auto">
-              {activeTariffs.map((tariff) => (
-                <label
-                  key={tariff.id}
-                  className="flex items-start space-x-3 cursor-pointer p-3 rounded-lg border hover:bg-lime-50 transition-colors"
-                >
-                  <input
-                    type="radio"
-                    name="tariff-selection"
-                    value={tariff.id}
-                    checked={selectedTariffId === tariff.id}
-                    onChange={(e) => setSelectedTariffId(e.target.value)}
-                    className="h-4 w-4 mt-1 text-lime-600 focus:ring-lime-500"
-                  />
-                  <div className="flex-1">
-                    <div className="font-medium text-sm">{tariff.title}</div>
-                    {tariff.description && (
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {tariff.description}
-                      </div>
-                    )}
-                  </div>
-                </label>
-              ))}
-            </div>
-          )}
-
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleCreateBudget}
-              className="bg-lime-500 hover:bg-lime-600"
-              disabled={activeTariffs.length > 0 && !selectedTariffId}
-            >
-              {activeTariffs.length === 0 ? "Crear Tarifa" : "Aceptar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { getBudgets } from '@/app/actions/budgets'
-import { getTariffs } from '@/app/actions/tariffs'
 import { BudgetsTable } from '@/components/budgets/BudgetsTable'
 
 interface PageProps {
@@ -11,10 +10,6 @@ interface PageProps {
 export default async function BudgetsPage({ searchParams }: PageProps) {
   const { tariff_id } = await searchParams
   const budgets = await getBudgets()
-
-  // Obtener tarifas activas para el selector
-  const allTariffs = await getTariffs()
-  const activeTariffs = allTariffs.filter(t => t.status === 'Activa')
 
   // Filtrar por tariff_id si se proporciona
   let filteredBudgets = budgets
@@ -44,7 +39,7 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
         )}
 
         {/* Tabla de presupuestos */}
-        <BudgetsTable budgets={filteredBudgets} activeTariffs={activeTariffs} />
+        <BudgetsTable budgets={filteredBudgets} />
       </div>
     </div>
   )
