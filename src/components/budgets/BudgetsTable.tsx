@@ -100,7 +100,9 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [editDialogBudget, setEditDialogBudget] = useState<Budget | null>(null);
-  const [editAction, setEditAction] = useState<"presupuesto" | "notas">("presupuesto");
+  const [editAction, setEditAction] = useState<"presupuesto" | "notas">(
+    "presupuesto"
+  );
 
   // Calcular contadores por estado
   const statusCounts = budgets.reduce((acc, budget) => {
@@ -411,7 +413,14 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
   // Transiciones válidas de estado - Permitir cambiar a cualquier estado
   const getValidTransitions = (currentStatus: string): string[] => {
     // Todos los estados disponibles
-    const allStatuses = ["borrador", "pendiente", "enviado", "aprobado", "rechazado", "caducado"];
+    const allStatuses = [
+      "borrador",
+      "pendiente",
+      "enviado",
+      "aprobado",
+      "rechazado",
+      "caducado",
+    ];
     // Retornar todos los estados (incluyendo el actual, ya que el Select lo necesita)
     return allStatuses;
   };
@@ -907,7 +916,10 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
       </div>
 
       {/* Filtros */}
-      <div id="filtros-presupuesto" className="flex gap-4 mb-4 flex-wrap items-center">
+      <div
+        id="filtros-presupuesto"
+        className="flex gap-4 mb-4 flex-wrap items-center"
+      >
         <Input
           placeholder="Buscar por número, cliente o NIF..."
           value={search}
@@ -918,7 +930,9 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
         {/* Botones de filtro de estado */}
         <div className="flex gap-2 flex-wrap">
           <Button
-            variant={statusFilter === "all" && search === "" ? "default" : "outline"}
+            variant={
+              statusFilter === "all" && search === "" ? "default" : "outline"
+            }
             size="sm"
             onClick={() => {
               setStatusFilter("all");
@@ -943,7 +957,8 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                 : "border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
             }
           >
-            Borradores{statusCounts["borrador"] ? ` (${statusCounts["borrador"]})` : ""}
+            Borradores
+            {statusCounts["borrador"] ? ` (${statusCounts["borrador"]})` : ""}
           </Button>
           <Button
             variant={statusFilter === "pendiente" ? "default" : "outline"}
@@ -956,7 +971,8 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                 : "border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
             }
           >
-            Pendientes{statusCounts["pendiente"] ? ` (${statusCounts["pendiente"]})` : ""}
+            Pendientes
+            {statusCounts["pendiente"] ? ` (${statusCounts["pendiente"]})` : ""}
           </Button>
           <Button
             variant={statusFilter === "enviado" ? "default" : "outline"}
@@ -969,7 +985,8 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                 : "border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
             }
           >
-            Enviados{statusCounts["enviado"] ? ` (${statusCounts["enviado"]})` : ""}
+            Enviados
+            {statusCounts["enviado"] ? ` (${statusCounts["enviado"]})` : ""}
           </Button>
           <Button
             variant={statusFilter === "aprobado" ? "default" : "outline"}
@@ -982,7 +999,8 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                 : "border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
             }
           >
-            Aprobados{statusCounts["aprobado"] ? ` (${statusCounts["aprobado"]})` : ""}
+            Aprobados
+            {statusCounts["aprobado"] ? ` (${statusCounts["aprobado"]})` : ""}
           </Button>
           <Button
             variant={statusFilter === "rechazado" ? "default" : "outline"}
@@ -995,7 +1013,8 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                 : "border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
             }
           >
-            Rechazados{statusCounts["rechazado"] ? ` (${statusCounts["rechazado"]})` : ""}
+            Rechazados
+            {statusCounts["rechazado"] ? ` (${statusCounts["rechazado"]})` : ""}
           </Button>
           <Button
             variant={statusFilter === "caducado" ? "default" : "outline"}
@@ -1008,7 +1027,8 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                 : "border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
             }
           >
-            Caducados{statusCounts["caducado"] ? ` (${statusCounts["caducado"]})` : ""}
+            Caducados
+            {statusCounts["caducado"] ? ` (${statusCounts["caducado"]})` : ""}
           </Button>
         </div>
       </div>
@@ -1200,12 +1220,12 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                 name="edit-action"
                 value="presupuesto"
                 checked={editAction === "presupuesto"}
-                onChange={(e) => setEditAction(e.target.value as "presupuesto" | "notas")}
+                onChange={(e) =>
+                  setEditAction(e.target.value as "presupuesto" | "notas")
+                }
                 className="h-4 w-4 text-lime-600 focus:ring-lime-500"
               />
-              <span className="text-sm font-medium">
-                Editar Presupuesto (Por defecto)
-              </span>
+              <span className="text-sm font-medium">Editar Presupuesto</span>
             </label>
 
             <label className="flex items-center space-x-3 cursor-pointer">
@@ -1214,7 +1234,9 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                 name="edit-action"
                 value="notas"
                 checked={editAction === "notas"}
-                onChange={(e) => setEditAction(e.target.value as "presupuesto" | "notas")}
+                onChange={(e) =>
+                  setEditAction(e.target.value as "presupuesto" | "notas")
+                }
                 className="h-4 w-4 text-lime-600 focus:ring-lime-500"
               />
               <span className="text-sm font-medium">

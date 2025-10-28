@@ -45,13 +45,11 @@ export default async function BudgetEditNotesPage({
   }
 
   return (
-    <div className="container mx-auto py-8 max-w-5xl">
-      <BudgetNotesForm
-        budgetId={budget.id}
-        budgetNumber={budget.budget_number}
-        initialSummaryNote={budget.summary_note || ""}
-        initialConditionsNote={budget.conditions_note || ""}
-      />
-    </div>
+    <BudgetNotesForm
+      budgetId={budget.id}
+      budgetNumber={budget.budget_number}
+      initialSummaryNote={budget.summary_note || ""}
+      initialConditionsNote={budget.conditions_note || ""}
+    />
   );
 }
