@@ -854,6 +854,25 @@ export async function saveBudget(
       }
     }
 
+    // Si es la primera vez que se guarda (notas vacías), copiar notas de la tarifa
+    if (!budget.summary_note || !budget.conditions_note) {
+      const { data: tariff, error: tariffError } = await supabaseAdmin
+        .from('redpresu_tariffs')
+        .select('summary_note, conditions_note')
+        .eq('id', budget.tariff_id)
+        .single()
+
+      if (!tariffError && tariff) {
+        if (!budget.summary_note) {
+          updateData.summary_note = tariff.summary_note || ''
+        }
+        if (!budget.conditions_note) {
+          updateData.conditions_note = tariff.conditions_note || ''
+        }
+        log.info('[saveBudget] Notas copiadas de la tarifa')
+      }
+    }
+
     // Actualizar como borrador
     const { error: updateError } = await supabaseAdmin
       .from('redpresu_budgets')
@@ -2346,5 +2365,117 @@ export async function duplicateBudgetCopy(budgetId: string): Promise<{
   } catch (error) {
     log.error('[duplicateBudgetCopy] Error crítico:', error)
     return { success: false, error: 'Error crítico al duplicar presupuesto' }
+  }
+}
+
+/**
+ * Actualizar notas de un presupuesto (summary_note y conditions_note)
+ */
+export async function updateBudgetNotes(
+  budgetId: string,
+  notes: {
+    summary_note: string
+    conditions_note: string
+  }
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    log.info('[updateBudgetNotes] Actualizando notas del presupuesto:', budgetId)
+
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+    // Obtener usuario actual
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      log.error('[updateBudgetNotes] Error de autenticación:', authError)
+      return { success: false, error: 'No autenticado' }
+    }
+
+    // SECURITY: Obtener datos del usuario actual
+    const { data: userData, error: userError } = await supabase
+      .from('redpresu_users')
+      .select('company_id, role')
+      .eq('id', user.id)
+      .single()
+
+    if (userError || !userData) {
+      log.error('[updateBudgetNotes] Error obteniendo usuario:', userError)
+      return { success: false, error: 'Usuario no encontrado' }
+    }
+
+    // SECURITY: Obtener budget y validar ownership
+    const { data: budget, error: budgetError } = await supabaseAdmin
+      .from('redpresu_budgets')
+      .select('id, user_id, company_id, pdf_url')
+      .eq('id', budgetId)
+      .single()
+
+    if (budgetError || !budget) {
+      log.error('[updateBudgetNotes] Budget no encontrado:', budgetError)
+      return { success: false, error: 'Presupuesto no encontrado' }
+    }
+
+    // Validar ownership
+    if (budget.user_id !== user.id) {
+      log.error('[updateBudgetNotes] Usuario no autorizado')
+      return { success: false, error: 'No autorizado' }
+    }
+
+    // Validar company_id
+    if (budget.company_id !== userData.company_id) {
+      log.error('[updateBudgetNotes] Intento de acceso cross-company')
+      return { success: false, error: 'No autorizado' }
+    }
+
+    // Preparar datos de actualización
+    const updateData: any = {
+      summary_note: notes.summary_note || '',
+      conditions_note: notes.conditions_note || '',
+      updated_at: new Date().toISOString()
+    }
+
+    // Si tenía PDF, eliminarlo porque las notas han cambiado
+    if (budget.pdf_url) {
+      updateData.pdf_url = null
+
+      // Eliminar archivo físico
+      try {
+        const fs = require('fs')
+        const path = require('path')
+        const filePath = path.join(process.cwd(), 'public', budget.pdf_url)
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath)
+          log.info('[updateBudgetNotes] PDF físico eliminado:', filePath)
+        }
+      } catch (fsError) {
+        log.error('[updateBudgetNotes] Error eliminando PDF físico:', fsError)
+        // No fallar la actualización por error de eliminación de archivo
+      }
+    }
+
+    // Actualizar notas
+    const { error: updateError } = await supabaseAdmin
+      .from('redpresu_budgets')
+      .update(updateData)
+      .eq('id', budgetId)
+
+    if (updateError) {
+      log.error('[updateBudgetNotes] Error actualizando:', updateError)
+      return { success: false, error: 'Error al actualizar notas' }
+    }
+
+    log.info('[updateBudgetNotes] Notas actualizadas exitosamente')
+    revalidatePath('/budgets')
+    revalidatePath(`/budgets/${budgetId}/edit-notes`)
+
+    return { success: true }
+
+  } catch (error) {
+    const sanitized = sanitizeError(error, {
+      context: 'updateBudgetNotes',
+      category: 'database',
+      metadata: { budgetId }
+    })
+    return { success: false, error: sanitized.userMessage }
   }
 }

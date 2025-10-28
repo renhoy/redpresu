@@ -45,6 +45,7 @@ import {
   FilePlus,
   Copy,
   Play,
+  FileEdit,
 } from "lucide-react";
 import {
   startTour,
@@ -742,6 +743,27 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Editar</p>
+                  </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() =>
+                        window.open(
+                          `/budgets/${budget.id}/edit-notes`,
+                          "_blank"
+                        )
+                      }
+                      className="border-cyan-500 text-cyan-600 hover:bg-cyan-500 hover:text-white"
+                    >
+                      <FileEdit className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Editar Notas</p>
                   </TooltipContent>
                 </Tooltip>
 

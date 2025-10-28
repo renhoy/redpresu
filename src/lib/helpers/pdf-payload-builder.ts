@@ -583,7 +583,7 @@ export async function buildPDFPayload(budget: Budget, tariff: Tariff): Promise<P
         validity: tariff.validity ? tariff.validity.toString().replace(/[^0-9]/g, '') : '0'
       },
       title: 'Resumen del Presupuesto',
-      note: tariff.summary_note || '',
+      note: budget.summary_note || tariff.summary_note || '',
       levels: summaryLevels,
       totals
     },
@@ -593,7 +593,7 @@ export async function buildPDFPayload(budget: Budget, tariff: Tariff): Promise<P
     },
     conditions: {
       title: 'Condiciones del Presupuesto',
-      note: tariff.conditions_note || ''
+      note: budget.conditions_note || tariff.conditions_note || ''
     },
     mode: 'produccion'
   }
