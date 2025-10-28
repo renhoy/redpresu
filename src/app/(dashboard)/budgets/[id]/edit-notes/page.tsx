@@ -12,8 +12,10 @@ export const metadata: Metadata = {
 export default async function BudgetEditNotesPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
+
   const cookieStore = await cookies();
   const supabase = createServerActionClient({ cookies: () => cookieStore });
 
@@ -30,7 +32,7 @@ export default async function BudgetEditNotesPage({
   const { data: budget, error } = await supabase
     .from("redpresu_budgets")
     .select("id, budget_number, summary_note, conditions_note, user_id")
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (error || !budget) {

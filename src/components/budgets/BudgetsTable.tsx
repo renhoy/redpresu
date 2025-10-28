@@ -757,7 +757,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                           "_blank"
                         )
                       }
-                      className="border-cyan-500 text-cyan-600 hover:bg-cyan-500 hover:text-white"
+                      className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
                     >
                       <FileEdit className="h-4 w-4" />
                     </Button>
