@@ -44,7 +44,7 @@ export function TariffFormFields({
   return (
     <div className="space-y-6">
       {/* Card 1: Datos Tarifa */}
-      <Card id="card-datos-tarifa" className="bg-lime-50">
+      <Card id="card-datos-tarifa" className="bg-lime-100">
         <CardHeader>
           <CardTitle>Datos Tarifa</CardTitle>
         </CardHeader>
@@ -182,7 +182,7 @@ export function TariffFormFields({
       </Card>
 
       {/* Card 2: Datos Empresa */}
-      <Card id="card-datos-empresa" className="bg-lime-50">
+      <Card id="card-datos-empresa" className="bg-lime-100">
         <CardHeader>
           <CardTitle>Datos Empresa</CardTitle>
         </CardHeader>
@@ -371,7 +371,7 @@ export function TariffFormFields({
       </Card>
 
       {/* Card 3: Configuración Visual */}
-      <Card id="card-configuracion-visual" className="bg-lime-50">
+      <Card id="card-configuracion-visual" className="bg-lime-100">
         <CardHeader>
           <CardTitle>Configuración Visual</CardTitle>
         </CardHeader>
@@ -465,7 +465,7 @@ export function TariffFormFields({
       </Card>
 
       {/* Card 4: Notas PDF */}
-      <Card id="card-notas-pdf" className="bg-lime-50">
+      <Card id="card-notas-pdf" className="bg-lime-100">
         <CardHeader>
           <CardTitle>Notas PDF</CardTitle>
         </CardHeader>
@@ -536,7 +536,7 @@ export function TariffFormFields({
       </Card>
 
       {/* Card 5: Notas Formulario */}
-      <Card id="card-notas-formulario" className="bg-lime-50">
+      <Card id="card-notas-formulario" className="bg-lime-100">
         <CardHeader>
           <CardTitle>Notas Formulario</CardTitle>
         </CardHeader>

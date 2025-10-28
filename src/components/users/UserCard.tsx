@@ -69,7 +69,7 @@ export function UserCard({
             <div className="space-y-1">
               {/* Línea 1: Nombre usuario */}
               <div className="font-semibold text-sm truncate">
-                {user.name} {user.apellidos}
+                {user.name} {user.last_name}
               </div>
               {/* Línea 2: Email */}
               <div className="text-xs text-muted-foreground truncate">
@@ -78,6 +78,10 @@ export function UserCard({
               {/* Línea 3: Rol como texto */}
               <div className="text-xs text-muted-foreground capitalize">
                 {getRoleLabel(user.role)}
+              </div>
+              {/* Línea 4: Empresa */}
+              <div className="text-xs font-medium text-lime-700">
+                {user.company_name || "-"}
               </div>
             </div>
 
@@ -182,14 +186,16 @@ export function UserCard({
                   asChild
                   className="w-full h-7 px-2 gap-1.5 text-xs"
                 >
-                  <Link href={`/users/${user.id}/edit`}>
+                  <Link href={`/users/create?id=${user.id}`}>
                     <Pencil className="h-3.5 w-3.5 flex-shrink-0" />
                     <span>Editar</span>
                   </Link>
                 </Button>
 
-                {/* Botón Borrar - Solo admin/superadmin */}
-                {canDelete && user.id !== currentUserId && (
+                {/* Botón Borrar - Solo admin/superadmin, excepto superadmin protegido */}
+                {canDelete &&
+                 user.id !== currentUserId &&
+                 user.email !== "josivela+super@gmail.com" && (
                   <Button
                     variant="outline"
                     size="sm"

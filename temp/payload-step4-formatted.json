@@ -1,69 +1,80 @@
 {
   "step": "Paso 4 - Después de formatItemNumbers() - budget.levels",
-  "totalItems": 8,
+  "totalItems": 9,
   "data": [
     {
       "id": "1",
-      "name": "Pescado Fresco",
+      "name": "Hardware",
       "level": "chapter",
-      "amount": "108.00"
+      "amount": "1600.00"
     },
     {
       "id": "1.1",
-      "name": "Pescado Blanco",
+      "name": "Impresoras",
       "level": "subchapter",
-      "amount": "108.00"
+      "amount": "105.00"
     },
     {
       "id": "1.1.1",
-      "name": "Pescados de Arrába",
-      "level": "section",
-      "amount": "108.00"
+      "pvp": "105.00",
+      "name": "Impresora Ticket NP-350/CP-250",
+      "unit": "ud",
+      "level": "item",
+      "amount": "105.00",
+      "quantity": "1.00",
+      "description": "Impresora tickets térmica 80 mm\\nVelocidad: 250 mm/s\\nConexiones: RS-232, USB y Ethernet\\nApertura cajón\\nSoporte pared\\nColor: Negro",
+      "iva_percentage": "21.00"
     },
     {
-      "id": "1.1.1.1",
-      "pvp": "10.80",
-      "name": "Merluza",
-      "unit": "kg",
+      "id": "1.2",
+      "name": "Cajones Portamonedas",
+      "level": "subchapter",
+      "amount": "65.00"
+    },
+    {
+      "id": "1.2.1",
+      "pvp": "65.00",
+      "name": "Cajón Portamonedas Concord 41x41",
+      "unit": "ud",
       "level": "item",
-      "amount": "108.00",
-      "quantity": "10.00",
-      "description": "Filete de merluza fresca sin espinas.",
-      "iva_percentage": "10.00"
+      "amount": "65.00",
+      "quantity": "1.00",
+      "description": "Cajón portamonedas Concord 41 x 41 cm\\nApertura automática\\nConexión RJ11\\nMaterial: Aluminio\\nColor: negro o blanco",
+      "iva_percentage": "21.00"
+    },
+    {
+      "id": "1.3",
+      "name": "Packs de Hardware",
+      "level": "subchapter",
+      "amount": "1430.00"
+    },
+    {
+      "id": "1.3.1",
+      "pvp": "1430.00",
+      "name": "Pack bares y restaurantes",
+      "unit": "ud",
+      "level": "item",
+      "amount": "1430.00",
+      "quantity": "1.00",
+      "description": "Incluye TPV Concord 1024, 2 impresoras tickets NP-350, cajón portamonedas 41x41 y comandera Concord M30",
+      "iva_percentage": "21.00"
     },
     {
       "id": "2",
-      "name": "Productos Congelados",
+      "name": "Servicios",
       "level": "chapter",
-      "amount": "180.00"
+      "amount": "290.00"
     },
     {
       "id": "2.1",
-      "pvp": "18.00",
-      "name": "Gambón Argentino",
-      "unit": "kg",
-      "level": "item",
-      "amount": "180.00",
-      "quantity": "10.00",
-      "description": "Gambón congelado grande.",
-      "iva_percentage": "10.00"
-    },
-    {
-      "id": "3",
-      "name": "Preparados y Ahumados",
-      "level": "chapter",
-      "amount": "5.00"
-    },
-    {
-      "id": "3.1",
-      "pvp": "0.50",
-      "name": "Croquetas de Marisco",
+      "pvp": "290.00",
+      "name": "Cuota inicial de suscripción",
       "unit": "ud",
       "level": "item",
-      "amount": "5.00",
-      "quantity": "10.00",
-      "description": "Croquetas caseras de marisco.",
-      "iva_percentage": "10.00"
+      "amount": "290.00",
+      "quantity": "1.00",
+      "description": "Incluye: Instalación, Configuración y 2h. de formación.",
+      "iva_percentage": "21.00"
     }
   ]
 }

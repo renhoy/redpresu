@@ -119,7 +119,10 @@ export function DashboardClient({
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-center md:text-left w-full md:w-auto">
             <div className="flex items-center justify-center md:justify-start gap-3">
-              <h1 className="text-3xl font-bold flex items-center gap-2" data-tour="titulo-dashboard">
+              <h1
+                className="text-3xl font-bold flex items-center gap-2"
+                data-tour="titulo-dashboard"
+              >
                 <Home className="h-6 w-6" /> Panel de control
               </h1>
               <TourButton tourId="dashboard-page" />
@@ -127,7 +130,10 @@ export function DashboardClient({
             <p className="text-sm">Información, resumen y estadísticas</p>
           </div>
 
-          <div className="flex items-center gap-2 w-full md:w-auto justify-center md:justify-end" data-tour="selector-periodo">
+          <div
+            className="flex items-center gap-2 w-full md:w-auto justify-center md:justify-end"
+            data-tour="selector-periodo"
+          >
             <Calendar className="w-4 h-4 text-gray-500" />
             <Select
               value={periodo}
@@ -147,20 +153,17 @@ export function DashboardClient({
         </div>
 
         {/* Estadísticas principales - Grid 2x2 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8" data-tour="estadisticas-principales">
+        <div
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+          data-tour="estadisticas-principales"
+        >
           {/* Total presupuestos */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-medium">
-                Total Presupuestos
-              </CardTitle>
-              <FileText className="h-6 w-6 text-muted-foreground" />
-            </CardHeader>
             <CardContent>
               {loading ? (
                 <Skeleton className="h-6 w-16" />
               ) : (
-                <div className="text-xl font-bold">
+                <div className="text-xl font-bold text-lime-600">
                   {Object.values(stats.countsByStatus).reduce(
                     (sum, count) => sum + count,
                     0
@@ -168,31 +171,35 @@ export function DashboardClient({
                 </div>
               )}
             </CardContent>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-sm font-medium text-lime-600">
+                Total Presupuestos
+              </CardTitle>
+              <FileText className="h-6 w-6 text-lime-600" />
+            </CardHeader>
           </Card>
 
           {/* Valor total */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-medium">Valor Total</CardTitle>
-              <Euro className="h-6 w-6 text-muted-foreground" />
-            </CardHeader>
             <CardContent>
               {loading ? (
                 <Skeleton className="h-6 w-24" />
               ) : (
-                <div className="text-xl font-bold">
+                <div className="text-xl font-bold text-lime-600">
                   {formatCurrency(stats.totalValue)}
                 </div>
               )}
             </CardContent>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-sm font-medium text-lime-600">
+                Valor Total
+              </CardTitle>
+              <Euro className="h-6 w-6 text-lime-600" />
+            </CardHeader>
           </Card>
 
           {/* Presupuestos del mes */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-medium">Mes Actual</CardTitle>
-              <Calendar className="h-6 w-6 text-muted-foreground" />
-            </CardHeader>
             <CardContent>
               {loading ? (
                 <Skeleton className="h-6 w-12" />
@@ -200,16 +207,14 @@ export function DashboardClient({
                 <div className="text-xl font-bold">{stats.monthCount}</div>
               )}
             </CardContent>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-sm font-medium">Mes Actual</CardTitle>
+              <Calendar className="h-6 w-6 text-muted-foreground" />
+            </CardHeader>
           </Card>
 
           {/* Tasa de conversión */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-medium">
-                Tasa de Conversión
-              </CardTitle>
-              <TrendingUp className="h-6 w-6 text-muted-foreground" />
-            </CardHeader>
             <CardContent>
               {loading ? (
                 <Skeleton className="h-6 w-16" />
@@ -217,11 +222,17 @@ export function DashboardClient({
                 <div className="text-xl font-bold">{stats.conversionRate}%</div>
               )}
             </CardContent>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-sm font-medium">
+                Tasa de Conversión
+              </CardTitle>
+              <TrendingUp className="h-6 w-6 text-muted-foreground" />
+            </CardHeader>
           </Card>
         </div>
 
         {/* Accesos rápidos */}
-        <Card data-tour="accesos-rapidos">
+        <Card data-tour="accesos-rapidos" className="bg-lime-100">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Zap className="w-5 h-5" />
@@ -279,7 +290,7 @@ export function DashboardClient({
 
         {/* Primeros Pasos - Solo si hay artículos */}
         {helpArticles.length > 0 && (
-          <Card data-tour="primeros-pasos">
+          <Card data-tour="primeros-pasos" className="bg-lime-100">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BookOpen className="w-5 h-5" />
@@ -310,7 +321,7 @@ export function DashboardClient({
         {/* Listados */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Últimos presupuestos */}
-          <Card data-tour="ultimos-presupuestos">
+          <Card data-tour="ultimos-presupuestos" className="bg-lime-100">
             <CardHeader>
               <CardTitle>Últimos 5 Presupuestos</CardTitle>
               <CardDescription>
@@ -366,7 +377,7 @@ export function DashboardClient({
           </Card>
 
           {/* Próximos a caducar */}
-          <Card data-tour="proximos-caducar">
+          <Card data-tour="proximos-caducar" className="bg-lime-100">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <AlertCircle className="w-5 h-5 text-orange-600" />

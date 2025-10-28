@@ -2,7 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Company, deleteCompany, duplicateCompany, permanentDeleteCompany } from "@/app/actions/companies";
+import {
+  Company,
+  deleteCompany,
+  duplicateCompany,
+  permanentDeleteCompany,
+} from "@/app/actions/companies";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -40,6 +45,7 @@ import {
   Users,
   Copy,
   XCircle,
+  UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -54,11 +60,14 @@ export default function CompanyTable({
   const [companies, setCompanies] = useState(initialCompanies);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isPermanentDeleteDialogOpen, setIsPermanentDeleteDialogOpen] = useState(false);
+  const [isPermanentDeleteDialogOpen, setIsPermanentDeleteDialogOpen] =
+    useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<"all" | "empresa" | "autonomo">("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | "empresa" | "autonomo">(
+    "all"
+  );
   const router = useRouter();
 
   // Calcular contadores por tipo
@@ -72,8 +81,10 @@ export default function CompanyTable({
     const matchesSearch =
       !search ||
       company.name.toLowerCase().includes(search.toLowerCase()) ||
-      (company.nif && company.nif.toLowerCase().includes(search.toLowerCase())) ||
-      (company.email && company.email.toLowerCase().includes(search.toLowerCase()));
+      (company.nif &&
+        company.nif.toLowerCase().includes(search.toLowerCase())) ||
+      (company.email &&
+        company.email.toLowerCase().includes(search.toLowerCase()));
 
     const matchesType = typeFilter === "all" || company.type === typeFilter;
 
@@ -154,8 +165,8 @@ export default function CompanyTable({
   };
 
   const tipoColors = {
-    empresa: "bg-lime-50 text-blue-800",
-    autonomo: "bg-purple-50 text-purple-800",
+    empresa: "bg-lime-100 text-blue-800",
+    autonomo: "bg-purple-100 text-purple-800",
   };
 
   const formatDate = (dateString: string) => {
@@ -180,7 +191,9 @@ export default function CompanyTable({
         {/* Botones de filtro de tipo */}
         <div className="flex gap-2 flex-wrap">
           <Button
-            variant={typeFilter === "all" && search === "" ? "default" : "outline"}
+            variant={
+              typeFilter === "all" && search === "" ? "default" : "outline"
+            }
             size="sm"
             onClick={() => {
               setTypeFilter("all");
@@ -218,7 +231,8 @@ export default function CompanyTable({
                 : "border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
             }
           >
-            Autónomos{typeCounts["autonomo"] ? ` (${typeCounts["autonomo"]})` : ""}
+            Autónomos
+            {typeCounts["autonomo"] ? ` (${typeCounts["autonomo"]})` : ""}
           </Button>
         </div>
       </div>
@@ -314,17 +328,17 @@ export default function CompanyTable({
 
                   {/* Columna Estadísticas */}
                   <TableCell className="p-4">
-                    <div className="flex justify-center gap-3">
+                    <div className="grid grid-cols-3 gap-3 text-center">
+                      {/* Fila 1: Iconos */}
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <div className="flex items-center gap-1 text-xs">
-                              <Users className="h-3 w-3 text-muted-foreground" />
-                              <span>{company.user_count || 0}</span>
+                            <div className="flex justify-center">
+                              <Users className="h-4 w-4 text-muted-foreground" />
                             </div>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>Usuarios</p>
+                            <p>Usuarios (Admin/Comercial)</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -332,9 +346,8 @@ export default function CompanyTable({
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <div className="flex items-center gap-1 text-xs">
-                              <Layers className="h-3 w-3 text-muted-foreground" />
-                              <span>{company.tariff_count || 0}</span>
+                            <div className="flex justify-center">
+                              <Layers className="h-4 w-4 text-muted-foreground" />
                             </div>
                           </TooltipTrigger>
                           <TooltipContent>
@@ -346,9 +359,8 @@ export default function CompanyTable({
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <div className="flex items-center gap-1 text-xs">
-                              <FileText className="h-3 w-3 text-muted-foreground" />
-                              <span>{company.budget_count || 0}</span>
+                            <div className="flex justify-center">
+                              <FileText className="h-4 w-4 text-muted-foreground" />
                             </div>
                           </TooltipTrigger>
                           <TooltipContent>
@@ -356,6 +368,17 @@ export default function CompanyTable({
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
+
+                      {/* Fila 2: Valores */}
+                      <div className="text-xs font-medium">
+                        {company.admin_count || 0}/{company.comercial_count || 0}
+                      </div>
+                      <div className="text-xs font-medium">
+                        {company.tariff_count || 0}
+                      </div>
+                      <div className="text-xs font-medium">
+                        {company.budget_count || 0}
+                      </div>
                     </div>
                   </TableCell>
 
@@ -381,13 +404,34 @@ export default function CompanyTable({
                                 asChild
                                 className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
                               >
-                                <Link href={`/companies/${company.uuid}/edit`}>
+                                <Link href={`/companies/create?id=${company.uuid}`}>
                                   <Pencil className="h-4 w-4" />
                                 </Link>
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
                               <p>Editar</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+
+                        {/* Botón Crear Usuario - Solo para empresas activas */}
+                        {!company.deleted_at && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                asChild
+                                className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
+                              >
+                                <Link href={`/users/create?company_id=${company.uuid}`}>
+                                  <UserPlus className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Crear usuario</p>
                             </TooltipContent>
                           </Tooltip>
                         )}
@@ -572,7 +616,8 @@ export default function CompanyTable({
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-3">
               <p className="text-base font-semibold">
-                ¿Estás COMPLETAMENTE seguro de eliminar definitivamente la empresa{" "}
+                ¿Estás COMPLETAMENTE seguro de eliminar definitivamente la
+                empresa{" "}
                 <strong className="text-foreground">
                   {selectedCompany?.name}
                 </strong>
@@ -588,13 +633,16 @@ export default function CompanyTable({
                 </p>
                 <ul className="text-sm text-red-800 space-y-1 list-disc list-inside ml-2">
                   <li>
-                    <strong>{selectedCompany?.user_count || 0}</strong> usuarios y sus accesos
+                    <strong>{selectedCompany?.user_count || 0}</strong> usuarios
+                    y sus accesos
                   </li>
                   <li>
-                    <strong>{selectedCompany?.tariff_count || 0}</strong> tarifas
+                    <strong>{selectedCompany?.tariff_count || 0}</strong>{" "}
+                    tarifas
                   </li>
                   <li>
-                    <strong>{selectedCompany?.budget_count || 0}</strong> presupuestos
+                    <strong>{selectedCompany?.budget_count || 0}</strong>{" "}
+                    presupuestos
                   </li>
                   <li>Todas las versiones de presupuestos</li>
                   <li>Todas las notas</li>
@@ -608,21 +656,22 @@ export default function CompanyTable({
                   ⚡ NO PODRÁS RECUPERAR ESTOS DATOS
                 </p>
                 <p className="text-xs text-yellow-800 mt-1">
-                  El sistema quedará limpio como si esta empresa nunca se hubiera registrado.
+                  El sistema quedará limpio como si esta empresa nunca se
+                  hubiera registrado.
                 </p>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isLoading}>
-              Cancelar
-            </AlertDialogCancel>
+            <AlertDialogCancel disabled={isLoading}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={handlePermanentDelete}
               disabled={isLoading}
               className="bg-red-700 hover:bg-red-800 font-bold"
             >
-              {isLoading ? "Eliminando definitivamente..." : "SÍ, ELIMINAR DEFINITIVAMENTE"}
+              {isLoading
+                ? "Eliminando definitivamente..."
+                : "SÍ, ELIMINAR DEFINITIVAMENTE"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

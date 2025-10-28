@@ -28,6 +28,8 @@ export interface Company {
   updated_at: string;
   deleted_at: string | null; // VULN-007: Soft-delete timestamp
   user_count?: number; // Número de usuarios asociados
+  admin_count?: number; // Número de usuarios admin
+  comercial_count?: number; // Número de usuarios comercial
   tariff_count?: number; // Número de tarifas
   budget_count?: number; // Número de presupuestos
 }
@@ -44,6 +46,21 @@ export interface UpdateCompanyData {
   phone?: string;
   email?: string;
   web?: string;
+  irpf_percentage?: number | null;
+}
+
+export interface CreateCompanyData {
+  name: string;
+  type: "empresa" | "autonomo";
+  nif: string;
+  address: string;
+  postal_code: string;
+  locality: string;
+  province: string;
+  country: string;
+  phone?: string | null;
+  email?: string | null;
+  web?: string | null;
   irpf_percentage?: number | null;
 }
 
@@ -95,6 +112,20 @@ export async function getCompanies(): Promise<ActionResult> {
           .select("*", { count: "exact", head: true })
           .eq("company_id", issuer.company_id);
 
+        // Contar usuarios admin de esta empresa
+        const { count: adminCount } = await supabaseAdmin
+          .from("redpresu_users")
+          .select("*", { count: "exact", head: true })
+          .eq("company_id", issuer.company_id)
+          .eq("role", "admin");
+
+        // Contar usuarios comercial de esta empresa
+        const { count: comercialCount } = await supabaseAdmin
+          .from("redpresu_users")
+          .select("*", { count: "exact", head: true })
+          .eq("company_id", issuer.company_id)
+          .eq("role", "comercial");
+
         // Contar tarifas de esta empresa
         const { count: tariffCount } = await supabaseAdmin
           .from("redpresu_tariffs")
@@ -112,6 +143,8 @@ export async function getCompanies(): Promise<ActionResult> {
           id: issuer.company_id, // Usar company_id como id principal
           uuid: issuer.id, // Guardar UUID del emisor
           user_count: userCount || 0,
+          admin_count: adminCount || 0,
+          comercial_count: comercialCount || 0,
           tariff_count: tariffCount || 0,
           budget_count: budgetCount || 0,
         };
@@ -187,6 +220,134 @@ export async function getCompanyById(companyId: string): Promise<ActionResult> {
   } catch (error) {
     log.error("[getCompanyById] Error inesperado:", error);
     return { success: false, error: "Error inesperado" };
+  }
+}
+
+/**
+ * Crear nueva empresa (solo superadmin)
+ * Crea registro en redpresu_companies y redpresu_issuers
+ */
+export async function createCompany(data: CreateCompanyData): Promise<ActionResult> {
+  try {
+    log.info("[createCompany] Iniciando...", data);
+
+    // Obtener usuario actual
+    const { getServerUser } = await import("@/lib/auth/server");
+    const user = await getServerUser();
+
+    if (!user) {
+      return { success: false, error: "No autenticado" };
+    }
+
+    // Solo superadmin puede crear empresas
+    if (user.role !== "superadmin") {
+      return { success: false, error: "Solo superadmin puede crear empresas" };
+    }
+
+    // Validaciones
+    if (!data.name || !data.name.trim()) {
+      return { success: false, error: "El nombre es obligatorio" };
+    }
+
+    if (!data.nif || data.nif.trim().length < 9) {
+      return { success: false, error: "CIF/NIF debe tener al menos 9 caracteres" };
+    }
+
+    if (!data.address || !data.address.trim()) {
+      return { success: false, error: "La dirección es obligatoria" };
+    }
+
+    if (!data.postal_code || !data.postal_code.trim()) {
+      return { success: false, error: "El código postal es obligatorio" };
+    }
+
+    if (!data.locality || !data.locality.trim()) {
+      return { success: false, error: "La localidad es obligatoria" };
+    }
+
+    if (!data.province || !data.province.trim()) {
+      return { success: false, error: "La provincia es obligatoria" };
+    }
+
+    if (data.email && !data.email.includes("@")) {
+      return { success: false, error: "Email inválido" };
+    }
+
+    if (data.type === "autonomo" && !data.irpf_percentage) {
+      return { success: false, error: "El % IRPF es obligatorio para autónomos" };
+    }
+
+    // 1. Crear registro en redpresu_companies
+    const { data: newCompany, error: companyError } = await supabaseAdmin
+      .from("redpresu_companies")
+      .insert({
+        name: data.name.trim(),
+        status: "active",
+      })
+      .select()
+      .single();
+
+    if (companyError || !newCompany) {
+      log.error("[createCompany] Error creando company:", companyError);
+      return { success: false, error: "Error al crear la empresa" };
+    }
+
+    const companyId = newCompany.id;
+    log.info("[createCompany] Company creada con ID:", companyId);
+
+    // 2. Crear registro en redpresu_issuers
+    const { data: newIssuer, error: issuerError } = await supabaseAdmin
+      .from("redpresu_issuers")
+      .insert({
+        user_id: user.id, // Superadmin que crea la empresa
+        company_id: companyId,
+        type: data.type,
+        name: data.name.trim(),
+        nif: data.nif.trim(),
+        address: data.address.trim(),
+        postal_code: data.postal_code.trim(),
+        locality: data.locality.trim(),
+        province: data.province.trim(),
+        country: data.country || "España",
+        phone: data.phone || null,
+        email: data.email || null,
+        web: data.web || null,
+        irpf_percentage: data.irpf_percentage || null,
+      })
+      .select()
+      .single();
+
+    if (issuerError || !newIssuer) {
+      log.error("[createCompany] Error creando issuer:", issuerError);
+
+      // Rollback: eliminar company creada
+      await supabaseAdmin
+        .from("redpresu_companies")
+        .delete()
+        .eq("id", companyId);
+
+      return { success: false, error: "Error al crear los datos fiscales de la empresa" };
+    }
+
+    log.info("[createCompany] Issuer creado con ID:", newIssuer.id);
+
+    // Revalidar rutas
+    revalidatePath("/companies");
+
+    return {
+      success: true,
+      data: {
+        ...newIssuer,
+        id: companyId,
+        uuid: newIssuer.id,
+        user_count: 0,
+        tariff_count: 0,
+        budget_count: 0,
+      },
+    };
+  } catch (error) {
+    log.error("[createCompany] Error inesperado:", error);
+    return { success: false, error: "Error inesperado al crear la empresa" };
   }
 }
 

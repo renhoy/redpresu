@@ -649,6 +649,7 @@ export interface UserProfile {
   email: string
   role: string
   company_id: number
+  company_name?: string // Nombre de la empresa a la que pertenece
 
   // Datos emisor
   emisor?: {
@@ -723,7 +724,7 @@ export async function getUserProfile(): Promise<ProfileResult> {
       }
     }
 
-    // Obtener datos del usuario desde public.users
+    // Obtener datos del usuario
     const { data: userData, error: userError } = await supabase
       .from('redpresu_users')
       .select('*')
@@ -736,6 +737,18 @@ export async function getUserProfile(): Promise<ProfileResult> {
         success: false,
         error: 'Error al obtener datos del usuario'
       }
+    }
+
+    // Obtener nombre de empresa (query separada para evitar problemas con RLS)
+    let companyName: string | null = null
+    if (userData.company_id) {
+      const { data: companyData } = await supabase
+        .from('redpresu_companies')
+        .select('name')
+        .eq('id', userData.company_id)
+        .single()
+
+      companyName = companyData?.name || null
     }
 
     // Obtener datos del issuer usando supabaseAdmin para bypass RLS
@@ -752,6 +765,7 @@ export async function getUserProfile(): Promise<ProfileResult> {
 
     const profile: UserProfile = {
       ...userData,
+      company_name: companyName,
       emisor: issuerData ? {
         id: issuerData.id,
         tipo: issuerData.type,
@@ -1093,6 +1107,18 @@ export async function getUserProfileById(userId: string): Promise<ProfileResult>
       }
     }
 
+    // Obtener nombre de empresa (query separada para evitar problemas con RLS)
+    let companyName: string | null = null
+    if (targetUserData.company_id) {
+      const { data: companyData } = await supabase
+        .from('redpresu_companies')
+        .select('name')
+        .eq('id', targetUserData.company_id)
+        .single()
+
+      companyName = companyData?.name || null
+    }
+
     // Obtener datos del issuer usando supabaseAdmin para bypass RLS
     const { data: issuerData, error: issuerError } = await supabaseAdmin
       .from('redpresu_issuers')
@@ -1106,6 +1132,7 @@ export async function getUserProfileById(userId: string): Promise<ProfileResult>
 
     const profile: UserProfile = {
       ...targetUserData,
+      company_name: companyName,
       emisor: issuerData ? {
         id: issuerData.id,
         tipo: issuerData.type,

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { PDFTemplate } from "@/app/actions/config";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import Image from "next/image";
@@ -85,13 +85,10 @@ export function TemplatePreviewModal({
 
         {/* Línea 3: Vista Previa Plantilla: {nombre} */}
         <div className="mb-1">
-          <span className="text-xl font-bold text-gray-900">
-            Vista Previa de Plantilla:{" "}
-          </span>
+          <DialogTitle className="text-xl font-bold text-gray-900">
+            Vista Previa de Plantilla: {template.name}
+          </DialogTitle>
           {/* Línea 4: Descripción de la plantilla */}
-          <span className="text-xl font-bold text-gray-900">
-            {template.name}
-          </span>
           <p className="text-sm text-gray-600 mb-2">{template.description}</p>
         </div>
 

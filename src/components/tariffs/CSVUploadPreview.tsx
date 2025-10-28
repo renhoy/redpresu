@@ -120,7 +120,7 @@ export function CSVUploadPreview({
   // Estado inicial: sin datos CSV cargados
   if (!data) {
     return (
-      <Card id="csv-upload-preview" className="bg-lime-50">
+      <Card id="csv-upload-preview" className="bg-lime-100">
         <CardHeader>
           <CardTitle>Estructura de Precios</CardTitle>
         </CardHeader>
@@ -154,7 +154,7 @@ export function CSVUploadPreview({
             </div>
 
             {/* Información explicativa */}
-            <div className="bg-lime-50 border border-blue-200 rounded-lg p-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <h4 className="font-medium text-blue-900 mb-2">
                 Formato CSV requerido
               </h4>
@@ -286,7 +286,7 @@ export function CSVUploadPreview({
 
   // Estado con datos CSV cargados: mostrar preview
   return (
-    <Card id="csv-upload-preview" className="bg-lime-50">
+    <Card id="csv-upload-preview" className="bg-lime-100">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Previsualización de Estructura de Precios</CardTitle>

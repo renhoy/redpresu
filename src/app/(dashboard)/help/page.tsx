@@ -11,7 +11,10 @@ import { generatePageMetadata } from "@/lib/helpers/metadata-helpers";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export async function generateMetadata() {
-  return generatePageMetadata("Ayuda", "Centro de ayuda y documentación de la aplicación");
+  return generatePageMetadata(
+    "Ayuda",
+    "Centro de ayuda y documentación de la aplicación"
+  );
 }
 
 export default async function HelpPage() {
@@ -37,13 +40,13 @@ export default async function HelpPage() {
             Centro de Ayuda
           </h1>
           <p className="text-sm">
-            Encuentra toda la ayuda e información para aprovechar al máximo
-            la aplicación
+            Encuentra toda la ayuda e información para aprovechar al máximo la
+            aplicación
           </p>
         </div>
 
         {/* Sección Guías Interactivas */}
-        <Card className="mb-6">
+        <Card className="mb-6 bg-lime-100">
           <CardHeader>
             <CardTitle className="text-2xl">Guías Interactivas</CardTitle>
           </CardHeader>
@@ -55,7 +58,10 @@ export default async function HelpPage() {
               </div>
               <div className="flex items-center justify-between p-3 border rounded-lg bg-white hover:bg-lime-50 transition-colors">
                 <span className="font-medium">Nueva Tarifa</span>
-                <TourButton tourId="tarifa-create" targetPath="/tariffs/create" />
+                <TourButton
+                  tourId="tarifa-create"
+                  targetPath="/tariffs/create"
+                />
               </div>
               <div className="flex items-center justify-between p-3 border rounded-lg bg-white hover:bg-lime-50 transition-colors">
                 <span className="font-medium">Presupuestos</span>

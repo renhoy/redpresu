@@ -317,8 +317,9 @@ export default function UserTable({
     const matchesSearch =
       !search ||
       user.email.toLowerCase().includes(search.toLowerCase()) ||
-      (user.nombre && user.nombre.toLowerCase().includes(search.toLowerCase())) ||
-      (user.apellidos && user.apellidos.toLowerCase().includes(search.toLowerCase()));
+      (user.name && user.name.toLowerCase().includes(search.toLowerCase())) ||
+      (user.last_name && user.last_name.toLowerCase().includes(search.toLowerCase())) ||
+      (user.company_name && user.company_name.toLowerCase().includes(search.toLowerCase()));
 
     const matchesStatus = statusFilter === "all" || user.status === statusFilter;
 
@@ -330,7 +331,7 @@ export default function UserTable({
       {/* Filtros */}
       <div className="flex gap-4 mb-4 flex-wrap items-center" data-tour="filtro-estado-usuarios">
         <Input
-          placeholder="Buscar por email o nombre..."
+          placeholder="Buscar por email, nombre o empresa..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-xs bg-white"
@@ -389,6 +390,7 @@ export default function UserTable({
             <TableRow className="hover:bg-transparent">
               <TableHead className="p-4">Email</TableHead>
               <TableHead className="p-4 text-center">Usuario</TableHead>
+              <TableHead className="p-4 text-center">Empresa</TableHead>
               <TableHead className="p-4 text-center">Estado</TableHead>
               <TableHead className="p-4 text-center">Invitado por</TableHead>
               <TableHead className="p-4 text-center">Último acceso</TableHead>
@@ -399,7 +401,7 @@ export default function UserTable({
             {filteredUsers.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={7}
                   className="text-center text-muted-foreground py-4"
                 >
                   {search || statusFilter !== "all"
@@ -462,6 +464,13 @@ export default function UserTable({
                       <div className="text-xs text-muted-foreground capitalize">
                         {getRoleLabel(user.role)}
                       </div>
+                    </div>
+                  </TableCell>
+
+                  {/* Columna Empresa */}
+                  <TableCell className="p-4 text-center">
+                    <div className="text-xs font-medium">
+                      {user.company_name || "-"}
                     </div>
                   </TableCell>
 
@@ -563,7 +572,7 @@ export default function UserTable({
                                   data-tour="btn-editar-usuario"
                                   className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
                                 >
-                                  <Link href={`/users/${user.id}/edit`}>
+                                  <Link href={`/users/create?id=${user.id}`}>
                                     <Pencil className="h-4 w-4" />
                                   </Link>
                                 </Button>
@@ -594,8 +603,9 @@ export default function UserTable({
                               </Tooltip>
                             )}
 
-                            {/* Botón Borrar Usuario - Solo admin/superadmin */}
-                            {currentUserRole !== "comercial" && (
+                            {/* Botón Borrar Usuario - Solo admin/superadmin, excepto el superadmin protegido */}
+                            {currentUserRole !== "comercial" &&
+                             user.email !== "josivela+super@gmail.com" && (
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Button

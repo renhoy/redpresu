@@ -46,6 +46,7 @@ interface UserFormProps {
   user?: User;
   empresaId: number;
   currentUserRole?: string;
+  preselectedCompanyId?: string; // UUID de la empresa a pre-seleccionar (desde query param)
 }
 
 interface FormData {
@@ -62,6 +63,7 @@ export default function UserForm({
   user,
   empresaId,
   currentUserRole,
+  preselectedCompanyId,
 }: UserFormProps) {
   const [formData, setFormData] = useState<FormData>({
     email: user?.email || "",
@@ -89,12 +91,44 @@ export default function UserForm({
     return generateSecurePassword(12, true);
   };
 
-  // Cargar emisores si el usuario es superadmin
+  // Cargar emisores si el usuario es superadmin (crear o editar)
   useEffect(() => {
-    if (currentUserRole === "superadmin" && mode === "create") {
+    if (currentUserRole === "superadmin") {
       loadIssuers();
     }
-  }, [currentUserRole, mode]);
+  }, [currentUserRole]);
+
+  // Pre-seleccionar empresa actual en modo edición
+  useEffect(() => {
+    if (mode === "edit" && user && currentUserRole === "superadmin" && issuers.length > 0) {
+      // Buscar el issuer por company_id del usuario
+      const userIssuer = issuers.find((i) => i.company_id === user.company_id);
+      if (userIssuer) {
+        setSelectedIssuer(userIssuer);
+        setFormData((prev) => ({ ...prev, issuer_id: userIssuer.id }));
+      }
+    }
+  }, [mode, user, currentUserRole, issuers]);
+
+  // Pre-seleccionar empresa desde query param (cuando se crea desde /companies)
+  useEffect(() => {
+    if (
+      mode === "create" &&
+      preselectedCompanyId &&
+      currentUserRole === "superadmin" &&
+      issuers.length > 0 &&
+      !selectedIssuer // Solo si no hay issuer ya seleccionado
+    ) {
+      // Buscar el issuer por company_id (UUID)
+      const preselectedIssuer = issuers.find(
+        (i) => i.company_id.toString() === preselectedCompanyId
+      );
+      if (preselectedIssuer) {
+        setSelectedIssuer(preselectedIssuer);
+        setFormData((prev) => ({ ...prev, issuer_id: preselectedIssuer.id }));
+      }
+    }
+  }, [mode, preselectedCompanyId, currentUserRole, issuers, selectedIssuer]);
 
   const loadIssuers = async () => {
     setLoadingIssuers(true);
@@ -216,7 +250,9 @@ export default function UserForm({
             return;
           }
 
-          toast.success("Usuario creado correctamente. Ahora puedes enviarle la invitación usando el botón [+ email]");
+          toast.success(
+            "Usuario creado correctamente. Ahora puedes enviarle la invitación usando el botón [+ email]"
+          );
 
           // Redirigir a lista de usuarios con recarga completa
           setTimeout(() => {
@@ -239,7 +275,9 @@ export default function UserForm({
             return;
           }
 
-          toast.success("Usuario creado correctamente. Ahora puedes enviarle la invitación usando el botón [+ email]");
+          toast.success(
+            "Usuario creado correctamente. Ahora puedes enviarle la invitación usando el botón [+ email]"
+          );
 
           // Redirigir a lista de usuarios con recarga completa
           setTimeout(() => {
@@ -260,6 +298,14 @@ export default function UserForm({
           status:
             formData.status !== user?.status ? formData.status : undefined,
         };
+
+        // Si es superadmin y cambió la empresa, incluirla
+        if (currentUserRole === "superadmin" && formData.issuer_id && selectedIssuer) {
+          const newCompanyId = selectedIssuer.company_id;
+          if (newCompanyId !== user?.company_id) {
+            updateData.company_id = newCompanyId;
+          }
+        }
 
         // Si no hay cambios
         if (Object.values(updateData).every((v) => v === undefined)) {
@@ -286,7 +332,6 @@ export default function UserForm({
       setIsLoading(false);
     }
   };
-
 
   // Determinar qué roles puede asignar el usuario actual
   const getAvailableRoles = () => {
@@ -381,7 +426,7 @@ export default function UserForm({
       )}
 
       {/* Card con formulario */}
-      <Card>
+      <Card className="bg-lime-100">
         <CardContent className="pt-6 space-y-6">
           {/* Línea 1: Email + Rol (25%) */}
           <div className="flex gap-4">
@@ -395,7 +440,9 @@ export default function UserForm({
                     placeholder="usuario@empresa.com"
                     value={formData.email}
                     onChange={handleInputChange("email")}
-                    className={errors.email ? "border-red-500" : ""}
+                    className={`bg-white ${
+                      errors.email ? "border-destructive" : ""
+                    }`}
                     disabled={isLoading}
                     required
                   />
@@ -430,7 +477,9 @@ export default function UserForm({
                   disabled={isLoading || loadingIssuers}
                 >
                   <SelectTrigger
-                    className={errors.role ? "border-red-500" : ""}
+                    className={`bg-white ${
+                      errors.role ? "border-destructive" : ""
+                    }`}
                   >
                     <SelectValue placeholder="Rol" />
                   </SelectTrigger>
@@ -459,7 +508,9 @@ export default function UserForm({
                 placeholder="Juan"
                 value={formData.name}
                 onChange={handleInputChange("name")}
-                className={errors.name ? "border-red-500" : ""}
+                className={`bg-white ${
+                  errors.name ? "border-destructive" : ""
+                }`}
                 disabled={isLoading}
                 required
               />
@@ -476,7 +527,9 @@ export default function UserForm({
                 placeholder="García López"
                 value={formData.last_name}
                 onChange={handleInputChange("last_name")}
-                className={errors.last_name ? "border-red-500" : ""}
+                className={`bg-white ${
+                  errors.last_name ? "border-destructive" : ""
+                }`}
                 disabled={isLoading}
                 required
               />
@@ -505,7 +558,7 @@ export default function UserForm({
                 onValueChange={handleSelectChange("status")}
                 disabled={isLoading}
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -520,38 +573,69 @@ export default function UserForm({
             </div>
           )}
 
-          {/* Selección de Empresa (solo para superadmin creando) */}
-          {mode === "create" && currentUserRole === "superadmin" && (
+          {/* Selección de Empresa (solo para superadmin) */}
+          {currentUserRole === "superadmin" && (
             <>
               {/* Línea 5: Título y Filtros */}
               <div className="pt-4 border-t space-y-4">
-                <h3 className="text-lg font-semibold">Empresa / Autónomo</h3>
+                <h3 className="text-lg font-semibold">
+                  {mode === "edit" ? "Cambiar Empresa / Autónomo" : "Empresa / Autónomo"}
+                </h3>
 
                 {/* Filtros de búsqueda */}
-                <div className="flex gap-4">
+                <div className="flex flex-col md:flex-row gap-4">
                   <div className="flex-1 relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
                       placeholder="Buscar por nombre, NIF, dirección..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
+                      className="pl-10 bg-white"
                     />
                   </div>
-                  <Select
-                    value={filterType}
-                    onValueChange={(value: any) => setFilterType(value)}
-                  >
-                    <SelectTrigger className="w-[200px]">
-                      <Filter className="mr-2 h-4 w-4" />
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
-                      <SelectItem value="empresa">Solo Empresas</SelectItem>
-                      <SelectItem value="autonomo">Solo Autónomos</SelectItem>
-                    </SelectContent>
-                  </Select>
+
+                  {/* Botones de filtro tipo */}
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={filterType === "all" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setFilterType("all")}
+                      className={
+                        filterType === "all"
+                          ? "bg-lime-600 hover:bg-lime-700 text-white"
+                          : ""
+                      }
+                    >
+                      Todas ({issuers.length})
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={filterType === "empresa" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setFilterType("empresa")}
+                      className={
+                        filterType === "empresa"
+                          ? "bg-blue-600 hover:bg-blue-700 text-white"
+                          : ""
+                      }
+                    >
+                      Empresas ({issuers.filter((i) => i.type === "empresa").length})
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={filterType === "autonomo" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setFilterType("autonomo")}
+                      className={
+                        filterType === "autonomo"
+                          ? "bg-purple-600 hover:bg-purple-700 text-white"
+                          : ""
+                      }
+                    >
+                      Autónomos ({issuers.filter((i) => i.type === "autonomo").length})
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Contador de resultados */}

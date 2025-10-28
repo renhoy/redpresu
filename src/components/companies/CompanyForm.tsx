@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { updateCompany, type Company } from "@/app/actions/companies";
+import {
+  updateCompany,
+  createCompany,
+  type Company,
+} from "@/app/actions/companies";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -26,7 +29,8 @@ import { toast } from "sonner";
 import Link from "next/link";
 
 interface CompanyFormProps {
-  company: Company;
+  mode: "create" | "edit";
+  company?: Company;
   currentUserRole: string;
 }
 
@@ -46,22 +50,23 @@ interface FormData {
 }
 
 export default function CompanyForm({
+  mode,
   company,
   currentUserRole,
 }: CompanyFormProps) {
   const [formData, setFormData] = useState<FormData>({
-    name: company.name,
-    type: company.type,
-    nif: company.nif,
-    address: company.address,
-    postal_code: company.postal_code || "",
-    locality: company.locality || "",
-    province: company.province || "",
-    country: company.country || "España",
-    phone: company.phone || "",
-    email: company.email || "",
-    web: company.web || "",
-    irpf_percentage: company.irpf_percentage,
+    name: company?.name || "",
+    type: company?.type || "empresa",
+    nif: company?.nif || "",
+    address: company?.address || "",
+    postal_code: company?.postal_code || "",
+    locality: company?.locality || "",
+    province: company?.province || "",
+    country: company?.country || "España",
+    phone: company?.phone || "",
+    email: company?.email || "",
+    web: company?.web || "",
+    irpf_percentage: company?.irpf_percentage || null,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -169,19 +174,33 @@ export default function CompanyForm({
 
     setIsLoading(true);
 
-    const result = await updateCompany(company.id.toString(), formData);
+    let result;
+    if (mode === "create") {
+      // Crear nueva empresa
+      result = await createCompany(formData as any);
+    } else {
+      // Actualizar empresa existente
+      if (!company) {
+        toast.error("Error: empresa no encontrada");
+        setIsLoading(false);
+        return;
+      }
+      result = await updateCompany(
+        company.uuid || company.id.toString(),
+        formData
+      );
+    }
 
     if (result.success) {
-      toast.success("Empresa actualizada correctamente");
+      toast.success(
+        mode === "create"
+          ? "Empresa creada correctamente"
+          : "Empresa actualizada correctamente"
+      );
       router.refresh();
 
-      // Redirigir según rol
-      if (currentUserRole === "superadmin") {
-        router.push("/companies");
-      } else {
-        // Admin permanece en la página de edición
-        router.refresh();
-      }
+      // Redirigir a la lista de empresas
+      router.push("/companies");
     } else {
       toast.error(result.error || "Error al actualizar empresa");
     }
@@ -205,9 +224,13 @@ export default function CompanyForm({
           <div className="text-center md:text-left w-full md:w-auto">
             <h1 className="text-3xl font-bold flex items-center justify-center md:justify-start gap-2">
               <Building2 className="h-6 w-6" />
-              Editar Empresa
+              {mode === "create" ? "Nueva Empresa" : "Editar Empresa"}
             </h1>
-            <p className="text-sm">Modifica los datos de tu empresa</p>
+            <p className="text-sm">
+              {mode === "create"
+                ? "Crea una nueva empresa en el sistema"
+                : "Modifica los datos de la empresa"}
+            </p>
           </div>
 
           <div className="flex gap-2 justify-center md:justify-end w-full md:w-auto">
@@ -224,12 +247,12 @@ export default function CompanyForm({
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Guardando...
+                  {mode === "create" ? "Creando..." : "Guardando..."}
                 </>
               ) : (
                 <>
                   <Save className="mr-2 h-4 w-4" />
-                  Guardar Cambios
+                  {mode === "create" ? "Crear Empresa" : "Guardar Cambios"}
                 </>
               )}
             </Button>
@@ -247,7 +270,7 @@ export default function CompanyForm({
         )}
 
         {/* Datos Fiscales */}
-        <Card>
+        <Card className="bg-lime-100">
           <CardHeader>
             <CardTitle>Datos Fiscales</CardTitle>
             <CardDescription>Información fiscal de la empresa</CardDescription>
@@ -261,11 +284,19 @@ export default function CompanyForm({
                 className="w-full"
               >
                 <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="empresa" disabled={isLoading}>
+                  <TabsTrigger
+                    value="empresa"
+                    disabled={isLoading}
+                    className="bg-lime-500 text-white hover:bg-lime-600 data-[state=active]:bg-white data-[state=active]:text-lime-600"
+                  >
                     <Building2 className="h-4 w-4 mr-2" />
                     Empresa
                   </TabsTrigger>
-                  <TabsTrigger value="autonomo" disabled={isLoading}>
+                  <TabsTrigger
+                    value="autonomo"
+                    disabled={isLoading}
+                    className="bg-lime-500 text-white hover:bg-lime-600 data-[state=active]:bg-white data-[state=active]:text-lime-600"
+                  >
                     <User className="h-4 w-4 mr-2" />
                     Autónomo
                   </TabsTrigger>
@@ -289,7 +320,9 @@ export default function CompanyForm({
                         placeholder="Nombre Comercial *"
                         value={formData.name}
                         onChange={handleChange}
-                        className={errors.name ? "border-red-500" : ""}
+                        className={`bg-white ${
+                          errors.nombreComercial ? "border-red-500" : ""
+                        }`}
                         disabled={isLoading}
                       />
                     </TooltipTrigger>
@@ -312,7 +345,9 @@ export default function CompanyForm({
                         placeholder="NIF/CIF *"
                         value={formData.nif}
                         onChange={handleChange}
-                        className={errors.nif ? "border-red-500" : ""}
+                        className={`bg-white ${
+                          errors.nif ? "border-red-500" : ""
+                        }`}
                         disabled={isLoading}
                       />
                     </TooltipTrigger>
@@ -340,7 +375,9 @@ export default function CompanyForm({
                         placeholder="Nombre Comercial *"
                         value={formData.name}
                         onChange={handleChange}
-                        className={errors.name ? "border-red-500" : ""}
+                        className={`bg-white ${
+                          errors.name ? "border-red-500" : ""
+                        }`}
                         disabled={isLoading}
                       />
                     </TooltipTrigger>
@@ -363,7 +400,9 @@ export default function CompanyForm({
                         placeholder="NIF *"
                         value={formData.nif}
                         onChange={handleChange}
-                        className={errors.nif ? "border-red-500" : ""}
+                        className={`bg-white ${
+                          errors.nif ? "border-red-500" : ""
+                        }`}
                         disabled={isLoading}
                       />
                     </TooltipTrigger>
@@ -389,9 +428,9 @@ export default function CompanyForm({
                         placeholder="% IRPF *"
                         value={formData.irpf_percentage ?? ""}
                         onChange={handleChange}
-                        className={
+                        className={`bg-white ${
                           errors.irpf_percentage ? "border-red-500" : ""
-                        }
+                        }`}
                         disabled={isLoading}
                       />
                     </TooltipTrigger>
@@ -420,7 +459,9 @@ export default function CompanyForm({
                       placeholder="Dirección *"
                       value={formData.address}
                       onChange={handleChange}
-                      className={errors.address ? "border-red-500" : ""}
+                      className={`bg-white ${
+                        errors.address ? "border-red-500" : ""
+                      }`}
                       disabled={isLoading}
                     />
                   </TooltipTrigger>
@@ -444,7 +485,9 @@ export default function CompanyForm({
                       maxLength={5}
                       value={formData.postal_code}
                       onChange={handleChange}
-                      className={errors.postal_code ? "border-red-500" : ""}
+                      className={`bg-white ${
+                        errors.postal_code ? "border-red-500" : ""
+                      }`}
                       disabled={isLoading}
                     />
                   </TooltipTrigger>
@@ -472,7 +515,9 @@ export default function CompanyForm({
                       placeholder="Localidad *"
                       value={formData.locality}
                       onChange={handleChange}
-                      className={errors.locality ? "border-red-500" : ""}
+                      className={`bg-white ${
+                        errors.locality ? "border-red-500" : ""
+                      }`}
                       disabled={isLoading}
                     />
                   </TooltipTrigger>
@@ -495,7 +540,9 @@ export default function CompanyForm({
                       placeholder="Provincia *"
                       value={formData.province}
                       onChange={handleChange}
-                      className={errors.province ? "border-red-500" : ""}
+                      className={`bg-white ${
+                        errors.province ? "border-red-500" : ""
+                      }`}
                       disabled={isLoading}
                     />
                   </TooltipTrigger>
@@ -512,7 +559,7 @@ export default function CompanyForm({
         </Card>
 
         {/* Datos de Contacto */}
-        <Card>
+        <Card className="bg-lime-100">
           <CardHeader>
             <CardTitle>Datos de Contacto</CardTitle>
             <CardDescription>
@@ -532,7 +579,9 @@ export default function CompanyForm({
                       placeholder="Teléfono"
                       value={formData.phone}
                       onChange={handleChange}
-                      className={errors.phone ? "border-red-500" : ""}
+                      className={`bg-white ${
+                        errors.phone ? "border-red-500" : ""
+                      }`}
                       disabled={isLoading}
                     />
                   </TooltipTrigger>
@@ -555,7 +604,9 @@ export default function CompanyForm({
                       placeholder="Email"
                       value={formData.email}
                       onChange={handleChange}
-                      className={errors.email ? "border-red-500" : ""}
+                      className={`bg-white ${
+                        errors.email ? "border-red-500" : ""
+                      }`}
                       disabled={isLoading}
                     />
                   </TooltipTrigger>
@@ -578,7 +629,9 @@ export default function CompanyForm({
                       placeholder="Sitio Web"
                       value={formData.web}
                       onChange={handleChange}
-                      className={errors.web ? "border-red-500" : ""}
+                      className={`bg-white ${
+                        errors.web ? "border-red-500" : ""
+                      }`}
                       disabled={isLoading}
                     />
                   </TooltipTrigger>
@@ -595,41 +648,44 @@ export default function CompanyForm({
         </Card>
 
         {/* Información de empresa */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Información Adicional</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <div className="flex justify-between">
-              <span>ID de la empresa:</span>
-              <span className="font-mono">{company.id}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Creada el:</span>
-              <span>
-                {new Date(company.created_at).toLocaleDateString("es-ES", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>Última modificación:</span>
-              <span>
-                {new Date(company.updated_at).toLocaleDateString("es-ES", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Información Adicional - Solo en modo edición */}
+        {mode === "edit" && company && (
+          <Card className="bg-lime-100">
+            <CardHeader>
+              <CardTitle>Información Adicional</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm text-muted-foreground">
+              <div className="flex justify-between">
+                <span>ID de la empresa:</span>
+                <span className="font-mono">{company.id}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Creada el:</span>
+                <span>
+                  {new Date(company.created_at).toLocaleDateString("es-ES", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Última modificación:</span>
+                <span>
+                  {new Date(company.updated_at).toLocaleDateString("es-ES", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </form>
     </TooltipProvider>
   );

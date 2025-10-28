@@ -1,73 +1,67 @@
 {
   "company": {
-    "logo": "https://img.freepik.com/vector-gratis/vector-degradado-logotipo-colorido-pajaro_343694-1365.jpg",
-    "name": "Empresa Demo",
-    "nif": "59101921V",
-    "address": "Alameda Picasso 95, 17032, Hostalric, (Girona)",
-    "contact": "665405002 - josivela+vicentecebrian@gmail.com",
+    "logo": "https://jeyca.net/wp-content/uploads/2025/04/logo-tpvguay.svg",
+    "name": "Jeyca Tecnología y Medio Ambiente, S.L.",
+    "nif": "B91707703",
+    "address": "Calle Pimienta, 6, 41200, Alcalá del Río (Sevilla)",
+    "contact": "955 650 626 - soporte@jeyca.net - https://jeyca.net",
     "template": "color",
     "styles": [
       {
-        "primary_color": "#84cc16"
+        "primary_color": "#ed9b00"
       },
       {
-        "secondary_color": "#0891b2"
+        "secondary_color": "#0ba36b"
       }
     ]
   },
   "pdf": {
-    "title": "Presupuesto - Jargi (59101921V)",
-    "author": "Empresa Demo",
+    "title": "Presupuesto - Pruebas PDF (59101921V)",
+    "author": "Jeyca Tecnología y Medio Ambiente, S.L.",
     "subject": "Documento de Presupuesto",
     "creator": "app server rapidPDF",
     "keywords": "presupuesto"
   },
   "summary": {
-    "budget_number": "20251023-222426",
+    "budget_number": "20251027-202821",
     "client": {
-      "name": "Jargi",
+      "name": "Pruebas PDF",
       "nif_nie": "59101921V",
       "address": "Alameda Picasso, 17032 Hostalric, Girona",
       "contact": "665405002 - josivela+vicentecebrian@gmail.com",
-      "budget_date": "24-10-2025",
+      "budget_date": "27-10-2025",
       "validity": "30"
     },
     "title": "Resumen del Presupuesto",
-    "note": "<p><strong>ACEPTACIÓN Y FORMAS DE PAGO</strong></p><p>Rogamos confirmar su aceptación mediante firma en la parte inferior de este documento.</p><p><br></p><p><strong>PAGO EN EFECTIVO:</strong></p><p>El importe total es de 2004 €, a abonar en 4 cuotas:</p><ul class=\"list-disc pl-4\"><li class=\"ml-2\"><p>30 de junio de 2025: 500 €</p></li><li class=\"ml-2\"><p>7 de julio de 2025: 500 €</p></li><li class=\"ml-2\"><p>14 de julio de 2025: 500 €</p></li><li class=\"ml-2\"><p>21 de julio de 2025: 504 €</p></li></ul><p></p><p>Los pagos pueden realizarse en efectivo en una de nuestras oficinas o mediante transferencia bancaria.</p><p></p><p><strong>Datos bancarios:</strong> Banco Santander ES12 3456 7890 1234 5678 9012</p><p><br></p><p>Requerimos que nos envíe el justificante de pago a: [<a target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-cyan-600 underline cursor-pointer hover:text-cyan-700\" href=\"mailto:facturacion@loremipsum.com\">facturacion@loremipsum.com</a>](<a target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-cyan-600 underline cursor-pointer hover:text-cyan-700\" href=\"mailto:facturacion@loremipsum.com\">mailto:facturacion@loremipsum.com</a>)</p><p><br></p><p>Quedamos a su disposición para cualquier consulta o aclaración.</p><p><br><strong>PROTECCIÓN DE DATOS</strong></p><p><em>Al firmar el presente presupuesto, el cliente acepta que, de conformidad con el REGLAMENTO (UE) 2016/679 del PARLAMENTO EUROPEO y del CONSEJO de 27 de abril de 2016, los datos personales facilitados voluntariamente a través de este documento serán tratados por Lorem Ipsum S.A. con la finalidad de gestionar la relación y prestación de los servicios señalados en este documento.</em></p><p><br></p><p>Los datos serán tratados de manera confidencial y el cliente podrá ejercer los derechos de acceso, rectificación, cancelación y oposición enviando una solicitud por escrito, acompañada de una fotocopia de su DNI, a: Calle Real, 325 - 41200, Alcalá del Río (Sevilla) o a <a target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-cyan-600 underline cursor-pointer hover:text-cyan-700\" href=\"mailto:info@loremipsum.com\">info@loremipsum.com</a></p>",
+    "note": "<p><strong>ACEPTACIÓN Y CONDICIONES DE PAGO</strong></p><p>Rogamos confirmar su aceptación mediante firma en la parte inferior de este documento.</p><p></p><p><strong>PAGO EN EFECTIVO</strong>:</p><p>El importe total es de 2004 €, a abonar en 4 cuotas:</p><ul class=\"list-disc pl-4\"><li class=\"ml-2\"><p>30 de junio de 2025: 500 €</p></li><li class=\"ml-2\"><p>7 de julio de 2025: 500 €</p></li><li class=\"ml-2\"><p>14 de julio de 2025: 500 €</p></li><li class=\"ml-2\"><p>21 de julio de 2025: 504 €</p></li><li class=\"ml-2\"><p>Los pagos pueden realizarse en efectivo en una de nuestras oficinas o mediante transferencia bancaria.</p></li></ul><p></p><p><strong>Datos bancarios:</strong> La Caixa ES61 2100 8392 6602 0002 9182</p><ul class=\"list-disc pl-4\"><li class=\"ml-2\"><p>Requerimos que nos envíe el justificante de pago a: <a target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-lime-600 underline cursor-pointer hover:text-lime-700\" href=\"mailto:facturacion@jeyca.net\">facturacion@jeyca.net</a>.</p></li></ul><p></p><p>Quedamos a su disposición para cualquier consulta o aclaración.</p><p></p><p><strong>PROTECCIÓN DE DATOS</strong></p><p>Al firmar el presente presupuesto, el cliente acepta que, de conformidad con el REGLAMENTO (UE) 2016/679 del PARLAMENTO EUROPEO y del CONSEJO de 27 de abril de 2016, los datos personales facilitados voluntariamente a través de este documento serán tratados por JEYCA TECNOLOGÍA Y MEDIO AMBIENTE, S.L. con la finalidad de gestionar la relación y prestación de los servicios señalados en este documento.</p><p>Los datos serán tratados de manera confidencial y el cliente podrá ejercer los derechos de acceso, rectificación, cancelación y oposición enviando una solicitud por escrito, acompañada de una fotocopia de su DNI, a: C/ Pimienta, 6, CP 41200 ALCALÁ DEL RÍO (Sevilla) o a <a target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-lime-600 underline cursor-pointer hover:text-lime-700\" href=\"mailto:info@jeyca.net\">info@jeyca.net</a>.</p>",
     "levels": [
       {
         "level": "chapter",
         "id": "1",
-        "name": "Pescado Fresco",
-        "amount": "108.00"
+        "name": "Hardware",
+        "amount": "1600.00"
       },
       {
         "level": "chapter",
         "id": "2",
-        "name": "Productos Congelados",
-        "amount": "180.00"
-      },
-      {
-        "level": "chapter",
-        "id": "3",
-        "name": "Preparados y Ahumados",
-        "amount": "5.00"
+        "name": "Servicios",
+        "amount": "290.00"
       }
     ],
     "totals": {
       "base": {
         "name": "Base Imponible",
-        "amount": "266.36"
+        "amount": "1561.98"
       },
       "ivas": [
         {
-          "name": "10.00% IVA",
-          "amount": "26.64"
+          "name": "21.00% IVA",
+          "amount": "328.02"
         }
       ],
       "total": {
         "name": "TOTAL PRESUPUESTO",
-        "amount": "293.00"
+        "amount": "1890.00"
       }
     }
   },
@@ -76,72 +70,83 @@
     "levels": [
       {
         "id": "1",
-        "name": "Pescado Fresco",
+        "name": "Hardware",
         "level": "chapter",
-        "amount": "108.00"
+        "amount": "1600.00"
       },
       {
         "id": "1.1",
-        "name": "Pescado Blanco",
+        "name": "Impresoras",
         "level": "subchapter",
-        "amount": "108.00"
+        "amount": "105.00"
       },
       {
         "id": "1.1.1",
-        "name": "Pescados de Arrába",
-        "level": "section",
-        "amount": "108.00"
+        "pvp": "105.00",
+        "name": "Impresora Ticket NP-350/CP-250",
+        "unit": "ud",
+        "level": "item",
+        "amount": "105.00",
+        "quantity": "1.00",
+        "description": "Impresora tickets térmica 80 mm\\nVelocidad: 250 mm/s\\nConexiones: RS-232, USB y Ethernet\\nApertura cajón\\nSoporte pared\\nColor: Negro",
+        "iva_percentage": "21.00"
       },
       {
-        "id": "1.1.1.1",
-        "pvp": "10.80",
-        "name": "Merluza",
-        "unit": "kg",
+        "id": "1.2",
+        "name": "Cajones Portamonedas",
+        "level": "subchapter",
+        "amount": "65.00"
+      },
+      {
+        "id": "1.2.1",
+        "pvp": "65.00",
+        "name": "Cajón Portamonedas Concord 41x41",
+        "unit": "ud",
         "level": "item",
-        "amount": "108.00",
-        "quantity": "10.00",
-        "description": "Filete de merluza fresca sin espinas.",
-        "iva_percentage": "10.00"
+        "amount": "65.00",
+        "quantity": "1.00",
+        "description": "Cajón portamonedas Concord 41 x 41 cm\\nApertura automática\\nConexión RJ11\\nMaterial: Aluminio\\nColor: negro o blanco",
+        "iva_percentage": "21.00"
+      },
+      {
+        "id": "1.3",
+        "name": "Packs de Hardware",
+        "level": "subchapter",
+        "amount": "1430.00"
+      },
+      {
+        "id": "1.3.1",
+        "pvp": "1430.00",
+        "name": "Pack bares y restaurantes",
+        "unit": "ud",
+        "level": "item",
+        "amount": "1430.00",
+        "quantity": "1.00",
+        "description": "Incluye TPV Concord 1024, 2 impresoras tickets NP-350, cajón portamonedas 41x41 y comandera Concord M30",
+        "iva_percentage": "21.00"
       },
       {
         "id": "2",
-        "name": "Productos Congelados",
+        "name": "Servicios",
         "level": "chapter",
-        "amount": "180.00"
+        "amount": "290.00"
       },
       {
         "id": "2.1",
-        "pvp": "18.00",
-        "name": "Gambón Argentino",
-        "unit": "kg",
-        "level": "item",
-        "amount": "180.00",
-        "quantity": "10.00",
-        "description": "Gambón congelado grande.",
-        "iva_percentage": "10.00"
-      },
-      {
-        "id": "3",
-        "name": "Preparados y Ahumados",
-        "level": "chapter",
-        "amount": "5.00"
-      },
-      {
-        "id": "3.1",
-        "pvp": "0.50",
-        "name": "Croquetas de Marisco",
+        "pvp": "290.00",
+        "name": "Cuota inicial de suscripción",
         "unit": "ud",
         "level": "item",
-        "amount": "5.00",
-        "quantity": "10.00",
-        "description": "Croquetas caseras de marisco.",
-        "iva_percentage": "10.00"
+        "amount": "290.00",
+        "quantity": "1.00",
+        "description": "Incluye: Instalación, Configuración y 2h. de formación.",
+        "iva_percentage": "21.00"
       }
     ]
   },
   "conditions": {
     "title": "Condiciones del Presupuesto",
-    "note": "<p><strong>CONDICIONES GENERALES</strong></p><ul><li>Presupuesto válido por 30 días desde la fecha de emisión</li><li>Los precios incluyen IVA</li><li>Plazo de entrega: según acordado</li></ul>"
+    "note": "<p><strong>CONDICIONES GENERALES DEL PRESUPUESTO DE SERVICIO TPV</strong></p><p><strong>1. GARANTÍAS DEL PRODUCTO Y SERVICIO</strong></p><p>1.1. El hardware suministrado (TPV, impresoras de tickets, cajones portamonedas, comanderas y demás periféricos) cuenta con una garantía de 2 años a partir de la fecha de instalación.</p><p>1.2. El software ofrecido se proporciona en modalidad de suscripción mensual, con acceso a todas las licencias necesarias, actualizaciones, soporte básico y copia de seguridad encriptada conforme a la certificación ISO 27001 y el cumplimiento de la Ley RGPD.</p><p></p><p><strong>2. SERVICIOS INCLUIDOS EN LA SUSCRIPCIÓN DEL SOFTWARE</strong></p><p>2.1. El servicio de suscripción incluye las siguientes prestaciones:</p><ul class=\"list-disc pl-4\"><li class=\"ml-2\"><p>Licencias necesarias para el funcionamiento del software.</p></li><li class=\"ml-2\"><p>Copia de seguridad encriptada, garantizando la máxima seguridad.</p></li><li class=\"ml-2\"><p>Actualizaciones periódicas del software.</p></li></ul><p>Soporte básico, incluyendo:</p><ul class=\"list-disc pl-4\"><li class=\"ml-2\"><p>Consultas y soporte técnico a través de email, teléfono y/o formulario web.</p></li><li class=\"ml-2\"><p>Asistencia remota.</p></li><li class=\"ml-2\"><p>Restauración de copias de seguridad.</p></li></ul><p>2.2. La suscripción mensual será abonada mediante facturación domiciliada, con un compromiso de permanencia mínima de 3 meses.</p><p>2.3. El contrato de suscripción será renovable automáticamente por un año al vencimiento, salvo que se haya cancelado con un preaviso de al menos 15 días antes de la fecha de emisión del recibo correspondiente.</p><p></p><p><strong>3. REQUISITOS DEL CLIENTE PARA EL USO DEL SERVICIO</strong></p><p>3.1. Es OBLIGATORIO que el cliente disponga de acceso a internet para poder utilizar el servicio contratado.</p><p>3.2. El cliente debe proporcionar acceso remoto al sistema en caso de que sea necesario para el soporte técnico y parar la actividad del terminal durante la intervención.</p><p></p><p><strong>4. INSTALACIÓN Y CONFIGURACIÓN DEL SISTEMA</strong></p><p>4.1. El precio incluye la instalación y configuración del hardware en el local del cliente. Esto incluye la instalación del TPV, impresoras, cajones portamonedas, comanderas, y la configuración básica del software.</p><p>4.2. La instalación del hardware tiene una duración de 2 horas. Si el hardware no ha sido adquirido en TPVguay, no garantizamos que el servicio pueda completarse en este tiempo, siendo necesario facturar horas adicionales a razón de 25 €/hora.</p><p>4.3. El precio no incluye materiales adicionales para la conexión de los equipos a la red, como cables Ethernet, switches, etc., los cuales serán facturados por separado.</p><p>4.4. Configuración del software:</p><ul class=\"list-disc pl-4\"><li class=\"ml-2\"><p>La configuración del software incluye la instalación y configuración del programa necesario para el funcionamiento del sistema. </p></li><li class=\"ml-2\"><p>Alta y parametrización de los datos fiscales y comerciales de la empresa (nombre fiscal, nombre comercial, CIF, etc.).</p></li><li class=\"ml-2\"><p>Parametrización del ticket de venta, creación de usuarios, zonas de trabajo, familias y productos.</p></li><li class=\"ml-2\"><p>Toda la información debe ser cumplimentada por el cliente en un formato Excel proporcionado por TPVguay antes de la intervención.</p></li></ul><p></p><p><strong>5. FORMACIÓN INCLUIDA</strong></p><p>5.1. Se incluye una sesión remota personalizada de 2 horas de formación sobre el uso del software. En esta formación, el cliente y sus empleados aprenderán cómo administrar y configurar el programa, mediante ejemplos prácticos.</p><p>5.2. El horario de formación será acordado entre ambas partes y realizado de manera remota.</p><p></p><p><strong>6. SOPORTE TÉCNICO</strong></p><p>6.1. El soporte básico cubre consultas y problemas relacionados con el uso del programa, incluyendo: - Asistencia remota y/o telefónica. - Consultas por email y formularios web. - Actualizaciones y restauración de copias de seguridad.</p><p>6.2. El soporte técnico se ofrecerá en un plazo máximo de 24 horas laborables durante el horario de atención: - Invierno: Lunes a Viernes, de 8:00 a 16:00 y de 17:00 a 20:00. - Verano: Lunes a Viernes, de 8:00 a 16:00 y de 17:30 a 20:30.</p><p>6.3. El soporte no incluye configuraciones adicionales al sistema o tareas que no estén relacionadas con el uso básico del software. Las configuraciones adicionales, como cambios en la carta o precios, se facturarán por separado bajo el servicio de Configuración Adicional, a razón de 25 €/hora (mínimo 1 hora).</p><ul class=\"list-disc pl-4\"><li class=\"ml-2\"><p>Importe total adeudado: 1501,80 €.</p></li></ul><p></p><p><strong>7. OTRAS CONDICIONES GENERALES</strong></p><p>7.1. Responsabilidad del cliente: El cliente se compromete a proporcionar la información veraz y completa que sea requerida para la correcta prestación del servicio.</p><p>7.2. Condiciones de cancelación: El contrato podrá ser cancelado con un preaviso mínimo de 15 días antes de la emisión del recibo de pago. En caso de cancelación antes de completar los 3 meses de compromiso de permanencia, el cliente deberá abonar el importe correspondiente a esos tres meses.</p><p>7.3. Modificaciones del contrato: Cualquier modificación en el presupuesto o en las condiciones del servicio deberá ser acordada por ambas partes y reflejada por escrito.</p><p></p><p><strong>Información legal</strong></p><ul class=\"list-disc pl-4\"><li class=\"ml-2\"><p>Responsable de los datos: JEYCA TECNOLOGÍA Y MEDIO AMBIENTE, S.L.</p></li><li class=\"ml-2\"><p>Finalidad de los datos: recabar información sobre nuestros servicios, gestionar el envío de información y prospección comercial.</p></li><li class=\"ml-2\"><p>Destinatarios: Empresas proveedoras nacionales y encargados de tratamiento acogidos a privacy shield y personal de Jeyca.</p></li><li class=\"ml-2\"><p>Información adicional: En la política de privacidad de <a target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-lime-600 underline cursor-pointer hover:text-lime-700\" href=\"http://JEYCA.NET\">JEYCA.NET</a> encontrarás información adicional sobre la recopilación y el uso de su información personal por parte de <a target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-lime-600 underline cursor-pointer hover:text-lime-700\" href=\"http://JEYCA.NET\">JEYCA.NET</a>, incluida información sobre acceso, conservación, rectificación, eliminación, seguridad y otros temas.</p></li></ul><p></p>"
   },
   "mode": "produccion"
 }

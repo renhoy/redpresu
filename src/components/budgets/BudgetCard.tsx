@@ -1,11 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { Budget } from "@/lib/types/database";
 import { formatCurrency } from "@/lib/helpers/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Pencil, Trash2, FileStack, FileText, Eye, FilePlus, Copy, Layers, FileEdit } from "lucide-react";
+import { Pencil, Trash2, FileStack, FileText, Eye, FilePlus, Copy, Layers } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -19,6 +20,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { BudgetNotesIcon } from "./BudgetNotesIcon";
 import Link from "next/link";
 import { getBudgetPDFSignedUrl } from "@/app/actions/budgets";
@@ -71,6 +82,9 @@ export function BudgetCard({
   generatingPdf,
   duplicating,
 }: BudgetCardProps) {
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editAction, setEditAction] = useState<"presupuesto" | "notas">("presupuesto");
+
   const days = getDaysRemaining(budget.start_date, budget.validity_days);
 
   // Obtener título de la tarifa desde la relación redpresu_tariffs
@@ -80,6 +94,20 @@ export function BudgetCard({
     "title" in (budget as any).redpresu_tariffs
       ? ((budget as any).redpresu_tariffs as { title: string }).title
       : "N/A";
+
+  const handleEditAction = () => {
+    if (editAction === "presupuesto") {
+      window.open(
+        `/budgets/create?tariff_id=${budget.tariff_id}&budget_id=${budget.id}`,
+        "_blank"
+      );
+    } else {
+      window.open(`/budgets/${budget.id}/edit-notes`, "_blank");
+    }
+
+    setEditDialogOpen(false);
+    setEditAction("presupuesto"); // Reset to default
+  };
 
   return (
     <TooltipProvider>
@@ -292,32 +320,11 @@ export function BudgetCard({
               data-tour="btn-editar-presupuesto"
               variant="outline"
               size="sm"
-              onClick={() =>
-                window.open(
-                  `/budgets/create?tariff_id=${budget.tariff_id}&budget_id=${budget.id}`,
-                  "_blank"
-                )
-              }
+              onClick={() => setEditDialogOpen(true)}
               className="h-7 px-2 gap-1.5 text-xs w-full"
             >
               <Pencil className="h-3.5 w-3.5 flex-shrink-0" />
               <span>Editar</span>
-            </Button>
-
-            {/* Editar Notas */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                window.open(
-                  `/budgets/${budget.id}/edit-notes`,
-                  "_blank"
-                )
-              }
-              className="h-7 px-2 gap-1.5 text-xs w-full"
-            >
-              <FileEdit className="h-3.5 w-3.5 flex-shrink-0" />
-              <span>Editar Notas</span>
             </Button>
 
             {/* Duplicar */}
@@ -348,6 +355,64 @@ export function BudgetCard({
         </div>
       </CardContent>
     </Card>
+
+    {/* Dialog para elegir acción de edición */}
+    <AlertDialog
+      open={editDialogOpen}
+      onOpenChange={(open) => {
+        setEditDialogOpen(open);
+        if (!open) setEditAction("presupuesto");
+      }}
+    >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Editar Presupuesto</AlertDialogTitle>
+          <AlertDialogDescription>
+            Selecciona qué deseas editar:
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        <div className="space-y-3 py-4">
+          <label className="flex items-center space-x-3 cursor-pointer">
+            <input
+              type="radio"
+              name="edit-action"
+              value="presupuesto"
+              checked={editAction === "presupuesto"}
+              onChange={(e) => setEditAction(e.target.value as "presupuesto" | "notas")}
+              className="h-4 w-4 text-lime-600 focus:ring-lime-500"
+            />
+            <span className="text-sm font-medium">
+              Editar Presupuesto (Por defecto)
+            </span>
+          </label>
+
+          <label className="flex items-center space-x-3 cursor-pointer">
+            <input
+              type="radio"
+              name="edit-action"
+              value="notas"
+              checked={editAction === "notas"}
+              onChange={(e) => setEditAction(e.target.value as "presupuesto" | "notas")}
+              className="h-4 w-4 text-lime-600 focus:ring-lime-500"
+            />
+            <span className="text-sm font-medium">
+              Editar Notas del Presupuesto
+            </span>
+          </label>
+        </div>
+
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleEditAction}
+            className="bg-lime-500 hover:bg-lime-600"
+          >
+            Aceptar
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     </TooltipProvider>
   );
 }

@@ -276,7 +276,7 @@ COMMENT ON FUNCTION public.get_user_role(user_id uuid) IS 'Returns role for a us
 --
 
 CREATE FUNCTION public.get_user_role_by_id(p_user_id uuid) RETURNS text
-    LANGUAGE plpgsql SECURITY DEFINER
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
     AS $$
 DECLARE
   v_role text;
@@ -295,7 +295,7 @@ $$;
 -- Name: FUNCTION get_user_role_by_id(p_user_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_user_role_by_id(p_user_id uuid) IS 'Obtiene el rol de un usuario dado su user_id';
+COMMENT ON FUNCTION public.get_user_role_by_id(p_user_id uuid) IS 'Obtiene el rol de un usuario. Marcada como STABLE para permitir cacheo durante transacciones y mejorar performance en políticas RLS.';
 
 
 --
@@ -756,6 +756,8 @@ CREATE TABLE public.redpresu_budgets (
     re_apply boolean DEFAULT false NOT NULL,
     re_total numeric(10,2) DEFAULT 0.00 NOT NULL,
     budget_number character varying(100) NOT NULL,
+    summary_note text,
+    conditions_note text,
     CONSTRAINT budgets_client_type_check CHECK ((client_type = ANY (ARRAY['particular'::text, 'autonomo'::text, 'empresa'::text]))),
     CONSTRAINT budgets_status_check CHECK ((status = ANY (ARRAY['borrador'::text, 'pendiente'::text, 'enviado'::text, 'aprobado'::text, 'rechazado'::text, 'caducado'::text]))),
     CONSTRAINT chk_budgets_irpf CHECK ((irpf >= (0)::numeric)),
@@ -1009,6 +1011,65 @@ COMMENT ON COLUMN public.redpresu_budgets.re_total IS 'Importe total del Recargo
 --
 
 COMMENT ON COLUMN public.redpresu_budgets.budget_number IS 'Número único del presupuesto (alfanumérico, editable). Formato por defecto: YYYYMMDD-HHMMSS. Único dentro de cada empresa (no global).';
+
+
+--
+-- Name: COLUMN redpresu_budgets.summary_note; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_budgets.summary_note IS 'Nota personalizada del sumario para este presupuesto (independiente de la tarifa)';
+
+
+--
+-- Name: COLUMN redpresu_budgets.conditions_note; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_budgets.conditions_note IS 'Nota personalizada de condiciones para este presupuesto (independiente de la tarifa)';
+
+
+--
+-- Name: redpresu_company_deletion_log; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.redpresu_company_deletion_log (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    company_id integer,
+    issuer_id uuid,
+    deleted_by uuid NOT NULL,
+    deletion_type text NOT NULL,
+    company_snapshot jsonb NOT NULL,
+    issuer_snapshot jsonb,
+    full_backup jsonb,
+    users_count integer DEFAULT 0,
+    tariffs_count integer DEFAULT 0,
+    budgets_count integer DEFAULT 0,
+    deletion_reason text,
+    ip_address text,
+    user_agent text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT redpresu_company_deletion_log_deletion_type_check CHECK ((deletion_type = ANY (ARRAY['soft_delete'::text, 'permanent_delete'::text, 'restore'::text])))
+);
+
+
+--
+-- Name: TABLE redpresu_company_deletion_log; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.redpresu_company_deletion_log IS 'Registro de auditoría de eliminaciones de empresas';
+
+
+--
+-- Name: COLUMN redpresu_company_deletion_log.company_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_company_deletion_log.company_id IS 'ID de la empresa eliminada (nullable con ON DELETE SET NULL)';
+
+
+--
+-- Name: COLUMN redpresu_company_deletion_log.deletion_type; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.redpresu_company_deletion_log.deletion_type IS 'soft_delete, permanent_delete o restore';
 
 
 --
@@ -1482,6 +1543,14 @@ ALTER TABLE ONLY public.redpresu_issuers
 
 
 --
+-- Name: redpresu_company_deletion_log redpresu_company_deletion_log_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.redpresu_company_deletion_log
+    ADD CONSTRAINT redpresu_company_deletion_log_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: redpresu_subscriptions redpresu_subscriptions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1662,6 +1731,34 @@ CREATE INDEX idx_config_category ON public.redpresu_config USING btree (category
 --
 
 CREATE INDEX idx_config_is_system ON public.redpresu_config USING btree (is_system);
+
+
+--
+-- Name: idx_deletion_log_company_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_deletion_log_company_id ON public.redpresu_company_deletion_log USING btree (company_id);
+
+
+--
+-- Name: idx_deletion_log_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_deletion_log_created_at ON public.redpresu_company_deletion_log USING btree (created_at DESC);
+
+
+--
+-- Name: idx_deletion_log_deleted_by; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_deletion_log_deleted_by ON public.redpresu_company_deletion_log USING btree (deleted_by);
+
+
+--
+-- Name: idx_deletion_log_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_deletion_log_type ON public.redpresu_company_deletion_log USING btree (deletion_type);
 
 
 --
@@ -1981,6 +2078,30 @@ ALTER TABLE ONLY public.redpresu_issuers
 
 
 --
+-- Name: redpresu_company_deletion_log redpresu_company_deletion_log_company_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.redpresu_company_deletion_log
+    ADD CONSTRAINT redpresu_company_deletion_log_company_id_fkey FOREIGN KEY (company_id) REFERENCES public.redpresu_companies(id) ON DELETE SET NULL;
+
+
+--
+-- Name: redpresu_company_deletion_log redpresu_company_deletion_log_deleted_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.redpresu_company_deletion_log
+    ADD CONSTRAINT redpresu_company_deletion_log_deleted_by_fkey FOREIGN KEY (deleted_by) REFERENCES auth.users(id) ON DELETE RESTRICT;
+
+
+--
+-- Name: redpresu_company_deletion_log redpresu_company_deletion_log_issuer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.redpresu_company_deletion_log
+    ADD CONSTRAINT redpresu_company_deletion_log_issuer_id_fkey FOREIGN KEY (issuer_id) REFERENCES public.redpresu_issuers(id) ON DELETE SET NULL;
+
+
+--
 -- Name: redpresu_user_invitations redpresu_user_invitations_inviter_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2121,6 +2242,24 @@ CREATE POLICY budgets_update_policy ON public.redpresu_budgets FOR UPDATE USING 
 --
 
 CREATE POLICY config_select_policy ON public.redpresu_config FOR SELECT USING ((auth.uid() IS NOT NULL));
+
+
+--
+-- Name: redpresu_company_deletion_log deletion_log_insert_superadmin; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY deletion_log_insert_superadmin ON public.redpresu_company_deletion_log FOR INSERT WITH CHECK ((EXISTS ( SELECT 1
+   FROM public.redpresu_users
+  WHERE ((redpresu_users.id = auth.uid()) AND (redpresu_users.role = 'superadmin'::text)))));
+
+
+--
+-- Name: redpresu_company_deletion_log deletion_log_select_superadmin; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY deletion_log_select_superadmin ON public.redpresu_company_deletion_log FOR SELECT USING ((EXISTS ( SELECT 1
+   FROM public.redpresu_users
+  WHERE ((redpresu_users.id = auth.uid()) AND (redpresu_users.role = 'superadmin'::text)))));
 
 
 --
@@ -2284,6 +2423,12 @@ ALTER TABLE public.redpresu_budgets ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.redpresu_companies ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: redpresu_company_deletion_log; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.redpresu_company_deletion_log ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: redpresu_config; Type: ROW SECURITY; Schema: public; Owner: -

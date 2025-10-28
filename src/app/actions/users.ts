@@ -33,6 +33,7 @@ export interface User {
 export interface UserWithInviter extends User {
   inviter_name?: string;
   inviter_email?: string;
+  company_name?: string;
 }
 
 // ============================================
@@ -59,6 +60,7 @@ const updateUserSchema = z.object({
     .optional(),
   role: z.enum(["comercial", "admin", "superadmin"]).optional(),
   status: z.enum(["active", "inactive", "pending"]).optional(),
+  company_id: z.number().int().positive().optional(), // Solo superadmin puede cambiar empresa
 });
 
 export type CreateUserData = z.infer<typeof createUserSchema>;
@@ -127,7 +129,7 @@ function generateTemporaryPassword(): string {
 // ============================================
 
 /**
- * Obtener lista de usuarios de la empresa
+ * Obtener lista de usuarios de la empresa (o todos si es superadmin)
  */
 export async function getUsers() {
   // Permitir acceso a todos (comercial verá la lista pero solo podrá editar su perfil)
@@ -152,11 +154,12 @@ export async function getUsers() {
         email
       )
     `
-    )
-    .eq("company_id", currentUser.company_id);
+    );
 
-  // Si el usuario NO es superadmin, filtrar para NO mostrar superadmins
+  // Si el usuario NO es superadmin, filtrar por empresa
   if (currentUser.role !== "superadmin") {
+    query = query.eq("company_id", currentUser.company_id);
+    // Admin/comercial no ven otros superadmins
     query = query.neq("role", "superadmin");
   }
 
@@ -172,6 +175,15 @@ export async function getUsers() {
     };
   }
 
+  // Obtener nombres de empresas
+  const companyIds = [...new Set(users.map(u => u.company_id))];
+  const { data: companies } = await supabaseAdmin
+    .from("redpresu_companies")
+    .select("id, name")
+    .in("id", companyIds);
+
+  const companiesMap = new Map(companies?.map(c => [c.id, c.name]) || []);
+
   // Formatear datos
   const formattedUsers: UserWithInviter[] = users.map((user) => ({
     ...user,
@@ -179,6 +191,7 @@ export async function getUsers() {
       ? `${user.inviter.name} ${user.inviter.last_name}`
       : undefined,
     inviter_email: user.inviter?.email,
+    company_name: companiesMap.get(user.company_id),
   }));
 
   return {
@@ -209,7 +222,8 @@ export async function getUserById(userId: string) {
     };
   }
 
-  const { data: user, error } = await supabaseAdmin
+  // Construir query base
+  let query = supabaseAdmin
     .from("redpresu_users")
     .select(
       `
@@ -221,9 +235,14 @@ export async function getUserById(userId: string) {
       )
     `
     )
-    .eq("id", userId)
-    .eq("company_id", currentUser.company_id)
-    .single();
+    .eq("id", userId);
+
+  // Si NO es superadmin, filtrar por empresa
+  if (currentUser.role !== "superadmin") {
+    query = query.eq("company_id", currentUser.company_id);
+  }
+
+  const { data: user, error } = await query.single();
 
   if (error) {
     log.error("Error fetching user:", error);
@@ -233,12 +252,20 @@ export async function getUserById(userId: string) {
     };
   }
 
+  // Obtener nombre de la empresa
+  const { data: company } = await supabaseAdmin
+    .from("redpresu_companies")
+    .select("name")
+    .eq("id", user.company_id)
+    .single();
+
   const formattedUser: UserWithInviter = {
     ...user,
     inviter_name: user.inviter
       ? `${user.inviter.name} ${user.inviter.last_name}`
       : undefined,
     inviter_email: user.inviter?.email,
+    company_name: company?.name,
   };
 
   return {
@@ -409,7 +436,15 @@ export async function updateUser(userId: string, data: UpdateUserData) {
     };
   }
 
-  // Verificar que el usuario pertenece a la misma empresa
+  // Solo superadmin puede cambiar company_id
+  if (data.company_id !== undefined && currentUser.role !== "superadmin") {
+    return {
+      success: false,
+      error: "Solo superadmin puede cambiar la empresa de un usuario",
+    };
+  }
+
+  // Verificar que el usuario pertenece a la misma empresa (salvo que sea superadmin cambiando empresa)
   const { data: targetUser, error: checkError } = await supabaseAdmin
     .from("redpresu_users")
     .select("company_id, role")
@@ -423,7 +458,8 @@ export async function updateUser(userId: string, data: UpdateUserData) {
     };
   }
 
-  if (targetUser.company_id !== companyId) {
+  // Si no es superadmin, verificar misma empresa
+  if (currentUser.role !== "superadmin" && targetUser.company_id !== companyId) {
     return {
       success: false,
       error: "No puedes actualizar usuarios de otra empresa",
@@ -512,29 +548,48 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
     };
   }
 
-  // Verificar que el usuario a eliminar pertenece a la misma empresa
+  // Verificar que el usuario a eliminar existe
   const { data: targetUser, error: targetError } = await supabaseAdmin
     .from("redpresu_users")
-    .select("company_id, role")
+    .select("company_id, role, email")
     .eq("id", userId)
     .single();
 
-  if (targetError || !targetUser || targetUser.company_id !== companyId) {
+  if (targetError || !targetUser) {
     return {
       success: false,
       error: "Usuario no encontrado",
     };
   }
 
-  // Admin no puede borrar superadmin
-  if (currentUser.role === "admin" && targetUser.role === "superadmin") {
+  // PROTECCIÓN: No permitir eliminar el superadmin principal del sistema
+  if (targetUser.email === "josivela+super@gmail.com") {
     return {
       success: false,
-      error: "No tienes permisos para eliminar un superadmin",
+      error: "Este usuario no puede ser eliminado del sistema",
     };
   }
 
-  // Si se va a reasignar, verificar que el usuario destino existe y es de la misma empresa
+  // Si el usuario actual NO es superadmin, verificar permisos adicionales
+  if (currentUser.role !== "superadmin") {
+    // Admin solo puede borrar usuarios de su misma empresa
+    if (targetUser.company_id !== companyId) {
+      return {
+        success: false,
+        error: "No puedes eliminar usuarios de otra empresa",
+      };
+    }
+
+    // Admin no puede borrar superadmin
+    if (targetUser.role === "superadmin") {
+      return {
+        success: false,
+        error: "No tienes permisos para eliminar un superadmin",
+      };
+    }
+  }
+
+  // Si se va a reasignar, verificar que el usuario destino existe y es válido
   if (reassignToUserId) {
     const { data: reassignUser, error: reassignError } = await supabaseAdmin
       .from("redpresu_users")
@@ -542,10 +597,18 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
       .eq("id", reassignToUserId)
       .single();
 
-    if (reassignError || !reassignUser || reassignUser.company_id !== companyId) {
+    if (reassignError || !reassignUser) {
       return {
         success: false,
-        error: "Usuario de reasignación no válido",
+        error: "Usuario de reasignación no encontrado",
+      };
+    }
+
+    // Si no es superadmin, verificar que el usuario de reasignación sea de la misma empresa
+    if (currentUser.role !== "superadmin" && reassignUser.company_id !== companyId) {
+      return {
+        success: false,
+        error: "El usuario de reasignación debe ser de la misma empresa",
       };
     }
 
@@ -586,9 +649,32 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
 
     log.info(`[deleteUser] Datos reasignados de ${userId} a ${reassignToUserId}`);
   } else {
-    // Si no se reasigna, borrar datos en cascada
-    // Las tablas con ON DELETE CASCADE se encargarán automáticamente
+    // Si no se reasigna, borrar datos explícitamente
     log.info(`[deleteUser] Se borrarán todos los datos del usuario ${userId}`);
+
+    // IMPORTANTE: Borrar presupuestos ANTES porque tienen ON DELETE RESTRICT
+    const { error: budgetsDeleteError } = await supabaseAdmin
+      .from("redpresu_budgets")
+      .delete()
+      .eq("user_id", userId);
+
+    if (budgetsDeleteError) {
+      log.error("[deleteUser] Error borrando presupuestos:", budgetsDeleteError);
+      return {
+        success: false,
+        error: "Error al borrar presupuestos del usuario",
+      };
+    }
+
+    // Borrar tarifas (aunque tienen ON DELETE SET NULL, es mejor limpiar)
+    const { error: tariffsDeleteError } = await supabaseAdmin
+      .from("redpresu_tariffs")
+      .delete()
+      .eq("user_id", userId);
+
+    if (tariffsDeleteError) {
+      log.error("[deleteUser] Error borrando tarifas:", tariffsDeleteError);
+    }
   }
 
   // Obtener email del usuario antes de borrarlo (para borrar invitaciones)
@@ -619,6 +705,17 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
     if (invitedError) {
       log.error("[deleteUser] Error borrando invitaciones como invitado:", invitedError);
     }
+  }
+
+  // Manejar registros de company_deletion_log donde el usuario es deleted_by
+  // Actualizar a NULL en lugar de borrar (mantener auditoría)
+  const { error: logError } = await supabaseAdmin
+    .from("redpresu_company_deletion_log")
+    .update({ deleted_by: null })
+    .eq("deleted_by", userId);
+
+  if (logError) {
+    log.error("[deleteUser] Error actualizando company_deletion_log:", logError);
   }
 
   // Eliminar de auth.users (cascada eliminará de public.redpresu_users)

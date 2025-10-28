@@ -328,7 +328,7 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
       )}
 
       {/* Sección: Información Personal (Solo lectura) */}
-      <Card id="card-info-personal">
+      <Card id="card-info-personal" className="bg-lime-100">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -342,7 +342,7 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
               variant="outline"
               size="sm"
               onClick={() =>
-                (window.location.href = `/users/${profile.id}/edit`)
+                (window.location.href = `/users/create?id=${profile.id}`)
               }
               className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
             >
@@ -351,41 +351,39 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
           </div>
         </CardHeader>
         <CardContent>
-          {/* Desktop: 1 línea (25% - 45% - 15% - 15%) */}
-          {/* Tablet: 2 líneas (50%-50%, 50%-50%) */}
-          {/* Móvil: 3 líneas (100%, 100%, 50%-50%) */}
-          <div className="grid grid-cols-4 lg:grid-cols-20 gap-4">
-            {/* Nombre: Desktop 25% (5/20), Tablet 50% (2/4), Móvil 100% (4/4) */}
-            <div className="col-span-4 md:col-span-2 lg:col-span-5">
-              <p className="text-sm">
-                <span className="font-bold">Nombre:</span> {profile.name}
-              </p>
-            </div>
-
-            {/* Email: Desktop 45% (9/20), Tablet 50% (2/4), Móvil 100% (4/4) */}
-            <div className="col-span-4 md:col-span-2 lg:col-span-9">
-              <p className="text-sm">
-                <span className="font-bold">Email:</span> {profile.email}
-              </p>
-            </div>
-
-            {/* Rol: Desktop 15% (3/20), Tablet 50% (2/4), Móvil 50% (2/4) */}
-            <div className="col-span-2 md:col-span-2 lg:col-span-3">
-              <p className="text-sm">
-                <span className="font-bold">Rol:</span>{" "}
-                <span className="capitalize">{profile.role}</span>
-              </p>
-            </div>
-
-            {/* Tipo: Desktop 15% (3/20), Tablet 50% (2/4), Móvil 50% (2/4) */}
-            {profile.emisor && (
-              <div className="col-span-2 md:col-span-2 lg:col-span-3">
+          {/* Grid responsive: 2 líneas */}
+          {/* Línea 1: Nombre + Empresa */}
+          {/* Línea 2: Email + Rol */}
+          <div className="space-y-3">
+            {/* Línea 1: Nombre y Empresa */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
                 <p className="text-sm">
-                  <span className="font-bold">Tipo:</span>{" "}
-                  {profile.emisor.tipo === "autonomo" ? "Autónomo" : "Empresa"}
+                  <span className="font-bold">Nombre:</span> {profile.name}
                 </p>
               </div>
-            )}
+              <div>
+                <p className="text-sm">
+                  <span className="font-bold">Empresa:</span>{" "}
+                  {profile.company_name || "Sin empresa"}
+                </p>
+              </div>
+            </div>
+
+            {/* Línea 2: Email y Rol */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm">
+                  <span className="font-bold">Email:</span> {profile.email}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm">
+                  <span className="font-bold">Rol:</span>{" "}
+                  <span className="capitalize">{profile.role}</span>
+                </p>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -691,7 +689,7 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
       )}
 
       {/* Sección: Cambiar Contraseña (Opcional) */}
-      <Card id="card-cambiar-password">
+      <Card id="card-cambiar-password" className="bg-lime-100">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Lock className="h-5 w-5" />

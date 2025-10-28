@@ -3,17 +3,17 @@
   "data": {
     "base": {
       "name": "Base Imponible",
-      "amount": "266.36"
+      "amount": "1561.98"
     },
     "ivas": [
       {
-        "name": "10.00% IVA",
-        "amount": "26.64"
+        "name": "21.00% IVA",
+        "amount": "328.02"
       }
     ],
     "total": {
       "name": "TOTAL PRESUPUESTO",
-      "amount": "293.00"
+      "amount": "1890.00"
     }
   }
 }

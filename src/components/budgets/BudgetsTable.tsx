@@ -45,7 +45,6 @@ import {
   FilePlus,
   Copy,
   Play,
-  FileEdit,
 } from "lucide-react";
 import {
   startTour,
@@ -100,6 +99,8 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
     hasPdf: boolean;
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [editDialogBudget, setEditDialogBudget] = useState<Budget | null>(null);
+  const [editAction, setEditAction] = useState<"presupuesto" | "notas">("presupuesto");
 
   // Calcular contadores por estado
   const statusCounts = budgets.reduce((acc, budget) => {
@@ -206,6 +207,22 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
     } finally {
       setDuplicating(null);
     }
+  };
+
+  const handleEditAction = () => {
+    if (!editDialogBudget) return;
+
+    if (editAction === "presupuesto") {
+      window.open(
+        `/budgets/create?tariff_id=${editDialogBudget.tariff_id}&budget_id=${editDialogBudget.id}`,
+        "_blank"
+      );
+    } else {
+      window.open(`/budgets/${editDialogBudget.id}/edit-notes`, "_blank");
+    }
+
+    setEditDialogBudget(null);
+    setEditAction("presupuesto"); // Reset to default
   };
 
   const getDaysRemaining = (
@@ -730,12 +747,7 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                       data-tour="btn-editar-presupuesto"
                       variant="outline"
                       size="icon"
-                      onClick={() =>
-                        window.open(
-                          `/budgets/create?tariff_id=${budget.tariff_id}&budget_id=${budget.id}`,
-                          "_blank"
-                        )
-                      }
+                      onClick={() => setEditDialogBudget(budget)}
                       className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
                     >
                       <Pencil className="h-4 w-4" />
@@ -743,27 +755,6 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Editar</p>
-                  </TooltipContent>
-                </Tooltip>
-
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() =>
-                        window.open(
-                          `/budgets/${budget.id}/edit-notes`,
-                          "_blank"
-                        )
-                      }
-                      className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
-                    >
-                      <FileEdit className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Editar Notas</p>
                   </TooltipContent>
                 </Tooltip>
 
@@ -1182,6 +1173,64 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
                 {isDeleting ? "Eliminando..." : "Eliminar"}
               </AlertDialogAction>
             )}
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog para elegir acción de edición */}
+      <AlertDialog
+        open={!!editDialogBudget}
+        onOpenChange={() => {
+          setEditDialogBudget(null);
+          setEditAction("presupuesto");
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Editar Presupuesto</AlertDialogTitle>
+            <AlertDialogDescription>
+              Selecciona qué deseas editar:
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-3 py-4">
+            <label className="flex items-center space-x-3 cursor-pointer">
+              <input
+                type="radio"
+                name="edit-action"
+                value="presupuesto"
+                checked={editAction === "presupuesto"}
+                onChange={(e) => setEditAction(e.target.value as "presupuesto" | "notas")}
+                className="h-4 w-4 text-lime-600 focus:ring-lime-500"
+              />
+              <span className="text-sm font-medium">
+                Editar Presupuesto (Por defecto)
+              </span>
+            </label>
+
+            <label className="flex items-center space-x-3 cursor-pointer">
+              <input
+                type="radio"
+                name="edit-action"
+                value="notas"
+                checked={editAction === "notas"}
+                onChange={(e) => setEditAction(e.target.value as "presupuesto" | "notas")}
+                className="h-4 w-4 text-lime-600 focus:ring-lime-500"
+              />
+              <span className="text-sm font-medium">
+                Editar Notas del Presupuesto
+              </span>
+            </label>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleEditAction}
+              className="bg-lime-500 hover:bg-lime-600"
+            >
+              Aceptar
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
