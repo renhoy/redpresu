@@ -395,6 +395,7 @@ export function TariffList({
         users={users}
         currentUserRole={currentUserRole}
         tariffs={allTariffs}
+        tariffId={tariffId}
       />
 
       {/* Contador de resultados */}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,6 +35,7 @@ interface TariffFiltersProps {
   users?: User[];
   currentUserRole?: string;
   tariffs?: Tariff[];
+  tariffId?: string;
 }
 
 export function TariffFilters({
@@ -44,7 +46,9 @@ export function TariffFilters({
   users = [],
   currentUserRole,
   tariffs = [],
+  tariffId,
 }: TariffFiltersProps) {
+  const router = useRouter();
   const [status, setStatus] = useState<"Activa" | "Inactiva" | "all">(
     defaultStatus
   );
@@ -62,7 +66,12 @@ export function TariffFilters({
     // Si el valor es "all", también limpiamos la búsqueda
     if (value === "all") {
       setSearch("");
-      onFiltersChange({ status: value, search: "", user_id: userId || undefined });
+      // Si hay tariff_id, navegar a /tariffs para limpiar todos los filtros
+      if (tariffId) {
+        router.push("/tariffs");
+      } else {
+        onFiltersChange({ status: value, search: "", user_id: userId || undefined });
+      }
     } else {
       onFiltersChange({ status: value, search, user_id: userId || undefined });
     }
@@ -99,11 +108,11 @@ export function TariffFilters({
       {/* Botones de filtro de estado */}
       <div data-tour="filtro-estado-tarifas" className="flex gap-2">
         <Button
-          variant={status === "all" && search === "" ? "default" : "outline"}
+          variant={status === "all" && search === "" && !tariffId ? "default" : "outline"}
           size="sm"
           onClick={() => handleStatusChange("all")}
           className={
-            status === "all" && search === ""
+            status === "all" && search === "" && !tariffId
               ? "bg-lime-500 hover:bg-lime-600"
               : "border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
           }
