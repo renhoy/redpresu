@@ -62,7 +62,7 @@ export async function middleware(req: NextRequest) {
     }
 
     // Definir rutas públicas que no requieren autenticación
-    const publicRoutes = ['/', '/login', '/forgot-password', '/reset-password', '/signup', '/register', '/pricing', '/accept-invitation']
+    const publicRoutes = ['/', '/login', '/forgot-password', '/reset-password', '/signup', '/register', '/pricing', '/accept-invitation', '/inactive-logout']
     const isPublicRoute = publicRoutes.some(path => {
       if (path === '/') {
         return pathname === '/'
@@ -112,11 +112,9 @@ export async function middleware(req: NextRequest) {
       // Verificar si el usuario está inactivo
       if (userStatus === 'inactive') {
         console.warn(`[Middleware] Usuario inactivo detectado: ${session.user.email}`)
-        // Cerrar sesión y redirigir al login con mensaje
-        await supabase.auth.signOut()
+        // Redirigir a página especial de logout para usuario inactivo
         const redirectUrl = req.nextUrl.clone()
-        redirectUrl.pathname = '/login'
-        redirectUrl.searchParams.set('reason', 'inactive')
+        redirectUrl.pathname = '/inactive-logout'
         return NextResponse.redirect(redirectUrl)
       }
 
