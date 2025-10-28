@@ -113,7 +113,8 @@ export async function middleware(req: NextRequest) {
     }
 
     // Verificar acceso a rutas restringidas por rol
-    if (isAuthenticated && session?.user) {
+    // NO verificar en rutas públicas (login, register, etc)
+    if (isAuthenticated && session?.user && !isPublicRoute) {
       // Obtener rol y status desde la base de datos usando supabaseAdmin (bypasea RLS)
       const { data: userData, error: userError } = await supabaseAdmin
         .from('redpresu_users')
