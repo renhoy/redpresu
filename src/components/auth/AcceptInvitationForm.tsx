@@ -41,6 +41,7 @@ export default function AcceptInvitationForm() {
   const [isValid, setIsValid] = useState(false);
   const [invitationEmail, setInvitationEmail] = useState("");
   const [inviterMessage, setInviterMessage] = useState("");
+  const [isPreFilled, setIsPreFilled] = useState(false);
 
   const [formData, setFormData] = useState<FormData>({
     name: "",
@@ -73,6 +74,16 @@ export default function AcceptInvitationForm() {
         const emailMatch = result.data.emailMessage?.match(/para (.+)$/);
         if (emailMatch) {
           setInvitationEmail(emailMatch[1]);
+        }
+
+        // Pre-llenar nombre y apellidos si el usuario ya existe (pre-creado por admin)
+        if (result.data.existingUserName) {
+          setFormData((prev) => ({
+            ...prev,
+            name: result.data.existingUserName || "",
+            lastName: result.data.existingUserLastName || "",
+          }));
+          setIsPreFilled(true);
         }
       } else {
         setIsValid(false);
@@ -278,6 +289,15 @@ export default function AcceptInvitationForm() {
           {errors.general && (
             <Alert variant="destructive">
               <AlertDescription>{errors.general}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* Mensaje informativo si los datos están pre-llenados */}
+          {isPreFilled && (
+            <Alert className="bg-blue-50 border-blue-200">
+              <AlertDescription className="text-blue-800 text-sm">
+                Tu nombre y apellidos han sido pre-rellenados. Puedes modificarlos si no son correctos.
+              </AlertDescription>
             </Alert>
           )}
 

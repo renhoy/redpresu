@@ -33,6 +33,10 @@ export interface InvitationResult {
     token?: string
     expiresAt?: string
     emailMessage?: string
+    existingUserName?: string
+    existingUserLastName?: string
+    userId?: string
+    autoLoginFailed?: boolean
   }
 }
 
@@ -342,6 +346,14 @@ export async function validateInvitationToken(token: string): Promise<Invitation
       log.error('[validateInvitationToken] Error obteniendo invitador:', inviterError)
     }
 
+    // Verificar si el usuario ya existe (pre-creado por admin)
+    const { data: existingUser } = await supabaseAdmin
+      .from('redpresu_users')
+      .select('id, name, last_name, status')
+      .eq('email', invitation.email)
+      .eq('status', 'pending')
+      .maybeSingle()
+
     log.info('[validateInvitationToken] Token válido para:', invitation.email)
 
     return {
@@ -350,7 +362,10 @@ export async function validateInvitationToken(token: string): Promise<Invitation
         invitationId: invitation.id,
         token: invitation.token,
         expiresAt: invitation.expires_at,
-        emailMessage: `Invitación de ${inviterData?.name || 'un administrador'} (${inviterData?.email || ''}) para ${invitation.email}`
+        emailMessage: `Invitación de ${inviterData?.name || 'un administrador'} (${inviterData?.email || ''}) para ${invitation.email}`,
+        // Incluir nombre y apellidos si el usuario ya existe
+        existingUserName: existingUser?.name || undefined,
+        existingUserLastName: existingUser?.last_name || undefined
       }
     }
 
