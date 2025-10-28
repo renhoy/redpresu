@@ -184,16 +184,26 @@ export async function getCompanyById(companyId: string): Promise<ActionResult> {
       return { success: false, error: "Usuario sin empresa asignada" };
     }
 
-    // company_id es UUID en redpresu_issuers
+    // Detectar si companyId es UUID o INTEGER
+    // UUID tiene formato: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(companyId);
+
     // Verificar permisos:
     // - Superadmin puede ver cualquier empresa
     // - Admin solo puede ver emisor de su propia empresa
-    const { data: company, error } = await supabaseAdmin
+    let query = supabaseAdmin
       .from("redpresu_issuers")
       .select("*")
-      .eq("id", companyId)
-      .is("deleted_at", null) // Solo empresas activas
-      .single();
+      .is("deleted_at", null); // Solo empresas activas
+
+    // Buscar por id (UUID) o company_id (INTEGER)
+    if (isUUID) {
+      query = query.eq("id", companyId);
+    } else {
+      query = query.eq("company_id", parseInt(companyId, 10));
+    }
+
+    const { data: company, error } = await query.single();
 
     if (error) {
       log.error("[getCompanyById] Error DB:", error);
