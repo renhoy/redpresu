@@ -81,7 +81,7 @@ export async function middleware(req: NextRequest) {
     }
 
     // Definir rutas públicas que no requieren autenticación
-    const publicRoutes = ['/', '/login', '/forgot-password', '/reset-password', '/signup', '/register', '/pricing', '/accept-invitation', '/inactive-logout']
+    const publicRoutes = ['/', '/login', '/forgot-password', '/reset-password', '/signup', '/register', '/pricing', '/accept-invitation']
     const isPublicRoute = publicRoutes.some(path => {
       if (path === '/') {
         return pathname === '/'
@@ -100,10 +100,9 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(redirectUrl)
     }
 
-    // Usuario autenticado intentando acceder a ruta pública
-    // Excepciones: home (/) y /inactive-logout (para permitir logout de usuario inactivo)
+    // Usuario autenticado intentando acceder a ruta pública (excepto home)
     // En modo monoempresa, el home ya fue manejado arriba
-    if (isAuthenticated && isPublicRoute && pathname !== '/' && pathname !== '/inactive-logout') {
+    if (isAuthenticated && isPublicRoute && pathname !== '/') {
       console.log(`[Middleware] Redirect autenticado: ${pathname} → /dashboard`)
       const redirectUrl = req.nextUrl.clone()
       redirectUrl.pathname = '/dashboard'
@@ -129,13 +128,15 @@ export async function middleware(req: NextRequest) {
 
       console.log(`[Middleware] Verificando permisos - Path: ${pathname}, Rol: ${userRole} (desde BD), Status: ${userStatus}, MultiEmpresa: ${multiempresa}`)
 
-      // Verificar si el usuario está inactivo (excepto si ya está en /inactive-logout)
-      if (userStatus === 'inactive' && pathname !== '/inactive-logout') {
+      // Verificar si el usuario está inactivo
+      if (userStatus === 'inactive') {
         console.warn(`[Middleware] Usuario inactivo detectado: ${session.user.email}`)
-        // Redirigir a página especial de logout para usuario inactivo
+        // Redirigir directamente al login con mensaje
         const redirectUrl = req.nextUrl.clone()
-        redirectUrl.pathname = '/inactive-logout'
-        return createRedirectWithCookies(redirectUrl, res)
+        redirectUrl.pathname = '/login'
+        redirectUrl.searchParams.set('reason', 'inactive')
+        // No usar createRedirectWithCookies aquí - queremos que pierda la sesión
+        return NextResponse.redirect(redirectUrl)
       }
 
       // /companies - Solo superadmin en modo multiempresa
