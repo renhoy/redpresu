@@ -383,6 +383,13 @@ export default function UserTable({
         </div>
       </div>
 
+      {/* Contador de resultados */}
+      {users.length > 0 && (
+        <div className="mb-4 text-sm text-muted-foreground">
+          Mostrando {filteredUsers.length} de {users.length} Usuarios
+        </div>
+      )}
+
       {/* Vista Desktop - Tabla */}
       <div className="hidden lg:block rounded-md border bg-gray-100" data-tour="tabla-usuarios">
         <Table>

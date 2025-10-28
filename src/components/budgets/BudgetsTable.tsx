@@ -1033,6 +1033,13 @@ export function BudgetsTable({ budgets }: BudgetsTableProps) {
         </div>
       </div>
 
+      {/* Contador de resultados */}
+      {budgets.length > 0 && (
+        <div className="mb-4 text-sm text-muted-foreground">
+          Mostrando {filteredBudgets.length} de {budgets.length} Presupuestos
+        </div>
+      )}
+
       {/* Vista Desktop - Tabla */}
       <div className="hidden lg:block border rounded-lg overflow-hidden bg-white">
         <div className="overflow-x-auto">

@@ -237,6 +237,13 @@ export default function CompanyTable({
         </div>
       </div>
 
+      {/* Contador de resultados */}
+      {companies.length > 0 && (
+        <div className="mb-4 text-sm text-muted-foreground">
+          Mostrando {filteredCompanies.length} de {companies.length} Empresas
+        </div>
+      )}
+
       {/* Vista Desktop - Tabla */}
       <div className="hidden lg:block rounded-md border bg-lime-100">
         <Table>

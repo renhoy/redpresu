@@ -386,22 +386,6 @@ export function TariffList({
         </div>
       </div>
 
-      {/* Filtro activo por tariff_id */}
-      {tariffId && (
-        <div className="mb-4 flex items-center gap-2">
-          <p className="text-sm text-muted-foreground">
-            Mostrando tarifa específica
-          </p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.push("/tariffs")}
-          >
-            Ver todas las tarifas
-          </Button>
-        </div>
-      )}
-
       {/* Filters */}
       <TariffFilters
         onFiltersChange={handleFiltersChange}
@@ -412,6 +396,13 @@ export function TariffList({
         currentUserRole={currentUserRole}
         tariffs={allTariffs}
       />
+
+      {/* Contador de resultados */}
+      {allTariffs.length > 0 && (
+        <div className="mb-4 text-sm text-muted-foreground">
+          Mostrando {filteredTariffs.length} de {allTariffs.length} Tarifas
+        </div>
+      )}
 
       {/* Vista Desktop - Tabla */}
       <div className="hidden lg:block border rounded-lg overflow-hidden bg-white">
