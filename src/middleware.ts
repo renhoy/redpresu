@@ -101,8 +101,10 @@ export async function middleware(req: NextRequest) {
     }
 
     // Usuario autenticado intentando acceder a ruta pública (excepto home)
+    // Excepción: si viene con reason=inactive, permitir acceso al login para mostrar mensaje
     // En modo monoempresa, el home ya fue manejado arriba
-    if (isAuthenticated && isPublicRoute && pathname !== '/') {
+    const reasonParam = req.nextUrl.searchParams.get('reason')
+    if (isAuthenticated && isPublicRoute && pathname !== '/' && reasonParam !== 'inactive') {
       console.log(`[Middleware] Redirect autenticado: ${pathname} → /dashboard`)
       const redirectUrl = req.nextUrl.clone()
       redirectUrl.pathname = '/dashboard'

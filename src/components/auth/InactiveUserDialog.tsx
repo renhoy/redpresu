@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,13 +19,18 @@ interface InactiveUserDialogProps {
 
 export function InactiveUserDialog({ showDialog }: InactiveUserDialogProps) {
   const router = useRouter();
+  const supabase = createClientComponentClient();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (showDialog) {
       setOpen(true);
+      // Cerrar sesión silenciosamente cuando se muestra el diálogo
+      supabase.auth.signOut().catch((error) => {
+        console.error("[InactiveUserDialog] Error en signOut:", error);
+      });
     }
-  }, [showDialog]);
+  }, [showDialog, supabase.auth]);
 
   const handleClose = () => {
     setOpen(false);
