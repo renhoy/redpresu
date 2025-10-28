@@ -2415,14 +2415,19 @@ export async function updateBudgetNotes(
       return { success: false, error: 'Presupuesto no encontrado' }
     }
 
-    // Validar ownership
-    if (budget.user_id !== user.id) {
+    // Validar permisos: superadmin y admin pueden editar todo, otros solo sus presupuestos
+    const canEdit =
+      userData.role === 'superadmin' ||
+      userData.role === 'admin' ||
+      budget.user_id === user.id
+
+    if (!canEdit) {
       log.error('[updateBudgetNotes] Usuario no autorizado')
       return { success: false, error: 'No autorizado' }
     }
 
-    // Validar company_id
-    if (budget.company_id !== userData.company_id) {
+    // Validar company_id (excepto para superadmin)
+    if (userData.role !== 'superadmin' && budget.company_id !== userData.company_id) {
       log.error('[updateBudgetNotes] Intento de acceso cross-company')
       return { success: false, error: 'No autorizado' }
     }

@@ -28,6 +28,15 @@ export default async function BudgetEditNotesPage({
     redirect("/login");
   }
 
+  // Obtener rol del usuario
+  const { data: userData } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  const userRole = userData?.role || "vendedor";
+
   // Obtener presupuesto
   const { data: budget, error } = await supabase
     .from("redpresu_budgets")
@@ -39,8 +48,13 @@ export default async function BudgetEditNotesPage({
     redirect("/budgets");
   }
 
-  // Verificar que el usuario sea el propietario
-  if (budget.user_id !== user.id) {
+  // Verificar permisos: superadmin y admin pueden editar todo, otros solo sus presupuestos
+  const canEdit =
+    userRole === "superadmin" ||
+    userRole === "admin" ||
+    budget.user_id === user.id;
+
+  if (!canEdit) {
     redirect("/budgets");
   }
 
