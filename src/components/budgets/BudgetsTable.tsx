@@ -519,50 +519,42 @@ export function BudgetsTable({ budgets, allBudgets, tariffId }: BudgetsTableProp
                 </div>
               )}
 
-              {/* Datos del cliente - Grid 2 columnas */}
+              {/* Datos del cliente */}
               <div
-                className="grid grid-cols-[1fr_auto] gap-2 flex-1"
+                className="space-y-1"
                 style={{ marginLeft: depth > 0 ? `${depth * 24}px` : "0" }}
               >
-                {/* Columna 1: Info cliente */}
-                <div className="space-y-1">
-                  {/* Fila 1: Número + Nombre + NIF + Tipo */}
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono text-xs font-semibold text-primary">
-                      {budget.budget_number}
-                    </span>
-                    <span className="font-medium text-xs">
-                      {budget.client_name} ({budget.client_nif_nie || "N/A"})
-                    </span>
-                    <Badge variant="secondary" className="text-xs">
-                      {budget.client_type}
+                {/* Fila 1: Número + Nombre + NIF + Tipo */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-mono text-xs font-semibold text-primary">
+                    {budget.budget_number}
+                  </span>
+                  <span className="font-medium text-xs">
+                    {budget.client_name} ({budget.client_nif_nie || "N/A"})
+                  </span>
+                  <Badge variant="secondary" className="text-xs">
+                    {budget.client_type}
+                  </Badge>
+                  {isChild && (
+                    <Badge variant="outline" className="text-xs">
+                      v{budget.version_number}
                     </Badge>
-                    {isChild && (
-                      <Badge variant="outline" className="text-xs">
-                        v{budget.version_number}
-                      </Badge>
-                    )}
-                  </div>
-                  {/* Fila 2: Fecha y días restantes */}
-                  {days && budget.start_date && budget.end_date && (
-                    <div
-                      className={`text-xs ${
-                        days.isExpiring
-                          ? "text-orange-600 font-medium"
-                          : "text-muted-foreground"
-                      }`}
-                    >
-                      {formatDate(budget.start_date)} -{" "}
-                      {formatDate(budget.end_date)} ({days.remaining} de{" "}
-                      {days.total} días restantes)
-                    </div>
                   )}
                 </div>
-
-                {/* Columna 2: Icono de notas (alineado derecha) */}
-                <div className="flex items-start justify-end">
-                  <BudgetNotesIcon data-tour="btn-nota" budgetId={budget.id} />
-                </div>
+                {/* Fila 2: Fecha y días restantes */}
+                {days && budget.start_date && budget.end_date && (
+                  <div
+                    className={`text-xs ${
+                      days.isExpiring
+                        ? "text-orange-600 font-medium"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    {formatDate(budget.start_date)} -{" "}
+                    {formatDate(budget.end_date)} ({days.remaining} de{" "}
+                    {days.total} días restantes)
+                  </div>
+                )}
               </div>
             </div>
           </td>
@@ -588,6 +580,10 @@ export function BudgetsTable({ budgets, allBudgets, tariffId }: BudgetsTableProp
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
+          </td>
+
+          <td className="p-4 text-center">
+            <BudgetNotesIcon data-tour="btn-nota" budgetId={budget.id} />
           </td>
 
           <td className="p-4 text-right font-mono">
@@ -1060,6 +1056,7 @@ export function BudgetsTable({ budgets, allBudgets, tariffId }: BudgetsTableProp
                 </th>
                 <th className="text-left p-4 font-medium w-[40%]">Cliente</th>
                 <th className="text-center p-4 font-medium w-[60px]">Tarifa</th>
+                <th className="text-center p-4 font-medium w-[60px]">Nota</th>
                 <th className="text-right p-4 font-medium w-[150px]">Total</th>
                 <th className="text-center p-4 font-medium w-[120px]">
                   Estado
