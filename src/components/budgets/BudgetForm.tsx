@@ -1089,7 +1089,7 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
 
       {/* Step 1: Datos del cliente */}
       {currentStep === 1 && (
-        <Card className="gap-0">
+        <Card className="gap-0 pt-0">
           <CardHeader
             style={{ backgroundColor: tariff.primary_color }}
             className="text-white rounded-t-lg py-3"
@@ -1099,7 +1099,7 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
               Completa la información del cliente para el presupuesto
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 pt-6">
             {/* Número de presupuesto */}
             <div className="space-y-2">
               <Label htmlFor="budget_number">Número de presupuesto</Label>
@@ -1533,7 +1533,7 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
 
       {/* Step 2: Formulario jerárquico */}
       {currentStep === 2 && (
-        <Card className="gap-0">
+        <Card className="gap-0 pt-0">
           <CardHeader
             style={{ backgroundColor: tariff.primary_color }}
             className="text-white rounded-t-lg py-3"
@@ -1544,7 +1544,7 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
               personalizado
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-3 pt-6">
             {(existingBudget?.json_budget_data || tariff.json_tariff_data) && (
               <BudgetHierarchyForm
                 tariffData={
