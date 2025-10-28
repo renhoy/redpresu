@@ -1099,7 +1099,7 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
               Completa la información del cliente para el presupuesto
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6 pt-6">
+          <CardContent className="space-y-6">
             {/* Número de presupuesto */}
             <div className="space-y-2">
               <Label htmlFor="budget_number">Número de presupuesto</Label>
@@ -1544,7 +1544,7 @@ export function BudgetForm({ tariff, existingBudget }: BudgetFormProps) {
               personalizado
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 pt-6">
+          <CardContent className="space-y-3">
             {(existingBudget?.json_budget_data || tariff.json_tariff_data) && (
               <BudgetHierarchyForm
                 tariffData={
