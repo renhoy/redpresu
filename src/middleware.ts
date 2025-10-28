@@ -93,20 +93,32 @@ export async function middleware(req: NextRequest) {
 
     // Verificar acceso a rutas restringidas por rol
     if (isAuthenticated && session?.user) {
-      // Obtener rol desde la base de datos usando supabaseAdmin (bypasea RLS)
+      // Obtener rol y status desde la base de datos usando supabaseAdmin (bypasea RLS)
       const { data: userData, error: userError } = await supabaseAdmin
         .from('redpresu_users')
-        .select('role')
+        .select('role, status')
         .eq('id', session.user.id)
         .single()
 
       if (userError) {
-        console.error(`[Middleware] Error obteniendo rol:`, userError)
+        console.error(`[Middleware] Error obteniendo datos usuario:`, userError)
       }
 
       const userRole = userData?.role || 'comercial'
+      const userStatus = userData?.status || 'active'
 
-      console.log(`[Middleware] Verificando permisos - Path: ${pathname}, Rol: ${userRole} (desde BD), MultiEmpresa: ${multiempresa}`)
+      console.log(`[Middleware] Verificando permisos - Path: ${pathname}, Rol: ${userRole} (desde BD), Status: ${userStatus}, MultiEmpresa: ${multiempresa}`)
+
+      // Verificar si el usuario está inactivo
+      if (userStatus === 'inactive') {
+        console.warn(`[Middleware] Usuario inactivo detectado: ${session.user.email}`)
+        // Cerrar sesión y redirigir al login con mensaje
+        await supabase.auth.signOut()
+        const redirectUrl = req.nextUrl.clone()
+        redirectUrl.pathname = '/login'
+        redirectUrl.searchParams.set('reason', 'inactive')
+        return NextResponse.redirect(redirectUrl)
+      }
 
       // /companies - Solo superadmin en modo multiempresa
       // En modo monoempresa, admin redirige a /companies/edit

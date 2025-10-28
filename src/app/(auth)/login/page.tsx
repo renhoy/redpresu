@@ -3,9 +3,16 @@ import Link from "next/link";
 import { getServerUser } from "@/lib/auth/server";
 import { isDevelopmentMode, getAppName } from "@/lib/helpers/config-helpers";
 import LoginForm from "@/components/auth/LoginForm";
+import { InactiveUserDialog } from "@/components/auth/InactiveUserDialog";
 import { FileText } from "lucide-react";
 
-export default async function LoginPage() {
+interface LoginPageProps {
+  searchParams: Promise<{ reason?: string }>;
+}
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const { reason } = await searchParams;
+
   // Verificar si el usuario ya está autenticado
   const user = await getServerUser();
 
@@ -50,6 +57,9 @@ export default async function LoginPage() {
 
         {/* Formulario de login */}
         <LoginForm />
+
+        {/* Diálogo de usuario inactivo */}
+        <InactiveUserDialog showDialog={reason === 'inactive'} />
 
         {/* Footer con info adicional - Solo en desarrollo */}
         {isDev && (

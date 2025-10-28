@@ -37,7 +37,13 @@ export async function getServerUser() {
     return null
   }
 
-  console.log('[getServerUser] User data loaded:', userData.email, userData.role)
+  console.log('[getServerUser] User data loaded:', userData.email, userData.role, 'status:', userData.status)
+
+  // Verificar si el usuario está inactivo
+  if (userData.status === 'inactive') {
+    console.warn('[getServerUser] Usuario inactivo:', userData.email)
+    return null
+  }
 
   // Retornar solo datos de la tabla users + id y email del auth
   // Evitar spread de user.* para no sobreescribir campos con metadata de auth
