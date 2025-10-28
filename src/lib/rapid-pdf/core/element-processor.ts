@@ -166,6 +166,10 @@ export class ElementProcessor {
 
   /**
    * Procesa texto de notas dividiendo por párrafos
+   * ALGORITMO:
+   * - <p>: cada párrafo es un bloque independiente (incluidos vacíos)
+   * - <ul>/<ol>: dividir por <li> manteniendo etiquetas de lista
+   * - Resultado: HTML válido en cada bloque para medir alturas correctamente
    */
   private processNoteText(noteText: string): string[] {
     if (!noteText || !noteText.trim()) {
@@ -175,44 +179,74 @@ export class ElementProcessor {
     const isHTML = /<[^>]+>/.test(noteText);
 
     if (isHTML) {
-      const paragraphs: string[] = [];
+      const blocks: string[] = [];
+      let remainingHTML = noteText.trim();
 
-      // Extraer todos los párrafos <p>...</p> individuales
-      const pMatches = noteText.match(/<p[^>]*>[\s\S]*?<\/p>/gi);
-      if (pMatches) {
-        pMatches.forEach((p) => {
-          const trimmed = p.trim();
-          if (
-            trimmed &&
-            trimmed !== "<p></p>" &&
-            trimmed !== "<p> </p>"
-          ) {
-            paragraphs.push(trimmed);
+      // Procesar el HTML token por token
+      while (remainingHTML.length > 0) {
+        remainingHTML = remainingHTML.trim();
+
+        // 1. Detectar y extraer párrafos <p>...</p>
+        const pMatch = remainingHTML.match(/^<p[^>]*>[\s\S]*?<\/p>/i);
+        if (pMatch) {
+          let paragraph = pMatch[0];
+
+          // Convertir párrafos vacíos en párrafo con contenido transparente
+          if (paragraph === '<p></p>' || paragraph.match(/^<p[^>]*>\s*<\/p>$/)) {
+            paragraph = '<p style="color: transparent;">.</p>';
           }
-        });
+
+          blocks.push(paragraph);
+          remainingHTML = remainingHTML.substring(pMatch[0].length);
+          continue;
+        }
+
+        // 2. Detectar y procesar listas <ul>...</ul>
+        const ulMatch = remainingHTML.match(/^<ul[^>]*>([\s\S]*?)<\/ul>/i);
+        if (ulMatch) {
+          const fullList = ulMatch[0];
+          const listContent = ulMatch[1];
+          const ulOpenTag = fullList.substring(0, fullList.indexOf('>') + 1); // Capturar <ul> con sus atributos
+
+          // Extraer cada <li> y crear bloques individuales con estructura completa
+          const liMatches = listContent.match(/<li[^>]*>[\s\S]*?<\/li>/gi);
+          if (liMatches) {
+            liMatches.forEach((li) => {
+              // Crear HTML válido: <ul><li>contenido</li></ul>
+              blocks.push(`${ulOpenTag}${li}</ul>`);
+            });
+          }
+
+          remainingHTML = remainingHTML.substring(fullList.length);
+          continue;
+        }
+
+        // 3. Detectar y procesar listas <ol>...</ol>
+        const olMatch = remainingHTML.match(/^<ol[^>]*>([\s\S]*?)<\/ol>/i);
+        if (olMatch) {
+          const fullList = olMatch[0];
+          const listContent = olMatch[1];
+          const olOpenTag = fullList.substring(0, fullList.indexOf('>') + 1); // Capturar <ol> con sus atributos
+
+          // Extraer cada <li> y crear bloques individuales con estructura completa
+          const liMatches = listContent.match(/<li[^>]*>[\s\S]*?<\/li>/gi);
+          if (liMatches) {
+            liMatches.forEach((li) => {
+              // Crear HTML válido: <ol><li>contenido</li></ol>
+              blocks.push(`${olOpenTag}${li}</ol>`);
+            });
+          }
+
+          remainingHTML = remainingHTML.substring(fullList.length);
+          continue;
+        }
+
+        // 4. Si no coincide con ningún patrón conocido, salir para evitar loop infinito
+        console.warn('[processNoteText] HTML no procesado:', remainingHTML.substring(0, 100));
+        break;
       }
 
-      // Extraer listas <ul>...</ul> o <ol>...</ol> completas
-      const ulMatches = noteText.match(/<ul[^>]*>[\s\S]*?<\/ul>/gi);
-      if (ulMatches) {
-        ulMatches.forEach((ul) => {
-          if (ul.trim()) paragraphs.push(ul.trim());
-        });
-      }
-
-      const olMatches = noteText.match(/<ol[^>]*>[\s\S]*?<\/ol>/gi);
-      if (olMatches) {
-        olMatches.forEach((ol) => {
-          if (ol.trim()) paragraphs.push(ol.trim());
-        });
-      }
-
-      // Si no se encontraron bloques pero hay HTML, usar todo el contenido
-      if (paragraphs.length === 0 && noteText.trim() !== "<p></p>") {
-        paragraphs.push(noteText.trim());
-      }
-
-      return paragraphs;
+      return blocks;
     } else {
       // Texto plano: dividir por dobles saltos de línea
       return noteText

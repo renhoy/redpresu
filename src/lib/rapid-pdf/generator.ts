@@ -89,6 +89,10 @@ export async function generatePDF(
     console.log("[generatePDF] Generando elementsData...");
     const elementsData = await elementProcessor.generateElementsData();
 
+    // 4.5. ACTUALIZAR MARGIN_BOTTOM PARA ÚLTIMOS ELEMENTOS
+    console.log("[generatePDF] Actualizando margin_bottom para últimos elementos...");
+    elementProcessor.updateMarginBottomForLastElement(elementsData);
+
     // 5. CALCULAR ALTURAS REALES
     console.log("[generatePDF] Calculando alturas...");
     await renderEngine.initTemporaryPage();
@@ -389,11 +393,12 @@ async function renderArea(
         await renderEngine.renderElementAtPosition(element, element.elementY, isDevelopment);
       } else {
         // Elemento dinámico
+        const yFinal = workingY + element.height + element.margin_bottom_total;
         if (isDevelopment) {
-          console.log(`  ${element.component} | Y: ${workingY} + H: ${element.height} + MB: ${element.margin_bottom_total} = ${workingY + element.height + element.margin_bottom_total}`);
+          console.log(`  ${element.component} | Y inicio: ${workingY}, H: ${element.height}, MB_total: ${element.margin_bottom_total}, Y final: ${yFinal}`);
         }
         await renderEngine.renderElementAtPosition(element, workingY, isDevelopment);
-        workingY += element.height + element.margin_bottom_total;
+        workingY = yFinal;
       }
     }
   }
@@ -444,7 +449,7 @@ async function renderContentArea(
     if (projectedY <= pageBreakY) {
       // Cabe en la página actual
       if (isDevelopment) {
-        console.log(`  ${element.component} | Y: ${workingY} + H: ${element.height} + MB: ${element.margin_bottom_total} = ${projectedY}`);
+        console.log(`  ${element.component} | Y inicio: ${workingY}, H: ${element.height}, MB_total: ${element.margin_bottom_total}, Y final: ${projectedY}`);
       }
       await renderEngine.renderElementAtPosition(element, workingY, isDevelopment);
       workingY = projectedY;
