@@ -4,9 +4,12 @@ import { Header } from "@/components/layout/Header";
 import { TourDetector } from "@/components/help/TourDetector";
 import { getCurrentSubscription } from "@/app/actions/subscriptions";
 import { isMultiEmpresa } from "@/lib/helpers/app-mode";
-import { getAppName, getSubscriptionsEnabled } from "@/lib/helpers/config-helpers";
+import { getAppName, getSubscriptionsEnabled, getConfigValue } from "@/lib/helpers/config-helpers";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
+import { TestingModeBanner } from "@/components/subscriptions/alerts/TestingModeBanner";
+import { BlockedAccountBanner } from "@/components/subscriptions/alerts/BlockedAccountBanner";
+import { ExpirationBanner } from "@/components/subscriptions/alerts/ExpirationBanner";
 
 export default async function DashboardLayout({
   children,
@@ -64,8 +67,20 @@ export default async function DashboardLayout({
   const companyName = issuer?.name || user.name;
   const issuerType = issuer?.type === "empresa" ? "Empresa" : "Autónomo";
 
+  // Detectar modo testing (mock time activo)
+  // Solo en desarrollo/testing
+  let testingMode = false;
+  if (process.env.NODE_ENV !== 'production') {
+    const mockTime = await getConfigValue('mock_time');
+    testingMode = mockTime !== null && mockTime !== 'null';
+  }
+
   return (
     <div className="min-h-screen bg-background">
+      {/* Testing Mode Banner (sticky arriba de todo) */}
+      <TestingModeBanner />
+
+      {/* Header con badge TEST si aplica */}
       <Header
         userId={user.id}
         userRole={user.role}
@@ -76,7 +91,16 @@ export default async function DashboardLayout({
         currentPlan={currentPlan}
         multiempresa={multiempresa}
         showSubscriptions={showSubscriptions}
+        subscriptionsEnabled={subscriptionsEnabled}
+        testingMode={testingMode}
       />
+
+      {/* Blocked Account Banner (crítico - cuenta bloqueada) */}
+      <BlockedAccountBanner />
+
+      {/* Expiration Banner (advertencias antes de expirar o en grace period) */}
+      <ExpirationBanner />
+
       <TourDetector />
       <main>{children}</main>
     </div>

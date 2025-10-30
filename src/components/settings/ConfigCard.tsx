@@ -15,10 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Pencil, Eye } from "lucide-react";
 import { toast } from "sonner";
-import {
-  getIssuerByEmpresaId,
-  type IssuerData,
-} from "@/app/actions/config";
+import { getIssuerByEmpresaId, type IssuerData } from "@/app/actions/config";
 import {
   Dialog,
   DialogContent,
@@ -37,7 +34,12 @@ interface ConfigCardProps {
   onUpdate?: (item: ConfigRow, newValue: string | number) => void;
 }
 
-export function ConfigCard({ item, onEdit, onToggle, onUpdate }: ConfigCardProps) {
+export function ConfigCard({
+  item,
+  onEdit,
+  onToggle,
+  onUpdate,
+}: ConfigCardProps) {
   const [viewingIssuer, setViewingIssuer] = useState<IssuerData | null>(null);
   const [isLoadingIssuer, setIsLoadingIssuer] = useState(false);
 
@@ -76,7 +78,10 @@ export function ConfigCard({ item, onEdit, onToggle, onUpdate }: ConfigCardProps
   };
 
   const isNumberValue = (key: string): boolean => {
-    const numberKeys = ["default_empresa_id", "invitation_token_expiration_days"];
+    const numberKeys = [
+      "default_empresa_id",
+      "invitation_token_expiration_days",
+    ];
     return numberKeys.includes(key);
   };
 
@@ -106,7 +111,9 @@ export function ConfigCard({ item, onEdit, onToggle, onUpdate }: ConfigCardProps
 
           {/* Descripción */}
           <div className="mb-3">
-            <div className="text-xs text-muted-foreground mb-1">Descripción</div>
+            <div className="text-xs text-muted-foreground mb-1">
+              Descripción
+            </div>
             <div className="text-sm">{item.description || "-"}</div>
           </div>
 

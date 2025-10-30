@@ -37,6 +37,7 @@ interface HeaderProps {
   multiempresa?: boolean;
   showSubscriptions?: boolean;
   subscriptionsEnabled?: boolean;
+  testingMode?: boolean; // NEW: Indica si mock time está activo
 }
 
 export function Header({
@@ -52,6 +53,7 @@ export function Header({
   multiempresa = true,
   showSubscriptions = false,
   subscriptionsEnabled = false,
+  testingMode = false,
 }: HeaderProps) {
   const pathname = usePathname();
 
@@ -149,6 +151,11 @@ export function Header({
               <FileText className="h-5 w-5 text-white" />
             </div>
             <span className="text-xl font-bold text-gray-900">{appName}</span>
+            {testingMode && (
+              <span className="ml-1 px-2 py-0.5 text-xs font-bold bg-orange-500 text-white rounded uppercase">
+                TEST
+              </span>
+            )}
           </Link>
 
           {/* Navigation - Desktop */}

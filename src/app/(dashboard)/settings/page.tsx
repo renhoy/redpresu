@@ -6,7 +6,10 @@ import { Settings } from "lucide-react";
 import { generatePageMetadata } from "@/lib/helpers/metadata-helpers";
 
 export async function generateMetadata() {
-  return generatePageMetadata("Configuración del Sistema", "Configuración global del sistema (solo superadmin)");
+  return generatePageMetadata(
+    "Configuración del Sistema",
+    "Configuración global del sistema (solo superadmin)"
+  );
 }
 
 export default async function SettingsPage() {
@@ -71,21 +74,23 @@ export default async function SettingsPage() {
   const configMap = config.reduce((acc, item) => {
     acc[item.key] = item;
     return acc;
-  }, {} as Record<string, typeof config[0]>);
+  }, {} as Record<string, (typeof config)[0]>);
 
   // Organizar configuraciones según categorías definidas
-  const organizedCategories = categoryDefinitions.map((category) => {
-    // Filtrar y ordenar alfabéticamente las claves que existen
-    const items = category.keys
-      .filter((key) => configMap[key]) // Solo claves que existen en BD
-      .sort() // Orden alfabético
-      .map((key) => configMap[key]);
+  const organizedCategories = categoryDefinitions
+    .map((category) => {
+      // Filtrar y ordenar alfabéticamente las claves que existen
+      const items = category.keys
+        .filter((key) => configMap[key]) // Solo claves que existen en BD
+        .sort() // Orden alfabético
+        .map((key) => configMap[key]);
 
-    return {
-      name: category.name,
-      items,
-    };
-  }).filter((category) => category.items.length > 0); // Solo categorías con items
+      return {
+        name: category.name,
+        items,
+      };
+    })
+    .filter((category) => category.items.length > 0); // Solo categorías con items
 
   return (
     <div className="min-h-screen bg-lime-50">

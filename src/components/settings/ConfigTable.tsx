@@ -127,7 +127,10 @@ export function ConfigTable({ config }: ConfigTableProps) {
   };
 
   const isNumberValue = (key: string): boolean => {
-    const numberKeys = ["default_empresa_id", "invitation_token_expiration_days"];
+    const numberKeys = [
+      "default_empresa_id",
+      "invitation_token_expiration_days",
+    ];
     return numberKeys.includes(key);
   };
 
@@ -167,7 +170,10 @@ export function ConfigTable({ config }: ConfigTableProps) {
     }
   };
 
-  const handleUpdateValue = async (item: ConfigRow, newValue: string | number) => {
+  const handleUpdateValue = async (
+    item: ConfigRow,
+    newValue: string | number
+  ) => {
     const result = await updateConfigValue(
       item.key,
       newValue,
@@ -196,122 +202,130 @@ export function ConfigTable({ config }: ConfigTableProps) {
                 <TableHead className="w-72">Valor</TableHead>
               </TableRow>
             </TableHeader>
-          <TableBody>
-            {config.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={4}
-                  className="text-center text-muted-foreground py-8"
-                >
-                  No hay configuración en esta categoría
-                </TableCell>
-              </TableRow>
-            ) : (
-              config.map((item) => {
-                const enumValues = isEnumValue(item.key);
-                const isNumber = isNumberValue(item.key);
-                const isString = isStringValue(item.key);
-                const isBoolean = isBooleanValue(item.value);
-                const isSimple = isSimpleValue(item);
-
-                return (
-                  <TableRow
-                    key={item.key}
-                    className="bg-white hover:bg-lime-50/50"
+            <TableBody>
+              {config.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={4}
+                    className="text-center text-muted-foreground py-8"
                   >
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        {!isSimple && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(item)}
-                            title="Editar valor"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {item.key === "default_empresa_id" && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleViewIssuer(item.value as number)}
-                            disabled={isLoadingIssuer}
-                            title="Ver datos de la empresa"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-mono text-sm">
-                      <div className="break-all whitespace-normal">
-                        {item.key}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      <div className="break-words whitespace-normal">
-                        {item.description || "-"}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {isBoolean ? (
-                        <div className="flex items-center gap-3">
-                          <Switch
-                            checked={item.value as boolean}
-                            onCheckedChange={() => handleToggleBoolean(item)}
-                          />
-                          <span className="text-sm text-muted-foreground">
-                            {item.value ? "Activado" : "Desactivado"}
-                          </span>
+                    No hay configuración en esta categoría
+                  </TableCell>
+                </TableRow>
+              ) : (
+                config.map((item) => {
+                  const enumValues = isEnumValue(item.key);
+                  const isNumber = isNumberValue(item.key);
+                  const isString = isStringValue(item.key);
+                  const isBoolean = isBooleanValue(item.value);
+                  const isSimple = isSimpleValue(item);
+
+                  return (
+                    <TableRow
+                      key={item.key}
+                      className="bg-white hover:bg-lime-50/50"
+                    >
+                      <TableCell>
+                        <div className="flex items-center justify-center gap-1">
+                          {!isSimple && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEdit(item)}
+                              title="Editar valor"
+                              className="border bg-white shadow-xs dark:bg-input/30 dark:border-input dark:hover:bg-input/50 size-9 border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {item.key === "default_empresa_id" && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() =>
+                                handleViewIssuer(item.value as number)
+                              }
+                              disabled={isLoadingIssuer}
+                              title="Ver datos de la empresa"
+                              className="border bg-white shadow-xs dark:bg-input/30 dark:border-input dark:hover:bg-input/50 size-9 border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
-                      ) : enumValues ? (
-                        <Select
-                          value={item.value as string}
-                          onValueChange={(value) => handleUpdateValue(item, value)}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {enumValues.map((option) => (
-                              <SelectItem key={option} value={option}>
-                                {option}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : isNumber ? (
-                        <Input
-                          type="number"
-                          defaultValue={item.value as number}
-                          onBlur={(e) => {
-                            const value = parseInt(e.target.value);
-                            if (!isNaN(value)) {
-                              handleUpdateValue(item, value);
+                      </TableCell>
+                      <TableCell className="font-mono text-sm">
+                        <div className="break-all whitespace-normal">
+                          {item.key}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        <div className="break-words whitespace-normal">
+                          {item.description || "-"}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {isBoolean ? (
+                          <div className="flex items-center gap-3">
+                            <Switch
+                              checked={item.value as boolean}
+                              onCheckedChange={() => handleToggleBoolean(item)}
+                            />
+                            <span className="text-sm text-muted-foreground">
+                              {item.value ? "Activado" : "Desactivado"}
+                            </span>
+                          </div>
+                        ) : enumValues ? (
+                          <Select
+                            value={item.value as string}
+                            onValueChange={(value) =>
+                              handleUpdateValue(item, value)
                             }
-                          }}
-                          className="w-full"
-                        />
-                      ) : isString ? (
-                        <Input
-                          type="text"
-                          defaultValue={item.value as string}
-                          onBlur={(e) => handleUpdateValue(item, e.target.value)}
-                          className="w-full"
-                        />
-                      ) : (
-                        <pre className="text-xs bg-muted p-2 rounded max-h-20 overflow-auto break-words whitespace-pre-wrap">
-                          {formatValue(item.value)}
-                        </pre>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {enumValues.map((option) => (
+                                <SelectItem key={option} value={option}>
+                                  {option}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : isNumber ? (
+                          <Input
+                            type="number"
+                            defaultValue={item.value as number}
+                            onBlur={(e) => {
+                              const value = parseInt(e.target.value);
+                              if (!isNaN(value)) {
+                                handleUpdateValue(item, value);
+                              }
+                            }}
+                            className="w-full"
+                          />
+                        ) : isString ? (
+                          <Input
+                            type="text"
+                            defaultValue={item.value as string}
+                            onBlur={(e) =>
+                              handleUpdateValue(item, e.target.value)
+                            }
+                            className="w-full"
+                          />
+                        ) : (
+                          <pre className="text-xs bg-muted p-2 rounded max-h-20 overflow-auto break-words whitespace-pre-wrap">
+                            {formatValue(item.value)}
+                          </pre>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
         </div>
       </div>
 
