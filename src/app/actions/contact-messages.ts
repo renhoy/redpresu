@@ -271,3 +271,55 @@ export async function getContactMessagesStats(): Promise<ActionResult> {
     };
   }
 }
+
+/**
+ * Elimina un mensaje de contacto
+ * Solo accesible para superadmin
+ */
+export async function deleteContactMessage(id: string): Promise<ActionResult> {
+  try {
+    console.log("[deleteContactMessage] Eliminando mensaje:", id);
+
+    // Verificar autenticación y rol
+    const user = await getServerUser();
+    if (!user) {
+      return { success: false, error: "No autenticado" };
+    }
+
+    if (user.role !== "superadmin") {
+      return { success: false, error: "Sin permisos para eliminar mensaje" };
+    }
+
+    // Validar ID
+    if (!id) {
+      return { success: false, error: "ID de mensaje requerido" };
+    }
+
+    // Eliminar mensaje
+    const { error } = await supabaseAdmin
+      .from("redpresu_contact_messages")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error("[deleteContactMessage] Error eliminando mensaje:", error);
+      return {
+        success: false,
+        error: "Error al eliminar el mensaje",
+      };
+    }
+
+    console.log("[deleteContactMessage] Mensaje eliminado correctamente:", id);
+
+    return {
+      success: true,
+      data: { message: "Mensaje eliminado correctamente" },
+    };
+  } catch (error) {
+    console.error("[deleteContactMessage] Error inesperado:", error);
+    return {
+      success: false,
+      error: "Error inesperado al eliminar el mensaje",
+    };
+  }
+}
