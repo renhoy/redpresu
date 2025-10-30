@@ -43,6 +43,7 @@ export default async function SettingsPage() {
       keys: [
         "app_mode",
         "app_name",
+        "contact_notification_emails",
         "default_empresa_id",
         "forms_legal_notice",
         "invitation_email_template",

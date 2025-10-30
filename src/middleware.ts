@@ -210,6 +210,14 @@ export async function middleware(req: NextRequest) {
         return createRedirectWithCookies(redirectUrl, res)
       }
 
+      // /contact-messages - Solo superadmin
+      if (pathname.startsWith('/contact-messages') && userRole !== 'superadmin') {
+        console.log(`[Middleware] Acceso denegado a /contact-messages (rol: ${userRole}) → /dashboard`)
+        const redirectUrl = req.nextUrl.clone()
+        redirectUrl.pathname = '/dashboard'
+        return createRedirectWithCookies(redirectUrl, res)
+      }
+
       // /users/create - Solo admin y superadmin
       if (pathname === '/users/create' && !['admin', 'superadmin'].includes(userRole)) {
         console.log(`[Middleware] Acceso denegado a /users/create (rol: ${userRole}) → /dashboard`)

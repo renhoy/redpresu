@@ -1,5 +1,9 @@
 "use server";
 
+import { supabaseAdmin } from "@/lib/supabase/server";
+import { getConfigValue } from "@/lib/helpers/config-helpers";
+import { sendContactNotificationEmail } from "@/lib/helpers/email-helpers";
+
 interface ContactMessageData {
   firstName: string;
   lastName: string;
@@ -13,12 +17,13 @@ interface ActionResult {
   error?: string;
   data?: {
     message: string;
+    messageId?: string;
   };
 }
 
 /**
- * Envía un mensaje de contacto y lo guarda en la base de datos
- * Los mensajes son revisados por los administradores
+ * Envía un mensaje de contacto, lo guarda en la base de datos
+ * y notifica a los administradores por email
  */
 export async function sendContactMessage(
   data: ContactMessageData
@@ -49,24 +54,67 @@ export async function sendContactMessage(
       };
     }
 
-    // Guardar mensaje en base de datos
-    // NOTA: Esta tabla se debe crear con una migración futura si se quiere persistir los mensajes
-    // Por ahora solo validamos y retornamos éxito
-    // En producción, aquí se enviaría un email a los administradores usando Supabase Functions o similar
+    // 1. Guardar mensaje en base de datos
+    const { data: savedMessage, error: dbError } = await supabaseAdmin
+      .from("redpresu_contact_messages")
+      .insert({
+        first_name: data.firstName,
+        last_name: data.lastName,
+        email: data.email,
+        subject: data.subject,
+        message: data.message,
+        status: "nuevo",
+      })
+      .select("id")
+      .single();
 
-    console.log("[sendContactMessage] Mensaje recibido correctamente:", {
-      from: `${data.firstName} ${data.lastName}`,
-      email: data.email,
-      subject: data.subject,
-    });
+    if (dbError) {
+      console.error("[sendContactMessage] Error guardando en BD:", dbError);
+      return {
+        success: false,
+        error: "Error al guardar el mensaje. Por favor, intenta de nuevo.",
+      };
+    }
 
-    // TODO: Implementar envío de email a administradores
-    // await supabaseAdmin.functions.invoke('send-contact-email', { body: data })
+    console.log("[sendContactMessage] Mensaje guardado con ID:", savedMessage.id);
+
+    // 2. Obtener emails de notificación desde configuración
+    const notificationEmails = await getConfigValue<string[]>(
+      "contact_notification_emails"
+    );
+
+    if (!notificationEmails || notificationEmails.length === 0) {
+      console.warn(
+        "[sendContactMessage] No hay emails de notificación configurados"
+      );
+      // Continuar igualmente, el mensaje ya está guardado
+    } else {
+      // 3. Enviar notificación por email
+      const emailResult = await sendContactNotificationEmail(
+        {
+          ...data,
+          messageId: savedMessage.id,
+        },
+        notificationEmails
+      );
+
+      if (!emailResult.success) {
+        console.error(
+          "[sendContactMessage] Error enviando email:",
+          emailResult.error
+        );
+        // No retornar error, el mensaje ya está guardado en BD
+      } else {
+        console.log("[sendContactMessage] Email de notificación enviado correctamente");
+      }
+    }
 
     return {
       success: true,
       data: {
-        message: "Mensaje enviado correctamente. Nos pondremos en contacto contigo pronto.",
+        message:
+          "Mensaje enviado correctamente. Nos pondremos en contacto contigo pronto.",
+        messageId: savedMessage.id,
       },
     };
   } catch (error) {
