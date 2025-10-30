@@ -1,12 +1,9 @@
 "use client";
 
 import { Mail } from "lucide-react";
-import { ActionButtons } from "@/components/shared/ActionButtons";
-import { useRouter } from "next/navigation";
+import { BackButton } from "@/components/shared/BackButton";
 
 export function ContactMessagesPageHeader() {
-  const router = useRouter();
-
   return (
     <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
       <div className="text-center md:text-left w-full md:w-auto">
@@ -17,14 +14,8 @@ export function ContactMessagesPageHeader() {
         <p className="text-sm">Gestiona los mensajes recibidos desde el formulario web</p>
       </div>
 
-      <div className="w-full md:w-auto">
-        <ActionButtons
-          primaryAction="cancel"
-          primaryText="Cancelar"
-          isLoading={false}
-          isHeader={true}
-          onPrimaryClick={() => router.back()}
-        />
+      <div className="w-full md:w-auto flex justify-center md:justify-end">
+        <BackButton />
       </div>
     </div>
   );
