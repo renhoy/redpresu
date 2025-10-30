@@ -6,6 +6,7 @@ import { Database } from "@/lib/types/database.types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -56,6 +57,8 @@ interface TariffCardProps {
   onStatusChange?: () => void;
   onDelete?: () => void;
   currentUserRole?: string;
+  selected?: boolean;
+  onSelectChange?: (checked: boolean) => void;
 }
 
 const statusColors = {
@@ -68,6 +71,8 @@ export function TariffCard({
   onStatusChange,
   onDelete,
   currentUserRole,
+  selected = false,
+  onSelectChange,
 }: TariffCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -168,8 +173,15 @@ export function TariffCard({
         <CardContent className="p-3">
           {/* Vista Mobile: Layout vertical */}
           <div className="md:hidden space-y-3">
-            {/* Header: Título + Icono */}
+            {/* Header: Checkbox + Título + Icono */}
             <div className="flex items-start gap-2">
+              {onSelectChange && (
+                <Checkbox
+                  checked={selected}
+                  onCheckedChange={onSelectChange}
+                  className="mt-1"
+                />
+              )}
               <FileText className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-base truncate">
@@ -249,14 +261,14 @@ export function TariffCard({
             </div>
 
             {/* Acciones Mobile */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 w-full border-t pt-3">
+            <div className="flex justify-end flex-wrap gap-1.5 border-t pt-3">
               {tariff.status === "Activa" ? (
                 <Button
                   data-tour="btn-crear-presupuesto"
                   variant="outline"
                   size="sm"
                   asChild
-                  className="w-full lg:w-auto h-7 px-2 gap-1.5 text-xs"
+                  className="min-w-[20%] h-7 px-2 gap-1.5 text-xs"
                 >
                   <Link
                     href={`/budgets/create?tariff_id=${tariff.id}`}
@@ -273,7 +285,7 @@ export function TariffCard({
                   variant="outline"
                   size="sm"
                   disabled
-                  className="w-full lg:w-auto h-7 px-2 gap-1.5 text-xs"
+                  className="min-w-[20%] h-7 px-2 gap-1.5 text-xs"
                 >
                   <Plus className="h-3.5 w-3.5 flex-shrink-0" />
                   <span>Presupuesto</span>
@@ -287,7 +299,7 @@ export function TariffCard({
                   variant="outline"
                   size="sm"
                   asChild
-                  className="w-full lg:w-auto h-7 px-2 gap-1.5 text-xs"
+                  className="min-w-[20%] h-7 px-2 gap-1.5 text-xs"
                 >
                   <Link href={`/budgets?tariff_id=${tariff.id}`}>
                     <Eye className="h-3.5 w-3.5 flex-shrink-0" />
@@ -302,7 +314,7 @@ export function TariffCard({
                   variant={tariff.is_template ? "default" : "outline"}
                   size="sm"
                   onClick={() => setShowTemplateDialog(true)}
-                  className="w-full lg:w-auto h-7 px-2 gap-1.5 text-xs"
+                  className="min-w-[20%] h-7 px-2 gap-1.5 text-xs"
                 >
                   <Star
                     className={`h-3.5 w-3.5 flex-shrink-0 ${
@@ -318,7 +330,7 @@ export function TariffCard({
                 variant="outline"
                 size="sm"
                 asChild
-                className="w-full lg:w-auto h-7 px-2 gap-1.5 text-xs"
+                className="min-w-[20%] h-7 px-2 gap-1.5 text-xs"
               >
                 <Link href={`/tariffs/edit/${tariff.id}`}>
                   <Pencil className="h-3.5 w-3.5 flex-shrink-0" />
@@ -332,7 +344,7 @@ export function TariffCard({
                 size="sm"
                 onClick={handleDuplicate}
                 disabled={isDuplicating}
-                className="w-full lg:w-auto h-7 px-2 gap-1.5 text-xs"
+                className="min-w-[20%] h-7 px-2 gap-1.5 text-xs"
               >
                 <Copy className="h-3.5 w-3.5 flex-shrink-0" />
                 <span>Duplicar</span>
@@ -343,7 +355,7 @@ export function TariffCard({
                 variant="outline"
                 size="sm"
                 onClick={() => setShowDeleteDialog(true)}
-                className="border-destructive text-destructive hover:bg-destructive/10 w-full h-7 px-2 gap-1.5 text-xs"
+                className="border-destructive text-destructive hover:bg-destructive/10 min-w-[20%] h-7 px-2 gap-1.5 text-xs"
               >
                 <Trash2 className="h-3.5 w-3.5 flex-shrink-0" />
                 <span>Borrar</span>
@@ -353,8 +365,18 @@ export function TariffCard({
 
           {/* Vista Tablet: Layout horizontal 2 columnas */}
           <div className="hidden md:block space-y-3">
-            {/* Fila 1: Título/Descripción + Estado/Validez */}
-            <div className="grid grid-cols-2 gap-4 items-start">
+            {/* Fila 1: Checkbox + Título/Descripción + Estado/Validez */}
+            <div className="grid grid-cols-[auto_1fr_auto] gap-4 items-start">
+              {/* Columna 0: Checkbox */}
+              {onSelectChange && (
+                <div className="pt-1">
+                  <Checkbox
+                    checked={selected}
+                    onCheckedChange={onSelectChange}
+                  />
+                </div>
+              )}
+
               {/* Columna 1: Título y Descripción */}
               <div className="space-y-1">
                 <h3 className="font-semibold text-base truncate">
@@ -365,7 +387,7 @@ export function TariffCard({
                 </p>
               </div>
 
-              {/* Columna 2: Estado y Validez */}
+              {/* Columna 3: Estado y Validez */}
               <div className="space-y-1">
                 <div className="flex items-center justify-end">
                   <Select
@@ -428,14 +450,14 @@ export function TariffCard({
             </div>
 
             {/* Acciones Tablet */}
-            <div className="flex flex-wrap justify-end gap-1.5 w-full border-t pt-3">
+            <div className="flex flex-wrap justify-end gap-1.5 border-t pt-3">
               {tariff.status === "Activa" ? (
                 <Button
                   data-tour="btn-crear-presupuesto"
                   variant="outline"
                   size="sm"
                   asChild
-                  className="h-7 px-2 gap-1.5 text-xs"
+                  className="min-w-[20%] h-7 px-2 gap-1.5 text-xs"
                 >
                   <Link
                     href={`/budgets/create?tariff_id=${tariff.id}`}
@@ -452,7 +474,7 @@ export function TariffCard({
                   variant="outline"
                   size="sm"
                   disabled
-                  className="h-7 px-2 gap-1.5 text-xs"
+                  className="min-w-[20%] h-7 px-2 gap-1.5 text-xs"
                 >
                   <Plus className="h-3.5 w-3.5 flex-shrink-0" />
                   <span>Presupuesto</span>
@@ -466,7 +488,7 @@ export function TariffCard({
                   variant="outline"
                   size="sm"
                   asChild
-                  className="h-7 px-2 gap-1.5 text-xs"
+                  className="min-w-[20%] h-7 px-2 gap-1.5 text-xs"
                 >
                   <Link href={`/budgets?tariff_id=${tariff.id}`}>
                     <Eye className="h-3.5 w-3.5 flex-shrink-0" />
@@ -481,7 +503,7 @@ export function TariffCard({
                   variant={tariff.is_template ? "default" : "outline"}
                   size="sm"
                   onClick={() => setShowTemplateDialog(true)}
-                  className="h-7 px-2 gap-1.5 text-xs"
+                  className="min-w-[20%] h-7 px-2 gap-1.5 text-xs"
                 >
                   <Star
                     className={`h-3.5 w-3.5 flex-shrink-0 ${
@@ -497,7 +519,7 @@ export function TariffCard({
                 variant="outline"
                 size="sm"
                 asChild
-                className="h-7 px-2 gap-1.5 text-xs"
+                className="min-w-[20%] h-7 px-2 gap-1.5 text-xs"
               >
                 <Link href={`/tariffs/edit/${tariff.id}`}>
                   <Pencil className="h-3.5 w-3.5 flex-shrink-0" />
@@ -511,7 +533,7 @@ export function TariffCard({
                 size="sm"
                 onClick={handleDuplicate}
                 disabled={isDuplicating}
-                className="h-7 px-2 gap-1.5 text-xs"
+                className="min-w-[20%] h-7 px-2 gap-1.5 text-xs"
               >
                 <Copy className="h-3.5 w-3.5 flex-shrink-0" />
                 <span>Duplicar</span>
@@ -522,7 +544,7 @@ export function TariffCard({
                 variant="outline"
                 size="sm"
                 onClick={() => setShowDeleteDialog(true)}
-                className="border-destructive text-destructive hover:bg-destructive/10 h-7 px-2 gap-1.5 text-xs"
+                className="border-destructive text-destructive hover:bg-destructive/10 min-w-[20%] h-7 px-2 gap-1.5 text-xs"
               >
                 <Trash2 className="h-3.5 w-3.5 flex-shrink-0" />
                 <span>Borrar</span>

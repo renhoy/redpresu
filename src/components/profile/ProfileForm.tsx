@@ -1,3 +1,9 @@
+/**
+ * @deprecated Este componente está deprecado.
+ * Ahora se usa UnifiedUserEditForm en /users/[id]/edit
+ * Este archivo se mantiene temporalmente por si se necesita referencia.
+ */
+
 "use client";
 
 import { useState } from "react";
@@ -202,7 +208,7 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
 
     // Validar formulario
     if (!validateForm()) {
-      toast.error("Por favor corrige los errores del formulario");
+      toast.error("Por favor corrige los errores en el formulario");
       return;
     }
 

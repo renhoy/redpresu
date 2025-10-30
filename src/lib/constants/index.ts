@@ -172,7 +172,7 @@ export const SYSTEM_CONSTANTS = {
     CLIENTS: "/clients",
     TARIFFS: "/tariffs",
     SETTINGS: "/settings",
-    PROFILE: "/profile",
+    // PROFILE: "/profile", // DEPRECADO: Ahora se usa /users/[id]/edit
   },
 } as const;
 

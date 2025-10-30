@@ -36,14 +36,53 @@ export default async function SettingsPage() {
 
   const config = result.data || [];
 
-  // Agrupar por categoría
-  const configByCategory = config.reduce((acc, item) => {
-    if (!acc[item.category]) {
-      acc[item.category] = [];
-    }
-    acc[item.category].push(item);
+  // Definir categorías personalizadas con orden específico
+  const categoryDefinitions = [
+    {
+      name: "General",
+      keys: [
+        "app_mode",
+        "app_name",
+        "default_empresa_id",
+        "invitation_email_template",
+        "invitation_token_expiration_days",
+        "multiempresa",
+        "public_registration_enabled",
+      ],
+    },
+    {
+      name: "PDF",
+      keys: ["pdf_templates", "rapid_pdf_mode"],
+    },
+    {
+      name: "Suscripciones",
+      keys: ["subscription_plans", "subscriptions_enabled"],
+    },
+    {
+      name: "Tarifas",
+      keys: ["default_tariff", "iva_re_equivalences"],
+    },
+  ];
+
+  // Crear mapa de configuraciones por key para acceso rápido
+  const configMap = config.reduce((acc, item) => {
+    acc[item.key] = item;
     return acc;
-  }, {} as Record<string, typeof config>);
+  }, {} as Record<string, typeof config[0]>);
+
+  // Organizar configuraciones según categorías definidas
+  const organizedCategories = categoryDefinitions.map((category) => {
+    // Filtrar y ordenar alfabéticamente las claves que existen
+    const items = category.keys
+      .filter((key) => configMap[key]) // Solo claves que existen en BD
+      .sort() // Orden alfabético
+      .map((key) => configMap[key]);
+
+    return {
+      name: category.name,
+      items,
+    };
+  }).filter((category) => category.items.length > 0); // Solo categorías con items
 
   return (
     <div className="min-h-screen bg-lime-50">
@@ -59,12 +98,12 @@ export default async function SettingsPage() {
           </p>
         </div>
 
-        {/* Configuración por categorías */}
+        {/* Configuración por categorías personalizadas */}
         <div className="space-y-8">
-          {Object.entries(configByCategory).map(([category, items]) => (
-            <div key={category} className="space-y-4">
-              <h2 className="text-2xl font-semibold capitalize">{category}</h2>
-              <ConfigTable config={items} />
+          {organizedCategories.map((category) => (
+            <div key={category.name} className="space-y-4">
+              <h2 className="text-2xl font-semibold">{category.name}</h2>
+              <ConfigTable config={category.items} />
             </div>
           ))}
         </div>

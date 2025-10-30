@@ -12,7 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Info } from "lucide-react";
+import { X, Info } from "lucide-react";
 import { updateBudgetNotes } from "@/app/actions/budgets";
 import { toast } from "sonner";
 import { ArrowLeft, Save } from "lucide-react";
@@ -104,6 +104,7 @@ export function BudgetNotesForm({
                 disabled={loading}
                 className="w-full"
               >
+                <X className="mr-2 h-4 w-4" />
                 Cancelar
               </Button>
             </Link>
@@ -120,7 +121,7 @@ export function BudgetNotesForm({
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  Guardar Notas
+                  Guardar
                 </>
               )}
             </Button>
@@ -210,6 +211,7 @@ export function BudgetNotesForm({
               disabled={loading}
               className="w-full"
             >
+              <X className="mr-2 h-4 w-4" />
               Cancelar
             </Button>
           </Link>
@@ -226,7 +228,7 @@ export function BudgetNotesForm({
             ) : (
               <>
                 <Save className="h-4 w-4 mr-2" />
-                Guardar Notas
+                Guardar
               </>
             )}
           </Button>

@@ -5,6 +5,7 @@ import { Budget } from "@/lib/types/database";
 import { formatCurrency } from "@/lib/helpers/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Pencil,
@@ -66,6 +67,8 @@ interface BudgetCardProps {
   ) => any;
   generatingPdf: string | null;
   duplicating: string | null;
+  selected?: boolean;
+  onSelectChange?: (checked: boolean) => void;
 }
 
 const statusColors = {
@@ -90,6 +93,8 @@ export function BudgetCard({
   getDaysRemaining,
   generatingPdf,
   duplicating,
+  selected = false,
+  onSelectChange,
 }: BudgetCardProps) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editAction, setEditAction] = useState<"presupuesto" | "notas">(
@@ -125,16 +130,26 @@ export function BudgetCard({
       <Card className="w-full mb-3">
         <CardContent className="p-3">
           <div className="space-y-3">
-            {/* Fila 1: Número de presupuesto + Total */}
-            <div className="grid grid-cols-2 gap-4 items-start">
-              {/* Columna 1 Línea 1: Número de presupuesto */}
+            {/* Fila 1: Checkbox + Número de presupuesto + Total */}
+            <div className="grid grid-cols-[auto_1fr_auto] gap-4 items-start">
+              {/* Columna 0: Checkbox */}
+              {onSelectChange && (
+                <div className="pt-1">
+                  <Checkbox
+                    checked={selected}
+                    onCheckedChange={onSelectChange}
+                  />
+                </div>
+              )}
+
+              {/* Columna 1: Número de presupuesto */}
               <div>
                 <span className="font-mono text-sm font-semibold text-primary">
                   {budget.budget_number}
                 </span>
               </div>
 
-              {/* Columna 2 Línea 1: Total sin label */}
+              {/* Columna 3: Total sin label */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="text-right cursor-help">
@@ -286,12 +301,12 @@ export function BudgetCard({
             </div>
 
             {/* Fila 4: Botones de acción */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 w-full border-t pt-3">
+            <div className="flex justify-end flex-wrap gap-1.5 border-t pt-3">
               {/* Notas */}
               <BudgetNotesIcon
                 budgetId={budget.id}
                 variant="button"
-                className="w-full"
+                className="min-w-[20%]"
               />
 
               {/* Tarifa */}
@@ -304,7 +319,7 @@ export function BudgetCard({
                     onClick={() =>
                       window.open(`/tariffs?id=${budget.tariff_id}`, "_blank")
                     }
-                    className="h-7 px-2 gap-1.5 text-xs w-full"
+                    className="h-7 px-2 gap-1.5 text-xs min-w-[20%]"
                   >
                     <Layers className="h-3.5 w-3.5 flex-shrink-0" />
                     <span>Tarifa</span>
@@ -331,7 +346,7 @@ export function BudgetCard({
                           toast.error(result.error || "Error obteniendo PDF");
                         }
                       }}
-                      className="h-7 px-2 gap-1.5 text-xs w-full"
+                      className="h-7 px-2 gap-1.5 text-xs min-w-[20%]"
                     >
                       <Eye className="h-3.5 w-3.5 flex-shrink-0" />
                       <span>Ver</span>
@@ -343,7 +358,7 @@ export function BudgetCard({
                       size="sm"
                       onClick={() => onGeneratePDF(budget.id)}
                       disabled={generatingPdf === budget.id}
-                      className="h-7 px-2 gap-1.5 text-xs w-full"
+                      className="h-7 px-2 gap-1.5 text-xs min-w-[20%]"
                     >
                       <FilePlus className="h-3.5 w-3.5 flex-shrink-0" />
                       <span>PDF</span>
@@ -358,7 +373,7 @@ export function BudgetCard({
                 variant="outline"
                 size="sm"
                 onClick={() => setEditDialogOpen(true)}
-                className="h-7 px-2 gap-1.5 text-xs w-full"
+                className="h-7 px-2 gap-1.5 text-xs min-w-[20%]"
               >
                 <Pencil className="h-3.5 w-3.5 flex-shrink-0" />
                 <span>Editar</span>
@@ -371,7 +386,7 @@ export function BudgetCard({
                 size="sm"
                 onClick={() => onDuplicate(budget.id, budget.client_name)}
                 disabled={duplicating === budget.id}
-                className="h-7 px-2 gap-1.5 text-xs w-full"
+                className="h-7 px-2 gap-1.5 text-xs min-w-[20%]"
               >
                 <Copy className="h-3.5 w-3.5 flex-shrink-0" />
                 <span>Duplicar</span>
@@ -385,7 +400,7 @@ export function BudgetCard({
                 onClick={() =>
                   onDelete(budget.id, budget.client_name, !!budget.pdf_url)
                 }
-                className="h-7 px-2 gap-1.5 text-xs border-destructive text-destructive hover:bg-destructive/10 w-full"
+                className="h-7 px-2 gap-1.5 text-xs border-destructive text-destructive hover:bg-destructive/10 min-w-[20%]"
               >
                 <Trash2 className="h-3.5 w-3.5 flex-shrink-0" />
                 <span>Borrar</span>

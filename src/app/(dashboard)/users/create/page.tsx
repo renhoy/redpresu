@@ -20,33 +20,24 @@ export default async function CreateUserPage({ searchParams }: CreateUserPagePro
     redirect("/login");
   }
 
-  // Comercial solo puede editar su propio usuario
-  if (user.role === "comercial" && id && id !== user.id) {
-    redirect("/users");
+  // Si hay id, es modo edición - redirigir a la nueva ruta unificada
+  if (id) {
+    redirect(`/users/${id}/edit`);
   }
 
+  // Solo admin/superadmin pueden crear usuarios
   if (!["admin", "superadmin"].includes(user.role)) {
     redirect("/dashboard");
   }
 
-  // Si hay id, es modo edición - cargar usuario
-  let editUser = undefined;
-  if (id) {
-    const result = await getUserById(id);
-    if (!result.success || !result.data) {
-      notFound();
-    }
-    editUser = result.data;
-  }
-
-  const mode = id ? "edit" : "create";
+  const mode = "create";
 
   return (
     <div className="min-h-screen bg-lime-50">
       <div className="container mx-auto px-4 py-6">
         <UserForm
           mode={mode}
-          user={editUser}
+          user={undefined}
           empresaId={user.company_id}
           currentUserRole={user.role}
           preselectedCompanyId={company_id}

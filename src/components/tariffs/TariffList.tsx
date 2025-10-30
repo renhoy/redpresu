@@ -505,6 +505,8 @@ export function TariffList({
               onStatusChange={handleRefresh}
               onDelete={handleRefresh}
               currentUserRole={currentUserRole}
+              selected={selectedTariffs.includes(tariff.id)}
+              onSelectChange={(checked) => handleSelectTariff(tariff.id, checked)}
             />
           ))
         )}

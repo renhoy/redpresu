@@ -140,8 +140,8 @@ export function CompanyCard({ company }: CompanyCardProps) {
           </div>
 
           {/* Actions */}
-          <div className="grid grid-cols-2 gap-1.5 w-full border-t pt-3">
-            <Button variant="outline" size="sm" className="w-full h-7 px-2 gap-1.5 text-xs" asChild>
+          <div className="flex justify-end flex-wrap gap-1.5 border-t pt-3">
+            <Button variant="outline" size="sm" className="min-w-[20%] h-7 px-2 gap-1.5 text-xs" asChild>
               <Link href={`/companies/${company.uuid}/edit`}>
                 <Pencil className="h-3.5 w-3.5 flex-shrink-0" />
                 <span>Editar</span>
@@ -154,8 +154,8 @@ export function CompanyCard({ company }: CompanyCardProps) {
               disabled={company.id === 1}
               className={
                 company.id === 1
-                  ? "w-full h-7 px-2 gap-1.5 text-xs border-destructive/50 text-destructive/50 cursor-not-allowed"
-                  : "w-full h-7 px-2 gap-1.5 text-xs border-destructive text-destructive hover:bg-destructive/10"
+                  ? "min-w-[20%] h-7 px-2 gap-1.5 text-xs border-destructive/50 text-destructive/50 cursor-not-allowed"
+                  : "min-w-[20%] h-7 px-2 gap-1.5 text-xs border-destructive text-destructive hover:bg-destructive/10"
               }
             >
               <Trash2 className="h-3.5 w-3.5 flex-shrink-0" />

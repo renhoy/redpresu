@@ -40,6 +40,7 @@ import { Loader2, Search, Filter } from "lucide-react";
 import { toast } from "sonner";
 import { generateSecurePassword } from "@/lib/helpers/crypto-helpers";
 import { validateEmail } from "@/lib/helpers/email-validation";
+import { ActionButtons } from "@/components/shared/ActionButtons";
 
 interface UserFormProps {
   mode: "create" | "edit";
@@ -100,7 +101,12 @@ export default function UserForm({
 
   // Pre-seleccionar empresa actual en modo edición
   useEffect(() => {
-    if (mode === "edit" && user && currentUserRole === "superadmin" && issuers.length > 0) {
+    if (
+      mode === "edit" &&
+      user &&
+      currentUserRole === "superadmin" &&
+      issuers.length > 0
+    ) {
       // Buscar el issuer por company_id del usuario
       const userIssuer = issuers.find((i) => i.company_id === user.company_id);
       if (userIssuer) {
@@ -300,7 +306,11 @@ export default function UserForm({
         };
 
         // Si es superadmin y cambió la empresa, incluirla
-        if (currentUserRole === "superadmin" && formData.issuer_id && selectedIssuer) {
+        if (
+          currentUserRole === "superadmin" &&
+          formData.issuer_id &&
+          selectedIssuer
+        ) {
           const newCompanyId = selectedIssuer.company_id;
           if (newCompanyId !== user?.company_id) {
             updateData.company_id = newCompanyId;
@@ -379,11 +389,15 @@ export default function UserForm({
 
   // Formulario normal
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+    <form
+      id="user-form"
+      onSubmit={handleSubmit}
+      className="flex flex-col gap-6"
+    >
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
+        <div className="text-center md:text-left">
+          <h1 className="text-3xl font-bold flex items-center justify-center md:justify-start gap-2">
             <Users className="h-6 w-6" />
             {mode === "create" ? "Crear Usuario" : "Editar Usuario"}
           </h1>
@@ -394,27 +408,15 @@ export default function UserForm({
           </p>
         </div>
 
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.push("/users")}
-            disabled={isLoading}
-          >
-            Cancelar
-          </Button>
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {mode === "create" ? "Creando..." : "Guardando..."}
-              </>
-            ) : mode === "create" ? (
-              "Crear Usuario"
-            ) : (
-              "Guardar Cambios"
-            )}
-          </Button>
+        <div className="w-full md:w-auto">
+          <ActionButtons
+            primaryAction="save"
+            primaryText={mode === "create" ? "Crear Usuario" : "Guardar"}
+            isLoading={isLoading}
+            isHeader={true}
+            formId="user-form"
+            onCancelClick={() => router.push("/users")}
+          />
         </div>
       </div>
 
@@ -428,7 +430,7 @@ export default function UserForm({
       {/* Card con formulario */}
       <Card className="bg-lime-100">
         <CardContent className="pt-6 space-y-6">
-          {/* Línea 1: Email + Rol (25%) */}
+          {/* Línea 1: Email + Rol (25%) + Estado (25%) */}
           <div className="flex gap-4">
             <div className="flex-1 space-y-2">
               {mode === "create" ? (
@@ -453,7 +455,7 @@ export default function UserForm({
               ) : (
                 <>
                   <Label>Email</Label>
-                  <div className="p-3 bg-muted rounded-md text-muted-foreground">
+                  <div className="py-1 px-3 bg-muted rounded-md">
                     {formData.email}
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -496,6 +498,30 @@ export default function UserForm({
                 <p className="text-sm text-red-600">{errors.role}</p>
               )}
             </div>
+
+            {/* Status (solo en edición y solo admin/superadmin) */}
+            {mode === "edit" && currentUserRole !== "comercial" && (
+              <div className="space-y-2">
+                <Label htmlFor="status">Estado</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={handleSelectChange("status")}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger className="bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Activo</SelectItem>
+                    <SelectItem value="inactive">Inactivo</SelectItem>
+                    <SelectItem value="pending">Pendiente</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Los usuarios inactivos no pueden acceder al sistema
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Línea 2: Nombre (50%) + Apellidos (50%) */}
@@ -549,37 +575,15 @@ export default function UserForm({
             </p>
           </div>
 
-          {/* Status (solo en edición y solo admin/superadmin) */}
-          {mode === "edit" && currentUserRole !== "comercial" && (
-            <div className="space-y-2">
-              <Label htmlFor="status">Estado</Label>
-              <Select
-                value={formData.status}
-                onValueChange={handleSelectChange("status")}
-                disabled={isLoading}
-              >
-                <SelectTrigger className="bg-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Activo</SelectItem>
-                  <SelectItem value="inactive">Inactivo</SelectItem>
-                  <SelectItem value="pending">Pendiente</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Los usuarios inactivos no pueden acceder al sistema
-              </p>
-            </div>
-          )}
-
           {/* Selección de Empresa (solo para superadmin) */}
           {currentUserRole === "superadmin" && (
             <>
               {/* Línea 5: Título y Filtros */}
               <div className="pt-4 border-t space-y-4">
                 <h3 className="text-lg font-semibold">
-                  {mode === "edit" ? "Cambiar Empresa / Autónomo" : "Empresa / Autónomo"}
+                  {mode === "edit"
+                    ? "Cambiar Empresa / Autónomo"
+                    : "Empresa / Autónomo"}
                 </h3>
 
                 {/* Filtros de búsqueda */}
@@ -620,11 +624,14 @@ export default function UserForm({
                           : ""
                       }
                     >
-                      Empresas ({issuers.filter((i) => i.type === "empresa").length})
+                      Empresas (
+                      {issuers.filter((i) => i.type === "empresa").length})
                     </Button>
                     <Button
                       type="button"
-                      variant={filterType === "autonomo" ? "default" : "outline"}
+                      variant={
+                        filterType === "autonomo" ? "default" : "outline"
+                      }
                       size="sm"
                       onClick={() => setFilterType("autonomo")}
                       className={
@@ -633,7 +640,8 @@ export default function UserForm({
                           : ""
                       }
                     >
-                      Autónomos ({issuers.filter((i) => i.type === "autonomo").length})
+                      Autónomos (
+                      {issuers.filter((i) => i.type === "autonomo").length})
                     </Button>
                   </div>
                 </div>

@@ -2,6 +2,7 @@ import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { isMultiEmpresa } from '@/lib/helpers/app-mode'
+import { getSubscriptionsEnabled } from '@/lib/helpers/config-helpers'
 import { supabaseAdmin } from '@/lib/supabase/server'
 
 /**
@@ -38,9 +39,30 @@ export async function middleware(req: NextRequest) {
     // Verificar modo de operación
     const multiempresa = await isMultiEmpresa()
 
+    // Verificar si suscripciones están habilitadas
+    const subscriptionsEnabled = await getSubscriptionsEnabled()
+
     // Verificar si hay sesión válida (usuario autenticado con token válido)
     const isAuthenticated = !error && !!user
     const session = user ? { user } : null
+
+    // Bloquear /subscriptions si:
+    // 1. Modo monoempresa (no disponible), O
+    // 2. Modo multiempresa pero config subscriptions_enabled = false
+    if (pathname.startsWith('/subscriptions')) {
+      const shouldBlock = !multiempresa || !subscriptionsEnabled
+
+      if (shouldBlock) {
+        const target = isAuthenticated ? '/dashboard' : '/login'
+        const reason = !multiempresa
+          ? 'Modo mono: bloqueando /subscriptions'
+          : 'Suscripciones deshabilitadas: bloqueando /subscriptions'
+        console.log(`[Middleware] ${reason} → ${target}`)
+        const redirectUrl = req.nextUrl.clone()
+        redirectUrl.pathname = target
+        return NextResponse.redirect(redirectUrl)
+      }
+    }
 
     // MODO MONOEMPRESA: Bloquear rutas específicas y redirigir home a login
     if (!multiempresa) {
@@ -49,15 +71,6 @@ export async function middleware(req: NextRequest) {
         console.log('[Middleware] Modo mono: bloqueando /register → /login')
         const redirectUrl = req.nextUrl.clone()
         redirectUrl.pathname = '/login'
-        return NextResponse.redirect(redirectUrl)
-      }
-
-      // Bloquear suscripciones en modo monoempresa (redirigir a dashboard si autenticado, a login si no)
-      if (pathname.startsWith('/subscriptions')) {
-        const target = isAuthenticated ? '/dashboard' : '/login'
-        console.log(`[Middleware] Modo mono: bloqueando /subscriptions → ${target}`)
-        const redirectUrl = req.nextUrl.clone()
-        redirectUrl.pathname = target
         return NextResponse.redirect(redirectUrl)
       }
 

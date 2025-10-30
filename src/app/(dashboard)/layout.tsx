@@ -4,8 +4,8 @@ import { Header } from "@/components/layout/Header";
 import { TourDetector } from "@/components/help/TourDetector";
 import { getCurrentSubscription } from "@/app/actions/subscriptions";
 import { isMultiEmpresa } from "@/lib/helpers/app-mode";
-import { getAppName } from "@/lib/helpers/config-helpers";
-import { createServerActionClient } from "@supabase/auth-helpers-nextjs";
+import { getAppName, getSubscriptionsEnabled } from "@/lib/helpers/config-helpers";
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 
 export default async function DashboardLayout({
@@ -32,16 +32,27 @@ export default async function DashboardLayout({
   // Obtener modo de operación
   const multiempresa = await isMultiEmpresa();
 
-  // Obtener suscripción actual
-  const subscriptionResult = await getCurrentSubscription();
+  // Obtener configuración de suscripciones
+  const subscriptionsEnabled = await getSubscriptionsEnabled();
+
+  // Determinar si mostrar módulo de suscripciones
+  // Solo si: modo multiempresa + suscripciones habilitadas + usuario admin/superadmin
+  const showSubscriptions =
+    multiempresa &&
+    subscriptionsEnabled &&
+    (user.role === "admin" || user.role === "superadmin");
+
+  // Obtener suscripción actual (solo si showSubscriptions)
+  const subscriptionResult = showSubscriptions
+    ? await getCurrentSubscription()
+    : { data: null };
   const currentPlan = subscriptionResult.data?.plan || "free";
 
   // Obtener nombre de la aplicación desde config
   const appName = await getAppName();
 
   // Obtener nombre de empresa/autónomo del emisor
-  const cookieStore = await cookies();
-  const supabase = createServerActionClient({ cookies: () => cookieStore });
+  const supabase = createServerComponentClient({ cookies });
 
   const { data: issuer } = await supabase
     .from("redpresu_issuers")
@@ -56,6 +67,7 @@ export default async function DashboardLayout({
   return (
     <div className="min-h-screen bg-background">
       <Header
+        userId={user.id}
         userRole={user.role}
         userName={user.name}
         appName={appName}
@@ -63,6 +75,7 @@ export default async function DashboardLayout({
         issuerType={issuerType}
         currentPlan={currentPlan}
         multiempresa={multiempresa}
+        showSubscriptions={showSubscriptions}
       />
       <TourDetector />
       <main>{children}</main>

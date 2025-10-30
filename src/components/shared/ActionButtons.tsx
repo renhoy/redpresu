@@ -77,7 +77,7 @@ export function ActionButtons({
         variant="outline"
         onClick={handleCancel}
         disabled={isLoading}
-        className="border-gray-300 text-gray-700 hover:bg-gray-100 w-full md:w-auto"
+        className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
       >
         <X className="mr-2 h-4 w-4" />
         Cancelar
@@ -89,7 +89,7 @@ export function ActionButtons({
         form={formId}
         onClick={!formId ? onPrimaryClick : undefined}
         disabled={isLoading}
-        className={`${primaryConfig.className} w-full md:w-auto`}
+        className={primaryConfig.className}
       >
         <PrimaryIcon className="mr-2 h-4 w-4" />
         {isLoading ? "Procesando..." : primaryConfig.text}

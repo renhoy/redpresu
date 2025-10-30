@@ -4,6 +4,15 @@ import { useState } from "react";
 import { Database } from "@/lib/types/database.types";
 import { Button } from "@/components/ui/button";
 import { Pencil, Eye } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ConfigCard } from "./ConfigCard";
 import {
   Table,
@@ -104,19 +113,83 @@ export function ConfigTable({ config }: ConfigTableProps) {
     return JSON.stringify(value, null, 2);
   };
 
+  const isBooleanValue = (value: unknown): boolean => {
+    return typeof value === "boolean";
+  };
+
+  const isEnumValue = (key: string): string[] | null => {
+    const enums: Record<string, string[]> = {
+      app_mode: ["development", "production"],
+      rapid_pdf_mode: ["development", "production"],
+    };
+    return enums[key] || null;
+  };
+
+  const isNumberValue = (key: string): boolean => {
+    const numberKeys = ["default_empresa_id", "invitation_token_expiration_days"];
+    return numberKeys.includes(key);
+  };
+
+  const isStringValue = (key: string): boolean => {
+    const stringKeys = ["app_name"];
+    return stringKeys.includes(key);
+  };
+
+  const isSimpleValue = (item: ConfigRow): boolean => {
+    return (
+      isBooleanValue(item.value) ||
+      isEnumValue(item.key) !== null ||
+      isNumberValue(item.key) ||
+      isStringValue(item.key)
+    );
+  };
+
+  const handleToggleBoolean = async (item: ConfigRow) => {
+    const newValue = !item.value;
+
+    const result = await updateConfigValue(
+      item.key,
+      newValue,
+      item.description || ""
+    );
+
+    if (result.success) {
+      toast.success("Configuración actualizada");
+      router.refresh();
+    } else {
+      toast.error(result.error || "Error al actualizar");
+    }
+  };
+
+  const handleUpdateValue = async (item: ConfigRow, newValue: string | number) => {
+    const result = await updateConfigValue(
+      item.key,
+      newValue,
+      item.description || ""
+    );
+
+    if (result.success) {
+      toast.success("Configuración actualizada");
+      router.refresh();
+    } else {
+      toast.error(result.error || "Error al actualizar");
+    }
+  };
+
   return (
     <>
       {/* Vista Desktop - Tabla */}
       <div className="hidden lg:block border rounded-lg overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[80px]">Acciones</TableHead>
-              <TableHead className="w-[200px]">Clave</TableHead>
-              <TableHead className="w-[200px]">Descripción</TableHead>
-              <TableHead>Valor</TableHead>
-            </TableRow>
-          </TableHeader>
+        <div className="w-full overflow-x-auto">
+          <Table className="table-fixed w-full min-w-[800px]">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-20">Acciones</TableHead>
+                <TableHead className="w-44">Clave</TableHead>
+                <TableHead className="w-auto">Descripción</TableHead>
+                <TableHead className="w-72">Valor</TableHead>
+              </TableRow>
+            </TableHeader>
           <TableBody>
             {config.length === 0 ? (
               <TableRow>
@@ -128,50 +201,112 @@ export function ConfigTable({ config }: ConfigTableProps) {
                 </TableCell>
               </TableRow>
             ) : (
-              config.map((item) => (
-                <TableRow
-                  key={item.key}
-                  className="bg-white hover:bg-lime-50/50"
-                >
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(item)}
-                        title="Editar valor"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      {item.key === "default_empresa_id" && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleViewIssuer(item.value as number)}
-                          disabled={isLoadingIssuer}
-                          title="Ver datos de la empresa"
+              config.map((item) => {
+                const enumValues = isEnumValue(item.key);
+                const isNumber = isNumberValue(item.key);
+                const isString = isStringValue(item.key);
+                const isBoolean = isBooleanValue(item.value);
+                const isSimple = isSimpleValue(item);
+
+                return (
+                  <TableRow
+                    key={item.key}
+                    className="bg-white hover:bg-lime-50/50"
+                  >
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        {!isSimple && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(item)}
+                            title="Editar valor"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {item.key === "default_empresa_id" && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleViewIssuer(item.value as number)}
+                            disabled={isLoadingIssuer}
+                            title="Ver datos de la empresa"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-mono text-sm">
+                      <div className="break-all whitespace-normal">
+                        {item.key}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      <div className="break-words whitespace-normal">
+                        {item.description || "-"}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {isBoolean ? (
+                        <div className="flex items-center gap-3">
+                          <Switch
+                            checked={item.value as boolean}
+                            onCheckedChange={() => handleToggleBoolean(item)}
+                          />
+                          <span className="text-sm text-muted-foreground">
+                            {item.value ? "Activado" : "Desactivado"}
+                          </span>
+                        </div>
+                      ) : enumValues ? (
+                        <Select
+                          value={item.value as string}
+                          onValueChange={(value) => handleUpdateValue(item, value)}
                         >
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {enumValues.map((option) => (
+                              <SelectItem key={option} value={option}>
+                                {option}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : isNumber ? (
+                        <Input
+                          type="number"
+                          defaultValue={item.value as number}
+                          onBlur={(e) => {
+                            const value = parseInt(e.target.value);
+                            if (!isNaN(value)) {
+                              handleUpdateValue(item, value);
+                            }
+                          }}
+                          className="w-full"
+                        />
+                      ) : isString ? (
+                        <Input
+                          type="text"
+                          defaultValue={item.value as string}
+                          onBlur={(e) => handleUpdateValue(item, e.target.value)}
+                          className="w-full"
+                        />
+                      ) : (
+                        <pre className="text-xs bg-muted p-2 rounded max-h-20 overflow-auto break-words whitespace-pre-wrap">
+                          {formatValue(item.value)}
+                        </pre>
                       )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-mono text-sm">
-                    {item.key}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {item.description || "-"}
-                  </TableCell>
-                  <TableCell>
-                    <pre className="text-xs bg-muted p-2 rounded max-h-20 overflow-auto">
-                      {formatValue(item.value)}
-                    </pre>
-                  </TableCell>
-                </TableRow>
-              ))
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       {/* Vista Mobile/Tablet - Cards */}
@@ -182,7 +317,13 @@ export function ConfigTable({ config }: ConfigTableProps) {
           </div>
         ) : (
           config.map((item) => (
-            <ConfigCard key={item.key} item={item} onEdit={handleEdit} />
+            <ConfigCard
+              key={item.key}
+              item={item}
+              onEdit={handleEdit}
+              onToggle={handleToggleBoolean}
+              onUpdate={handleUpdateValue}
+            />
           ))
         )}
       </div>

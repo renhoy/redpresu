@@ -16,20 +16,20 @@
     ]
   },
   "pdf": {
-    "title": "Presupuesto - Pruebas PDF (59101921V)",
+    "title": "Presupuesto - Andrés Cárdenas Martín (28727857Y)",
     "author": "Jeyca Tecnología y Medio Ambiente, S.L.",
     "subject": "Documento de Presupuesto",
     "creator": "app server rapidPDF",
     "keywords": "presupuesto"
   },
   "summary": {
-    "budget_number": "20251027-202821",
+    "budget_number": "20251028-101855",
     "client": {
-      "name": "Pruebas PDF",
-      "nif_nie": "59101921V",
-      "address": "Alameda Picasso, 17032 Hostalric, Girona",
-      "contact": "665405002 - josivela+vicentecebrian@gmail.com",
-      "budget_date": "27-10-2025",
+      "name": "Andrés Cárdenas Martín",
+      "nif_nie": "28727857Y",
+      "address": "Calle la palma, 12, 11345 San Fernando, Cádiz",
+      "contact": "612345678 - josivela@gmail.com",
+      "budget_date": "28-10-2025",
       "validity": "30"
     },
     "title": "Resumen del Presupuesto",

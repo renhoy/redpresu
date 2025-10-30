@@ -83,7 +83,11 @@ const statusColors = {
   caducado: "bg-neutral-200 text-black",
 };
 
-export function BudgetsTable({ budgets, allBudgets, tariffId }: BudgetsTableProps) {
+export function BudgetsTable({
+  budgets,
+  allBudgets,
+  tariffId,
+}: BudgetsTableProps) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -560,6 +564,10 @@ export function BudgetsTable({ budgets, allBudgets, tariffId }: BudgetsTableProp
           </td>
 
           <td className="p-4 text-center">
+            <BudgetNotesIcon data-tour="btn-nota" budgetId={budget.id} />
+          </td>
+
+          <td className="p-4 text-center">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -580,10 +588,6 @@ export function BudgetsTable({ budgets, allBudgets, tariffId }: BudgetsTableProp
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-          </td>
-
-          <td className="p-4 text-center">
-            <BudgetNotesIcon data-tour="btn-nota" budgetId={budget.id} />
           </td>
 
           <td className="p-4 text-right font-mono">
@@ -675,7 +679,7 @@ export function BudgetsTable({ budgets, allBudgets, tariffId }: BudgetsTableProp
             </Select>
           </td>
 
-          <td className="p-4">
+          <td className="p-4 text-center">
             <div className="space-y-0.5">
               <div className="text-sm font-medium">{getUserName(budget)}</div>
               <div className="text-xs text-muted-foreground capitalize">
@@ -929,7 +933,9 @@ export function BudgetsTable({ budgets, allBudgets, tariffId }: BudgetsTableProp
         <div className="flex gap-2 flex-wrap">
           <Button
             variant={
-              statusFilter === "all" && search === "" && !tariffId ? "default" : "outline"
+              statusFilter === "all" && search === "" && !tariffId
+                ? "default"
+                : "outline"
             }
             size="sm"
             onClick={() => {
@@ -1055,8 +1061,8 @@ export function BudgetsTable({ budgets, allBudgets, tariffId }: BudgetsTableProp
                   />
                 </th>
                 <th className="text-left p-4 font-medium w-[40%]">Cliente</th>
-                <th className="text-center p-4 font-medium w-[60px]">Tarifa</th>
                 <th className="text-center p-4 font-medium w-[60px]">Nota</th>
+                <th className="text-center p-4 font-medium w-[60px]">Tarifa</th>
                 <th className="text-right p-4 font-medium w-[150px]">Total</th>
                 <th className="text-center p-4 font-medium w-[120px]">
                   Estado
@@ -1065,7 +1071,7 @@ export function BudgetsTable({ budgets, allBudgets, tariffId }: BudgetsTableProp
                   Usuario
                 </th>
                 <th className="text-center p-4 font-medium w-[60px]">PDF</th>
-                <th className="text-right p-4 font-medium w-[120px]">
+                <th className="text-center p-4 font-medium w-[120px]">
                   Acciones
                 </th>
               </tr>
@@ -1140,6 +1146,8 @@ export function BudgetsTable({ budgets, allBudgets, tariffId }: BudgetsTableProp
               getDaysRemaining={getDaysRemaining}
               generatingPdf={generatingPdf}
               duplicating={duplicating}
+              selected={selectedBudgets.includes(budget.id)}
+              onSelectChange={(checked) => handleSelectBudget(budget.id, !!checked)}
             />
           ))
         )}

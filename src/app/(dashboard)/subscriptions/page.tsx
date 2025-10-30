@@ -1,7 +1,11 @@
 import { redirect } from "next/navigation";
 import { getServerUser } from "@/lib/auth/server";
 import { getCurrentSubscription } from "@/app/actions/subscriptions";
-import { isSubscriptionsEnabled } from "@/lib/stripe";
+import { isMultiEmpresa } from "@/lib/helpers/app-mode";
+import {
+  getSubscriptionsEnabled,
+  getSubscriptionPlansFromConfig,
+} from "@/lib/helpers/config-helpers";
 import { SubscriptionsClient } from "@/components/subscriptions/SubscriptionsClient";
 import { generatePageMetadata } from "@/lib/helpers/metadata-helpers";
 
@@ -21,25 +25,15 @@ export default async function SubscriptionsPage() {
     redirect("/dashboard");
   }
 
-  // Si suscripciones están deshabilitadas, mostrar mensaje
-  if (!isSubscriptionsEnabled()) {
-    return (
-      <div className="min-h-screen bg-lime-50">
-        <div className="container mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold text-lime-600 mb-4">
-            Suscripciones
-          </h1>
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-8 text-center">
-            <p className="text-gray-700">
-              Las suscripciones están deshabilitadas en este momento.
-            </p>
-            <p className="text-sm text-gray-600 mt-2">
-              Contacta con soporte para activar esta funcionalidad.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
+  // Verificar si la página debe estar disponible
+  const multiempresa = await isMultiEmpresa();
+  const subscriptionsEnabled = await getSubscriptionsEnabled();
+
+  // Redirigir si:
+  // 1. Modo monoempresa (no disponible), O
+  // 2. Config subscriptions_enabled = false
+  if (!multiempresa || !subscriptionsEnabled) {
+    redirect("/dashboard");
   }
 
   // Obtener suscripción actual
@@ -63,10 +57,19 @@ export default async function SubscriptionsPage() {
     );
   }
 
+  // Obtener planes desde config de BD
+  const plansConfig = await getSubscriptionPlansFromConfig(true);
+
+  // Ordenar planes por position
+  const sortedPlans = Object.fromEntries(
+    Object.entries(plansConfig).sort(([, a], [, b]) => a.position - b.position)
+  ) as Record<typeof plansConfig extends Record<infer K, any> ? K : never, typeof plansConfig[keyof typeof plansConfig]>;
+
   return (
     <SubscriptionsClient
       currentSubscription={subscriptionResult.data}
       userRole={user.role}
+      plans={sortedPlans}
     />
   );
 }

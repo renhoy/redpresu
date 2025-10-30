@@ -2,9 +2,11 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { STRIPE_PLANS } from "@/lib/stripe";
 import { Header } from "@/components/layout/Header";
-import { getAppName } from "@/lib/helpers/config-helpers";
+import {
+  getAppName,
+  getSubscriptionPlansFromConfig,
+} from "@/lib/helpers/config-helpers";
 
 export async function generateMetadata() {
   const appName = await getAppName();
@@ -15,8 +17,38 @@ export async function generateMetadata() {
 }
 
 export default async function PricingPage() {
-  const plans = Object.values(STRIPE_PLANS);
+  const plansConfig = await getSubscriptionPlansFromConfig(true); // Incluir plan free
+  const plans = Object.values(plansConfig).sort((a, b) => a.position - b.position); // Ordenar por position
   const appName = await getAppName();
+
+  // Helper para convertir features objeto a array
+  function getFeaturesArray(plan: typeof plans[0]): string[] {
+    const features = plan.features;
+
+    // Si ya es array, devolverlo directamente
+    if (Array.isArray(features)) {
+      return features;
+    }
+
+    // Convertir objeto a array de strings
+    const featuresArray: string[] = [
+      features.tariffs_limit,
+      features.budgets_limit,
+      features.users_limit,
+      features.storage,
+      features.support,
+    ];
+
+    // Añadir features booleanas si están activas
+    if (features.custom_templates) featuresArray.push("Plantillas personalizadas");
+    if (features.priority_support) featuresArray.push("Soporte prioritario");
+    if (features.remove_watermark) featuresArray.push("Sin marca de agua");
+    if (features.multi_company) featuresArray.push("Multi-empresa");
+    if (features.api_access) featuresArray.push("Acceso API");
+    if (features.custom_branding) featuresArray.push("Branding completo");
+
+    return featuresArray;
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -73,7 +105,7 @@ export default async function PricingPage() {
 
                 <CardContent className="flex-1">
                   <ul className="space-y-3">
-                    {plan.features.map((feature, index) => (
+                    {getFeaturesArray(plan).map((feature, index) => (
                       <li key={index} className="flex items-start gap-3">
                         <Check className="h-5 w-5 text-lime-500 shrink-0 mt-0.5" />
                         <span className="text-gray-700">{feature}</span>

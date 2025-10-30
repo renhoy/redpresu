@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 interface UserMenuProps {
+  userId?: string;
   userName: string;
   userRole: string;
   companyName?: string;
@@ -37,6 +38,7 @@ interface UserMenuProps {
 }
 
 export function UserMenu({
+  userId,
   userName,
   userRole,
   companyName,
@@ -158,7 +160,7 @@ export function UserMenu({
           <DropdownMenuSeparator />
         </div>
 
-        <Link href="/profile">
+        <Link href={userId ? `/users/${userId}/edit` : "/profile"}>
           <DropdownMenuItem className="cursor-pointer">
             <UserCircle className="mr-2 h-4 w-4" />
             <span>Mi Perfil</span>

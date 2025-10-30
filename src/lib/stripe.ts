@@ -45,10 +45,42 @@ export function getStripeClient(): Stripe | null {
 // ============================================
 
 /**
- * Verifica si las suscripciones están habilitadas
+ * Verifica si las suscripciones están habilitadas (solo env var)
+ * @deprecated Usar isSubscriptionsEnabledAsync() para verificación completa
  */
 export function isSubscriptionsEnabled(): boolean {
   return process.env.NEXT_PUBLIC_STRIPE_ENABLED === "true";
+}
+
+/**
+ * Verifica si las suscripciones están habilitadas (verificación completa)
+ * Requisitos:
+ * 1. Variable entorno NEXT_PUBLIC_STRIPE_ENABLED = "true"
+ * 2. Modo multiempresa activo (isMultiEmpresa = true)
+ * 3. Config 'subscriptions_enabled' = true
+ *
+ * @returns Promise<boolean> - true si todas las condiciones se cumplen
+ */
+export async function isSubscriptionsEnabledAsync(): Promise<boolean> {
+  // 1. Verificar variable de entorno
+  if (process.env.NEXT_PUBLIC_STRIPE_ENABLED !== "true") {
+    return false;
+  }
+
+  // 2. Verificar modo multiempresa
+  const { isMultiEmpresa } = await import("@/lib/helpers/app-mode");
+  const multiempresa = await isMultiEmpresa();
+  if (!multiempresa) {
+    return false;
+  }
+
+  // 3. Verificar config en BD
+  const { getConfigValue } = await import("@/lib/helpers/config-helpers");
+  const subscriptionsEnabled = await getConfigValue<boolean>(
+    "subscriptions_enabled"
+  );
+
+  return subscriptionsEnabled === true;
 }
 
 // ============================================
@@ -56,6 +88,20 @@ export function isSubscriptionsEnabled(): boolean {
 // ============================================
 
 export type PlanType = "free" | "pro" | "enterprise";
+
+export interface PlanFeatures {
+  tariffs_limit: string;
+  budgets_limit: string;
+  users_limit: string;
+  storage: string;
+  support: string;
+  custom_templates: boolean;
+  priority_support: boolean;
+  remove_watermark: boolean;
+  multi_company: boolean;
+  api_access: boolean;
+  custom_branding: boolean;
+}
 
 export interface StripePlan {
   id: PlanType;
@@ -69,7 +115,7 @@ export interface StripePlan {
     users: number;
     storage_mb: number;
   };
-  features: string[];
+  features: PlanFeatures | string[]; // Puede ser objeto detallado o array de strings
 }
 
 /**
@@ -161,6 +207,11 @@ export function getStripePlans(includeFree = false): StripePlan[] {
   const plans = Object.values(STRIPE_PLANS);
   return includeFree ? plans : plans.filter((p) => p.id !== "free");
 }
+
+/**
+ * @deprecated Usar getSubscriptionPlansFromConfig() desde config-helpers.ts en server components
+ * Esta función mantiene compatibilidad con código existente que usa STRIPE_PLANS
+ */
 
 // ============================================
 // Helpers de Precios

@@ -510,6 +510,203 @@ export async function updateUser(userId: string, data: UpdateUserData) {
 }
 
 /**
+ * Actualizar usuario completo (datos básicos + emisor + contraseña)
+ * Función unificada para edición de usuarios desde /users/[id]/edit
+ */
+export async function updateUserComplete(params: {
+  userId: string;
+  basicData?: UpdateUserData;
+  emisorData?: {
+    nombre_comercial?: string;
+    nif?: string;
+    direccion_fiscal?: string;
+    codigo_postal?: string;
+    localidad?: string;
+    provincia?: string;
+    pais?: string;
+    telefono?: string;
+    emailContacto?: string;
+    web?: string;
+    irpf_percentage?: number;
+  };
+  passwordData?: {
+    currentPassword?: string;
+    newPassword: string;
+  };
+}) {
+  const { userId, basicData, emisorData, passwordData } = params;
+
+  try {
+    log.info('[updateUserComplete] Iniciando...', {
+      userId,
+      hasBasicData: !!basicData,
+      hasEmisorData: !!emisorData,
+      hasPasswordData: !!passwordData,
+    });
+
+    // Obtener usuario actual
+    const currentUser = await getServerUser();
+
+    if (!currentUser) {
+      return {
+        success: false,
+        error: "No estás autenticado",
+      };
+    }
+
+    const isOwnProfile = currentUser.id === userId;
+
+    // Verificar permisos
+    if (!isOwnProfile && !["admin", "superadmin"].includes(currentUser.role)) {
+      return {
+        success: false,
+        error: "No tienes permisos para editar usuarios",
+      };
+    }
+
+    // 1. Actualizar datos básicos del usuario (si se proporcionaron)
+    if (basicData && Object.keys(basicData).length > 0) {
+      log.info('[updateUserComplete] Actualizando datos básicos...');
+
+      const updateResult = await updateUser(userId, basicData);
+
+      if (!updateResult.success) {
+        return updateResult;
+      }
+    }
+
+    // 2. Actualizar datos del emisor (si se proporcionaron)
+    if (emisorData && Object.keys(emisorData).length > 0) {
+      log.info('[updateUserComplete] Actualizando datos emisor...');
+
+      // Construir objeto de actualización
+      const updateData: any = {};
+
+      if (emisorData.nombre_comercial) updateData.name = emisorData.nombre_comercial.trim();
+      if (emisorData.nif) updateData.nif = emisorData.nif.trim().toUpperCase();
+      if (emisorData.direccion_fiscal) updateData.address = emisorData.direccion_fiscal.trim();
+      if (emisorData.codigo_postal !== undefined)
+        updateData.postal_code = emisorData.codigo_postal?.trim() || null;
+      if (emisorData.localidad !== undefined)
+        updateData.locality = emisorData.localidad?.trim() || null;
+      if (emisorData.provincia !== undefined)
+        updateData.province = emisorData.provincia?.trim() || null;
+      if (emisorData.pais !== undefined)
+        updateData.country = emisorData.pais?.trim() || null;
+      if (emisorData.telefono !== undefined)
+        updateData.phone = emisorData.telefono?.trim() || null;
+      if (emisorData.emailContacto !== undefined)
+        updateData.email = emisorData.emailContacto?.trim() || null;
+      if (emisorData.web !== undefined)
+        updateData.web = emisorData.web?.trim() || null;
+      if (emisorData.irpf_percentage !== undefined)
+        updateData.irpf_percentage = emisorData.irpf_percentage;
+
+      updateData.updated_at = new Date().toISOString();
+
+      // Actualizar emisor usando supabaseAdmin
+      const { error: issuerError } = await supabaseAdmin
+        .from("redpresu_issuers")
+        .update(updateData)
+        .eq("user_id", userId);
+
+      if (issuerError) {
+        log.error('[updateUserComplete] Error al actualizar emisor:', issuerError);
+        return {
+          success: false,
+          error: "Error al actualizar los datos del emisor",
+        };
+      }
+    }
+
+    // 3. Actualizar contraseña (si se proporcionó)
+    if (passwordData) {
+      log.info('[updateUserComplete] Actualizando contraseña...');
+
+      // Validar contraseña nueva
+      if (passwordData.newPassword.length < 8) {
+        return {
+          success: false,
+          error: "La nueva contraseña debe tener al menos 8 caracteres",
+        };
+      }
+
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
+      if (!passwordRegex.test(passwordData.newPassword)) {
+        return {
+          success: false,
+          error: "La contraseña debe contener al menos una mayúscula, una minúscula y un número",
+        };
+      }
+
+      // Si es propio perfil y se proporciona contraseña actual, verificarla
+      if (isOwnProfile && passwordData.currentPassword) {
+        const { data: userData } = await supabaseAdmin
+          .from("redpresu_users")
+          .select("email")
+          .eq("id", userId)
+          .single();
+
+        if (!userData) {
+          return {
+            success: false,
+            error: "Usuario no encontrado",
+          };
+        }
+
+        // Verificar contraseña actual usando supabase client
+        const { createServerActionClient } = require("@supabase/auth-helpers-nextjs");
+        const { cookies } = require("next/headers");
+        const cookieStore = await cookies();
+        const supabase = createServerActionClient({ cookies: () => cookieStore });
+
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: userData.email,
+          password: passwordData.currentPassword,
+        });
+
+        if (signInError) {
+          return {
+            success: false,
+            error: "La contraseña actual es incorrecta",
+          };
+        }
+      }
+
+      // Actualizar contraseña usando supabaseAdmin (bypass contraseña actual)
+      const { error: updatePasswordError } =
+        await supabaseAdmin.auth.admin.updateUserById(userId, {
+          password: passwordData.newPassword,
+        });
+
+      if (updatePasswordError) {
+        log.error('[updateUserComplete] Error al actualizar contraseña:', updatePasswordError);
+        return {
+          success: false,
+          error: "Error al actualizar la contraseña",
+        };
+      }
+    }
+
+    log.info('[updateUserComplete] Usuario actualizado exitosamente');
+
+    // Retornar usuario actualizado
+    const userResult = await getUserById(userId);
+
+    return {
+      success: true,
+      data: userResult.data,
+    };
+  } catch (error) {
+    log.error('[updateUserComplete] Error crítico:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Error inesperado al actualizar usuario",
+    };
+  }
+}
+
+/**
  * Cambiar status de usuario (soft delete)
  */
 export async function toggleUserStatus(

@@ -18,23 +18,27 @@ import {
   createCheckoutSession,
   createPortalSession,
 } from "@/app/actions/subscriptions";
-import { getStripePlans, formatPrice, type PlanType } from "@/lib/stripe";
+import { formatPrice, type PlanType } from "@/lib/stripe";
 import type { Subscription } from "@/lib/types/database";
+import type { SubscriptionPlan } from "@/lib/helpers/config-helpers";
 
 interface SubscriptionsClientProps {
   currentSubscription: Subscription;
   userRole: string;
+  plans: Record<PlanType, SubscriptionPlan>;
 }
 
 export function SubscriptionsClient({
   currentSubscription,
   userRole,
+  plans: plansConfig,
 }: SubscriptionsClientProps) {
   const router = useRouter();
   const [loading, setLoading] = useState<PlanType | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
 
-  const plans = getStripePlans(true); // Incluir plan free
+  // Convertir Record a Array para mapear
+  const plans = Object.values(plansConfig);
   const currentPlan = currentSubscription.plan;
 
   async function handleSelectPlan(planId: PlanType) {
@@ -95,6 +99,47 @@ export function SubscriptionsClient({
       case "enterprise":
         return "border-yellow-500";
     }
+  }
+
+  // Convertir objeto de features a array de strings para mostrar
+  function getFeaturesArray(plan: SubscriptionPlan): string[] {
+    const features = plan.features;
+
+    // Si features ya es un array, devolverlo directamente
+    if (Array.isArray(features)) {
+      return features;
+    }
+
+    // Convertir objeto a array de strings
+    const featuresArray: string[] = [
+      features.tariffs_limit,
+      features.budgets_limit,
+      features.users_limit,
+      features.storage,
+      features.support,
+    ];
+
+    // Añadir features booleanas si están activas
+    if (features.custom_templates) {
+      featuresArray.push("Plantillas personalizadas");
+    }
+    if (features.priority_support) {
+      featuresArray.push("Soporte prioritario");
+    }
+    if (features.remove_watermark) {
+      featuresArray.push("Sin marca de agua");
+    }
+    if (features.multi_company) {
+      featuresArray.push("Multi-empresa");
+    }
+    if (features.api_access) {
+      featuresArray.push("Acceso API");
+    }
+    if (features.custom_branding) {
+      featuresArray.push("Branding completo");
+    }
+
+    return featuresArray;
   }
 
   return (
@@ -207,7 +252,7 @@ export function SubscriptionsClient({
 
                 <CardContent>
                   <ul className="space-y-2">
-                    {plan.features.map((feature, index) => (
+                    {getFeaturesArray(plan).map((feature, index) => (
                       <li
                         key={index}
                         className="flex items-start gap-2 text-sm"

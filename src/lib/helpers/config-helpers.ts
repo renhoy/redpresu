@@ -227,3 +227,192 @@ export async function getRapidPDFMode(): Promise<'development' | 'production'> {
   const mode = await getConfigValue<string>('rapid_pdf_mode')
   return (mode === 'development' ? 'development' : 'production') as 'development' | 'production'
 }
+
+/**
+ * Verifica si el módulo de suscripciones está habilitado
+ * Solo disponible en modo multiempresa
+ * @returns true si las suscripciones están habilitadas
+ */
+export async function getSubscriptionsEnabled(): Promise<boolean> {
+  const enabled = await getConfigValue<boolean>('subscriptions_enabled')
+  return enabled === true
+}
+
+/**
+ * Tipo para planes de suscripción
+ */
+export type PlanType = 'free' | 'pro' | 'enterprise'
+
+export interface PlanFeatures {
+  tariffs_limit: string
+  budgets_limit: string
+  users_limit: string
+  storage: string
+  support: string
+  custom_templates: boolean
+  priority_support: boolean
+  remove_watermark: boolean
+  multi_company: boolean
+  api_access: boolean
+  custom_branding: boolean
+}
+
+export interface SubscriptionPlan {
+  id: PlanType
+  name: string
+  description: string
+  price: number
+  priceId: string
+  position: number
+  limits: {
+    tariffs: number
+    budgets: number
+    users: number
+    storage_mb: number
+  }
+  features: PlanFeatures
+}
+
+/**
+ * Obtiene todos los planes de suscripción desde config
+ * @returns Record con todos los planes o null si no existe config
+ */
+export async function getSubscriptionPlans(): Promise<Record<PlanType, SubscriptionPlan> | null> {
+  const plans = await getConfigValue<Record<PlanType, SubscriptionPlan>>('subscription_plans')
+  return plans
+}
+
+/**
+ * Obtiene un plan específico por su ID
+ * @param planId - ID del plan (free, pro, enterprise)
+ * @returns Plan específico o null si no existe
+ */
+export async function getSubscriptionPlan(planId: PlanType): Promise<SubscriptionPlan | null> {
+  const plans = await getSubscriptionPlans()
+  return plans?.[planId] || null
+}
+
+/**
+ * Obtiene planes desde configuración de BD con fallback a valores hardcoded
+ * Esta función es server-only y debe usarse en Server Components/Actions
+ * @param includeFree - Incluir plan free (default: true)
+ * @returns Promise<Record<PlanType, SubscriptionPlan>>
+ */
+export async function getSubscriptionPlansFromConfig(
+  includeFree = true
+): Promise<Record<PlanType, SubscriptionPlan>> {
+  try {
+    const plansConfig = await getConfigValue<Record<PlanType, SubscriptionPlan>>(
+      'subscription_plans'
+    )
+
+    if (plansConfig) {
+      // Filtrar plan free si no se requiere
+      if (!includeFree) {
+        const { free, ...rest } = plansConfig
+        return rest as Record<PlanType, SubscriptionPlan>
+      }
+      return plansConfig
+    }
+
+    // Fallback a valores por defecto (importar dinámicamente para evitar ciclos)
+    console.warn(
+      '[getSubscriptionPlansFromConfig] Config no encontrada, usando valores por defecto'
+    )
+
+    // Valores por defecto hardcoded
+    const defaultPlans: Record<PlanType, SubscriptionPlan> = {
+      free: {
+        id: 'free',
+        name: 'Free',
+        description: 'Plan gratuito para comenzar',
+        price: 0,
+        priceId: '',
+        position: 1,
+        limits: {
+          tariffs: 3,
+          budgets: 10,
+          users: 1,
+          storage_mb: 100
+        },
+        features: {
+          tariffs_limit: 'Hasta 3 tarifas',
+          budgets_limit: 'Hasta 10 presupuestos',
+          users_limit: '1 usuario',
+          storage: '100 MB almacenamiento',
+          support: 'Soporte por email',
+          custom_templates: false,
+          priority_support: false,
+          remove_watermark: false,
+          multi_company: false,
+          api_access: false,
+          custom_branding: false
+        }
+      },
+      pro: {
+        id: 'pro',
+        name: 'Pro',
+        description: 'Plan profesional para negocios',
+        price: 29,
+        priceId: 'price_REPLACE_WITH_REAL_PRICE_ID',
+        position: 2,
+        limits: {
+          tariffs: 50,
+          budgets: 500,
+          users: 5,
+          storage_mb: 5000
+        },
+        features: {
+          tariffs_limit: 'Hasta 50 tarifas',
+          budgets_limit: 'Hasta 500 presupuestos',
+          users_limit: 'Hasta 5 usuarios',
+          storage: '5 GB almacenamiento',
+          support: 'Soporte prioritario',
+          custom_templates: true,
+          priority_support: true,
+          remove_watermark: true,
+          multi_company: false,
+          api_access: false,
+          custom_branding: false
+        }
+      },
+      enterprise: {
+        id: 'enterprise',
+        name: 'Enterprise',
+        description: 'Plan empresarial sin límites',
+        price: 99,
+        priceId: 'price_REPLACE_WITH_REAL_PRICE_ID',
+        position: 3,
+        limits: {
+          tariffs: 9999,
+          budgets: 9999,
+          users: 50,
+          storage_mb: 50000
+        },
+        features: {
+          tariffs_limit: 'Tarifas ilimitadas',
+          budgets_limit: 'Presupuestos ilimitados',
+          users_limit: 'Hasta 50 usuarios',
+          storage: '50 GB almacenamiento',
+          support: 'Soporte dedicado 24/7',
+          custom_templates: true,
+          priority_support: true,
+          remove_watermark: true,
+          multi_company: true,
+          api_access: true,
+          custom_branding: true
+        }
+      }
+    }
+
+    if (!includeFree) {
+      const { free, ...rest } = defaultPlans
+      return rest as Record<PlanType, SubscriptionPlan>
+    }
+    return defaultPlans
+  } catch (error) {
+    console.error('[getSubscriptionPlansFromConfig] Error:', error)
+    // Fallback en caso de error crítico
+    throw new Error('No se pudieron cargar los planes de suscripción')
+  }
+}

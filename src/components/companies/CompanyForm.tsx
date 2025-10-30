@@ -252,7 +252,7 @@ export default function CompanyForm({
               ) : (
                 <>
                   <Save className="mr-2 h-4 w-4" />
-                  {mode === "create" ? "Crear Empresa" : "Guardar Cambios"}
+                  {mode === "create" ? "Crear Empresa" : "Guardar"}
                 </>
               )}
             </Button>
@@ -261,10 +261,11 @@ export default function CompanyForm({
 
         {/* Información */}
         {currentUserRole === "admin" && (
-          <Alert>
+          <Alert className="bg-indigo-50">
             <AlertDescription>
               Estás editando los datos de tu empresa. Estos cambios se
-              reflejarán en todos los presupuestos que generes.
+              reflejarán en todos los presupuestos que generes a partir de
+              ahora.
             </AlertDescription>
           </Alert>
         )}

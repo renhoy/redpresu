@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/tooltip";
 
 interface HeaderProps {
+  userId?: string;
   userRole?: string;
   userName?: string;
   isAuthenticated?: boolean;
@@ -34,9 +35,11 @@ interface HeaderProps {
   issuerType?: string;
   currentPlan?: string;
   multiempresa?: boolean;
+  showSubscriptions?: boolean;
 }
 
 export function Header({
+  userId,
   userRole,
   userName,
   isAuthenticated = true,
@@ -46,6 +49,7 @@ export function Header({
   issuerType,
   currentPlan = "free",
   multiempresa = true,
+  showSubscriptions = false,
 }: HeaderProps) {
   const pathname = usePathname();
 
@@ -97,11 +101,6 @@ export function Header({
   // Construir navegación según rol (solo si está autenticado)
   const isSuperadmin = userRole === "superadmin";
   const isAdmin = userRole === "admin" || userRole === "superadmin";
-
-  // Verificar si suscripciones están habilitadas
-  // Solo mostrar suscripciones si está en modo multiempresa Y está habilitado Stripe
-  const subscriptionsEnabled =
-    multiempresa && process.env.NEXT_PUBLIC_STRIPE_ENABLED === "true";
 
   const navigation = [
     { name: "Panel", href: "/dashboard", icon: Home, show: true },
@@ -273,12 +272,13 @@ export function Header({
 
           {/* User Menu Dropdown */}
           <UserMenu
+            userId={userId}
             userName={userName}
             userRole={userRole}
             companyName={companyName}
             issuerType={issuerType}
             currentPlan={currentPlan}
-            showSubscriptions={isAdmin && subscriptionsEnabled}
+            showSubscriptions={showSubscriptions}
             showSettings={isSuperadmin}
           />
         </div>

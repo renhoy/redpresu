@@ -569,7 +569,7 @@ export default function UserTable({
                           </span>
                         ) : (
                           <>
-                            {/* Botón Editar */}
+                            {/* Botón Editar Usuario */}
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button
@@ -579,36 +579,15 @@ export default function UserTable({
                                   data-tour="btn-editar-usuario"
                                   className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
                                 >
-                                  <Link href={`/users/create?id=${user.id}`}>
+                                  <Link href={`/users/${user.id}/edit`}>
                                     <Pencil className="h-4 w-4" />
                                   </Link>
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>Editar</p>
+                                <p>Editar Usuario</p>
                               </TooltipContent>
                             </Tooltip>
-
-                            {/* Botón Editar Perfil - Solo admin/superadmin */}
-                            {currentUserRole !== "comercial" && (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    asChild
-                                    className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
-                                  >
-                                    <Link href={`/users/${user.id}/profile`}>
-                                      <User className="h-4 w-4" />
-                                    </Link>
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Editar perfil</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            )}
 
                             {/* Botón Borrar Usuario - Solo admin/superadmin, excepto el superadmin protegido */}
                             {currentUserRole !== "comercial" &&

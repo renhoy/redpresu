@@ -1,22 +1,58 @@
 # Planificación - Fase 2: Evolución Funcional
 
-## FASE 2: EVOLUCIÓN Y PREPARACIÓN MULTI-TENANT (13 semanas)
+## FASE 2: EVOLUCIÓN Y PREPARACIÓN MULTI-TENANT (15 semanas - 13 completadas)
 
 **Objetivo:** Completar funcionalidades fiscales, mejorar UX, preparar arquitectura para SaaS multi-tenant, sistema de ayuda
 
+**Estado actual:** ✅ 75% completado (48/64 tareas) - 9 de 12 bloques completados
+
 ---
 
-## Timeline General
+## 📊 Resumen Ejecutivo (Actualizado 2025-01-29)
+
+**Semanas transcurridas:** 13/17
+**Bloques completados:** 9/12
+**Progreso:** 75%
+
+### ✅ Bloques Completados:
+1. ✅ Usuarios y Seguridad (Semanas 1-2)
+2. ✅ Mejoras Tarifas (Semana 3)
+3. ✅ Configuración (Semana 4)
+4. ✅ IRPF y RE (Semanas 5-6)
+5. ✅ Versiones y Notas (Semanas 7-8)
+6. ✅ Rich Text Editor (Semana 9)
+7. ✅ Import/Export (Semana 10)
+8. ✅ Responsive Mobile-First (Semana 11)
+9. ✅ Sistema de Ayuda (Semana 12-13)
+
+### ⏳ Bloques Avanzados (Post Fase 2):
+10. ⏳ Suscripciones Stripe - 70% (Infraestructura base)
+11. ⏳ Modo Monoempresa/Multiempresa - 80% (Core funcional)
+
+### Bloque Opcional Pendiente:
+12. Navegación Unificada (HierarchicalNavigator) - Opcional
+
+---
+
+## Timeline General (Actualizado)
 
 ```
-Semanas 1-2:   Usuarios y Autenticación (CRÍTICO)
-Semanas 3-4:   Mejoras Tarifas + Configuración
-Semanas 5-6:   IRPF y Recargo de Equivalencia
-Semanas 7-8:   Versiones y Notas
-Semanas 9-10:  Navegación Unificada + Rich Text
-Semanas 11-12: Import/Export + Responsive Mobile
-Semana 13:     Sistema de Ayuda
+Semanas 1-2:   ✅ Usuarios y Autenticación (COMPLETADO)
+Semanas 3-4:   ✅ Mejoras Tarifas + Configuración (COMPLETADO)
+Semanas 5-6:   ✅ IRPF y Recargo de Equivalencia (COMPLETADO)
+Semanas 7-8:   ✅ Versiones y Notas (COMPLETADO)
+Semanas 9-10:  ✅ Rich Text Editor + Import/Export (COMPLETADO)
+Semanas 11-12: ✅ Responsive Mobile + Sistema Ayuda (COMPLETADO)
+Semana 13:     ✅ Sistema de Ayuda finalizado (COMPLETADO)
+Semanas 14-15: ⏳ Stripe base + App Mode implementados (AVANZADO)
+Semanas 16-17: Completar Stripe UI + Testing App Mode (PENDIENTE)
 ```
+
+**Próximos pasos críticos:**
+1. Completar componentes UI Stripe (CurrentPlan, SubscriptionPlans)
+2. Integrar límites de recursos en tariffs/budgets/users
+3. Testing completo modo monoempresa vs multiempresa
+4. Opcional: Implementar HierarchicalNavigator (Navegación Unificada)
 
 ---
 

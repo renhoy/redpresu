@@ -6,6 +6,8 @@ import { Building2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import CompanyTable from "@/components/companies/CompanyTable";
 import { generatePageMetadata } from "@/lib/helpers/metadata-helpers";
+import { CompaniesPageHeader } from "@/components/companies/CompaniesPageHeader";
+import { CompaniesPageFooter } from "@/components/companies/CompaniesPageFooter";
 
 export async function generateMetadata() {
   return generatePageMetadata(
@@ -45,24 +47,7 @@ export default async function CompaniesPage() {
     <div className="min-h-screen bg-lime-50">
       <div className="container mx-auto px-4 py-6">
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-          <div className="text-center md:text-left w-full md:w-auto">
-            <h1 className="text-3xl font-bold flex items-center justify-center md:justify-start gap-2">
-              <Building2 className="h-6 w-6" />
-              Empresas
-            </h1>
-            <p className="text-sm">Gestiona todas las empresas del sistema</p>
-          </div>
-
-          <div className="flex flex-wrap gap-2 justify-center md:justify-end w-full md:w-auto">
-            <Button asChild>
-              <Link href="/companies/create">
-                <Plus className="mr-2 h-4 w-4" />
-                Nueva Empresa
-              </Link>
-            </Button>
-          </div>
-        </div>
+        <CompaniesPageHeader />
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -88,6 +73,9 @@ export default async function CompaniesPage() {
 
         {/* Table */}
         <CompanyTable companies={companies} />
+
+        {/* Footer */}
+        <CompaniesPageFooter />
       </div>
     </div>
   );
