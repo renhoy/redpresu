@@ -107,15 +107,18 @@ SET
   description = EXCLUDED.description,
   updated_at = NOW();
 
--- Verificar inserción
+-- Verificar creación exitosa
 DO $$
 BEGIN
+  -- Verificar que la tabla existe
   IF EXISTS (
-    SELECT 1 FROM public.redpresu_contact_messages LIMIT 0
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public'
+    AND table_name = 'redpresu_contact_messages'
   ) AND EXISTS (
     SELECT 1 FROM public.redpresu_config WHERE key = 'contact_notification_emails'
   ) THEN
-    RAISE NOTICE '✅ Tabla contact_messages y config creadas correctamente';
+    RAISE NOTICE '✅ Tabla redpresu_contact_messages y config creadas correctamente';
   ELSE
     RAISE EXCEPTION '❌ Error: No se pudieron crear la tabla o config';
   END IF;
