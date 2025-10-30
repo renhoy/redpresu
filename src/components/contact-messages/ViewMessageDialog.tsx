@@ -66,7 +66,7 @@ ${message.message}`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[80vw] max-h-[80vh] overflow-y-auto p-0" hideCloseButton>
+      <DialogContent className="max-w-[80vw] max-h-[80vh] overflow-y-auto p-0">
         {/* Título oculto para accesibilidad */}
         <VisuallyHidden>
           <DialogTitle>Mensaje de contacto</DialogTitle>

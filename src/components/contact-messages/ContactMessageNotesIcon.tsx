@@ -104,6 +104,13 @@ export function ContactMessageNotesIcon({
     }
   }, [popoverOpen])
 
+  // Recargar notas cuando se cierra el dialog
+  useEffect(() => {
+    if (!dialogOpen) {
+      loadNotes()
+    }
+  }, [dialogOpen])
+
   const handleNotesUpdated = (updatedMessage: ContactMessage) => {
     setCurrentMessage(updatedMessage)
     loadNotes()

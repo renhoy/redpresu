@@ -266,7 +266,7 @@ ${message.message}`;
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>Copiar al portapapeles</p>
+                          <p>Copiar</p>
                         </TooltipContent>
                       </Tooltip>
 
