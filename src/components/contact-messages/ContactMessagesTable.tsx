@@ -37,6 +37,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ViewMessageDialog } from "./ViewMessageDialog";
+import { ContactMessageNotesIcon } from "./ContactMessageNotesIcon";
 import { updateContactMessage, deleteContactMessage } from "@/app/actions/contact-messages";
 import { toast } from "sonner";
 
@@ -182,6 +183,7 @@ ${message.message}`;
               <TableHead className="font-semibold">Email</TableHead>
               <TableHead className="font-semibold">Asunto</TableHead>
               <TableHead className="font-semibold text-center">Estado</TableHead>
+              <TableHead className="font-semibold text-center">Notas</TableHead>
               <TableHead className="font-semibold text-center">Fecha</TableHead>
               <TableHead className="font-semibold text-right">Acciones</TableHead>
             </TableRow>
@@ -220,6 +222,14 @@ ${message.message}`;
                         </SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex justify-center">
+                    <ContactMessageNotesIcon
+                      messageId={message.id}
+                      data-tour="btn-notas-mensaje"
+                    />
                   </div>
                 </TableCell>
                 <TableCell className="text-gray-500 text-sm text-center">

@@ -17,11 +17,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Mail, Calendar, Save } from "lucide-react";
 import { updateContactMessage } from "@/app/actions/contact-messages";
+import { ContactMessageNotes } from "./ContactMessageNotes";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -53,7 +53,6 @@ export function ContactMessageDialog({
 }: ContactMessageDialogProps) {
   const router = useRouter();
   const [status, setStatus] = useState(message.status);
-  const [notes, setNotes] = useState(message.notes || "");
   const [loading, setLoading] = useState(false);
 
   async function handleSave() {
@@ -62,15 +61,14 @@ export function ContactMessageDialog({
     const result = await updateContactMessage({
       id: message.id,
       status,
-      notes: notes.trim() || undefined,
     });
 
     if (result.success) {
-      toast.success("Mensaje actualizado correctamente");
+      toast.success("Estado actualizado correctamente");
       onUpdate(result.data);
       router.refresh();
     } else {
-      toast.error(result.error || "Error al actualizar mensaje");
+      toast.error(result.error || "Error al actualizar estado");
     }
 
     setLoading(false);
@@ -182,21 +180,9 @@ export function ContactMessageDialog({
             </Select>
           </div>
 
-          {/* Notas internas */}
-          <div>
-            <Label htmlFor="notes" className="text-gray-700 font-medium">
-              Notas Internas
-              <span className="text-gray-500 font-normal text-sm ml-2">
-                (Solo visible para administradores)
-              </span>
-            </Label>
-            <Textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Añade notas internas sobre este mensaje..."
-              className="mt-1 min-h-[100px]"
-            />
+          {/* Notas internas con timeline */}
+          <div className="border-t pt-4">
+            <ContactMessageNotes messageId={message.id} />
           </div>
 
           {/* Fechas */}
@@ -220,11 +206,11 @@ export function ContactMessageDialog({
           </Button>
           <Button onClick={handleSave} disabled={loading} className="bg-lime-600 hover:bg-lime-700">
             {loading ? (
-              "Guardando..."
+              "Actualizando..."
             ) : (
               <>
                 <Save className="h-4 w-4 mr-2" />
-                Guardar Cambios
+                Actualizar Estado
               </>
             )}
           </Button>
