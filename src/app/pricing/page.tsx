@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,9 @@ import { Header } from "@/components/layout/Header";
 import {
   getAppName,
   getSubscriptionPlansFromConfig,
+  getSubscriptionsEnabled,
 } from "@/lib/helpers/config-helpers";
+import { isMultiEmpresa } from "@/lib/helpers/app-mode";
 
 export async function generateMetadata() {
   const appName = await getAppName();
@@ -17,6 +20,15 @@ export async function generateMetadata() {
 }
 
 export default async function PricingPage() {
+  // Verificar si las suscripciones están habilitadas
+  const subscriptionsEnabled = await getSubscriptionsEnabled();
+  const multiempresa = await isMultiEmpresa();
+
+  // Si las suscripciones están deshabilitadas, redirigir a home
+  if (!subscriptionsEnabled) {
+    redirect("/");
+  }
+
   const plansConfig = await getSubscriptionPlansFromConfig(true); // Incluir plan free
   const plans = Object.values(plansConfig).sort((a, b) => a.position - b.position); // Ordenar por position
   const appName = await getAppName();
@@ -51,8 +63,13 @@ export default async function PricingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header isAuthenticated={false} appName={appName} />
+    <div className="min-h-screen bg-lime-50">
+      <Header
+        isAuthenticated={false}
+        appName={appName}
+        multiempresa={multiempresa}
+        subscriptionsEnabled={subscriptionsEnabled}
+      />
 
       <div className="container mx-auto px-4 py-16">
         {/* Header */}

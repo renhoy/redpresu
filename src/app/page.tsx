@@ -3,13 +3,16 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { FileText, CheckCircle, Clock, Users } from "lucide-react";
 import { getServerUser } from '@/lib/auth/server'
-import { getAppName } from '@/lib/helpers/config-helpers'
+import { getAppName, getSubscriptionsEnabled } from '@/lib/helpers/config-helpers'
+import { isMultiEmpresa } from '@/lib/helpers/app-mode'
 import { Header } from '@/components/layout/Header'
 
 export default async function Index() {
   // Verificar si el usuario ya está autenticado
   const user = await getServerUser()
   const appName = await getAppName()
+  const subscriptionsEnabled = await getSubscriptionsEnabled()
+  const multiempresa = await isMultiEmpresa()
 
   if (user) {
     // Redirigir según rol
@@ -27,7 +30,12 @@ export default async function Index() {
   return (
     <div className="min-h-screen" style={{ background: '#f7fee7' }}>
       {/* Header */}
-      <Header isAuthenticated={false} appName={appName} />
+      <Header
+        isAuthenticated={false}
+        appName={appName}
+        multiempresa={multiempresa}
+        subscriptionsEnabled={subscriptionsEnabled}
+      />
 
       {/* Hero Section */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">

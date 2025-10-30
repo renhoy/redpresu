@@ -36,6 +36,7 @@ interface HeaderProps {
   currentPlan?: string;
   multiempresa?: boolean;
   showSubscriptions?: boolean;
+  subscriptionsEnabled?: boolean;
 }
 
 export function Header({
@@ -50,6 +51,7 @@ export function Header({
   currentPlan = "free",
   multiempresa = true,
   showSubscriptions = false,
+  subscriptionsEnabled = false,
 }: HeaderProps) {
   const pathname = usePathname();
 
@@ -69,21 +71,22 @@ export function Header({
 
             {/* Enlaces de navegación */}
             <div className="flex items-center gap-6">
-              {/* Solo mostrar Pricing y Registro en modo multiempresa */}
+              {/* Solo mostrar Pricing si suscripciones habilitadas y multiempresa */}
+              {multiempresa && subscriptionsEnabled && (
+                <Link
+                  href="/pricing"
+                  className="text-gray-700 hover:text-lime-600 transition-colors font-medium"
+                >
+                  Precios
+                </Link>
+              )}
+              {/* Solo mostrar Registro en modo multiempresa */}
               {multiempresa && (
-                <>
-                  <Link
-                    href="/pricing"
-                    className="text-gray-700 hover:text-lime-600 transition-colors font-medium"
-                  >
-                    Precios
-                  </Link>
-                  <Link href="/register">
-                    <Button className="bg-lime-500 hover:bg-lime-600">
-                      Registro
-                    </Button>
-                  </Link>
-                </>
+                <Link href="/register">
+                  <Button className="bg-lime-500 hover:bg-lime-600">
+                    Registro
+                  </Button>
+                </Link>
               )}
               <Link
                 href="/login"
