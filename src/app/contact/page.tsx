@@ -1,5 +1,6 @@
 import { ContactForm } from "@/components/contact/ContactForm";
 import { Header } from "@/components/layout/Header";
+import { BackButton } from "@/components/shared/BackButton";
 import {
   getAppName,
   getFormsLegalNotice,
@@ -28,6 +29,11 @@ export default async function ContactPage() {
       />
 
       <div className="container mx-auto px-4 py-16">
+        {/* Botón Cancelar Superior */}
+        <div className="flex justify-end mb-6">
+          <BackButton />
+        </div>
+
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Contacto</h1>
@@ -40,6 +46,11 @@ export default async function ContactPage() {
         {/* Formulario */}
         <div className="max-w-2xl mx-auto">
           <ContactForm legalNotice={legalNotice} />
+        </div>
+
+        {/* Botón Cancelar Inferior */}
+        <div className="flex justify-end mt-8">
+          <BackButton />
         </div>
       </div>
     </div>
