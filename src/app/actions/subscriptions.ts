@@ -17,6 +17,8 @@ import { getServerUser } from "@/lib/auth/server";
 import { getStripeClient, isSubscriptionsEnabled, getStripePlan, type PlanType } from "@/lib/stripe";
 import type { Subscription } from "@/lib/types/database";
 import { log } from "@/lib/logger";
+import { getCurrentTime, isPast } from "@/lib/helpers/time-helpers";
+import { supabaseAdmin } from "@/lib/supabase/server";
 
 export interface ActionResult<T = unknown> {
   success: boolean;
@@ -67,8 +69,8 @@ export async function getCurrentSubscription(): Promise<ActionResult<Subscriptio
             current_period_start: null,
             current_period_end: null,
             cancel_at_period_end: false,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
+            created_at: (await getCurrentTime()).toISOString(),
+            updated_at: (await getCurrentTime()).toISOString(),
           },
         };
       }
@@ -81,6 +83,60 @@ export async function getCurrentSubscription(): Promise<ActionResult<Subscriptio
   } catch (error) {
     log.error('[getCurrentSubscription] Error inesperado:', error);
     return { success: false, error: 'Error al obtener suscripción' };
+  }
+}
+
+// ============================================
+// Verificar Expiración de Suscripción
+// ============================================
+
+/**
+ * Verifica si una suscripción ha expirado
+ * Si está expirada y status='active', la marca como 'expired' automáticamente
+ *
+ * @param subscription - Suscripción a verificar
+ * @returns true si la suscripción está expirada
+ */
+export async function isSubscriptionExpired(subscription: Subscription): Promise<boolean> {
+  try {
+    // Plan free nunca expira
+    if (subscription.plan === 'free') {
+      return false;
+    }
+
+    // Si no hay fecha de fin, no está expirada (ej: suscripción vitalicia)
+    if (!subscription.current_period_end) {
+      return false;
+    }
+
+    // Verificar si la fecha de fin ya pasó
+    const isExpired = await isPast(subscription.current_period_end);
+
+    // Si está expirada y status aún es 'active', actualizar a 'expired'
+    if (isExpired && subscription.status === 'active') {
+      log.warn('[isSubscriptionExpired] Suscripción expirada detectada:', subscription.id);
+
+      // Actualizar status en BD (usar supabaseAdmin para bypasear RLS)
+      const { error } = await supabaseAdmin
+        .from('redpresu_subscriptions')
+        .update({
+          status: 'canceled',
+          updated_at: (await getCurrentTime()).toISOString(),
+        })
+        .eq('id', subscription.id);
+
+      if (error) {
+        log.error('[isSubscriptionExpired] Error actualizando status:', error);
+      } else {
+        log.info('[isSubscriptionExpired] Status actualizado a canceled');
+      }
+    }
+
+    return isExpired;
+  } catch (error) {
+    log.error('[isSubscriptionExpired] Error verificando expiración:', error);
+    // En caso de error, asumir que NO está expirada (fail open)
+    return false;
   }
 }
 
