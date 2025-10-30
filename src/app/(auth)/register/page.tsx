@@ -1,11 +1,15 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getServerUser } from "@/lib/auth/server";
-import { isPublicRegistrationEnabled } from "@/lib/helpers/config-helpers";
+import {
+  isPublicRegistrationEnabled,
+  getSubscriptionsEnabled,
+} from "@/lib/helpers/config-helpers";
 import RegisterForm from "@/components/auth/RegisterForm";
 import { Lock } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Header } from "@/components/layout/Header";
+import { RegisterClosedDialog } from "@/components/auth/RegisterClosedDialog";
 
 export default async function RegisterPage() {
   // Verificar si el usuario ya está autenticado
@@ -26,8 +30,39 @@ export default async function RegisterPage() {
 
   // Verificar si el registro público está habilitado
   const registrationEnabled = await isPublicRegistrationEnabled();
+  const subscriptionsEnabled = await getSubscriptionsEnabled();
 
-  // Si el registro está deshabilitado, mostrar mensaje
+  // Si el registro está deshabilitado Y suscripciones activas, mostrar página con popup
+  if (!registrationEnabled && subscriptionsEnabled) {
+    return (
+      <>
+        <Header isAuthenticated={false} />
+        <div
+          className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8"
+          style={{ background: "#f7fee7" }}
+        >
+          <div className="w-full max-w-2xl space-y-8">
+            {/* Formulario de registro (deshabilitado visualmente) */}
+            <div className="opacity-50 pointer-events-none">
+              <RegisterForm />
+            </div>
+
+            {/* Footer con info adicional */}
+            <div className="text-center pb-8">
+              <p className="text-xs text-gray-500">
+                Al registrarte, aceptas nuestros términos y condiciones
+              </p>
+            </div>
+          </div>
+
+          {/* Popup modal */}
+          <RegisterClosedDialog />
+        </div>
+      </>
+    );
+  }
+
+  // Si el registro está deshabilitado Y suscripciones desactivadas, mostrar mensaje simple
   if (!registrationEnabled) {
     return (
       <>

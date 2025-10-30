@@ -39,6 +39,7 @@ import {
 } from "@/app/actions/config";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { RichTextEditor } from "@/components/shared/RichTextEditor";
 
 type ConfigRow = Database["public"]["Tables"]["config"]["Row"];
 
@@ -133,6 +134,11 @@ export function ConfigTable({ config }: ConfigTableProps) {
   const isStringValue = (key: string): boolean => {
     const stringKeys = ["app_name"];
     return stringKeys.includes(key);
+  };
+
+  const isHTMLValue = (key: string): boolean => {
+    const htmlKeys = ["forms_legal_notice", "legal_page_content"];
+    return htmlKeys.includes(key);
   };
 
   const isSimpleValue = (item: ConfigRow): boolean => {
@@ -333,7 +339,13 @@ export function ConfigTable({ config }: ConfigTableProps) {
         open={!!editingConfig}
         onOpenChange={() => setEditingConfig(null)}
       >
-        <DialogContent className="w-[80vw] max-w-none sm:max-w-none">
+        <DialogContent
+          className={
+            editingConfig && isHTMLValue(editingConfig.key)
+              ? "w-[90vw] max-w-none sm:max-w-none max-h-[90vh] overflow-y-auto"
+              : "w-[80vw] max-w-none sm:max-w-none"
+          }
+        >
           <DialogHeader>
             <DialogTitle>Editar valor de Clave</DialogTitle>
             <DialogDescription>
@@ -353,17 +365,36 @@ export function ConfigTable({ config }: ConfigTableProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="value">Valor (JSON)</Label>
-              <Textarea
-                id="value"
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                rows={10}
-                className="font-mono text-sm"
-              />
-              <p className="text-xs text-muted-foreground">
-                El valor debe ser JSON válido
-              </p>
+              {editingConfig && isHTMLValue(editingConfig.key) ? (
+                <>
+                  <Label htmlFor="value">Contenido HTML</Label>
+                  <div className="border rounded-md min-h-[400px]">
+                    <RichTextEditor
+                      value={editValue ? JSON.parse(editValue) : ""}
+                      onChange={(html) => setEditValue(JSON.stringify(html))}
+                      placeholder="Escribe el contenido aquí..."
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Usa el editor para dar formato al contenido. El HTML se
+                    guardará automáticamente.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Label htmlFor="value">Valor (JSON)</Label>
+                  <Textarea
+                    id="value"
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    rows={10}
+                    className="font-mono text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    El valor debe ser JSON válido
+                  </p>
+                </>
+              )}
             </div>
           </div>
 

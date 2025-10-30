@@ -416,3 +416,33 @@ export async function getSubscriptionPlansFromConfig(
     throw new Error('No se pudieron cargar los planes de suscripción')
   }
 }
+
+/**
+ * Obtiene el texto de información legal para formularios
+ * @returns HTML string con la información legal o texto por defecto
+ */
+export async function getFormsLegalNotice(): Promise<string> {
+  const notice = await getConfigValue<string>('forms_legal_notice')
+
+  if (notice) {
+    return notice
+  }
+
+  // Fallback por defecto
+  return '<p><strong>Información legal</strong></p><ul class="list-disc pl-4"><li class="ml-2"><p><strong>Responsable de los datos</strong>: REDPRESU.</p></li><li class="ml-2"><p><strong>Finalidad de los datos</strong>: recabar información sobre nuestros servicios, gestionar el envío de información y prospección comercial.</p></li><li class="ml-2"><p><strong>Destinatarios</strong>: Empresas proveedoras nacionales y encargados de tratamiento acogidos a privacy shield y personal de Jeyca.</p></li><li class="ml-2"><p><strong>Información adicional</strong>: En la política de privacidad de <a target="_blank" rel="noopener noreferrer" class="text-cyan-600 underline cursor-pointer hover:text-cyan-700" href="http://JEYCA.NET">JEYCA.NET</a> encontrarás información adicional sobre la recopilación y el uso de su información personal por parte de <a target="_blank" rel="noopener noreferrer" class="text-cyan-600 underline cursor-pointer hover:text-cyan-700" href="http://JEYCA.NET">JEYCA.NET</a>, incluida información sobre acceso, conservación, rectificación, eliminación, seguridad y otros temas.</p></li></ul><p></p>'
+}
+
+/**
+ * Obtiene el contenido HTML completo de la página legal
+ * @returns HTML string con el contenido legal completo
+ */
+export async function getLegalPageContent(): Promise<string> {
+  const content = await getConfigValue<string>('legal_page_content')
+
+  if (content) {
+    return content
+  }
+
+  // Fallback por defecto (página legal básica)
+  return '<h1>Aviso Legal</h1><p>En cumplimiento de la Ley 34/2002, de 11 de julio, de Servicios de la Sociedad de la Información y de Comercio Electrónico (LSSI-CE), REDPRESU informa que es titular del sitio web.</p><p>Para más información, contacte con el administrador del sitio.</p>'
+}
