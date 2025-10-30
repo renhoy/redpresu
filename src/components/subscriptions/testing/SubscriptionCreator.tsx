@@ -12,7 +12,7 @@ import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface SubscriptionCreatorProps {
-  companies: Array<{ id: number; nombre_comercial: string; nif: string }>;
+  companies: Array<{ id: number; name: string; nif: string }>;
 }
 
 export function SubscriptionCreator({ companies }: SubscriptionCreatorProps) {
@@ -82,7 +82,7 @@ export function SubscriptionCreator({ companies }: SubscriptionCreatorProps) {
             <SelectContent>
               {companies.map((company) => (
                 <SelectItem key={company.id} value={String(company.id)}>
-                  {company.nombre_comercial} ({company.nif})
+                  {company.name} ({company.nif})
                 </SelectItem>
               ))}
             </SelectContent>

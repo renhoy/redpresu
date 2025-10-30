@@ -450,25 +450,39 @@ export async function deleteTestSubscription(subscriptionId: string): Promise<Ac
 
 /**
  * Obtiene todas las empresas (para selector en UI)
+ * Agrupa por company_id para evitar duplicados (un company_id puede tener múltiples issuers/usuarios)
  */
-export async function getTestCompanies(): Promise<ActionResult<Array<{ id: number; nombre_comercial: string; nif: string }>>> {
+export async function getTestCompanies(): Promise<ActionResult<Array<{ id: number; name: string; nif: string }>>> {
   try {
     const check = await checkSuperadminAndTestingMode();
     if (!check.allowed) {
       return { success: false, error: check.error };
     }
 
+    // Obtener todos los issuers y agrupar por company_id
     const { data, error } = await supabaseAdmin
-      .from('redpresu_emisores')
-      .select('id, nombre_comercial, nif')
-      .order('nombre_comercial');
+      .from('redpresu_issuers')
+      .select('company_id, name, nif')
+      .order('name');
 
     if (error) {
       log.error('[getTestCompanies] Error:', error);
       return { success: false, error: error.message };
     }
 
-    return { success: true, data: data || [] };
+    // Agrupar por company_id (tomar el primero de cada group)
+    const uniqueCompanies = data?.reduce((acc, issuer) => {
+      if (!acc.find((c) => c.id === issuer.company_id)) {
+        acc.push({
+          id: issuer.company_id,
+          name: issuer.name,
+          nif: issuer.nif,
+        });
+      }
+      return acc;
+    }, [] as Array<{ id: number; name: string; nif: string }>);
+
+    return { success: true, data: uniqueCompanies || [] };
   } catch (error) {
     log.error('[getTestCompanies] Error inesperado:', error);
     return { success: false, error: 'Error al obtener empresas' };
