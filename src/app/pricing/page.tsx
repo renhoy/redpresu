@@ -4,6 +4,7 @@ import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Header } from "@/components/layout/Header";
+import { PublicFooter } from "@/components/layout/PublicFooter";
 import {
   getAppName,
   getSubscriptionPlansFromConfig,
@@ -63,7 +64,7 @@ export default async function PricingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-lime-50">
+    <div className="min-h-screen bg-lime-50 flex flex-col">
       <Header
         isAuthenticated={false}
         appName={appName}
@@ -71,7 +72,7 @@ export default async function PricingPage() {
         subscriptionsEnabled={subscriptionsEnabled}
       />
 
-      <div className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-4 py-16 flex-grow">
         {/* Header */}
         <div className="text-center mb-16">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
@@ -154,13 +155,20 @@ export default async function PricingPage() {
         {/* FAQs / Información adicional */}
         <div className="mt-16 text-center">
           <p className="text-gray-600 mb-4">
-            ¿Tienes dudas? <Link href="/login" className="text-lime-600 hover:text-lime-700 font-medium">Contáctanos</Link>
+            ¿Tienes dudas? <Link href="/contact" className="text-lime-600 hover:text-lime-700 font-medium">Contáctanos</Link>
           </p>
           <p className="text-sm text-gray-500">
             Todos los precios son en euros (€) y no incluyen IVA. Puedes cancelar o cambiar tu plan en cualquier momento.
           </p>
         </div>
       </div>
+
+      {/* Footer */}
+      <PublicFooter
+        appName={appName}
+        showPricing={subscriptionsEnabled}
+        showRegister={multiempresa}
+      />
     </div>
   );
 }

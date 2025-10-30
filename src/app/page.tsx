@@ -1,11 +1,12 @@
 import { redirect } from 'next/navigation'
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { FileText, CheckCircle, Clock, Users } from "lucide-react";
+import { CheckCircle, Clock, Users } from "lucide-react";
 import { getServerUser } from '@/lib/auth/server'
 import { getAppName, getSubscriptionsEnabled } from '@/lib/helpers/config-helpers'
 import { isMultiEmpresa } from '@/lib/helpers/app-mode'
 import { Header } from '@/components/layout/Header'
+import { PublicFooter } from '@/components/layout/PublicFooter'
 
 export default async function Index() {
   // Verificar si el usuario ya está autenticado
@@ -112,19 +113,11 @@ export default async function Index() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <div className="w-6 h-6 bg-lime-500 rounded flex items-center justify-center">
-              <FileText className="h-4 w-4 text-white" />
-            </div>
-            <span className="text-xl font-bold">{appName}</span>
-          </div>
-          <p className="text-center text-gray-400">
-            © 2024 {appName}. Todos los derechos reservados.
-          </p>
-        </div>
-      </footer>
+      <PublicFooter
+        appName={appName}
+        showPricing={subscriptionsEnabled}
+        showRegister={multiempresa}
+      />
     </div>
   );
 }

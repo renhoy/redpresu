@@ -1,4 +1,5 @@
 import { Header } from "@/components/layout/Header";
+import { PublicFooter } from "@/components/layout/PublicFooter";
 import { BackButton } from "@/components/shared/BackButton";
 import {
   getAppName,
@@ -19,7 +20,7 @@ export default async function LegalPage() {
   const multiempresa = await isMultiEmpresa();
 
   return (
-    <div className="min-h-screen bg-lime-50">
+    <div className="min-h-screen bg-lime-50 flex flex-col">
       <Header
         isAuthenticated={false}
         appName={appName}
@@ -27,7 +28,7 @@ export default async function LegalPage() {
         subscriptionsEnabled={subscriptionsEnabled}
       />
 
-      <div className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-4 py-16 flex-grow">
         {/* Botón Cancelar Superior */}
         <div className="flex justify-end mb-6">
           <BackButton />
@@ -45,6 +46,13 @@ export default async function LegalPage() {
           <BackButton />
         </div>
       </div>
+
+      {/* Footer */}
+      <PublicFooter
+        appName={appName}
+        showPricing={subscriptionsEnabled}
+        showRegister={multiempresa}
+      />
     </div>
   );
 }
