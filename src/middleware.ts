@@ -60,7 +60,7 @@ export async function middleware(req: NextRequest) {
         console.log(`[Middleware] ${reason} → ${target}`)
         const redirectUrl = req.nextUrl.clone()
         redirectUrl.pathname = target
-        return NextResponse.redirect(redirectUrl)
+        return createRedirectWithCookies(redirectUrl, res)
       }
     }
 
