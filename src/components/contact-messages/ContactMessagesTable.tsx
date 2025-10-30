@@ -85,29 +85,29 @@ export function ContactMessagesTable({ messages }: ContactMessagesTableProps) {
 
   return (
     <>
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Asunto</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead>Fecha</TableHead>
+            <TableRow className="bg-gray-50">
+              <TableHead className="font-semibold">Nombre</TableHead>
+              <TableHead className="font-semibold">Email</TableHead>
+              <TableHead className="font-semibold">Asunto</TableHead>
+              <TableHead className="font-semibold">Estado</TableHead>
+              <TableHead className="font-semibold">Fecha</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {messages.map((message) => (
               <TableRow
                 key={message.id}
-                className="cursor-pointer hover:bg-gray-50"
+                className="cursor-pointer hover:bg-lime-50 transition-colors"
                 onClick={() => handleRowClick(message)}
               >
-                <TableCell className="font-medium">
+                <TableCell className="font-medium text-gray-900">
                   {message.first_name} {message.last_name}
                 </TableCell>
                 <TableCell className="text-gray-600">{message.email}</TableCell>
-                <TableCell className="max-w-xs truncate">{message.subject}</TableCell>
+                <TableCell className="max-w-xs truncate text-gray-700">{message.subject}</TableCell>
                 <TableCell>{getStatusBadge(message.status)}</TableCell>
                 <TableCell className="text-gray-500 text-sm">
                   {formatDate(message.created_at)}

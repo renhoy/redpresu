@@ -13,6 +13,7 @@ import {
   UserCircle,
   Home,
   HelpCircle,
+  Mail,
 } from "lucide-react";
 import LogoutButton from "@/components/auth/LogoutButton";
 import {
@@ -175,6 +176,16 @@ export function UserMenu({
             <DropdownMenuItem className="cursor-pointer">
               <Building2 className="mr-2 h-4 w-4" />
               <span>{userRole === "superadmin" ? "Empresas" : "Empresa"}</span>
+            </DropdownMenuItem>
+          </Link>
+        )}
+
+        {/* Mensajes de Contacto - Solo superadmin */}
+        {userRole === "superadmin" && (
+          <Link href="/contact-messages">
+            <DropdownMenuItem className="cursor-pointer">
+              <Mail className="mr-2 h-4 w-4" />
+              <span>Mensajes</span>
             </DropdownMenuItem>
           </Link>
         )}
