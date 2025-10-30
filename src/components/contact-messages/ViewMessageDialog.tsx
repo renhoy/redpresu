@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
 } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { X, Copy } from "lucide-react";
 import { toast } from "sonner";
 
@@ -64,9 +66,14 @@ ${message.message}`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[80vw] max-h-[80vh] overflow-y-auto p-0">
+      <DialogContent className="max-w-[80vw] max-h-[80vh] overflow-y-auto p-0" hideCloseButton>
+        {/* Título oculto para accesibilidad */}
+        <VisuallyHidden>
+          <DialogTitle>Mensaje de contacto</DialogTitle>
+        </VisuallyHidden>
+
         {/* Header con botón X */}
-        <div className="sticky top-0 bg-white border-b p-4 flex justify-end">
+        <div className="sticky top-0 bg-white border-b p-4 flex justify-end z-10">
           <Button
             variant="ghost"
             size="icon"
