@@ -264,3 +264,34 @@ export async function isFuture(date: Date | string): Promise<boolean> {
 
   return target > now
 }
+
+/**
+ * Añade N días a una fecha
+ *
+ * @param date - Fecha base
+ * @param days - Número de días a añadir (puede ser negativo)
+ * @returns Nueva fecha con los días añadidos
+ */
+export async function addDays(date: Date | string, days: number): Promise<Date> {
+  const baseDate = new Date(date)
+
+  if (isNaN(baseDate.getTime())) {
+    throw new Error(`[addDays] Fecha inválida: ${date}`)
+  }
+
+  const result = new Date(baseDate)
+  result.setDate(result.getDate() + days)
+
+  return result
+}
+
+/**
+ * Resta N días a una fecha
+ *
+ * @param date - Fecha base
+ * @param days - Número de días a restar
+ * @returns Nueva fecha con los días restados
+ */
+export async function subtractDays(date: Date | string, days: number): Promise<Date> {
+  return addDays(date, -days)
+}
