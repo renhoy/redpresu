@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -25,17 +24,23 @@ interface InactiveAccountPopupProps {
 export function InactiveAccountPopup({ message }: InactiveAccountPopupProps) {
   const [open, setOpen] = useState(true);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
   const supabase = createClientComponentClient();
 
   async function handleContact() {
     setLoading(true);
 
-    // Cerrar sesión
-    await supabase.auth.signOut();
+    try {
+      // Cerrar sesión
+      await supabase.auth.signOut();
 
-    // Redirigir a contacto
-    router.push("/contact");
+      // Redirigir a contacto usando window.location para forzar recarga completa
+      // Esto asegura que el middleware vea al usuario como no autenticado
+      window.location.href = "/contact";
+    } catch (error) {
+      console.error("[InactiveAccountPopup] Error al cerrar sesión:", error);
+      // Redirigir de todas formas
+      window.location.href = "/contact";
+    }
   }
 
   return (
