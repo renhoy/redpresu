@@ -46,10 +46,21 @@ export default async function DashboardLayout({
     (user.role === "admin" || user.role === "superadmin");
 
   // Obtener suscripción actual (solo si showSubscriptions)
-  const subscriptionResult = showSubscriptions
-    ? await getCurrentSubscription()
-    : { data: null };
-  const currentPlan = subscriptionResult.data?.plan || "free";
+  // NOTA: Para display en Header, obtenemos la más reciente sin filtrar por status
+  // (útil en testing mode para ver cambios inmediatos)
+  let currentPlan = "free";
+  if (showSubscriptions) {
+    const supabase = createServerComponentClient({ cookies });
+    const { data: subscription } = await supabase
+      .from('redpresu_subscriptions')
+      .select('plan')
+      .eq('company_id', user.company_id)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    currentPlan = subscription?.plan || "free";
+  }
 
   // Obtener nombre de la aplicación desde config
   const appName = await getAppName();
