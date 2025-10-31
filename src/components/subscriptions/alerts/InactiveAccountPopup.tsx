@@ -27,19 +27,29 @@ export function InactiveAccountPopup({ message }: InactiveAccountPopupProps) {
   const supabase = createClientComponentClient();
 
   async function handleContact() {
+    console.log("[InactiveAccountPopup] Iniciando logout y redirect...");
     setLoading(true);
 
     try {
       // Cerrar sesión
-      await supabase.auth.signOut();
+      console.log("[InactiveAccountPopup] Ejecutando signOut()...");
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        console.error("[InactiveAccountPopup] Error en signOut:", error);
+      } else {
+        console.log("[InactiveAccountPopup] SignOut exitoso");
+      }
 
       // Redirigir a contacto usando window.location para forzar recarga completa
-      // Esto asegura que el middleware vea al usuario como no autenticado
-      window.location.href = "/contact";
+      // Añadir parámetro reason=inactive para que middleware permita acceso
+      console.log("[InactiveAccountPopup] Redirigiendo a /contact...");
+      window.location.href = "/contact?reason=subscription_inactive";
     } catch (error) {
-      console.error("[InactiveAccountPopup] Error al cerrar sesión:", error);
+      console.error("[InactiveAccountPopup] Error inesperado:", error);
       // Redirigir de todas formas
-      window.location.href = "/contact";
+      console.log("[InactiveAccountPopup] Redirigiendo a /contact (con error)...");
+      window.location.href = "/contact?reason=subscription_inactive";
     }
   }
 
