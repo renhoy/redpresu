@@ -8,6 +8,7 @@ import { getAppName, getSubscriptionsEnabled, getConfigValue } from "@/lib/helpe
 import { cookies } from "next/headers";
 import { TestingModeBanner } from "@/components/subscriptions/alerts/TestingModeBanner";
 import { SubscriptionStatusManager } from "@/components/subscriptions/alerts/SubscriptionStatusManager";
+import { SubscriptionStatusMonitor } from "@/components/subscriptions/alerts/SubscriptionStatusMonitor";
 
 export default async function DashboardLayout({
   children,
@@ -48,6 +49,7 @@ export default async function DashboardLayout({
   // La lógica de estados (inactive/canceled/past_due/etc.) se maneja en subscription-status-checker
   // IMPORTANTE: Usar supabaseAdmin para bypass RLS (server-side, seguro)
   let currentPlan = "free";
+  let subscriptionStatus = "active"; // Default para el monitor
   if (showSubscriptions) {
     const { supabaseAdmin } = await import('@/lib/supabase/server');
 
@@ -65,6 +67,11 @@ export default async function DashboardLayout({
     // Debug: Log resultado de suscripción
     console.log('[Layout] Subscription found:', subscription);
     console.log('[Layout] Error:', error);
+
+    // Guardar el status para el monitor
+    if (subscription) {
+      subscriptionStatus = subscription.status;
+    }
 
     // Si status es canceled o past_due, forzar a FREE (según nueva lógica)
     if (subscription && (subscription.status === 'canceled' || subscription.status === 'past_due')) {
@@ -121,6 +128,14 @@ export default async function DashboardLayout({
 
       {/* Subscription Status Manager (Inactive/Canceled/PastDue/Trialing banners) */}
       <SubscriptionStatusManager />
+
+      {/* Subscription Status Monitor (polling para detectar cambios en tiempo real) */}
+      {showSubscriptions && (
+        <SubscriptionStatusMonitor
+          companyId={user.company_id}
+          initialStatus={subscriptionStatus}
+        />
+      )}
 
       <TourDetector />
       <main>{children}</main>
