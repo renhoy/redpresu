@@ -23,6 +23,7 @@ import {
   FileText,
   Eye,
   Copy,
+  Lock,
 } from "lucide-react";
 import { formatDate } from "@/lib/validators";
 import {
@@ -32,6 +33,7 @@ import {
   unsetTariffAsTemplate,
   duplicateTariff,
 } from "@/app/actions/tariffs";
+import { shouldMarkResourceInactive } from "@/lib/helpers/subscription-status-checker";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,6 +61,8 @@ interface TariffCardProps {
   currentUserRole?: string;
   selected?: boolean;
   onSelectChange?: (checked: boolean) => void;
+  resourceIndex?: number;
+  currentPlan?: string;
 }
 
 const statusColors = {
@@ -73,12 +77,17 @@ export function TariffCard({
   currentUserRole,
   selected = false,
   onSelectChange,
+  resourceIndex = 0,
+  currentPlan = 'free',
 }: TariffCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [isTogglingTemplate, setIsTogglingTemplate] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
+
+  // Determinar si este recurso debe mostrarse como inactivo por límites del plan
+  const isLimitedByPlan = shouldMarkResourceInactive(resourceIndex, 'tariffs', currentPlan);
 
   const handleStatusChange = async (newStatus: string) => {
     try {
@@ -169,7 +178,7 @@ export function TariffCard({
 
   return (
     <>
-      <Card className="w-full mb-4">
+      <Card className={`w-full mb-4 ${isLimitedByPlan ? 'opacity-50 bg-gray-50' : ''}`}>
         <CardContent className="p-3">
           {/* Vista Mobile: Layout vertical */}
           <div className="md:hidden space-y-3">
@@ -184,9 +193,17 @@ export function TariffCard({
               )}
               <FileText className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-base truncate">
-                  {tariff.title}
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-base truncate">
+                    {tariff.title}
+                  </h3>
+                  {isLimitedByPlan && (
+                    <Badge variant="outline" className="border-orange-500 text-orange-700 gap-1">
+                      <Lock className="h-3 w-3" />
+                      <span className="text-xs">Upgrade</span>
+                    </Badge>
+                  )}
+                </div>
                 <p className="text-sm text-muted-foreground line-clamp-2">
                   {tariff.description || "Sin descripción"}
                 </p>
@@ -262,7 +279,7 @@ export function TariffCard({
 
             {/* Acciones Mobile */}
             <div className="flex justify-end flex-wrap gap-1.5 border-t pt-3">
-              {tariff.status === "Activa" ? (
+              {tariff.status === "Activa" && !isLimitedByPlan ? (
                 <Button
                   data-tour="btn-crear-presupuesto"
                   variant="outline"
@@ -314,6 +331,7 @@ export function TariffCard({
                   variant={tariff.is_template ? "default" : "outline"}
                   size="sm"
                   onClick={() => setShowTemplateDialog(true)}
+                  disabled={isLimitedByPlan}
                   className="min-w-[20%] h-7 px-2 gap-1.5 text-xs"
                 >
                   <Star
@@ -325,25 +343,38 @@ export function TariffCard({
                 </Button>
               )}
 
-              <Button
-                data-tour="btn-editar"
-                variant="outline"
-                size="sm"
-                asChild
-                className="min-w-[20%] h-7 px-2 gap-1.5 text-xs"
-              >
-                <Link href={`/tariffs/edit/${tariff.id}`}>
+              {!isLimitedByPlan ? (
+                <Button
+                  data-tour="btn-editar"
+                  variant="outline"
+                  size="sm"
+                  asChild
+                  className="min-w-[20%] h-7 px-2 gap-1.5 text-xs"
+                >
+                  <Link href={`/tariffs/edit/${tariff.id}`}>
+                    <Pencil className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span>Editar</span>
+                  </Link>
+                </Button>
+              ) : (
+                <Button
+                  data-tour="btn-editar"
+                  variant="outline"
+                  size="sm"
+                  disabled
+                  className="min-w-[20%] h-7 px-2 gap-1.5 text-xs"
+                >
                   <Pencil className="h-3.5 w-3.5 flex-shrink-0" />
                   <span>Editar</span>
-                </Link>
-              </Button>
+                </Button>
+              )}
 
               <Button
                 data-tour="btn-duplicar"
                 variant="outline"
                 size="sm"
                 onClick={handleDuplicate}
-                disabled={isDuplicating}
+                disabled={isDuplicating || isLimitedByPlan}
                 className="min-w-[20%] h-7 px-2 gap-1.5 text-xs"
               >
                 <Copy className="h-3.5 w-3.5 flex-shrink-0" />
@@ -355,6 +386,7 @@ export function TariffCard({
                 variant="outline"
                 size="sm"
                 onClick={() => setShowDeleteDialog(true)}
+                disabled={isLimitedByPlan}
                 className="border-destructive text-destructive hover:bg-destructive/10 min-w-[20%] h-7 px-2 gap-1.5 text-xs"
               >
                 <Trash2 className="h-3.5 w-3.5 flex-shrink-0" />
@@ -379,9 +411,17 @@ export function TariffCard({
 
               {/* Columna 1: Título y Descripción */}
               <div className="space-y-1">
-                <h3 className="font-semibold text-base truncate">
-                  {tariff.title}
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-base truncate">
+                    {tariff.title}
+                  </h3>
+                  {isLimitedByPlan && (
+                    <Badge variant="outline" className="border-orange-500 text-orange-700 gap-1">
+                      <Lock className="h-3 w-3" />
+                      <span className="text-xs">Upgrade</span>
+                    </Badge>
+                  )}
+                </div>
                 <p className="text-sm text-muted-foreground line-clamp-2">
                   {tariff.description || "Sin descripción"}
                 </p>
@@ -451,7 +491,7 @@ export function TariffCard({
 
             {/* Acciones Tablet */}
             <div className="flex flex-wrap justify-end gap-1.5 border-t pt-3">
-              {tariff.status === "Activa" ? (
+              {tariff.status === "Activa" && !isLimitedByPlan ? (
                 <Button
                   data-tour="btn-crear-presupuesto"
                   variant="outline"
@@ -503,6 +543,7 @@ export function TariffCard({
                   variant={tariff.is_template ? "default" : "outline"}
                   size="sm"
                   onClick={() => setShowTemplateDialog(true)}
+                  disabled={isLimitedByPlan}
                   className="min-w-[20%] h-7 px-2 gap-1.5 text-xs"
                 >
                   <Star
@@ -514,25 +555,38 @@ export function TariffCard({
                 </Button>
               )}
 
-              <Button
-                data-tour="btn-editar"
-                variant="outline"
-                size="sm"
-                asChild
-                className="min-w-[20%] h-7 px-2 gap-1.5 text-xs"
-              >
-                <Link href={`/tariffs/edit/${tariff.id}`}>
+              {!isLimitedByPlan ? (
+                <Button
+                  data-tour="btn-editar"
+                  variant="outline"
+                  size="sm"
+                  asChild
+                  className="min-w-[20%] h-7 px-2 gap-1.5 text-xs"
+                >
+                  <Link href={`/tariffs/edit/${tariff.id}`}>
+                    <Pencil className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span>Editar</span>
+                  </Link>
+                </Button>
+              ) : (
+                <Button
+                  data-tour="btn-editar"
+                  variant="outline"
+                  size="sm"
+                  disabled
+                  className="min-w-[20%] h-7 px-2 gap-1.5 text-xs"
+                >
                   <Pencil className="h-3.5 w-3.5 flex-shrink-0" />
                   <span>Editar</span>
-                </Link>
-              </Button>
+                </Button>
+              )}
 
               <Button
                 data-tour="btn-duplicar"
                 variant="outline"
                 size="sm"
                 onClick={handleDuplicate}
-                disabled={isDuplicating}
+                disabled={isDuplicating || isLimitedByPlan}
                 className="min-w-[20%] h-7 px-2 gap-1.5 text-xs"
               >
                 <Copy className="h-3.5 w-3.5 flex-shrink-0" />
@@ -544,6 +598,7 @@ export function TariffCard({
                 variant="outline"
                 size="sm"
                 onClick={() => setShowDeleteDialog(true)}
+                disabled={isLimitedByPlan}
                 className="border-destructive text-destructive hover:bg-destructive/10 min-w-[20%] h-7 px-2 gap-1.5 text-xs"
               >
                 <Trash2 className="h-3.5 w-3.5 flex-shrink-0" />

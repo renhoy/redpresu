@@ -52,6 +52,7 @@ interface TariffListProps {
   users?: User[];
   currentUserRole?: string;
   tariffId?: string;
+  currentPlan?: string;
 }
 
 // Verificar si puede importar (admin/superadmin)
@@ -65,6 +66,7 @@ export function TariffList({
   users = [],
   currentUserRole,
   tariffId,
+  currentPlan = 'free',
 }: TariffListProps) {
   const router = useRouter();
   const [tariffs, setTariffs] = useState<Tariff[]>(initialTariffs);
@@ -452,7 +454,7 @@ export function TariffList({
                 </tr>
               </thead>
               <tbody>
-                {filteredTariffs.map((tariff) => (
+                {filteredTariffs.map((tariff, index) => (
                   <TariffRow
                     key={tariff.id}
                     tariff={tariff}
@@ -463,6 +465,8 @@ export function TariffList({
                     onSelectChange={(checked) =>
                       handleSelectTariff(tariff.id, checked)
                     }
+                    resourceIndex={index}
+                    currentPlan={currentPlan}
                   />
                 ))}
               </tbody>
@@ -498,7 +502,7 @@ export function TariffList({
               )}
           </div>
         ) : (
-          filteredTariffs.map((tariff) => (
+          filteredTariffs.map((tariff, index) => (
             <TariffCard
               key={tariff.id}
               tariff={tariff}
@@ -507,6 +511,8 @@ export function TariffList({
               currentUserRole={currentUserRole}
               selected={selectedTariffs.includes(tariff.id)}
               onSelectChange={(checked) => handleSelectTariff(tariff.id, checked)}
+              resourceIndex={index}
+              currentPlan={currentPlan}
             />
           ))
         )}

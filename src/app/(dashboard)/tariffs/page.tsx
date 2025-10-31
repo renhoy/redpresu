@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { TariffList } from '@/components/tariffs/TariffList'
 import { getTariffs } from '@/app/actions/tariffs'
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { checkSubscriptionStatus } from '@/lib/helpers/subscription-status-checker'
 
 interface PageProps {
   searchParams: Promise<{ tariff_id?: string }>
@@ -40,6 +41,10 @@ export default async function TariffsPage({ searchParams }: PageProps) {
     users = data || []
   }
 
+  // Obtener estado de suscripción para determinar límites
+  const subscriptionStatus = await checkSubscriptionStatus()
+  const currentPlan = subscriptionStatus.currentPlan
+
   return (
     <div className="min-h-screen bg-lime-50">
       <div className="container mx-auto px-4 py-6">
@@ -54,6 +59,7 @@ export default async function TariffsPage({ searchParams }: PageProps) {
             users={users}
             currentUserRole={user.role}
             tariffId={tariff_id}
+            currentPlan={currentPlan}
           />
         </Suspense>
       </div>
