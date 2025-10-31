@@ -15,7 +15,6 @@ import {
   HelpCircle,
   Mail,
   FlaskConical,
-  Clock,
   MailCheck,
 } from "lucide-react";
 import LogoutButton from "@/components/auth/LogoutButton";
@@ -204,12 +203,6 @@ export function UserMenu({
               <DropdownMenuItem className="cursor-pointer">
                 <FlaskConical className="mr-2 h-4 w-4" />
                 <span>Suscripciones</span>
-              </DropdownMenuItem>
-            </Link>
-            <Link href="/settings/time-testing">
-              <DropdownMenuItem className="cursor-pointer">
-                <Clock className="mr-2 h-4 w-4" />
-                <span>Tiempo Mock</span>
               </DropdownMenuItem>
             </Link>
             <Link href="/settings/mock-emails">
