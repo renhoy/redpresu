@@ -32,6 +32,7 @@ export interface ActionResult<T = unknown> {
 
 /**
  * Obtiene la suscripción activa de la empresa del usuario
+ * NOTA: Usa supabaseAdmin para bypass RLS (server-side, seguro)
  */
 export async function getCurrentSubscription(): Promise<ActionResult<Subscription>> {
   try {
@@ -42,10 +43,8 @@ export async function getCurrentSubscription(): Promise<ActionResult<Subscriptio
       return { success: false, error: 'No autenticado' };
     }
 
-    const cookieStore = await cookies();
-    const supabase = createServerActionClient({ cookies: () => cookieStore });
-
-    const { data, error } = await supabase
+    // Usar supabaseAdmin para bypass RLS
+    const { data, error } = await supabaseAdmin
       .from('redpresu_subscriptions')
       .select('*')
       .eq('company_id', user.company_id)
