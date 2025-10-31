@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Zap, Crown, Loader2 } from "lucide-react";
+import { Check, CreditCard, Zap, Crown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   createCheckoutSession,
@@ -147,12 +147,12 @@ export function SubscriptionsClient({
       <div className="container mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-lime-600 mb-2">
+          <h1 className="text-3xl font-bold text-black flex items-center gap-2">
+            <CreditCard className="h-6 w-6" />
             Suscripciones
           </h1>
-          <p className="text-sm text-lime-600">
-            Gestiona tu plan de suscripción y límites
-          </p>
+
+          <p className="text-sm">Gestiona tu plan de suscripción y límites</p>
         </div>
 
         {/* Plan Actual */}

@@ -31,8 +31,9 @@ export interface ActionResult<T = unknown> {
 // ============================================
 
 /**
- * Obtiene la suscripción activa de la empresa del usuario
- * NOTA: Usa supabaseAdmin para bypass RLS (server-side, seguro)
+ * Obtiene la suscripción más reciente de la empresa del usuario
+ * NOTA: NO filtra por status, obtiene la más reciente (puede ser active, inactive, canceled, etc.)
+ * IMPORTANTE: Usa supabaseAdmin para bypass RLS (server-side, seguro)
  */
 export async function getCurrentSubscription(): Promise<ActionResult<Subscription>> {
   try {
@@ -44,11 +45,13 @@ export async function getCurrentSubscription(): Promise<ActionResult<Subscriptio
     }
 
     // Usar supabaseAdmin para bypass RLS
+    // NO filtrar por status - obtener la más reciente
     const { data, error } = await supabaseAdmin
       .from('redpresu_subscriptions')
       .select('*')
       .eq('company_id', user.company_id)
-      .eq('status', 'active')
+      .order('updated_at', { ascending: false })
+      .limit(1)
       .single();
 
     if (error) {
@@ -77,31 +80,7 @@ export async function getCurrentSubscription(): Promise<ActionResult<Subscriptio
       return { success: false, error: error.message };
     }
 
-    log.info('[getCurrentSubscription] Suscripción encontrada:', data.plan);
-
-    // Verificar si la suscripción está expirada (auto-expire + create FREE)
-    const expired = await isSubscriptionExpired(data);
-
-    // Si se detectó que expiró, volver a consultar para obtener la suscripción FREE recién creada
-    if (expired) {
-      log.info('[getCurrentSubscription] Suscripción expiró, reobteniendo suscripción FREE...');
-
-      const { data: newData, error: newError } = await supabaseAdmin
-        .from('redpresu_subscriptions')
-        .select('*')
-        .eq('company_id', user.company_id)
-        .eq('status', 'active')
-        .single();
-
-      if (newError) {
-        log.error('[getCurrentSubscription] Error reobteniendo suscripción FREE:', newError);
-        // Retornar la expirada si falla
-        return { success: true, data };
-      }
-
-      log.info('[getCurrentSubscription] Suscripción FREE obtenida:', newData.plan);
-      return { success: true, data: newData };
-    }
+    log.info('[getCurrentSubscription] Suscripción encontrada:', data.plan, 'status:', data.status);
 
     return { success: true, data };
   } catch (error) {

@@ -31,6 +31,17 @@ COMMENT ON SCHEMA public IS 'standard public schema';
 
 
 --
+-- Name: contact_message_status; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.contact_message_status AS ENUM (
+    'nuevo',
+    'leido',
+    'respondido'
+);
+
+
+--
 -- Name: check_plan_limit(integer, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -319,6 +330,34 @@ $$;
 --
 
 CREATE FUNCTION public.update_budget_notes_updated_at() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: update_contact_message_note_updated_at(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.update_contact_message_note_updated_at() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: update_contact_message_updated_at(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.update_contact_message_updated_at() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
@@ -1130,6 +1169,69 @@ COMMENT ON COLUMN public.redpresu_config.is_system IS 'Si es true, solo superadm
 
 
 --
+-- Name: redpresu_contact_message_notes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.redpresu_contact_message_notes (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    contact_message_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    content text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: TABLE redpresu_contact_message_notes; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.redpresu_contact_message_notes IS 'Notas internas asociadas a mensajes de contacto (solo superadmin)';
+
+
+--
+-- Name: redpresu_contact_messages; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.redpresu_contact_messages (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    first_name text NOT NULL,
+    last_name text NOT NULL,
+    email text NOT NULL,
+    subject text NOT NULL,
+    message text NOT NULL,
+    status public.contact_message_status DEFAULT 'nuevo'::public.contact_message_status NOT NULL,
+    notes text,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now()
+);
+
+
+--
+-- Name: redpresu_mock_emails; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.redpresu_mock_emails (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    type text NOT NULL,
+    to_email text NOT NULL,
+    subject text NOT NULL,
+    body text NOT NULL,
+    data jsonb,
+    company_id integer,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT redpresu_mock_emails_type_check CHECK ((type = ANY (ARRAY['payment_failed'::text, 'expiring_soon'::text, 'expired'::text, 'grace_period_ending'::text, 'upgraded'::text, 'canceled'::text, 'custom'::text])))
+);
+
+
+--
+-- Name: TABLE redpresu_mock_emails; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.redpresu_mock_emails IS 'Emails mockeados para testing (NODE_ENV !== production). Se guardan en lugar de enviarse.';
+
+
+--
 -- Name: redpresu_subscriptions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1551,6 +1653,30 @@ ALTER TABLE ONLY public.redpresu_company_deletion_log
 
 
 --
+-- Name: redpresu_contact_message_notes redpresu_contact_message_notes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.redpresu_contact_message_notes
+    ADD CONSTRAINT redpresu_contact_message_notes_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: redpresu_contact_messages redpresu_contact_messages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.redpresu_contact_messages
+    ADD CONSTRAINT redpresu_contact_messages_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: redpresu_mock_emails redpresu_mock_emails_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.redpresu_mock_emails
+    ADD CONSTRAINT redpresu_mock_emails_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: redpresu_subscriptions redpresu_subscriptions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1734,6 +1860,41 @@ CREATE INDEX idx_config_is_system ON public.redpresu_config USING btree (is_syst
 
 
 --
+-- Name: idx_contact_message_notes_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_contact_message_notes_created_at ON public.redpresu_contact_message_notes USING btree (created_at DESC);
+
+
+--
+-- Name: idx_contact_message_notes_message_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_contact_message_notes_message_id ON public.redpresu_contact_message_notes USING btree (contact_message_id);
+
+
+--
+-- Name: idx_contact_messages_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_contact_messages_created_at ON public.redpresu_contact_messages USING btree (created_at DESC);
+
+
+--
+-- Name: idx_contact_messages_email; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_contact_messages_email ON public.redpresu_contact_messages USING btree (email);
+
+
+--
+-- Name: idx_contact_messages_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_contact_messages_status ON public.redpresu_contact_messages USING btree (status);
+
+
+--
 -- Name: idx_deletion_log_company_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1850,6 +2011,34 @@ CREATE INDEX idx_issuers_type ON public.redpresu_issuers USING btree (type);
 --
 
 CREATE INDEX idx_issuers_user_id ON public.redpresu_issuers USING btree (user_id);
+
+
+--
+-- Name: idx_mock_emails_company_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_mock_emails_company_id ON public.redpresu_mock_emails USING btree (company_id);
+
+
+--
+-- Name: idx_mock_emails_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_mock_emails_created_at ON public.redpresu_mock_emails USING btree (created_at DESC);
+
+
+--
+-- Name: idx_mock_emails_to_email; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_mock_emails_to_email ON public.redpresu_mock_emails USING btree (to_email);
+
+
+--
+-- Name: idx_mock_emails_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_mock_emails_type ON public.redpresu_mock_emails USING btree (type);
 
 
 --
@@ -2007,6 +2196,20 @@ CREATE TRIGGER trigger_tariffs_updated_at BEFORE UPDATE ON public.redpresu_tarif
 
 
 --
+-- Name: redpresu_contact_message_notes trigger_update_contact_message_note_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trigger_update_contact_message_note_updated_at BEFORE UPDATE ON public.redpresu_contact_message_notes FOR EACH ROW EXECUTE FUNCTION public.update_contact_message_note_updated_at();
+
+
+--
+-- Name: redpresu_contact_messages trigger_update_contact_message_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trigger_update_contact_message_updated_at BEFORE UPDATE ON public.redpresu_contact_messages FOR EACH ROW EXECUTE FUNCTION public.update_contact_message_updated_at();
+
+
+--
 -- Name: redpresu_users trigger_users_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -2067,6 +2270,22 @@ ALTER TABLE ONLY public.redpresu_budgets
 
 ALTER TABLE ONLY public.redpresu_budgets
     ADD CONSTRAINT budgets_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE RESTRICT;
+
+
+--
+-- Name: redpresu_contact_message_notes contact_message_notes_message_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.redpresu_contact_message_notes
+    ADD CONSTRAINT contact_message_notes_message_fkey FOREIGN KEY (contact_message_id) REFERENCES public.redpresu_contact_messages(id) ON DELETE CASCADE;
+
+
+--
+-- Name: redpresu_contact_message_notes contact_message_notes_user_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.redpresu_contact_message_notes
+    ADD CONSTRAINT contact_message_notes_user_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 
 
 --
@@ -2245,6 +2464,60 @@ CREATE POLICY config_select_policy ON public.redpresu_config FOR SELECT USING ((
 
 
 --
+-- Name: redpresu_contact_message_notes contact_message_notes_delete_superadmin; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY contact_message_notes_delete_superadmin ON public.redpresu_contact_message_notes FOR DELETE USING ((EXISTS ( SELECT 1
+   FROM public.redpresu_users
+  WHERE ((redpresu_users.id = auth.uid()) AND (redpresu_users.role = 'superadmin'::text)))));
+
+
+--
+-- Name: redpresu_contact_message_notes contact_message_notes_insert_superadmin; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY contact_message_notes_insert_superadmin ON public.redpresu_contact_message_notes FOR INSERT WITH CHECK (((auth.uid() IS NOT NULL) AND (user_id = auth.uid()) AND (EXISTS ( SELECT 1
+   FROM public.redpresu_users
+  WHERE ((redpresu_users.id = auth.uid()) AND (redpresu_users.role = 'superadmin'::text))))));
+
+
+--
+-- Name: redpresu_contact_message_notes contact_message_notes_select_superadmin; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY contact_message_notes_select_superadmin ON public.redpresu_contact_message_notes FOR SELECT USING ((EXISTS ( SELECT 1
+   FROM public.redpresu_users
+  WHERE ((redpresu_users.id = auth.uid()) AND (redpresu_users.role = 'superadmin'::text)))));
+
+
+--
+-- Name: redpresu_contact_message_notes contact_message_notes_update_superadmin; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY contact_message_notes_update_superadmin ON public.redpresu_contact_message_notes FOR UPDATE USING (((user_id = auth.uid()) AND (EXISTS ( SELECT 1
+   FROM public.redpresu_users
+  WHERE ((redpresu_users.id = auth.uid()) AND (redpresu_users.role = 'superadmin'::text)))))) WITH CHECK ((user_id = auth.uid()));
+
+
+--
+-- Name: redpresu_contact_messages contact_messages_select_superadmin; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY contact_messages_select_superadmin ON public.redpresu_contact_messages FOR SELECT USING ((EXISTS ( SELECT 1
+   FROM public.redpresu_users
+  WHERE ((redpresu_users.id = auth.uid()) AND (redpresu_users.role = 'superadmin'::text)))));
+
+
+--
+-- Name: redpresu_contact_messages contact_messages_update_superadmin; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY contact_messages_update_superadmin ON public.redpresu_contact_messages FOR UPDATE USING ((EXISTS ( SELECT 1
+   FROM public.redpresu_users
+  WHERE ((redpresu_users.id = auth.uid()) AND (redpresu_users.role = 'superadmin'::text)))));
+
+
+--
 -- Name: redpresu_company_deletion_log deletion_log_insert_superadmin; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -2401,6 +2674,31 @@ CREATE POLICY issuers_update_superadmin ON public.redpresu_issuers FOR UPDATE TO
 
 
 --
+-- Name: redpresu_mock_emails mock_emails_delete_superadmin; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY mock_emails_delete_superadmin ON public.redpresu_mock_emails FOR DELETE USING ((EXISTS ( SELECT 1
+   FROM public.redpresu_users
+  WHERE ((redpresu_users.id = auth.uid()) AND (redpresu_users.role = 'superadmin'::text)))));
+
+
+--
+-- Name: redpresu_mock_emails mock_emails_insert_system; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY mock_emails_insert_system ON public.redpresu_mock_emails FOR INSERT WITH CHECK (true);
+
+
+--
+-- Name: redpresu_mock_emails mock_emails_select_superadmin; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY mock_emails_select_superadmin ON public.redpresu_mock_emails FOR SELECT USING ((EXISTS ( SELECT 1
+   FROM public.redpresu_users
+  WHERE ((redpresu_users.id = auth.uid()) AND (redpresu_users.role = 'superadmin'::text)))));
+
+
+--
 -- Name: redpresu_budget_notes; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -2437,10 +2735,28 @@ ALTER TABLE public.redpresu_company_deletion_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.redpresu_config ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: redpresu_contact_message_notes; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.redpresu_contact_message_notes ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: redpresu_contact_messages; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.redpresu_contact_messages ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: redpresu_issuers; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.redpresu_issuers ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: redpresu_mock_emails; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.redpresu_mock_emails ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: redpresu_subscriptions; Type: ROW SECURITY; Schema: public; Owner: -

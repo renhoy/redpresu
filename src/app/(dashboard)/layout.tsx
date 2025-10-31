@@ -7,8 +7,7 @@ import { isMultiEmpresa } from "@/lib/helpers/app-mode";
 import { getAppName, getSubscriptionsEnabled, getConfigValue } from "@/lib/helpers/config-helpers";
 import { cookies } from "next/headers";
 import { TestingModeBanner } from "@/components/subscriptions/alerts/TestingModeBanner";
-import { BlockedAccountBanner } from "@/components/subscriptions/alerts/BlockedAccountBanner";
-import { ExpirationBanner } from "@/components/subscriptions/alerts/ExpirationBanner";
+import { SubscriptionStatusManager } from "@/components/subscriptions/alerts/SubscriptionStatusManager";
 
 export default async function DashboardLayout({
   children,
@@ -45,8 +44,8 @@ export default async function DashboardLayout({
     (user.role === "admin" || user.role === "superadmin");
 
   // Obtener suscripción actual (solo si showSubscriptions)
-  // NOTA: Filtrar por status='active' porque cuando expira una suscripción,
-  // isSubscriptionExpired() crea automáticamente una nueva suscripción FREE activa
+  // NOTA: Obtener la más reciente sin filtrar por status
+  // La lógica de estados (inactive/canceled/past_due/etc.) se maneja en subscription-status-checker
   // IMPORTANTE: Usar supabaseAdmin para bypass RLS (server-side, seguro)
   let currentPlan = "free";
   if (showSubscriptions) {
@@ -59,7 +58,6 @@ export default async function DashboardLayout({
       .from('redpresu_subscriptions')
       .select('plan, company_id, status, updated_at')
       .eq('company_id', user.company_id)
-      .eq('status', 'active') // Filtrar por active (siempre hay una activa, FREE si expiró)
       .order('updated_at', { ascending: false })
       .limit(1)
       .single();
@@ -68,7 +66,12 @@ export default async function DashboardLayout({
     console.log('[Layout] Subscription found:', subscription);
     console.log('[Layout] Error:', error);
 
-    currentPlan = subscription?.plan || "free";
+    // Si status es canceled o past_due, forzar a FREE (según nueva lógica)
+    if (subscription && (subscription.status === 'canceled' || subscription.status === 'past_due')) {
+      currentPlan = "free";
+    } else {
+      currentPlan = subscription?.plan || "free";
+    }
   }
 
   // Obtener nombre de la aplicación desde config
@@ -116,11 +119,8 @@ export default async function DashboardLayout({
         testingMode={testingMode}
       />
 
-      {/* Blocked Account Banner (crítico - cuenta bloqueada) */}
-      <BlockedAccountBanner />
-
-      {/* Expiration Banner (advertencias antes de expirar o en grace period) */}
-      <ExpirationBanner />
+      {/* Subscription Status Manager (Inactive/Canceled/PastDue/Trialing banners) */}
+      <SubscriptionStatusManager />
 
       <TourDetector />
       <main>{children}</main>

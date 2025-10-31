@@ -14,7 +14,7 @@ export function TestingHeader({ mockTime, currentTime }: TestingHeaderProps) {
     <div className="mb-6">
       {/* Título */}
       <h1 className="text-3xl font-bold flex items-center justify-center md:justify-start gap-2 mb-2">
-        <FlaskConical className="h-6 w-6 text-orange-600" />
+        <FlaskConical className="h-6 w-6" />
         Testing de Suscripciones
       </h1>
 
@@ -23,7 +23,9 @@ export function TestingHeader({ mockTime, currentTime }: TestingHeaderProps) {
         <Clock className="h-4 w-4" />
         {isMockActive ? (
           <div className="flex items-center gap-2">
-            <span className="font-medium text-orange-600">Mock Time Activo:</span>
+            <span className="font-medium text-orange-600">
+              Mock Time Activo:
+            </span>
             <span className="font-mono bg-orange-100 px-2 py-1 rounded text-orange-800">
               {new Date(mockTime).toLocaleString("es-ES")}
             </span>
