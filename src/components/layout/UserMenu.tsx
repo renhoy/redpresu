@@ -14,6 +14,9 @@ import {
   Home,
   HelpCircle,
   Mail,
+  FlaskConical,
+  Clock,
+  MailCheck,
 } from "lucide-react";
 import LogoutButton from "@/components/auth/LogoutButton";
 import {
@@ -188,6 +191,35 @@ export function UserMenu({
               <span>Mensajes</span>
             </DropdownMenuItem>
           </Link>
+        )}
+
+        {/* Testing Tools - Solo superadmin */}
+        {userRole === "superadmin" && (
+          <>
+            <DropdownMenuSeparator />
+            <div className="px-2 py-1">
+              <p className="text-xs text-muted-foreground font-semibold">Testing</p>
+            </div>
+            <Link href="/settings/subscriptions-testing">
+              <DropdownMenuItem className="cursor-pointer">
+                <FlaskConical className="mr-2 h-4 w-4" />
+                <span>Suscripciones</span>
+              </DropdownMenuItem>
+            </Link>
+            <Link href="/settings/time-testing">
+              <DropdownMenuItem className="cursor-pointer">
+                <Clock className="mr-2 h-4 w-4" />
+                <span>Tiempo Mock</span>
+              </DropdownMenuItem>
+            </Link>
+            <Link href="/settings/mock-emails">
+              <DropdownMenuItem className="cursor-pointer">
+                <MailCheck className="mr-2 h-4 w-4" />
+                <span>Emails Mock</span>
+              </DropdownMenuItem>
+            </Link>
+            <DropdownMenuSeparator />
+          </>
         )}
 
         <Link href="/users">
