@@ -4,6 +4,7 @@ import type { NextRequest } from 'next/server'
 import { isMultiEmpresa } from '@/lib/helpers/app-mode'
 import { getSubscriptionsEnabled } from '@/lib/helpers/config-helpers'
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { handleInactiveAccountRedirect } from '@/lib/helpers/subscription-middleware'
 
 /**
  * Helper para crear redirección preservando cookies de Supabase
@@ -153,6 +154,22 @@ export async function middleware(req: NextRequest) {
         redirectUrl.searchParams.set('reason', 'inactive')
         // No usar createRedirectWithCookies aquí - queremos que pierda la sesión
         return NextResponse.redirect(redirectUrl)
+      }
+
+      // Verificar si la suscripción está INACTIVE (cuenta sancionada)
+      // Solo verificar si suscripciones están habilitadas y es modo multiempresa
+      if (multiempresa && subscriptionsEnabled) {
+        const inactiveRedirect = await handleInactiveAccountRedirect(
+          req,
+          res,
+          session.user.id,
+          pathname
+        )
+
+        if (inactiveRedirect) {
+          console.log(`[Middleware] Subscription INACTIVE: redirigiendo a /dashboard`)
+          return inactiveRedirect
+        }
       }
 
       // /companies - Solo superadmin en modo multiempresa
