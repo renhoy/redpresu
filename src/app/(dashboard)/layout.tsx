@@ -62,7 +62,7 @@ export default async function DashboardLayout({
       .eq('company_id', user.company_id)
       .order('updated_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     // Debug: Log resultado de suscripción
     console.log('[Layout] Subscription found:', subscription);

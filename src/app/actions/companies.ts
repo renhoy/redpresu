@@ -341,6 +341,23 @@ export async function createCompany(data: CreateCompanyData): Promise<ActionResu
 
     log.info("[createCompany] Issuer creado con ID:", newIssuer.id);
 
+    // 3. Crear suscripción FREE por defecto
+    const { error: subscriptionError } = await supabaseAdmin
+      .from("redpresu_subscriptions")
+      .insert({
+        company_id: companyId,
+        plan: "free",
+        status: "active",
+      });
+
+    if (subscriptionError) {
+      log.error("[createCompany] Error creando suscripción FREE:", subscriptionError);
+      // No fallar completamente, solo advertir
+      log.warn("[createCompany] Empresa creada sin suscripción, se puede añadir después");
+    } else {
+      log.info("[createCompany] Suscripción FREE creada para company_id:", companyId);
+    }
+
     // Revalidar rutas
     revalidatePath("/companies");
 
