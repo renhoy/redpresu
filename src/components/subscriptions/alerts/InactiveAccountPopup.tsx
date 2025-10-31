@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { signOutAndRedirectToContact } from "@/app/actions/auth";
 
 interface InactiveAccountPopupProps {
   message: string;
@@ -24,32 +24,20 @@ interface InactiveAccountPopupProps {
 export function InactiveAccountPopup({ message }: InactiveAccountPopupProps) {
   const [open, setOpen] = useState(true);
   const [loading, setLoading] = useState(false);
-  const supabase = createClientComponentClient();
 
   async function handleContact() {
-    console.log("[InactiveAccountPopup] Iniciando logout y redirect...");
+    console.log("[InactiveAccountPopup] Ejecutando logout y redirect a /contact...");
     setLoading(true);
 
     try {
-      // Cerrar sesión
-      console.log("[InactiveAccountPopup] Ejecutando signOut()...");
-      const { error } = await supabase.auth.signOut();
+      // Llamar al Server Action que hace logout y redirige a /contact
+      await signOutAndRedirectToContact();
 
-      if (error) {
-        console.error("[InactiveAccountPopup] Error en signOut:", error);
-      } else {
-        console.log("[InactiveAccountPopup] SignOut exitoso");
-      }
-
-      // Redirigir a contacto usando window.location para forzar recarga completa
-      // Añadir parámetro reason=inactive para que middleware permita acceso
-      console.log("[InactiveAccountPopup] Redirigiendo a /contact...");
-      window.location.href = "/contact?reason=subscription_inactive";
+      // El Server Action maneja el redirect automáticamente
+      // No se ejecutará código después del redirect
     } catch (error) {
-      console.error("[InactiveAccountPopup] Error inesperado:", error);
-      // Redirigir de todas formas
-      console.log("[InactiveAccountPopup] Redirigiendo a /contact (con error)...");
-      window.location.href = "/contact?reason=subscription_inactive";
+      console.error("[InactiveAccountPopup] Error durante logout:", error);
+      setLoading(false);
     }
   }
 

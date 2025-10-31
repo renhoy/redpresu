@@ -161,6 +161,58 @@ export async function signOutAction(): Promise<SignInResult> {
 }
 
 /**
+ * Server Action para cerrar sesión y redirigir a /contact
+ * Usado específicamente en InactiveAccountPopup cuando cuenta está desactivada
+ */
+export async function signOutAndRedirectToContact(): Promise<SignInResult> {
+  try {
+    const cookieStore = await cookies()
+    const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+    log.info('[signOutAndRedirectToContact] Iniciando logout...')
+
+    // Verificar si hay una sesión activa antes de intentar cerrar sesión
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+    if (sessionError) {
+      log.error('[signOutAndRedirectToContact] Session check error:', sessionError)
+      // Aún así intentar cerrar sesión por si acaso
+    }
+
+    if (!session) {
+      log.info('[signOutAndRedirectToContact] No hay sesión activa, redirigiendo a /contact')
+      redirect('/contact')
+      return { success: true }
+    }
+
+    const { error } = await supabase.auth.signOut()
+
+    if (error) {
+      log.error('[signOutAndRedirectToContact] Logout error:', error)
+      // Redirigir a /contact de todas formas
+      redirect('/contact')
+      return { success: false, error: `Error al cerrar sesión: ${error.message}` }
+    }
+
+    log.info('[signOutAndRedirectToContact] Logout exitoso, redirigiendo a /contact')
+    redirect('/contact')
+
+  } catch (error) {
+    log.error('[signOutAndRedirectToContact] Error crítico en logout:', error)
+
+    // Si es un redirect, Next.js lo maneja automáticamente
+    if (error && typeof error === 'object' && 'digest' in error) {
+      throw error
+    }
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error desconocido al cerrar sesión'
+    }
+  }
+}
+
+/**
  * Interfaz para datos de registro
  */
 export interface RegisterData {
