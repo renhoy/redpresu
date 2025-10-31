@@ -193,14 +193,16 @@ export async function createTestSubscription(
       return { success: false, error: check.error };
     }
 
-    // Validar company_id existe
-    const { data: company, error: companyError } = await supabaseAdmin
-      .from('redpresu_emisores')
-      .select('id')
-      .eq('id', params.companyId)
+    // Validar company_id existe (verificar que hay al menos un issuer con ese company_id)
+    const { data: issuer, error: issuerError } = await supabaseAdmin
+      .from('redpresu_issuers')
+      .select('company_id')
+      .eq('company_id', params.companyId)
+      .limit(1)
       .single();
 
-    if (companyError || !company) {
+    if (issuerError || !issuer) {
+      log.error('[createTestSubscription] Empresa no encontrada:', params.companyId, issuerError);
       return { success: false, error: 'Empresa no encontrada' };
     }
 
