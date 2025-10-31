@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import { Trash2, FastForward, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { Subscription } from "@/lib/types/database";
+import { TestSubscriptionCard } from "./TestSubscriptionCard";
 
 interface TestSubscriptionsTableProps {
   subscriptions: Array<Subscription & { company_name?: string }>;
@@ -189,187 +190,202 @@ export function TestSubscriptionsTable({ subscriptions, currentTime }: TestSubsc
   }
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader className="bg-indigo-50">
-            <TableRow>
-              <TableHead className="min-w-[150px]">Empresa</TableHead>
-              <TableHead className="min-w-[120px]">Plan</TableHead>
-              <TableHead className="min-w-[140px]">Estado</TableHead>
-              <TableHead className="min-w-[100px] hidden md:table-cell">Fecha Fin</TableHead>
-              <TableHead className="min-w-[150px] hidden lg:table-cell">Estado Expiración</TableHead>
-              <TableHead className="text-right min-w-[180px]">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {subscriptions.map((sub) => {
-              const expirationStatus = getExpirationStatus(sub);
-              const isLoading = loadingId === sub.id;
-
-              return (
-                <TableRow key={sub.id} className="bg-white border-t hover:bg-lime-100/100">
-                  {/* Empresa */}
-                  <TableCell className="font-medium">
-                    <div className="flex flex-col">
-                      <span className="text-sm">{sub.company_name || `Empresa ${sub.company_id}`}</span>
-                      <span className="text-xs text-muted-foreground">({sub.company_id})</span>
-                    </div>
-                  </TableCell>
-
-                  {/* Plan - Selector */}
-                  <TableCell>
-                    <Select
-                      value={sub.plan}
-                      onValueChange={(value) => handlePlanChange(sub.id, value)}
-                      disabled={isLoading}
-                    >
-                      <SelectTrigger className="w-[120px] bg-white">
-                        <SelectValue>
-                          <Badge className={planColors[sub.plan as keyof typeof planColors] || "bg-gray-200 text-gray-700"}>
-                            {sub.plan.toUpperCase()}
-                          </Badge>
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent className="bg-white">
-                        <SelectItem value="free">
-                          <Badge className="bg-gray-100 text-gray-800">FREE</Badge>
-                        </SelectItem>
-                        <SelectItem value="pro">
-                          <Badge className="bg-lime-100 text-lime-800">PRO</Badge>
-                        </SelectItem>
-                        <SelectItem value="enterprise">
-                          <Badge className="bg-yellow-100 text-yellow-800">ENTERPRISE</Badge>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-
-                  {/* Estado - Selector */}
-                  <TableCell>
-                    <Select
-                      value={sub.status}
-                      onValueChange={(value) => handleStatusChange(sub.id, value)}
-                      disabled={isLoading}
-                    >
-                      <SelectTrigger className="w-[140px] bg-white">
-                        <SelectValue>
-                          <Badge className={statusColors[sub.status as keyof typeof statusColors] || "bg-gray-200 text-gray-700"}>
-                            {sub.status === 'active' ? 'Activa' :
-                             sub.status === 'inactive' ? 'Inactiva' :
-                             sub.status === 'canceled' ? 'Cancelada' :
-                             sub.status === 'past_due' ? 'Pago Atrasado' :
-                             sub.status === 'trialing' ? 'Prueba' : sub.status}
-                          </Badge>
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent className="bg-white">
-                        <SelectItem value="active">
-                          <Badge className="bg-green-100 text-green-800">Activa</Badge>
-                        </SelectItem>
-                        <SelectItem value="inactive">
-                          <Badge className="bg-red-100 text-red-800">Inactiva</Badge>
-                        </SelectItem>
-                        <SelectItem value="canceled">
-                          <Badge className="bg-gray-200 text-gray-700">Cancelada</Badge>
-                        </SelectItem>
-                        <SelectItem value="past_due">
-                          <Badge className="bg-yellow-100 text-yellow-800">Pago Atrasado</Badge>
-                        </SelectItem>
-                        <SelectItem value="trialing">
-                          <Badge className="bg-blue-100 text-blue-800">Prueba</Badge>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-
-                  {/* Fecha Fin */}
-                  <TableCell className="text-sm hidden md:table-cell">
-                    {sub.current_period_end ? (
-                      <span className="font-mono">
-                        {new Date(sub.current_period_end).toLocaleDateString("es-ES", {
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "numeric",
-                        })}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-
-                  {/* Estado Expiración */}
-                  <TableCell className="hidden lg:table-cell">
-                    <span className={`text-sm font-medium ${expirationStatus.color}`}>
-                      {expirationStatus.text}
-                    </span>
-                  </TableCell>
-
-                  {/* Acciones */}
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1 flex-wrap">
-                      {/* Expirar ahora */}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleExpire(sub.id)}
-                        disabled={isLoading || sub.plan === 'free'}
-                        title="Marcar como expirada (hace 10 días)"
-                        className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white h-9 px-2 min-w-[44px] touch-manipulation"
-                      >
-                        <AlertCircle className="h-4 w-4" />
-                      </Button>
-
-                      {/* Extender 30 días */}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleExtend(sub.id, 30)}
-                        disabled={isLoading || sub.plan === 'free'}
-                        title="Extender 30 días"
-                        className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white h-9 px-2 min-w-[44px] touch-manipulation"
-                      >
-                        <FastForward className="h-4 w-4" />
-                      </Button>
-
-                      {/* Eliminar */}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(sub.id)}
-                        disabled={isLoading}
-                        title="Eliminar"
-                        className="border-red-500 text-red-600 hover:bg-red-500 hover:text-white h-9 px-2 min-w-[44px] touch-manipulation"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+    <>
+      {/* Vista Mobile/Tablet - Cards */}
+      <div className="lg:hidden space-y-4">
+        {subscriptions.map((sub) => (
+          <TestSubscriptionCard
+            key={sub.id}
+            subscription={sub}
+            currentTime={currentTime}
+            onRefresh={() => router.refresh()}
+          />
+        ))}
       </div>
 
-      {/* Leyenda de acciones */}
-      <div className="border-t p-4 bg-slate-50">
-        <p className="text-xs text-muted-foreground mb-2">Acciones rápidas:</p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="h-3 w-3" />
-            <span>Expirar ahora (hace 10 días)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <FastForward className="h-3 w-3" />
-            <span>Extender 30 días desde fecha fin</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Trash2 className="h-3 w-3" />
-            <span>Eliminar suscripción de prueba</span>
+      {/* Vista Desktop - Table */}
+      <div className="hidden lg:block bg-white rounded-lg shadow overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader className="bg-indigo-50">
+              <TableRow>
+                <TableHead className="min-w-[150px]">Empresa</TableHead>
+                <TableHead className="min-w-[120px]">Plan</TableHead>
+                <TableHead className="min-w-[140px]">Estado</TableHead>
+                <TableHead className="min-w-[100px]">Fecha Fin</TableHead>
+                <TableHead className="min-w-[150px]">Estado Expiración</TableHead>
+                <TableHead className="text-right min-w-[180px]">Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {subscriptions.map((sub) => {
+                const expirationStatus = getExpirationStatus(sub);
+                const isLoading = loadingId === sub.id;
+
+                return (
+                  <TableRow key={sub.id} className="bg-white border-t hover:bg-lime-100/100">
+                    {/* Empresa */}
+                    <TableCell className="font-medium">
+                      <div className="flex flex-col">
+                        <span className="text-sm">{sub.company_name || `Empresa ${sub.company_id}`}</span>
+                        <span className="text-xs text-muted-foreground">({sub.company_id})</span>
+                      </div>
+                    </TableCell>
+
+                    {/* Plan - Selector */}
+                    <TableCell>
+                      <Select
+                        value={sub.plan}
+                        onValueChange={(value) => handlePlanChange(sub.id, value)}
+                        disabled={isLoading}
+                      >
+                        <SelectTrigger className="w-[120px] bg-white">
+                          <SelectValue>
+                            <Badge className={planColors[sub.plan as keyof typeof planColors] || "bg-gray-200 text-gray-700"}>
+                              {sub.plan.toUpperCase()}
+                            </Badge>
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent className="bg-white">
+                          <SelectItem value="free">
+                            <Badge className="bg-gray-100 text-gray-800">FREE</Badge>
+                          </SelectItem>
+                          <SelectItem value="pro">
+                            <Badge className="bg-lime-100 text-lime-800">PRO</Badge>
+                          </SelectItem>
+                          <SelectItem value="enterprise">
+                            <Badge className="bg-yellow-100 text-yellow-800">ENTERPRISE</Badge>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+
+                    {/* Estado - Selector */}
+                    <TableCell>
+                      <Select
+                        value={sub.status}
+                        onValueChange={(value) => handleStatusChange(sub.id, value)}
+                        disabled={isLoading}
+                      >
+                        <SelectTrigger className="w-[140px] bg-white">
+                          <SelectValue>
+                            <Badge className={statusColors[sub.status as keyof typeof statusColors] || "bg-gray-200 text-gray-700"}>
+                              {sub.status === 'active' ? 'Activa' :
+                               sub.status === 'inactive' ? 'Inactiva' :
+                               sub.status === 'canceled' ? 'Cancelada' :
+                               sub.status === 'past_due' ? 'Pago Atrasado' :
+                               sub.status === 'trialing' ? 'Prueba' : sub.status}
+                            </Badge>
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent className="bg-white">
+                          <SelectItem value="active">
+                            <Badge className="bg-green-100 text-green-800">Activa</Badge>
+                          </SelectItem>
+                          <SelectItem value="inactive">
+                            <Badge className="bg-red-100 text-red-800">Inactiva</Badge>
+                          </SelectItem>
+                          <SelectItem value="canceled">
+                            <Badge className="bg-gray-200 text-gray-700">Cancelada</Badge>
+                          </SelectItem>
+                          <SelectItem value="past_due">
+                            <Badge className="bg-yellow-100 text-yellow-800">Pago Atrasado</Badge>
+                          </SelectItem>
+                          <SelectItem value="trialing">
+                            <Badge className="bg-blue-100 text-blue-800">Prueba</Badge>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+
+                    {/* Fecha Fin */}
+                    <TableCell className="text-sm">
+                      {sub.current_period_end ? (
+                        <span className="font-mono">
+                          {new Date(sub.current_period_end).toLocaleDateString("es-ES", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          })}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+
+                    {/* Estado Expiración */}
+                    <TableCell>
+                      <span className={`text-sm font-medium ${expirationStatus.color}`}>
+                        {expirationStatus.text}
+                      </span>
+                    </TableCell>
+
+                    {/* Acciones */}
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1 flex-wrap">
+                        {/* Expirar ahora */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleExpire(sub.id)}
+                          disabled={isLoading || sub.plan === 'free'}
+                          title="Marcar como expirada (hace 10 días)"
+                          className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white h-9 px-2 min-w-[44px] touch-manipulation"
+                        >
+                          <AlertCircle className="h-4 w-4" />
+                        </Button>
+
+                        {/* Extender 30 días */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleExtend(sub.id, 30)}
+                          disabled={isLoading || sub.plan === 'free'}
+                          title="Extender 30 días"
+                          className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white h-9 px-2 min-w-[44px] touch-manipulation"
+                        >
+                          <FastForward className="h-4 w-4" />
+                        </Button>
+
+                        {/* Eliminar */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(sub.id)}
+                          disabled={isLoading}
+                          title="Eliminar"
+                          className="border-red-500 text-red-600 hover:bg-red-500 hover:text-white h-9 px-2 min-w-[44px] touch-manipulation"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Leyenda de acciones */}
+        <div className="border-t p-4 bg-slate-50">
+          <p className="text-xs text-muted-foreground mb-2">Acciones rápidas:</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-3 w-3" />
+              <span>Expirar ahora (hace 10 días)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <FastForward className="h-3 w-3" />
+              <span>Extender 30 días desde fecha fin</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Trash2 className="h-3 w-3" />
+              <span>Eliminar suscripción de prueba</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
