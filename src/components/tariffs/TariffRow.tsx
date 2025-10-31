@@ -11,6 +11,7 @@ import {
   Star,
   Eye,
   Copy,
+  Lock,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,7 @@ import {
 } from "@/app/actions/tariffs";
 import { Database } from "@/lib/types/database.types";
 import { toast } from "sonner";
+import { shouldMarkResourceInactive } from "@/lib/helpers/subscription-status-checker";
 
 type Tariff = Database["public"]["Tables"]["tariffs"]["Row"] & {
   creator?: {
@@ -65,6 +67,8 @@ interface TariffRowProps {
   currentUserRole?: string;
   selected?: boolean;
   onSelectChange?: (checked: boolean) => void;
+  resourceIndex?: number;
+  currentPlan?: string;
 }
 
 export function TariffRow({
@@ -74,12 +78,17 @@ export function TariffRow({
   currentUserRole,
   selected = false,
   onSelectChange,
+  resourceIndex = 0,
+  currentPlan = 'free',
 }: TariffRowProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [isTogglingTemplate, setIsTogglingTemplate] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
+
+  // Determinar si este recurso debe mostrarse como inactivo por límites del plan
+  const isLimitedByPlan = shouldMarkResourceInactive(resourceIndex, 'tariffs', currentPlan);
 
   const handleStatusChange = async (newStatus: string) => {
     try {
@@ -175,7 +184,7 @@ export function TariffRow({
 
   return (
     <>
-      <TableRow className="bg-white border-t hover:bg-lime-100/100">
+      <TableRow className={`bg-white border-t hover:bg-lime-100/100 ${isLimitedByPlan ? 'opacity-50 bg-gray-50' : ''}`}>
         {/* Checkbox */}
         <TableCell className="p-4 w-12">
           <Checkbox checked={selected} onCheckedChange={onSelectChange} />
@@ -189,6 +198,12 @@ export function TariffRow({
               <span className="font-medium" style={{ fontSize: "12px" }}>
                 {tariff.title}
               </span>
+              {isLimitedByPlan && (
+                <Badge variant="outline" className="border-orange-500 text-orange-700 gap-1 ml-1">
+                  <Lock className="h-3 w-3" />
+                  <span className="text-xs">Upgrade</span>
+                </Badge>
+              )}
             </div>
             <div
               className="text-muted-foreground max-w-xs truncate"
@@ -204,7 +219,7 @@ export function TariffRow({
           <div className="flex items-center justify-center gap-2">
             <Tooltip>
               <TooltipTrigger asChild>
-                {tariff.status === "Activa" ? (
+                {tariff.status === "Activa" && !isLimitedByPlan ? (
                   <Button
                     variant="outline"
                     size="sm"
@@ -344,6 +359,7 @@ export function TariffRow({
                       variant={tariff.is_template ? "default" : "outline"}
                       size="icon"
                       onClick={() => setShowTemplateDialog(true)}
+                      disabled={isLimitedByPlan}
                       className={
                         tariff.is_template
                           ? "bg-lime-500 hover:bg-lime-600"
@@ -369,16 +385,27 @@ export function TariffRow({
 
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    asChild
-                    className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
-                  >
-                    <Link href={`/tariffs/edit/${tariff.id}`}>
+                  {!isLimitedByPlan ? (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      asChild
+                      className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
+                    >
+                      <Link href={`/tariffs/edit/${tariff.id}`}>
+                        <Pencil className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      disabled
+                      className="border-lime-500 text-lime-600"
+                    >
                       <Pencil className="h-4 w-4" />
-                    </Link>
-                  </Button>
+                    </Button>
+                  )}
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Editar</p>
@@ -391,7 +418,7 @@ export function TariffRow({
                     variant="outline"
                     size="icon"
                     onClick={handleDuplicate}
-                    disabled={isDuplicating}
+                    disabled={isDuplicating || isLimitedByPlan}
                     className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
                   >
                     <Copy className="h-4 w-4" />
@@ -408,6 +435,7 @@ export function TariffRow({
                     variant="outline"
                     size="icon"
                     onClick={() => setShowDeleteDialog(true)}
+                    disabled={isLimitedByPlan}
                     className="border-red-500 text-red-600 hover:bg-red-500 hover:text-white"
                   >
                     <Trash2 className="h-4 w-4" />
