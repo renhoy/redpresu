@@ -494,7 +494,7 @@ export async function getTestCompanies(): Promise<ActionResult<Array<{ id: numbe
 /**
  * Obtiene todas las suscripciones (para tabla en UI)
  */
-export async function getAllTestSubscriptions(): Promise<ActionResult<Subscription[]>> {
+export async function getAllTestSubscriptions(): Promise<ActionResult<Array<Subscription & { company_name?: string }>>> {
   try {
     const check = await checkSuperadminAndTestingMode();
     if (!check.allowed) {
@@ -511,7 +511,23 @@ export async function getAllTestSubscriptions(): Promise<ActionResult<Subscripti
       return { success: false, error: error.message };
     }
 
-    return { success: true, data: data || [] };
+    // Obtener nombres de empresas para cada suscripción
+    const subscriptionsWithNames = await Promise.all(
+      (data || []).map(async (sub) => {
+        const { data: issuer } = await supabaseAdmin
+          .from('redpresu_issuers')
+          .select('name')
+          .eq('company_id', sub.company_id)
+          .single();
+
+        return {
+          ...sub,
+          company_name: issuer?.name || `Empresa ${sub.company_id}`,
+        };
+      })
+    );
+
+    return { success: true, data: subscriptionsWithNames };
   } catch (error) {
     log.error('[getAllTestSubscriptions] Error inesperado:', error);
     return { success: false, error: 'Error al obtener suscripciones' };

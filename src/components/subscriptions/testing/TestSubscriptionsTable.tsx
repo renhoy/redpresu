@@ -12,9 +12,17 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   expireSubscription,
   extendSubscription,
   deleteTestSubscription,
+  updateTestSubscription,
 } from "@/app/actions/testing/subscriptions-testing";
 import { toast } from "sonner";
 import { Trash2, FastForward, AlertCircle } from "lucide-react";
@@ -22,7 +30,7 @@ import { useRouter } from "next/navigation";
 import type { Subscription } from "@/lib/types/database";
 
 interface TestSubscriptionsTableProps {
-  subscriptions: Subscription[];
+  subscriptions: Array<Subscription & { company_name?: string }>;
   currentTime: string;
 }
 
@@ -86,6 +94,46 @@ export function TestSubscriptionsTable({ subscriptions, currentTime }: TestSubsc
     }
   }
 
+  async function handleStatusChange(subscriptionId: string, newStatus: string) {
+    setLoadingId(subscriptionId);
+
+    try {
+      const result = await updateTestSubscription({
+        subscriptionId,
+        status: newStatus as 'active' | 'canceled' | 'past_due' | 'trialing' | 'inactive',
+      });
+
+      if (result.success) {
+        toast.success(`Estado actualizado a ${newStatus}`);
+        router.refresh();
+      } else {
+        toast.error(result.error || "Error al actualizar estado");
+      }
+    } finally {
+      setLoadingId(null);
+    }
+  }
+
+  async function handlePlanChange(subscriptionId: string, newPlan: string) {
+    setLoadingId(subscriptionId);
+
+    try {
+      const result = await updateTestSubscription({
+        subscriptionId,
+        plan: newPlan as 'free' | 'pro' | 'enterprise',
+      });
+
+      if (result.success) {
+        toast.success(`Plan actualizado a ${newPlan.toUpperCase()}`);
+        router.refresh();
+      } else {
+        toast.error(result.error || "Error al actualizar plan");
+      }
+    } finally {
+      setLoadingId(null);
+    }
+  }
+
   // Helper: Calcular estado de expiración
   function getExpirationStatus(sub: Subscription) {
     if (sub.plan === 'free') {
@@ -116,23 +164,19 @@ export function TestSubscriptionsTable({ subscriptions, currentTime }: TestSubsc
     }
   }
 
-  // Helper: Status badge
-  function getStatusBadge(status: string) {
-    const variants: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; text: string }> = {
-      active: { variant: 'default', text: 'Activa' },
-      canceled: { variant: 'destructive', text: 'Cancelada' },
-      past_due: { variant: 'outline', text: 'Pago Atrasado' },
-      trialing: { variant: 'secondary', text: 'Prueba' },
-    };
+  const statusColors = {
+    active: "bg-green-100 text-green-800",
+    inactive: "bg-red-100 text-red-800",
+    canceled: "bg-gray-200 text-gray-700",
+    past_due: "bg-yellow-100 text-yellow-800",
+    trialing: "bg-blue-100 text-blue-800",
+  };
 
-    const config = variants[status] || { variant: 'secondary' as const, text: status };
-
-    return (
-      <Badge variant={config.variant}>
-        {config.text}
-      </Badge>
-    );
-  }
+  const planColors = {
+    free: "bg-gray-100 text-gray-800",
+    pro: "bg-lime-100 text-lime-800",
+    enterprise: "bg-yellow-100 text-yellow-800",
+  };
 
   // Sin suscripciones
   if (subscriptions.length === 0) {
@@ -148,9 +192,9 @@ export function TestSubscriptionsTable({ subscriptions, currentTime }: TestSubsc
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <div className="overflow-x-auto">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-indigo-50">
             <TableRow>
-              <TableHead>Empresa ID</TableHead>
+              <TableHead>Empresa</TableHead>
               <TableHead>Plan</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead>Fecha Fin</TableHead>
@@ -164,22 +208,79 @@ export function TestSubscriptionsTable({ subscriptions, currentTime }: TestSubsc
               const isLoading = loadingId === sub.id;
 
               return (
-                <TableRow key={sub.id}>
-                  {/* Empresa ID */}
-                  <TableCell className="font-mono text-sm">
-                    {sub.company_id}
+                <TableRow key={sub.id} className="bg-white border-t hover:bg-lime-100/100">
+                  {/* Empresa */}
+                  <TableCell className="font-medium">
+                    <div className="flex flex-col">
+                      <span className="text-sm">{sub.company_name || `Empresa ${sub.company_id}`}</span>
+                      <span className="text-xs text-muted-foreground">({sub.company_id})</span>
+                    </div>
                   </TableCell>
 
-                  {/* Plan */}
+                  {/* Plan - Selector */}
                   <TableCell>
-                    <Badge variant="outline" className="uppercase">
-                      {sub.plan}
-                    </Badge>
+                    <Select
+                      value={sub.plan}
+                      onValueChange={(value) => handlePlanChange(sub.id, value)}
+                      disabled={isLoading}
+                    >
+                      <SelectTrigger className="w-[120px] bg-white">
+                        <SelectValue>
+                          <Badge className={planColors[sub.plan as keyof typeof planColors] || "bg-gray-200 text-gray-700"}>
+                            {sub.plan.toUpperCase()}
+                          </Badge>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        <SelectItem value="free">
+                          <Badge className="bg-gray-100 text-gray-800">FREE</Badge>
+                        </SelectItem>
+                        <SelectItem value="pro">
+                          <Badge className="bg-lime-100 text-lime-800">PRO</Badge>
+                        </SelectItem>
+                        <SelectItem value="enterprise">
+                          <Badge className="bg-yellow-100 text-yellow-800">ENTERPRISE</Badge>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                   </TableCell>
 
-                  {/* Estado */}
+                  {/* Estado - Selector */}
                   <TableCell>
-                    {getStatusBadge(sub.status)}
+                    <Select
+                      value={sub.status}
+                      onValueChange={(value) => handleStatusChange(sub.id, value)}
+                      disabled={isLoading}
+                    >
+                      <SelectTrigger className="w-[140px] bg-white">
+                        <SelectValue>
+                          <Badge className={statusColors[sub.status as keyof typeof statusColors] || "bg-gray-200 text-gray-700"}>
+                            {sub.status === 'active' ? 'Activa' :
+                             sub.status === 'inactive' ? 'Inactiva' :
+                             sub.status === 'canceled' ? 'Cancelada' :
+                             sub.status === 'past_due' ? 'Pago Atrasado' :
+                             sub.status === 'trialing' ? 'Prueba' : sub.status}
+                          </Badge>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        <SelectItem value="active">
+                          <Badge className="bg-green-100 text-green-800">Activa</Badge>
+                        </SelectItem>
+                        <SelectItem value="inactive">
+                          <Badge className="bg-red-100 text-red-800">Inactiva</Badge>
+                        </SelectItem>
+                        <SelectItem value="canceled">
+                          <Badge className="bg-gray-200 text-gray-700">Cancelada</Badge>
+                        </SelectItem>
+                        <SelectItem value="past_due">
+                          <Badge className="bg-yellow-100 text-yellow-800">Pago Atrasado</Badge>
+                        </SelectItem>
+                        <SelectItem value="trialing">
+                          <Badge className="bg-blue-100 text-blue-800">Prueba</Badge>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                   </TableCell>
 
                   {/* Fecha Fin */}
@@ -209,35 +310,38 @@ export function TestSubscriptionsTable({ subscriptions, currentTime }: TestSubsc
                     <div className="flex items-center justify-end gap-1">
                       {/* Expirar ahora */}
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         onClick={() => handleExpire(sub.id)}
                         disabled={isLoading || sub.plan === 'free'}
                         title="Marcar como expirada (hace 10 días)"
+                        className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white h-9 px-2"
                       >
                         <AlertCircle className="h-4 w-4" />
                       </Button>
 
                       {/* Extender 30 días */}
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         onClick={() => handleExtend(sub.id, 30)}
                         disabled={isLoading || sub.plan === 'free'}
                         title="Extender 30 días"
+                        className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white h-9 px-2"
                       >
                         <FastForward className="h-4 w-4" />
                       </Button>
 
                       {/* Eliminar */}
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         onClick={() => handleDelete(sub.id)}
                         disabled={isLoading}
                         title="Eliminar"
+                        className="border-red-500 text-red-600 hover:bg-red-500 hover:text-white h-9 px-2"
                       >
-                        <Trash2 className="h-4 w-4 text-red-600" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </TableCell>
