@@ -194,12 +194,12 @@ export function TestSubscriptionsTable({ subscriptions, currentTime }: TestSubsc
         <Table>
           <TableHeader className="bg-indigo-50">
             <TableRow>
-              <TableHead>Empresa</TableHead>
-              <TableHead>Plan</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead>Fecha Fin</TableHead>
-              <TableHead>Estado Expiración</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
+              <TableHead className="min-w-[150px]">Empresa</TableHead>
+              <TableHead className="min-w-[120px]">Plan</TableHead>
+              <TableHead className="min-w-[140px]">Estado</TableHead>
+              <TableHead className="min-w-[100px] hidden md:table-cell">Fecha Fin</TableHead>
+              <TableHead className="min-w-[150px] hidden lg:table-cell">Estado Expiración</TableHead>
+              <TableHead className="text-right min-w-[180px]">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -284,7 +284,7 @@ export function TestSubscriptionsTable({ subscriptions, currentTime }: TestSubsc
                   </TableCell>
 
                   {/* Fecha Fin */}
-                  <TableCell className="text-sm">
+                  <TableCell className="text-sm hidden md:table-cell">
                     {sub.current_period_end ? (
                       <span className="font-mono">
                         {new Date(sub.current_period_end).toLocaleDateString("es-ES", {
@@ -299,7 +299,7 @@ export function TestSubscriptionsTable({ subscriptions, currentTime }: TestSubsc
                   </TableCell>
 
                   {/* Estado Expiración */}
-                  <TableCell>
+                  <TableCell className="hidden lg:table-cell">
                     <span className={`text-sm font-medium ${expirationStatus.color}`}>
                       {expirationStatus.text}
                     </span>
@@ -307,7 +307,7 @@ export function TestSubscriptionsTable({ subscriptions, currentTime }: TestSubsc
 
                   {/* Acciones */}
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
+                    <div className="flex items-center justify-end gap-1 flex-wrap">
                       {/* Expirar ahora */}
                       <Button
                         variant="outline"
@@ -315,7 +315,7 @@ export function TestSubscriptionsTable({ subscriptions, currentTime }: TestSubsc
                         onClick={() => handleExpire(sub.id)}
                         disabled={isLoading || sub.plan === 'free'}
                         title="Marcar como expirada (hace 10 días)"
-                        className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white h-9 px-2"
+                        className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white h-9 px-2 min-w-[44px] touch-manipulation"
                       >
                         <AlertCircle className="h-4 w-4" />
                       </Button>
@@ -327,7 +327,7 @@ export function TestSubscriptionsTable({ subscriptions, currentTime }: TestSubsc
                         onClick={() => handleExtend(sub.id, 30)}
                         disabled={isLoading || sub.plan === 'free'}
                         title="Extender 30 días"
-                        className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white h-9 px-2"
+                        className="border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white h-9 px-2 min-w-[44px] touch-manipulation"
                       >
                         <FastForward className="h-4 w-4" />
                       </Button>
@@ -339,7 +339,7 @@ export function TestSubscriptionsTable({ subscriptions, currentTime }: TestSubsc
                         onClick={() => handleDelete(sub.id)}
                         disabled={isLoading}
                         title="Eliminar"
-                        className="border-red-500 text-red-600 hover:bg-red-500 hover:text-white h-9 px-2"
+                        className="border-red-500 text-red-600 hover:bg-red-500 hover:text-white h-9 px-2 min-w-[44px] touch-manipulation"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
