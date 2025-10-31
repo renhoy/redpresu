@@ -45,8 +45,8 @@ export default async function DashboardLayout({
     (user.role === "admin" || user.role === "superadmin");
 
   // Obtener suscripción actual (solo si showSubscriptions)
-  // NOTA: Para display en Header, obtenemos la más reciente sin filtrar por status
-  // (útil en testing mode para ver cambios inmediatos)
+  // NOTA: Filtrar por status='active' porque cuando expira una suscripción,
+  // isSubscriptionExpired() crea automáticamente una nueva suscripción FREE activa
   // IMPORTANTE: Usar supabaseAdmin para bypass RLS (server-side, seguro)
   let currentPlan = "free";
   if (showSubscriptions) {
@@ -59,6 +59,7 @@ export default async function DashboardLayout({
       .from('redpresu_subscriptions')
       .select('plan, company_id, status, updated_at')
       .eq('company_id', user.company_id)
+      .eq('status', 'active') // Filtrar por active (siempre hay una activa, FREE si expiró)
       .order('updated_at', { ascending: false })
       .limit(1)
       .single();

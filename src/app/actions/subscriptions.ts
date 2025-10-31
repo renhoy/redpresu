@@ -78,6 +78,31 @@ export async function getCurrentSubscription(): Promise<ActionResult<Subscriptio
     }
 
     log.info('[getCurrentSubscription] Suscripción encontrada:', data.plan);
+
+    // Verificar si la suscripción está expirada (auto-expire + create FREE)
+    const expired = await isSubscriptionExpired(data);
+
+    // Si se detectó que expiró, volver a consultar para obtener la suscripción FREE recién creada
+    if (expired) {
+      log.info('[getCurrentSubscription] Suscripción expiró, reobteniendo suscripción FREE...');
+
+      const { data: newData, error: newError } = await supabaseAdmin
+        .from('redpresu_subscriptions')
+        .select('*')
+        .eq('company_id', user.company_id)
+        .eq('status', 'active')
+        .single();
+
+      if (newError) {
+        log.error('[getCurrentSubscription] Error reobteniendo suscripción FREE:', newError);
+        // Retornar la expirada si falla
+        return { success: true, data };
+      }
+
+      log.info('[getCurrentSubscription] Suscripción FREE obtenida:', newData.plan);
+      return { success: true, data: newData };
+    }
+
     return { success: true, data };
   } catch (error) {
     log.error('[getCurrentSubscription] Error inesperado:', error);
@@ -91,7 +116,7 @@ export async function getCurrentSubscription(): Promise<ActionResult<Subscriptio
 
 /**
  * Verifica si una suscripción ha expirado
- * Si está expirada y status='active', la marca como 'expired' automáticamente
+ * Si está expirada y status='active', la marca como 'canceled' y crea suscripción FREE
  *
  * @param subscription - Suscripción a verificar
  * @returns true si la suscripción está expirada
@@ -111,23 +136,49 @@ export async function isSubscriptionExpired(subscription: Subscription): Promise
     // Verificar si la fecha de fin ya pasó
     const isExpired = await isPast(subscription.current_period_end);
 
-    // Si está expirada y status aún es 'active', actualizar a 'expired'
+    // Si está expirada y status aún es 'active', actualizar a 'canceled' y crear FREE
     if (isExpired && subscription.status === 'active') {
       log.warn('[isSubscriptionExpired] Suscripción expirada detectada:', subscription.id);
 
-      // Actualizar status en BD (usar supabaseAdmin para bypasear RLS)
-      const { error } = await supabaseAdmin
+      const now = await getCurrentTime();
+
+      // 1. Actualizar suscripción expirada a 'canceled'
+      const { error: updateError } = await supabaseAdmin
         .from('redpresu_subscriptions')
         .update({
           status: 'canceled',
-          updated_at: (await getCurrentTime()).toISOString(),
+          updated_at: now.toISOString(),
         })
         .eq('id', subscription.id);
 
-      if (error) {
-        log.error('[isSubscriptionExpired] Error actualizando status:', error);
+      if (updateError) {
+        log.error('[isSubscriptionExpired] Error actualizando status:', updateError);
       } else {
         log.info('[isSubscriptionExpired] Status actualizado a canceled');
+      }
+
+      // 2. Crear nueva suscripción FREE activa para la empresa
+      log.info('[isSubscriptionExpired] Creando suscripción FREE automática para company_id:', subscription.company_id);
+
+      const { error: insertError } = await supabaseAdmin
+        .from('redpresu_subscriptions')
+        .insert({
+          company_id: subscription.company_id,
+          plan: 'free',
+          status: 'active',
+          stripe_customer_id: subscription.stripe_customer_id, // Mantener customer_id si existe
+          stripe_subscription_id: null, // FREE no tiene subscription_id de Stripe
+          current_period_start: null,
+          current_period_end: null,
+          cancel_at_period_end: false,
+          created_at: now.toISOString(),
+          updated_at: now.toISOString(),
+        });
+
+      if (insertError) {
+        log.error('[isSubscriptionExpired] Error creando suscripción FREE:', insertError);
+      } else {
+        log.info('[isSubscriptionExpired] Suscripción FREE creada exitosamente');
       }
     }
 
