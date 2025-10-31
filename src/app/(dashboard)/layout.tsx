@@ -5,7 +5,6 @@ import { TourDetector } from "@/components/help/TourDetector";
 import { getCurrentSubscription } from "@/app/actions/subscriptions";
 import { isMultiEmpresa } from "@/lib/helpers/app-mode";
 import { getAppName, getSubscriptionsEnabled, getConfigValue } from "@/lib/helpers/config-helpers";
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { TestingModeBanner } from "@/components/subscriptions/alerts/TestingModeBanner";
 import { BlockedAccountBanner } from "@/components/subscriptions/alerts/BlockedAccountBanner";
@@ -48,16 +47,25 @@ export default async function DashboardLayout({
   // Obtener suscripción actual (solo si showSubscriptions)
   // NOTA: Para display en Header, obtenemos la más reciente sin filtrar por status
   // (útil en testing mode para ver cambios inmediatos)
+  // IMPORTANTE: Usar supabaseAdmin para bypass RLS (server-side, seguro)
   let currentPlan = "free";
   if (showSubscriptions) {
-    const supabase = createServerComponentClient({ cookies });
-    const { data: subscription } = await supabase
+    const { supabaseAdmin } = await import('@/lib/supabase/server');
+
+    // Debug: Log company_id del usuario
+    console.log('[Layout] User company_id:', user.company_id);
+
+    const { data: subscription, error } = await supabaseAdmin
       .from('redpresu_subscriptions')
-      .select('plan')
+      .select('plan, company_id, status, updated_at')
       .eq('company_id', user.company_id)
       .order('updated_at', { ascending: false })
       .limit(1)
       .single();
+
+    // Debug: Log resultado de suscripción
+    console.log('[Layout] Subscription found:', subscription);
+    console.log('[Layout] Error:', error);
 
     currentPlan = subscription?.plan || "free";
   }
@@ -66,9 +74,10 @@ export default async function DashboardLayout({
   const appName = await getAppName();
 
   // Obtener nombre de empresa/autónomo del emisor
-  const supabase = createServerComponentClient({ cookies });
+  // Usar supabaseAdmin para bypass RLS
+  const { supabaseAdmin: supabaseAdminForIssuer } = await import('@/lib/supabase/server');
 
-  const { data: issuer } = await supabase
+  const { data: issuer } = await supabaseAdminForIssuer
     .from("redpresu_issuers")
     .select("name, type")
     .eq("user_id", user.id)
