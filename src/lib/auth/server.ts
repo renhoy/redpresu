@@ -19,21 +19,28 @@ export async function getServerUser() {
     .from('redpresu_users')
     .select('*')
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
 
   if (dbError) {
     console.error('[getServerUser] Error fetching user data:', {
+      userId: user.id,
+      userEmail: user.email,
+      errorType: dbError.constructor.name,
+      errorString: JSON.stringify(dbError),
       message: dbError.message,
       details: dbError.details,
       hint: dbError.hint,
-      code: dbError.code,
-      full: dbError
+      code: dbError.code
     })
     return null
   }
 
   if (!userData) {
-    console.error('[getServerUser] No user data found for id:', user.id)
+    console.error('[getServerUser] No user data found in redpresu_users for authenticated user:', {
+      userId: user.id,
+      userEmail: user.email,
+      hint: 'Usuario existe en auth.users pero no en redpresu_users - posible desincronización'
+    })
     return null
   }
 
