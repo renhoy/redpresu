@@ -829,6 +829,58 @@ export async function permanentlyDeleteCompany(
       .select("*")
       .eq("company_id", company.company_id);
 
+    // ============================================
+    // PROTECCIÓN: Verificar usuarios protegidos
+    // ============================================
+
+    // Lista de emails protegidos que NUNCA deben ser eliminados
+    const PROTECTED_EMAILS = ['josivela+super@gmail.com'];
+
+    // Verificar si hay usuarios protegidos
+    const protectedUsers = allUsers?.filter(u =>
+      PROTECTED_EMAILS.includes(u.email) || u.role === 'superadmin'
+    ) || [];
+
+    if (protectedUsers.length > 0) {
+      log.warn("[permanentlyDeleteCompany] DETECTADO: Usuarios protegidos en la empresa a eliminar:", {
+        count: protectedUsers.length,
+        emails: protectedUsers.map(u => u.email)
+      });
+
+      // REASIGNAR usuarios protegidos a empresa 1 en lugar de eliminarlos
+      for (const protectedUser of protectedUsers) {
+        log.warn("[permanentlyDeleteCompany] Reasignando usuario protegido a empresa 1:", protectedUser.email);
+
+        const { error: reassignError } = await supabaseAdmin
+          .from("redpresu_users")
+          .update({
+            company_id: 1,
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", protectedUser.id);
+
+        if (reassignError) {
+          log.error("[permanentlyDeleteCompany] ERROR CRÍTICO: No se pudo reasignar usuario protegido:", {
+            email: protectedUser.email,
+            error: reassignError
+          });
+          return {
+            success: false,
+            error: `Error crítico: No se puede eliminar empresa con usuarios protegidos. Usuario ${protectedUser.email} no pudo ser reasignado.`
+          };
+        }
+
+        log.info("[permanentlyDeleteCompany] ✓ Usuario protegido reasignado exitosamente a empresa 1:", protectedUser.email);
+      }
+
+      // Actualizar allUsers para excluir usuarios reasignados
+      const reassignedUserIds = protectedUsers.map(u => u.id);
+      const remainingUsers = allUsers?.filter(u => !reassignedUserIds.includes(u.id)) || [];
+
+      log.info("[permanentlyDeleteCompany] Usuarios reasignados:", protectedUsers.length);
+      log.info("[permanentlyDeleteCompany] Usuarios que SE eliminarán:", remainingUsers.length);
+    }
+
     // Obtener TODAS las tarifas de esta empresa
     const { data: allTariffs } = await supabaseAdmin
       .from("redpresu_tariffs")
@@ -1378,11 +1430,86 @@ export async function permanentDeleteCompany(companyUuid: string): Promise<Actio
     // 5.5. Obtener usuarios para eliminar sus cuentas de auth
     const { data: users } = await supabaseAdmin
       .from("redpresu_users")
-      .select("id")
+      .select("id, email, role")
       .eq("company_id", issuer.company_id);
 
-    if (users && users.length > 0) {
-      // Eliminar usuarios de Supabase Auth (esto también eliminará sus sesiones)
+    // ============================================
+    // PROTECCIÓN: Verificar usuarios protegidos
+    // ============================================
+
+    // Lista de emails protegidos que NUNCA deben ser eliminados
+    const PROTECTED_EMAILS = ['josivela+super@gmail.com'];
+
+    // Verificar si hay usuarios protegidos
+    const protectedUsers = users?.filter(u =>
+      PROTECTED_EMAILS.includes(u.email) || u.role === 'superadmin'
+    ) || [];
+
+    if (protectedUsers.length > 0) {
+      log.warn("[permanentDeleteCompany] DETECTADO: Usuarios protegidos en la empresa a eliminar:", {
+        count: protectedUsers.length,
+        emails: protectedUsers.map(u => u.email)
+      });
+
+      // REASIGNAR usuarios protegidos a empresa 1 en lugar de eliminarlos
+      for (const protectedUser of protectedUsers) {
+        log.warn("[permanentDeleteCompany] Reasignando usuario protegido a empresa 1:", protectedUser.email);
+
+        const { error: reassignError } = await supabaseAdmin
+          .from("redpresu_users")
+          .update({
+            company_id: 1,
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", protectedUser.id);
+
+        if (reassignError) {
+          log.error("[permanentDeleteCompany] ERROR CRÍTICO: No se pudo reasignar usuario protegido:", {
+            email: protectedUser.email,
+            error: reassignError
+          });
+          return {
+            success: false,
+            error: `Error crítico: No se puede eliminar empresa con usuarios protegidos. Usuario ${protectedUser.email} no pudo ser reasignado.`
+          };
+        }
+
+        log.info("[permanentDeleteCompany] ✓ Usuario protegido reasignado exitosamente a empresa 1:", protectedUser.email);
+      }
+
+      // Filtrar usuarios protegidos de la lista de usuarios a eliminar
+      const remainingUsers = users?.filter(u =>
+        !protectedUsers.some(pu => pu.id === u.id)
+      ) || [];
+
+      log.info("[permanentDeleteCompany] Usuarios reasignados:", protectedUsers.length);
+      log.info("[permanentDeleteCompany] Usuarios que SE eliminarán:", remainingUsers.length);
+
+      // Actualizar users con solo los usuarios NO protegidos
+      if (remainingUsers.length > 0) {
+        // Eliminar solo usuarios NO protegidos de Supabase Auth
+        for (const userRecord of remainingUsers) {
+          const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(
+            userRecord.id
+          );
+
+          if (authError) {
+            log.warn(`[permanentDeleteCompany] Error al eliminar auth user ${userRecord.id}:`, authError);
+          }
+        }
+
+        // Eliminar registros de usuarios en redpresu_users (si quedan, solo NO protegidos)
+        const { error: usersError } = await supabaseAdmin
+          .from("redpresu_users")
+          .delete()
+          .eq("company_id", issuer.company_id);
+
+        if (usersError) {
+          log.warn("[permanentDeleteCompany] Error al eliminar users:", usersError);
+        }
+      }
+    } else if (users && users.length > 0) {
+      // No hay usuarios protegidos, eliminar todos normalmente
       for (const userRecord of users) {
         const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(
           userRecord.id
