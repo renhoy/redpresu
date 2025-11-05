@@ -45,12 +45,11 @@ public/help/.obsidian/
 # LIMPIEZA PRE-PRODUCCIÓN
 # ============================================
 
-# Documentación (solo desarrollo)
+# Documentación (solo desarrollo - excluir de producción)
+# NOTA: prd.md, planificacion.md, tareas.md, claude.md son archivos base del proyecto
+# Se mantienen en repo pero se excluyen en deployment con .dockerignore
 /docs/
 arquitectura.md
-prd.md
-tareas.md
-planificacion.md
 mvp-completado.md
 CHANGELOG_*.md
 CHECKLIST_*.md
@@ -60,7 +59,6 @@ INSTRUCCIONES_*.md
 TESTING_*.md
 REFACTORING_*.md
 arbol.txt
-claude.md
 DEPLOYMENT.md
 
 # Archivos temporales y de desarrollo

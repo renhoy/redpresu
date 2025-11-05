@@ -1,0 +1,74 @@
+# ============================================
+# DOCKERIGNORE - Excluir archivos de build
+# ============================================
+
+# Archivos base de desarrollo (NO copiar a imagen Docker)
+prd.md
+planificacion.md
+tareas.md
+claude.md
+
+# Documentación de desarrollo
+/docs/
+arquitectura.md
+mvp-completado.md
+CHANGELOG_*.md
+CHECKLIST_*.md
+FEATURE_*.md
+importerCSV.md
+INSTRUCCIONES_*.md
+TESTING_*.md
+REFACTORING_*.md
+arbol.txt
+DEPLOYMENT.md
+
+# Temporales
+/temp/
+/.dev/
+/.claude/
+tsconfig.tsbuildinfo
+
+# Migraciones de desarrollo
+migrations/EJECUTAR_*.sql
+migrations/UTIL_*.sql
+migrations/DIAGNOSTICO_*.sql
+migrations/VERIFICAR_*.sql
+migrations/README_*.md
+
+# Scripts
+fix_*.sh
+refactor_*.sh
+/scripts/
+
+# Git
+.git
+.gitignore
+
+# Node
+node_modules
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Next.js
+.next
+out
+build
+
+# Testing
+coverage
+.env.test
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode
+.idea
+*.swp
+*.swo
+*~
