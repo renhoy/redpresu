@@ -209,35 +209,6 @@ BEGIN
   RAISE NOTICE 'RESUMEN DE ACCIONES:';
   RAISE NOTICE '  Acción tomada: %', v_action_taken;
   RAISE NOTICE '';
-  RAISE NOTICE 'Estado final del superadmin:';
-
-  -- Obtener estado final
-  SELECT
-    u.id,
-    u.email,
-    u.role,
-    u.company_id,
-    c.name AS company_name,
-    u.status,
-    u.created_at,
-    u.updated_at
-  FROM public.redpresu_users u
-  LEFT JOIN public.redpresu_companies c ON u.company_id = c.id
-  WHERE u.id = v_auth_user_id
-  INTO STRICT
-    v_auth_user_id,
-    v_auth_email,
-    v_current_status,  -- reusing variable for role
-    v_current_company_id,
-    v_action_taken,    -- reusing variable for company name
-    v_current_status;  -- reusing for final status
-
-  RAISE NOTICE '  - ID: %', v_auth_user_id;
-  RAISE NOTICE '  - Email: %', v_auth_email;
-  RAISE NOTICE '  - Rol: superadmin';
-  RAISE NOTICE '  - Empresa: % (id=%)', v_action_taken, v_current_company_id;
-  RAISE NOTICE '  - Status: %', v_current_status;
-  RAISE NOTICE '';
   RAISE NOTICE 'MIGRACIÓN 044: COMPLETADA EXITOSAMENTE';
   RAISE NOTICE '================================================';
   RAISE NOTICE '';
