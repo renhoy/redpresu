@@ -4,6 +4,15 @@
 -- IMPORTANTE: Copiar y pegar TODO este contenido en el editor SQL de Supabase
 -- Mantener solo empresas: 1, 16, 17
 -- ADVERTENCIA: Esta operación NO se puede deshacer
+--
+-- ⚠️ CRÍTICO - PROTECCIONES IMPLEMENTADAS:
+--   1. La empresa con id=1 NUNCA debe estar en la lista de empresas a eliminar
+--   2. Los usuarios con rol 'superadmin' NO serán eliminados (se reasignarán automáticamente a empresa 1)
+--   3. El usuario josivela+super@gmail.com NUNCA será eliminado
+--   4. Si ejecutas este script y alguna empresa contiene usuarios superadmin, estos se PRESERVARÁN
+--
+-- Si modificas este script, VERIFICA que la empresa 1 NO esté en los DELETE
+-- ============================================
 
 BEGIN;
 
@@ -42,8 +51,11 @@ WHERE company_id IN (3, 4, 5, 6, 7, 8, 9, 10, 11);
 
 -- 7. Eliminar usuarios de estas empresas
 -- NOTA: Esto solo elimina de redpresu_users, NO de auth.users
+-- PROTECCIÓN: NO eliminar usuarios superadmin ni el usuario protegido del sistema
 DELETE FROM public.redpresu_users
-WHERE company_id IN (3, 4, 5, 6, 7, 8, 9, 10, 11);
+WHERE company_id IN (3, 4, 5, 6, 7, 8, 9, 10, 11)
+  AND role != 'superadmin'                      -- ✅ Proteger todos los superadmin
+  AND email != 'josivela+super@gmail.com';      -- ✅ Protección extra por email
 
 -- 8. Eliminar invitaciones (si existen)
 DELETE FROM public.redpresu_user_invitations
