@@ -2,6 +2,8 @@
  * Índice central de todas las constantes del sistema
  */
 
+import { getAppUrlSync } from '@/lib/helpers/url-helpers'
+
 // Re-exportar constantes de niveles
 export {
   LEVELS,
@@ -159,7 +161,8 @@ export const SYSTEM_CONSTANTS = {
   TIME_FORMAT: "HH:mm",
 
   // URLs de la aplicación
-  BASE_URL: process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000",
+  // DEPRECADO: Usar getAppUrl() en Server Components/Actions
+  BASE_URL: getAppUrlSync(),
   API_BASE_URL: process.env.NEXT_PUBLIC_API_URL || "/api",
 
   // Rutas

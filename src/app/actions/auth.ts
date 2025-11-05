@@ -1,6 +1,7 @@
 'use server'
 import { log } from '@/lib/logger'
 import { sanitizeError } from '@/lib/helpers/error-helpers'
+import { getAppUrl } from '@/lib/helpers/url-helpers'
 
 import { cookies } from 'next/headers'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
@@ -583,10 +584,13 @@ export async function requestPasswordReset(email: string): Promise<PasswordReset
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
 
+    // Obtener URL base de la aplicación
+    const baseUrl = await getAppUrl()
+
     // Enviar email de recuperación usando Supabase Auth
     // El link de reset apuntará a /reset-password
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-      redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/reset-password`
+      redirectTo: `${baseUrl}/reset-password`
     })
 
     if (error) {

@@ -6,6 +6,7 @@ import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import crypto from 'crypto'
+import { getAppUrl } from '@/lib/helpers/url-helpers'
 
 /**
  * Interfaz para datos de invitación
@@ -200,7 +201,7 @@ export async function createUserInvitation(
     log.info('[createUserInvitation] Invitación creada:', invitationData.id)
 
     // Construir URL de invitación
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+    const baseUrl = await getAppUrl()
     const invitationUrl = `${baseUrl}/accept-invitation?token=${token}`
 
     // Obtener plantilla de email desde configuración

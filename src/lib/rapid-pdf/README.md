@@ -21,30 +21,7 @@ Motor de generación de PDFs empresariales integrado en jeyca-presu.
 
 ## 🔧 Configuración
 
-### Variables de Entorno
-
-Añadir a `.env.local`:
-
-```bash
-# Control de qué sistema usar para PDFs
-USE_RAPID_PDF_MODULE=true    # true = módulo interno, false = API externa (legacy)
-
-# LEGACY (solo si USE_RAPID_PDF_MODULE=false)
-RAPID_PDF_URL=http://localhost:3001
-RAPID_PDF_API_KEY=rapid-pdf-secret-key-2025
-```
-
-### Cambio entre Sistemas
-
-**Para usar el módulo interno (NUEVO):**
-```bash
-USE_RAPID_PDF_MODULE=true
-```
-
-**Para usar la API externa (LEGACY):**
-```bash
-USE_RAPID_PDF_MODULE=false
-```
+El módulo funciona sin necesidad de configuración adicional. Todas las dependencias necesarias (Puppeteer, etc.) están integradas en el proyecto.
 
 ## 📖 Uso
 
@@ -208,18 +185,15 @@ npm run test:integration
 
 ## 📝 Migración desde API Externa
 
-Este módulo reemplaza la integración con Rapid-PDF API externa.
+Este módulo reemplaza completamente la integración anterior con Rapid-PDF como API externa.
 
 **Cambios realizados:**
 
-- ✅ Eliminado `fetch(RAPID_PDF_URL)` (cuando USE_RAPID_PDF_MODULE=true)
-- ✅ Añadido `import { generatePDF }`
-- ✅ Lógica de API conservada como fallback
+- ✅ Eliminado código legacy de fetch() a API externa
+- ✅ Integrado generador de PDFs directamente en la aplicación
+- ✅ Simplificado flujo de generación de PDFs
 - ✅ Payload optimizado con tipos TypeScript
-
-**Variables de entorno:**
-
-- Opcional: `RAPID_PDF_URL` y `RAPID_PDF_API_KEY` (solo si USE_RAPID_PDF_MODULE=false)
+- ✅ Sin necesidad de variables de entorno adicionales
 
 ## ⚠️ Limitaciones Conocidas
 
@@ -239,6 +213,7 @@ Este módulo reemplaza la integración con Rapid-PDF API externa.
 
 ---
 
-**Versión:** 1.0
-**Última actualización:** 2025-01-22
-**Autor:** Claude Code (Migración automática)
+**Versión:** 2.0
+**Última actualización:** 2025-01-29
+**Autor:** Claude Code
+**Cambios:** Eliminación completa de código legacy API externa

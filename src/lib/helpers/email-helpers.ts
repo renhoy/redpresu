@@ -15,6 +15,7 @@
 
 import { supabaseAdmin } from '@/lib/supabase/server';
 import { getCurrentTime } from '@/lib/helpers/time-helpers';
+import { getAppUrl } from '@/lib/helpers/url-helpers';
 
 // ============================================
 // Tipos - Formulario de Contacto
@@ -57,9 +58,12 @@ export async function sendContactNotificationEmail(
       }
     }
 
+    // Obtener URL base de la aplicación
+    const baseUrl = await getAppUrl()
+
     // Construir contenido del email
     const emailSubject = `[Contacto Web] ${data.subject}`
-    const emailBody = generateContactEmailHTML(data)
+    const emailBody = generateContactEmailHTML(data, baseUrl)
 
     // TODO: Implementar envío real de email
     // Opciones:
@@ -103,9 +107,10 @@ export async function sendContactNotificationEmail(
 /**
  * Genera el HTML del email de notificación de contacto
  * @param data - Datos del mensaje
+ * @param baseUrl - URL base de la aplicación
  * @returns HTML del email
  */
-function generateContactEmailHTML(data: ContactEmailData): string {
+function generateContactEmailHTML(data: ContactEmailData, baseUrl: string): string {
   return `
 <!DOCTYPE html>
 <html>
@@ -166,7 +171,7 @@ function generateContactEmailHTML(data: ContactEmailData): string {
               </div>
 
               <div style="text-align: center;">
-                <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/contact-messages"
+                <a href="${baseUrl}/contact-messages"
                    style="display: inline-block; padding: 12px 30px; background-color: #84cc16; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold;">
                   Ver en Panel de Administración
                 </a>
@@ -283,6 +288,8 @@ export async function sendPaymentFailedEmail(params: {
   plan: string;
   companyId?: number;
 }): Promise<boolean> {
+  const baseUrl = await getAppUrl();
+
   return sendSubscriptionEmail({
     type: 'payment_failed',
     to: params.to,
@@ -294,7 +301,7 @@ Hemos detectado un problema con el pago de tu suscripción ${params.plan.toUpper
 Por favor, actualiza tu método de pago lo antes posible para evitar la interrupción del servicio.
 
 Puedes gestionar tu suscripción desde el panel de control:
-${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/subscriptions
+${baseUrl}/subscriptions
 
 Si crees que esto es un error, por favor contacta con soporte.
 
@@ -318,6 +325,7 @@ export async function sendExpiringSoonEmail(params: {
   companyId?: number;
 }): Promise<boolean> {
   const { daysUntilExpiration } = params;
+  const baseUrl = await getAppUrl();
 
   let urgency = '';
   if (daysUntilExpiration <= 1) {
@@ -340,7 +348,7 @@ Días restantes: ${daysUntilExpiration}
 Renueva ahora para evitar la interrupción del servicio y seguir disfrutando de todas las funcionalidades.
 
 Renovar suscripción:
-${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/subscriptions
+${baseUrl}/subscriptions
 
 Gracias por confiar en nosotros.
 
@@ -365,6 +373,8 @@ export async function sendExpiredEmail(params: {
   gracePeriodDays: number;
   companyId?: number;
 }): Promise<boolean> {
+  const baseUrl = await getAppUrl();
+
   return sendSubscriptionEmail({
     type: 'expired',
     to: params.to,
@@ -378,7 +388,7 @@ Período de gracia: Tienes ${params.gracePeriodDays} días para renovar tu suscr
 Durante este período podrás seguir usando la aplicación normalmente, pero te recomendamos renovar cuanto antes.
 
 Renovar suscripción:
-${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/subscriptions
+${baseUrl}/subscriptions
 
 Si no renuevas antes de que termine el período de gracia, tu cuenta será bloqueada (solo lectura).
 
@@ -403,6 +413,8 @@ export async function sendGracePeriodEndingEmail(params: {
   expirationDate: string;
   companyId?: number;
 }): Promise<boolean> {
+  const baseUrl = await getAppUrl();
+
   return sendSubscriptionEmail({
     type: 'grace_period_ending',
     to: params.to,
@@ -420,7 +432,7 @@ Si no renuevas antes de que termine, tu cuenta será bloqueada:
 - ✅ Podrás ver tus datos existentes (solo lectura)
 
 RENOVAR AHORA:
-${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/subscriptions
+${baseUrl}/subscriptions
 
 ¿Necesitas ayuda? Contacta con soporte.
 
@@ -443,6 +455,7 @@ export async function sendUpgradedEmail(params: {
   newPlan: string;
   companyId?: number;
 }): Promise<boolean> {
+  const baseUrl = await getAppUrl();
   const features = getPlanFeatures(params.newPlan);
 
   return sendSubscriptionEmail({
@@ -458,7 +471,7 @@ Ya puedes disfrutar de todas las funcionalidades y límites ampliados de tu nuev
 ${features}
 
 Gestionar suscripción:
-${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/subscriptions
+${baseUrl}/subscriptions
 
 Gracias por tu confianza.
 
@@ -479,6 +492,8 @@ export async function sendCanceledEmail(params: {
   oldPlan: string;
   companyId?: number;
 }): Promise<boolean> {
+  const baseUrl = await getAppUrl();
+
   return sendSubscriptionEmail({
     type: 'canceled',
     to: params.to,
@@ -495,7 +510,7 @@ Has vuelto al plan FREE con las siguientes limitaciones:
 Tus datos existentes se mantienen intactos. Si deseas volver a un plan de pago en el futuro, puedes hacerlo en cualquier momento.
 
 Ver planes disponibles:
-${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/pricing
+${baseUrl}/pricing
 
 Lamentamos verte partir. Si tienes algún comentario sobre el servicio, nos encantaría escucharlo.
 

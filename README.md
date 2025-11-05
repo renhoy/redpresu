@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# JEYCA Presupuestos
 
-## Getting Started
+Sistema de gestión de presupuestos empresariales con generación automática de PDFs.
 
-First, run the development server:
+## 🚀 Stack Tecnológico
+
+- **Framework:** Next.js 15.5.4 (App Router) + Turbopack
+- **Lenguaje:** TypeScript 5
+- **React:** 19.1.0
+- **Estilos:** Tailwind CSS 3.4
+- **Componentes:** shadcn/ui (Radix UI)
+- **Base de datos:** Supabase (PostgreSQL)
+- **Auth:** Supabase Auth con RLS
+- **PDF:** Rapid-PDF (módulo integrado con Puppeteer)
+
+## 📦 Instalación
 
 ```bash
+# Instalar dependencias
+npm install
+
+# Configurar variables de entorno
+cp .env.production.example .env.local
+# Editar .env.local con tus valores
+
+# Ejecutar en desarrollo
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# Build para producción
+npm run build
+npm start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🔧 Configuración
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Variables de Entorno Requeridas
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=tu_url_supabase
+NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_anon_key
+SUPABASE_SERVICE_ROLE_KEY=tu_service_role_key
 
-## Learn More
+# App URL
+NEXT_PUBLIC_APP_URL=http://tu-dominio.com
 
-To learn more about Next.js, take a look at the following resources:
+# Entorno
+NODE_ENV=production
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📚 Características
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- ✅ Gestión de tarifas jerárquicas (6 niveles)
+- ✅ Generación automática de presupuestos en PDF
+- ✅ Sistema de autenticación multi-rol
+- ✅ Gestión de usuarios y empresas
+- ✅ Import/Export de tarifas (CSV/JSON)
+- ✅ Sistema de ayuda interactivo con tours
+- ✅ Responsive (móvil/tablet/desktop)
+- ✅ Generación de PDFs con templates personalizables
 
-## Deploy on Vercel
+## 📝 Licencia
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Propiedad de JEYCA Sistemas
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+**Versión:** 2.0
+**Última actualización:** 2025-01-29
