@@ -75,7 +75,7 @@ export function TestSubscriptionsTable({ subscriptions, currentTime }: TestSubsc
   }
 
   async function handleDelete(subscriptionId: string) {
-    if (!confirm("¿Eliminar esta suscripción de prueba?")) {
+    if (!confirm("¿Convertir esta suscripción a plan FREE? Se eliminarán los datos de Stripe y pasará a plan gratuito.")) {
       return;
     }
 
@@ -85,10 +85,10 @@ export function TestSubscriptionsTable({ subscriptions, currentTime }: TestSubsc
       const result = await deleteTestSubscription(subscriptionId);
 
       if (result.success) {
-        toast.success("Suscripción eliminada");
+        toast.success("Suscripción convertida a plan FREE");
         router.refresh();
       } else {
-        toast.error(result.error || "Error al eliminar");
+        toast.error(result.error || "Error al procesar");
       }
     } finally {
       setLoadingId(null);
@@ -347,14 +347,14 @@ export function TestSubscriptionsTable({ subscriptions, currentTime }: TestSubsc
                           <FastForward className="h-4 w-4" />
                         </Button>
 
-                        {/* Eliminar */}
+                        {/* Eliminar (deshabilitado para FREE) */}
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleDelete(sub.id)}
-                          disabled={isLoading}
-                          title="Eliminar"
-                          className="border-red-500 text-red-600 hover:bg-red-500 hover:text-white h-9 px-2 min-w-[44px] touch-manipulation"
+                          disabled={isLoading || sub.plan === 'free'}
+                          title={sub.plan === 'free' ? 'El plan FREE no se puede eliminar (es el plan por defecto)' : 'Eliminar suscripción (convierte a FREE si es PRO/ENTERPRISE)'}
+                          className="border-red-500 text-red-600 hover:bg-red-500 hover:text-white h-9 px-2 min-w-[44px] touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -381,9 +381,12 @@ export function TestSubscriptionsTable({ subscriptions, currentTime }: TestSubsc
             </div>
             <div className="flex items-center gap-2">
               <Trash2 className="h-3 w-3" />
-              <span>Eliminar suscripción de prueba</span>
+              <span>Convertir a FREE (PRO/ENTERPRISE → FREE)</span>
             </div>
           </div>
+          <p className="text-xs text-muted-foreground mt-2 italic">
+            Nota: El plan FREE no se puede eliminar, es el plan por defecto de todas las empresas.
+          </p>
         </div>
       </div>
     </>

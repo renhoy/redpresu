@@ -67,7 +67,7 @@ export function TestSubscriptionCard({ subscription: sub, currentTime }: TestSub
   }
 
   async function handleDelete() {
-    if (!confirm("¿Eliminar esta suscripción de prueba?")) {
+    if (!confirm("¿Convertir esta suscripción a plan FREE? Se eliminarán los datos de Stripe y pasará a plan gratuito.")) {
       return;
     }
 
@@ -77,10 +77,10 @@ export function TestSubscriptionCard({ subscription: sub, currentTime }: TestSub
       const result = await deleteTestSubscription(sub.id);
 
       if (result.success) {
-        toast.success("Suscripción eliminada");
+        toast.success("Suscripción convertida a plan FREE");
         router.refresh();
       } else {
-        toast.error(result.error || "Error al eliminar");
+        toast.error(result.error || "Error al procesar");
       }
     } finally {
       setIsLoading(false);
@@ -315,9 +315,9 @@ export function TestSubscriptionCard({ subscription: sub, currentTime }: TestSub
               variant="outline"
               size="sm"
               onClick={handleDelete}
-              disabled={isLoading}
-              title="Eliminar"
-              className="border-red-500 text-red-600 hover:bg-red-500 hover:text-white min-w-[20%] h-7 px-2 gap-1.5 text-xs"
+              disabled={isLoading || sub.plan === 'free'}
+              title={sub.plan === 'free' ? 'El plan FREE no se puede eliminar' : 'Convertir a FREE'}
+              className="border-red-500 text-red-600 hover:bg-red-500 hover:text-white min-w-[20%] h-7 px-2 gap-1.5 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Trash2 className="h-3.5 w-3.5 flex-shrink-0" />
               <span>Borrar</span>
@@ -457,9 +457,9 @@ export function TestSubscriptionCard({ subscription: sub, currentTime }: TestSub
               variant="outline"
               size="sm"
               onClick={handleDelete}
-              disabled={isLoading}
-              title="Eliminar"
-              className="border-red-500 text-red-600 hover:bg-red-500 hover:text-white min-w-[20%] h-7 px-2 gap-1.5 text-xs"
+              disabled={isLoading || sub.plan === 'free'}
+              title={sub.plan === 'free' ? 'El plan FREE no se puede eliminar' : 'Convertir a FREE'}
+              className="border-red-500 text-red-600 hover:bg-red-500 hover:text-white min-w-[20%] h-7 px-2 gap-1.5 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Trash2 className="h-3.5 w-3.5 flex-shrink-0" />
               <span>Borrar</span>

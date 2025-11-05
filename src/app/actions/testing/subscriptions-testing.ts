@@ -418,31 +418,67 @@ export async function extendSubscription(
 
 /**
  * Elimina una suscripción de prueba
+ * REGLA DE NEGOCIO:
+ * - FREE plan NO se puede eliminar (es el plan por defecto)
+ * - PRO/ENTERPRISE plan se CONVIERTE a FREE (no se elimina)
  */
 export async function deleteTestSubscription(subscriptionId: string): Promise<ActionResult<void>> {
   try {
-    log.info('[deleteTestSubscription] Eliminando suscripción...', subscriptionId);
+    log.info('[deleteTestSubscription] Procesando eliminación...', subscriptionId);
 
     const check = await checkSuperadminAndTestingMode();
     if (!check.allowed) {
       return { success: false, error: check.error };
     }
 
+    // 1. Obtener suscripción actual para verificar el plan
+    const { data: subscription, error: fetchError } = await supabaseAdmin
+      .from('redpresu_subscriptions')
+      .select('plan, company_id')
+      .eq('id', subscriptionId)
+      .single();
+
+    if (fetchError || !subscription) {
+      log.error('[deleteTestSubscription] Suscripción no encontrada:', fetchError);
+      return { success: false, error: 'Suscripción no encontrada' };
+    }
+
+    // 2. FREE plan no se puede eliminar
+    if (subscription.plan === 'free') {
+      log.warn('[deleteTestSubscription] Intento de eliminar plan FREE bloqueado');
+      return {
+        success: false,
+        error: 'No se puede eliminar el plan FREE. Es el plan por defecto de todas las empresas.'
+      };
+    }
+
+    // 3. PRO/ENTERPRISE: Convertir a FREE en lugar de eliminar
+    log.info('[deleteTestSubscription] Convirtiendo plan', subscription.plan, 'a FREE...');
+
     const { error } = await supabaseAdmin
       .from('redpresu_subscriptions')
-      .delete()
+      .update({
+        plan: 'free',
+        status: 'active',
+        stripe_customer_id: null,
+        stripe_subscription_id: null,
+        current_period_start: null,
+        current_period_end: null,
+        cancel_at_period_end: false,
+        updated_at: (await getCurrentTime()).toISOString(),
+      })
       .eq('id', subscriptionId);
 
     if (error) {
-      log.error('[deleteTestSubscription] Error:', error);
+      log.error('[deleteTestSubscription] Error convirtiendo a FREE:', error);
       return { success: false, error: error.message };
     }
 
-    log.info('[deleteTestSubscription] Suscripción eliminada');
+    log.info('[deleteTestSubscription] Suscripción convertida a FREE exitosamente');
     return { success: true };
   } catch (error) {
     log.error('[deleteTestSubscription] Error inesperado:', error);
-    return { success: false, error: 'Error al eliminar suscripción' };
+    return { success: false, error: 'Error al procesar suscripción' };
   }
 }
 

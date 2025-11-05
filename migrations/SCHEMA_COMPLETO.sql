@@ -1248,7 +1248,7 @@ CREATE TABLE public.redpresu_subscriptions (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     CONSTRAINT redpresu_subscriptions_plan_check CHECK ((plan = ANY (ARRAY['free'::text, 'pro'::text, 'enterprise'::text]))),
-    CONSTRAINT redpresu_subscriptions_status_check CHECK ((status = ANY (ARRAY['active'::text, 'canceled'::text, 'past_due'::text, 'trialing'::text])))
+    CONSTRAINT redpresu_subscriptions_status_check CHECK ((status = ANY (ARRAY['active'::text, 'inactive'::text, 'canceled'::text, 'past_due'::text, 'trialing'::text])))
 );
 
 
