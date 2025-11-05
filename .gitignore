@@ -40,3 +40,47 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 public/help/.obsidian/
+
+# ============================================
+# LIMPIEZA PRE-PRODUCCIÓN
+# ============================================
+
+# Documentación (solo desarrollo)
+/docs/
+arquitectura.md
+prd.md
+tareas.md
+planificacion.md
+mvp-completado.md
+CHANGELOG_*.md
+CHECKLIST_*.md
+FEATURE_*.md
+importerCSV.md
+INSTRUCCIONES_*.md
+TESTING_*.md
+REFACTORING_*.md
+arbol.txt
+claude.md
+DEPLOYMENT.md
+
+# Archivos temporales y de desarrollo
+/temp/
+/.dev/
+/.claude/
+
+# Migraciones de desarrollo (mantener solo numeradas oficiales)
+migrations/EJECUTAR_*.sql
+migrations/UTIL_*.sql
+migrations/DIAGNOSTICO_*.sql
+migrations/VERIFICAR_*.sql
+migrations/README_*.md
+migrations/delete_*.sql
+
+# Scripts de desarrollo y refactoring
+fix_*.sh
+refactor_*.sh
+/scripts/
+
+# Archivos generados en desarrollo/testing
+public/pdfs/
+public/logos/
