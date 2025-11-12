@@ -66,6 +66,7 @@ interface TariffCardProps {
 }
 
 const statusColors = {
+  Borrador: "bg-yellow-100 text-yellow-800",
   Activa: "bg-green-100 text-green-800",
   Inactiva: "bg-gray-200 text-gray-700",
 };
@@ -93,7 +94,7 @@ export function TariffCard({
     try {
       const result = await toggleTariffStatus(
         tariff.id,
-        tariff.status as "Activa" | "Inactiva"
+        tariff.status as "Borrador" | "Activa" | "Inactiva"
       );
       if (result.success) {
         toast.success(`Estado actualizado a ${newStatus}`);
@@ -197,6 +198,11 @@ export function TariffCard({
                   <h3 className="font-semibold text-base truncate">
                     {tariff.title}
                   </h3>
+                  {tariff.status === 'Borrador' && (
+                    <Badge variant="outline" className="border-yellow-500 text-yellow-700 gap-1 flex-shrink-0">
+                      <span className="text-xs">⚠️ Incompleta</span>
+                    </Badge>
+                  )}
                   {isLimitedByPlan && (
                     <Badge variant="outline" className="border-orange-500 text-orange-700 gap-1">
                       <Lock className="h-3 w-3" />

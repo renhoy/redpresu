@@ -72,7 +72,7 @@ export interface TariffFormData {
   title: string
   description?: string
   validity: number
-  status: 'Activa' | 'Inactiva'
+  status: 'Borrador' | 'Activa' | 'Inactiva'
   logo_url: string
   name: string
   nif: string
@@ -90,7 +90,7 @@ export interface TariffFormData {
 export async function getTariffs(
   empresaId: number,
   filters?: {
-    status?: 'Activa' | 'Inactiva' | 'all'
+    status?: 'Borrador' | 'Activa' | 'Inactiva' | 'all'
     search?: string
     user_id?: string
   }
@@ -184,12 +184,92 @@ export async function getTariffs(
   }
 }
 
+/**
+ * Valida si una tarifa tiene todos los campos completos
+ * para poder activarse
+ */
+function isTariffComplete(tariff: Partial<Tariff>): {
+  complete: boolean
+  missingFields: string[]
+} {
+  const missing: string[] = []
+
+  // Validar campos obligatorios
+  if (!tariff.title?.trim()) missing.push('Título')
+  if (!tariff.validity || tariff.validity < 1) missing.push('Validez')
+  if (!tariff.logo_url?.trim()) missing.push('Logo')
+  if (!tariff.name?.trim()) missing.push('Nombre de empresa')
+  if (!tariff.nif?.trim()) missing.push('NIF/CIF')
+  if (!tariff.address?.trim()) missing.push('Dirección')
+  if (!tariff.contact?.trim()) missing.push('Contacto')
+  if (!tariff.template?.trim()) missing.push('Plantilla')
+  if (!tariff.primary_color?.trim()) missing.push('Color primario')
+  if (!tariff.secondary_color?.trim()) missing.push('Color secundario')
+  if (!tariff.summary_note?.trim()) missing.push('Nota resumen')
+  if (!tariff.conditions_note?.trim()) missing.push('Condiciones')
+  if (!tariff.legal_note?.trim()) missing.push('Notas legales')
+  if (!tariff.json_tariff_data) missing.push('Archivo CSV')
+
+  return {
+    complete: missing.length === 0,
+    missingFields: missing
+  }
+}
+
 export async function toggleTariffStatus(
   tariffId: string,
-  currentStatus: 'Activa' | 'Inactiva'
+  currentStatus: 'Borrador' | 'Activa' | 'Inactiva'
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = supabaseAdmin
 
+  // Si el estado actual es Borrador y se intenta activar, validar que esté completa
+  if (currentStatus === 'Borrador') {
+    // Obtener la tarifa completa para validar
+    const { data: tariff, error: fetchError } = await supabase
+      .from('redpresu_tariffs')
+      .select('*')
+      .eq('id', tariffId)
+      .single()
+
+    if (fetchError || !tariff) {
+      log.error('Error fetching tariff for validation:', fetchError)
+      return {
+        success: false,
+        error: 'No se pudo validar la tarifa'
+      }
+    }
+
+    // Validar si está completa
+    const validation = isTariffComplete(tariff)
+    if (!validation.complete) {
+      return {
+        success: false,
+        error: `No se puede activar la tarifa. Faltan los siguientes campos: ${validation.missingFields.join(', ')}`
+      }
+    }
+
+    // Si está completa, activarla
+    const { error } = await supabase
+      .from('redpresu_tariffs')
+      .update({
+        status: 'Activa',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', tariffId)
+
+    if (error) {
+      log.error('Error activating tariff:', error)
+      return {
+        success: false,
+        error: 'Error al activar la tarifa'
+      }
+    }
+
+    revalidatePath('/tariffs')
+    return { success: true }
+  }
+
+  // Para estados Activa/Inactiva, alternar normalmente
   const newStatus = currentStatus === 'Activa' ? 'Inactiva' : 'Activa'
 
   const { error } = await supabase

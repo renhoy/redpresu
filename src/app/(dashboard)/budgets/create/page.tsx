@@ -46,9 +46,13 @@ export default async function CreateBudgetPage({ searchParams }: PageProps) {
   // Cargar la tarifa específica
   const tariff = await getTariffById(tariff_id)
 
-  // Si la tarifa no existe o está inactiva, redirigir
+  // Si la tarifa no existe, está inactiva o está en borrador, redirigir
   if (!tariff) {
     redirect('/tariffs?message=tariff-not-found')
+  }
+
+  if (tariff.status === 'Borrador') {
+    redirect('/tariffs?message=tariff-draft')
   }
 
   if (tariff.status !== 'Activa') {

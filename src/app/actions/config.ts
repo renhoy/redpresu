@@ -341,7 +341,7 @@ export async function getPDFTemplatesAction(): Promise<{
 export interface TariffDefaults {
   // Datos Tarifa
   validity: number
-  status: 'Activa' | 'Inactiva'
+  status: 'Borrador' | 'Activa' | 'Inactiva'
   // Datos Empresa
   logo_url: string
   name: string
@@ -396,7 +396,7 @@ export async function getTariffDefaultsAction(empresaId?: number): Promise<{
         success: true,
         data: {
           validity: templateTariff.validity || 30,
-          status: templateTariff.status as 'Activa' | 'Inactiva' || 'Inactiva',
+          status: templateTariff.status as 'Borrador' | 'Activa' | 'Inactiva' || 'Inactiva',
           logo_url: templateTariff.logo_url || '',
           name: templateTariff.name || '',
           nif: templateTariff.nif || '',

@@ -77,7 +77,7 @@ export function TariffList({
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [importing, setImporting] = useState(false);
   const [filters, setFilters] = useState<{
-    status?: "Activa" | "Inactiva" | "all";
+    status?: "Borrador" | "Activa" | "Inactiva" | "all";
     search?: string;
     user_id?: string;
     tariff_id?: string;

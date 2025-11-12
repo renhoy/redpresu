@@ -94,7 +94,7 @@ export function TariffRow({
     try {
       const result = await toggleTariffStatus(
         tariff.id,
-        tariff.status as "Activa" | "Inactiva"
+        tariff.status as "Borrador" | "Activa" | "Inactiva"
       );
       if (result.success) {
         toast.success(`Estado actualizado a ${newStatus}`);
@@ -178,6 +178,7 @@ export function TariffRow({
     currentUserRole && ["admin", "superadmin"].includes(currentUserRole);
 
   const statusColors = {
+    Borrador: "bg-yellow-100 text-yellow-800",
     Activa: "bg-green-100 text-green-800",
     Inactiva: "bg-gray-200 text-gray-700",
   };
@@ -198,6 +199,11 @@ export function TariffRow({
               <span className="font-medium" style={{ fontSize: "12px" }}>
                 {tariff.title}
               </span>
+              {tariff.status === 'Borrador' && (
+                <Badge variant="outline" className="border-yellow-500 text-yellow-700 gap-1 ml-1">
+                  <span className="text-xs">⚠️ Incompleta</span>
+                </Badge>
+              )}
               {isLimitedByPlan && (
                 <Badge variant="outline" className="border-orange-500 text-orange-700 gap-1 ml-1">
                   <Lock className="h-3 w-3" />

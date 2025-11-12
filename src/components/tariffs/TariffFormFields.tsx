@@ -159,7 +159,7 @@ export function TariffFormFields({
               </div>
               <Select
                 value={data.status}
-                onValueChange={(value: "Activa" | "Inactiva") =>
+                onValueChange={(value: "Borrador" | "Activa" | "Inactiva") =>
                   handleInputChange("status", value)
                 }
               >
@@ -172,6 +172,7 @@ export function TariffFormFields({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="Borrador">Borrador</SelectItem>
                   <SelectItem value="Activa">Activa</SelectItem>
                   <SelectItem value="Inactiva">Inactiva</SelectItem>
                 </SelectContent>

@@ -15,6 +15,15 @@ import { Tariff } from "@/lib/types/database";
 import { isValidNIF, getNIFErrorMessage } from "@/lib/helpers/nif-validator";
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface TariffFormProps {
   mode: "create" | "edit";
@@ -30,7 +39,7 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
     title: initialData?.title || "",
     description: initialData?.description || "",
     validity: initialData?.validity || 30,
-    status: (initialData?.status as "Activa" | "Inactiva") || "Activa",
+    status: (initialData?.status as "Borrador" | "Activa" | "Inactiva") || "Borrador",
     logo_url: initialData?.logo_url || "",
     name: initialData?.name || "",
     nif: initialData?.nif || "",
@@ -49,73 +58,24 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
     initialData?.json_tariff_data || null
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showIncompleteDialog, setShowIncompleteDialog] = useState(false);
+  const [missingFields, setMissingFields] = useState<string[]>([]);
 
-  const validateForm = (): {
+  /**
+   * Validación mínima para guardar como borrador
+   * Solo requiere título y CSV
+   */
+  const validateMinimal = (): {
     isValid: boolean;
     errors: Record<string, string>;
   } => {
     const newErrors: Record<string, string> = {};
 
-    // Datos Tarifa
+    // Solo campos mínimos para borrador
     if (!formData.title || formData.title.trim() === "") {
       newErrors.title = "El título es obligatorio";
     }
-    if (!formData.validity || formData.validity < 1) {
-      newErrors.validity = "La validez debe ser al menos 1 día";
-    }
-    if (!formData.status) {
-      newErrors.status = "El estado es obligatorio";
-    }
 
-    // Datos Empresa
-    if (!formData.logo_url || formData.logo_url.trim() === "") {
-      newErrors.logo_url = "El logo es obligatorio";
-    }
-    if (!formData.name || formData.name.trim() === "") {
-      newErrors.name = "El nombre de empresa es obligatorio";
-    }
-    if (!formData.nif || formData.nif.trim() === "") {
-      newErrors.nif = "El NIF/CIF es obligatorio";
-    } else {
-      // Validar formato y letra de control del NIF/CIF
-      const nifCleaned = formData.nif.trim().toUpperCase();
-      if (!isValidNIF(nifCleaned)) {
-        // Para tarifas asumimos que es empresa (CIF) por defecto
-        newErrors.nif = getNIFErrorMessage(nifCleaned, "empresa");
-      }
-    }
-    if (!formData.address || formData.address.trim() === "") {
-      newErrors.address = "La dirección es obligatoria";
-    }
-    if (!formData.contact || formData.contact.trim() === "") {
-      newErrors.contact = "El contacto es obligatorio";
-    }
-
-    // Configuración Visual
-    if (!formData.template || formData.template.trim() === "") {
-      newErrors.template = "La plantilla es obligatoria";
-    }
-    if (!formData.primary_color || formData.primary_color.trim() === "") {
-      newErrors.primary_color = "El color primario es obligatorio";
-    }
-    if (!formData.secondary_color || formData.secondary_color.trim() === "") {
-      newErrors.secondary_color = "El color secundario es obligatorio";
-    }
-
-    // Notas PDF
-    if (!formData.summary_note || formData.summary_note.trim() === "") {
-      newErrors.summary_note = "La nota resumen es obligatoria";
-    }
-    if (!formData.conditions_note || formData.conditions_note.trim() === "") {
-      newErrors.conditions_note = "Las condiciones son obligatorias";
-    }
-
-    // Notas Formulario
-    if (!formData.legal_note || formData.legal_note.trim() === "") {
-      newErrors.legal_note = "Las notas legales son obligatorias";
-    }
-
-    // CSV Data
     if (!csvData) {
       newErrors.csv = "Debe cargar un archivo CSV válido";
     }
@@ -126,37 +86,167 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
     };
   };
 
-  const handleSave = async () => {
-    // Validar formulario
-    const validation = validateForm();
+  /**
+   * Validación completa para activar tarifa
+   * Requiere todos los campos
+   */
+  const validateComplete = (): {
+    isValid: boolean;
+    errors: Record<string, string>;
+    missingFields: string[];
+  } => {
+    const newErrors: Record<string, string> = {};
+    const missing: string[] = [];
 
-    if (!validation.isValid) {
-      setErrors(validation.errors);
-
-      // Mostrar mensaje general
-      setErrors((prev) => ({
-        ...prev,
-        general: `Por favor, complete todos los campos obligatorios (${
-          Object.keys(validation.errors).length
-        } errores encontrados)`,
-      }));
-
-      // Scroll al primer error
-      const firstErrorField = Object.keys(validation.errors)[0];
-      const element = document.querySelector(`[name="${firstErrorField}"]`);
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
-
-      return;
+    // Datos Tarifa
+    if (!formData.title || formData.title.trim() === "") {
+      newErrors.title = "El título es obligatorio";
+      missing.push("Título");
+    }
+    if (!formData.validity || formData.validity < 1) {
+      newErrors.validity = "La validez debe ser al menos 1 día";
+      missing.push("Validez");
     }
 
+    // Datos Empresa
+    if (!formData.logo_url || formData.logo_url.trim() === "") {
+      newErrors.logo_url = "El logo es obligatorio";
+      missing.push("Logo");
+    }
+    if (!formData.name || formData.name.trim() === "") {
+      newErrors.name = "El nombre de empresa es obligatorio";
+      missing.push("Nombre de empresa");
+    }
+    if (!formData.nif || formData.nif.trim() === "") {
+      newErrors.nif = "El NIF/CIF es obligatorio";
+      missing.push("NIF/CIF");
+    } else {
+      // Validar formato y letra de control del NIF/CIF
+      const nifCleaned = formData.nif.trim().toUpperCase();
+      if (!isValidNIF(nifCleaned)) {
+        newErrors.nif = getNIFErrorMessage(nifCleaned, "empresa");
+        missing.push("NIF/CIF válido");
+      }
+    }
+    if (!formData.address || formData.address.trim() === "") {
+      newErrors.address = "La dirección es obligatoria";
+      missing.push("Dirección");
+    }
+    if (!formData.contact || formData.contact.trim() === "") {
+      newErrors.contact = "El contacto es obligatorio";
+      missing.push("Contacto");
+    }
+
+    // Configuración Visual
+    if (!formData.template || formData.template.trim() === "") {
+      newErrors.template = "La plantilla es obligatoria";
+      missing.push("Plantilla");
+    }
+    if (!formData.primary_color || formData.primary_color.trim() === "") {
+      newErrors.primary_color = "El color primario es obligatorio";
+      missing.push("Color primario");
+    }
+    if (!formData.secondary_color || formData.secondary_color.trim() === "") {
+      newErrors.secondary_color = "El color secundario es obligatorio";
+      missing.push("Color secundario");
+    }
+
+    // Notas PDF
+    if (!formData.summary_note || formData.summary_note.trim() === "") {
+      newErrors.summary_note = "La nota resumen es obligatoria";
+      missing.push("Nota resumen");
+    }
+    if (!formData.conditions_note || formData.conditions_note.trim() === "") {
+      newErrors.conditions_note = "Las condiciones son obligatorias";
+      missing.push("Condiciones");
+    }
+
+    // Notas Formulario
+    if (!formData.legal_note || formData.legal_note.trim() === "") {
+      newErrors.legal_note = "Las notas legales son obligatorias";
+      missing.push("Notas legales");
+    }
+
+    // CSV Data
+    if (!csvData) {
+      newErrors.csv = "Debe cargar un archivo CSV válido";
+      missing.push("Archivo CSV");
+    }
+
+    return {
+      isValid: Object.keys(newErrors).length === 0,
+      errors: newErrors,
+      missingFields: missing,
+    };
+  };
+
+  const handleSave = async () => {
     setIsLoading(true);
     setErrors({});
+
+    // Determinar qué tipo de validación usar según el estado deseado
+    const wantsActive = formData.status === "Activa";
+
+    if (wantsActive) {
+      // Si quiere activar, validar todos los campos
+      const validation = validateComplete();
+
+      if (!validation.isValid) {
+        setErrors(validation.errors);
+        setMissingFields(validation.missingFields);
+
+        // Mostrar mensaje general
+        setErrors((prev) => ({
+          ...prev,
+          general: `Para activar la tarifa debe completar todos los campos obligatorios (faltan ${validation.missingFields.length} campos)`,
+        }));
+
+        // Scroll al primer error
+        const firstErrorField = Object.keys(validation.errors)[0];
+        const element = document.querySelector(`[name="${firstErrorField}"]`);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+
+        setIsLoading(false);
+        return;
+      }
+    } else {
+      // Si es borrador, solo validar campos mínimos
+      const validation = validateMinimal();
+
+      if (!validation.isValid) {
+        setErrors(validation.errors);
+
+        setErrors((prev) => ({
+          ...prev,
+          general: `Complete los campos mínimos para guardar: ${Object.keys(validation.errors).join(", ")}`,
+        }));
+
+        // Scroll al primer error
+        const firstErrorField = Object.keys(validation.errors)[0];
+        const element = document.querySelector(`[name="${firstErrorField}"]`);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+
+        setIsLoading(false);
+        return;
+      }
+
+      // Si pasa validación mínima pero está en borrador, verificar si faltan campos
+      const completeValidation = validateComplete();
+      if (!completeValidation.isValid) {
+        // Guardar pero mostrar advertencia
+        setMissingFields(completeValidation.missingFields);
+      }
+    }
 
     try {
       const dataWithCSV = {
         ...formData,
+        // Forzar estado a Borrador si faltan campos
+        status: formData.status === "Activa" ? "Activa" : "Borrador",
         json_tariff_data: csvData,
       };
 
@@ -166,13 +256,19 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
       } else {
         if (!tariffId) {
           setErrors({ general: "Error: ID de tarifa no encontrado" });
+          setIsLoading(false);
           return;
         }
         result = await updateTariff(tariffId, dataWithCSV);
       }
 
       if (result.success) {
-        router.push("/tariffs");
+        // Si se guardó como borrador y faltan campos, mostrar advertencia
+        if (dataWithCSV.status === "Borrador" && missingFields.length > 0) {
+          setShowIncompleteDialog(true);
+        } else {
+          router.push("/tariffs");
+        }
       } else {
         setErrors({ general: result.error || "Error al guardar la tarifa" });
       }
@@ -335,6 +431,52 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
           </Button>
         </div>
       </div>
+
+      {/* Dialog de advertencia para tarifas incompletas */}
+      <AlertDialog open={showIncompleteDialog} onOpenChange={setShowIncompleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>⚠️ Tarifa guardada como Borrador</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-4">
+              <p>
+                La tarifa se ha guardado correctamente, pero está <strong>incompleta</strong> y permanecerá en estado <strong>Borrador</strong>.
+              </p>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p className="font-semibold text-yellow-900 mb-2">Campos faltantes:</p>
+                <ul className="list-disc list-inside text-sm text-yellow-800 space-y-1">
+                  {missingFields.map((field, index) => (
+                    <li key={index}>{field}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="font-semibold text-red-900 mb-2">⛔ Restricciones:</p>
+                <ul className="list-disc list-inside text-sm text-red-800 space-y-1">
+                  <li>No podrá crear presupuestos con esta tarifa</li>
+                  <li>No podrá cambiar el estado hasta completar todos los campos</li>
+                </ul>
+              </div>
+
+              <p className="text-sm text-gray-600">
+                Para activar la tarifa y poder usarla en presupuestos, complete los campos faltantes y cambie el estado a <strong>Activa</strong>.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              onClick={() => {
+                setShowIncompleteDialog(false);
+                router.push("/tariffs");
+              }}
+              className="bg-lime-500 hover:bg-lime-600"
+            >
+              Entendido
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

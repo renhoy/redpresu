@@ -25,11 +25,11 @@ interface Tariff {
 
 interface TariffFiltersProps {
   onFiltersChange: (filters: {
-    status?: "Activa" | "Inactiva" | "all";
+    status?: "Borrador" | "Activa" | "Inactiva" | "all";
     search?: string;
     user_id?: string;
   }) => void;
-  defaultStatus?: "Activa" | "Inactiva" | "all";
+  defaultStatus?: "Borrador" | "Activa" | "Inactiva" | "all";
   defaultSearch?: string;
   defaultUserId?: string;
   users?: User[];
@@ -49,7 +49,7 @@ export function TariffFilters({
   tariffId,
 }: TariffFiltersProps) {
   const router = useRouter();
-  const [status, setStatus] = useState<"Activa" | "Inactiva" | "all">(
+  const [status, setStatus] = useState<"Borrador" | "Activa" | "Inactiva" | "all">(
     defaultStatus
   );
   const [search, setSearch] = useState(defaultSearch);
@@ -61,7 +61,7 @@ export function TariffFilters({
     return acc;
   }, {} as Record<string, number>);
 
-  const handleStatusChange = (value: "Activa" | "Inactiva" | "all") => {
+  const handleStatusChange = (value: "Borrador" | "Activa" | "Inactiva" | "all") => {
     setStatus(value);
     // Si el valor es "all", también limpiamos la búsqueda
     if (value === "all") {
@@ -118,6 +118,19 @@ export function TariffFilters({
           }
         >
           Todas ({tariffs.length})
+        </Button>
+        <Button
+          variant={status === "Borrador" ? "default" : "outline"}
+          size="sm"
+          onClick={() => handleStatusChange("Borrador")}
+          disabled={!statusCounts["Borrador"]}
+          className={
+            status === "Borrador"
+              ? "bg-lime-500 hover:bg-lime-600"
+              : "border-lime-500 text-lime-600 hover:bg-lime-500 hover:text-white"
+          }
+        >
+          Borradores{statusCounts["Borrador"] ? ` (${statusCounts["Borrador"]})` : ""}
         </Button>
         <Button
           variant={status === "Activa" ? "default" : "outline"}
