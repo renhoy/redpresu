@@ -63,7 +63,7 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
 
   /**
    * Validación mínima para guardar como borrador
-   * Solo requiere título y CSV
+   * Solo requiere título
    */
   const validateMinimal = (): {
     isValid: boolean;
@@ -71,13 +71,9 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
   } => {
     const newErrors: Record<string, string> = {};
 
-    // Solo campos mínimos para borrador
+    // Solo el título es obligatorio para guardar como borrador
     if (!formData.title || formData.title.trim() === "") {
       newErrors.title = "El título es obligatorio";
-    }
-
-    if (!csvData) {
-      newErrors.csv = "Debe cargar un archivo CSV válido";
     }
 
     return {

@@ -372,9 +372,10 @@ export async function createTariff(data: TariffFormData): Promise<{
       return { success: false, error: limitCheck.message }
     }
 
-    // Validar NIF antes de continuar
-    if (!isValidNIF(data.nif)) {
-      log.error('[createTariff] NIF inválido:', data.nif)
+    // Validar NIF solo si la tarifa está activa
+    // Las tarifas en borrador pueden tener campos vacíos o inválidos
+    if (data.status === 'Activa' && !isValidNIF(data.nif)) {
+      log.error('[createTariff] NIF inválido para tarifa activa:', data.nif)
       return { success: false, error: getNIFErrorMessage(data.nif) }
     }
 
@@ -464,7 +465,8 @@ export async function createTariff(data: TariffFormData): Promise<{
         summary_note: data.summary_note,
         conditions_note: data.conditions_note,
         legal_note: data.legal_note,
-        json_tariff_data: data.json_tariff_data,
+        // json_tariff_data es NOT NULL en BD, enviar array vacío si no hay datos
+        json_tariff_data: data.json_tariff_data || [],
         ivas_presentes: ivasPresentes // Guardar IVAs detectados
       })
 
@@ -490,9 +492,10 @@ export async function updateTariff(id: string, data: TariffFormData): Promise<{
   try {
     log.info('[updateTariff] Iniciando actualización de tarifa:', { id })
 
-    // Validar NIF antes de continuar
-    if (!isValidNIF(data.nif)) {
-      log.error('[updateTariff] NIF inválido:', data.nif)
+    // Validar NIF solo si la tarifa está activa
+    // Las tarifas en borrador pueden tener campos vacíos o inválidos
+    if (data.status === 'Activa' && !isValidNIF(data.nif)) {
+      log.error('[updateTariff] NIF inválido para tarifa activa:', data.nif)
       return { success: false, error: getNIFErrorMessage(data.nif) }
     }
 
@@ -558,7 +561,8 @@ export async function updateTariff(id: string, data: TariffFormData): Promise<{
         summary_note: data.summary_note,
         conditions_note: data.conditions_note,
         legal_note: data.legal_note,
-        json_tariff_data: data.json_tariff_data,
+        // json_tariff_data es NOT NULL en BD, mantener array vacío si no hay datos
+        json_tariff_data: data.json_tariff_data || [],
         ivas_presentes: ivasPresentes, // Actualizar IVAs detectados
         updated_at: new Date().toISOString()
       })
