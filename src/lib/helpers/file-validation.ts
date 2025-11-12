@@ -243,7 +243,12 @@ export function validateFile(
     const hasValidMimeType = allowedMimeTypes.includes(file.type)
     const isEmptyMimeType = !file.type || file.type === ''
 
-    if (!hasValidMimeType && !isEmptyMimeType) {
+    // EXCEPCIÓN: Para archivos CSV, ser más permisivos con MIME type
+    // ya que varía según SO/navegador (ej: application/vnd.ms-excel en Windows)
+    // Si la extensión es .csv, confiar en esa validación
+    const isCSVByExtension = fileType === 'csv' && extension === '.csv'
+
+    if (!hasValidMimeType && !isEmptyMimeType && !isCSVByExtension) {
       const allowedTypesStr = allowedMimeTypes.join(', ')
 
       return {
