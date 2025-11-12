@@ -219,7 +219,7 @@ function isTariffComplete(tariff: Partial<Tariff>): {
 export async function toggleTariffStatus(
   tariffId: string,
   currentStatus: 'Borrador' | 'Activa' | 'Inactiva'
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; missingFields?: string[] }> {
   const supabase = supabaseAdmin
 
   // Si el estado actual es Borrador y se intenta activar, validar que esté completa
@@ -244,7 +244,8 @@ export async function toggleTariffStatus(
     if (!validation.complete) {
       return {
         success: false,
-        error: `No se puede activar la tarifa. Faltan los siguientes campos: ${validation.missingFields.join(', ')}`
+        error: `No se puede activar la tarifa. Faltan ${validation.missingFields.length} campos obligatorios.`,
+        missingFields: validation.missingFields
       }
     }
 

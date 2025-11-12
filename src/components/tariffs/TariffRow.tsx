@@ -86,6 +86,8 @@ export function TariffRow({
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [isTogglingTemplate, setIsTogglingTemplate] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
+  const [showIncompleteDialog, setShowIncompleteDialog] = useState(false);
+  const [missingFields, setMissingFields] = useState<string[]>([]);
 
   // Determinar si este recurso debe mostrarse como inactivo por límites del plan
   const isLimitedByPlan = shouldMarkResourceInactive(resourceIndex, 'tariffs', currentPlan);
@@ -100,7 +102,13 @@ export function TariffRow({
         toast.success(`Estado actualizado a ${newStatus}`);
         onStatusChange?.();
       } else {
-        toast.error(result.error || "Error al actualizar estado");
+        // Si hay campos faltantes, mostrar popup en lugar de toast
+        if (result.missingFields && result.missingFields.length > 0) {
+          setMissingFields(result.missingFields);
+          setShowIncompleteDialog(true);
+        } else {
+          toast.error(result.error || "Error al actualizar estado");
+        }
       }
     } catch {
       toast.error("Error inesperado al actualizar estado");
@@ -292,32 +300,44 @@ export function TariffRow({
         {/* Columna Estado */}
         <TableCell className="p-4">
           <div className="flex justify-center">
-            <Select
-              value={tariff.status || "Activa"}
-              onValueChange={handleStatusChange}
-            >
-              <SelectTrigger className="w-[140px] bg-white">
-                <SelectValue>
-                  <Badge
-                    className={
-                      statusColors[
-                        tariff.status as keyof typeof statusColors
-                      ] || "bg-gray-200 text-gray-700"
-                    }
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <Select
+                    value={tariff.status || "Activa"}
+                    onValueChange={handleStatusChange}
+                    disabled={tariff.status === "Borrador" || isLimitedByPlan}
                   >
-                    {tariff.status || "Activa"}
-                  </Badge>
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent className="bg-white">
-                <SelectItem value="Activa">
-                  <Badge className="bg-green-100 text-green-800">Activa</Badge>
-                </SelectItem>
-                <SelectItem value="Inactiva">
-                  <Badge className="bg-gray-200 text-gray-700">Inactiva</Badge>
-                </SelectItem>
-              </SelectContent>
-            </Select>
+                    <SelectTrigger className="w-[140px] bg-white">
+                      <SelectValue>
+                        <Badge
+                          className={
+                            statusColors[
+                              tariff.status as keyof typeof statusColors
+                            ] || "bg-gray-200 text-gray-700"
+                          }
+                        >
+                          {tariff.status || "Activa"}
+                        </Badge>
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="Activa">
+                        <Badge className="bg-green-100 text-green-800">Activa</Badge>
+                      </SelectItem>
+                      <SelectItem value="Inactiva">
+                        <Badge className="bg-gray-200 text-gray-700">Inactiva</Badge>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </TooltipTrigger>
+              {tariff.status === "Borrador" && (
+                <TooltipContent>
+                  <p>Complete los campos obligatorios para activar la tarifa</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
           </div>
         </TableCell>
 
@@ -516,6 +536,49 @@ export function TariffRow({
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {isDeleting ? "Eliminando..." : "Eliminar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog de advertencia para tarifas incompletas */}
+      <AlertDialog open={showIncompleteDialog} onOpenChange={setShowIncompleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>⚠️ Tarifa Incompleta</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-4">
+              <p>
+                La tarifa <strong>&quot;{tariff.title}&quot;</strong> no se puede activar porque está <strong>incompleta</strong>.
+              </p>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p className="font-semibold text-yellow-900 mb-2">Campos faltantes:</p>
+                <ul className="list-disc list-inside text-sm text-yellow-800 space-y-1">
+                  {missingFields.map((field, index) => (
+                    <li key={index}>{field}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="font-semibold text-red-900 mb-2">⛔ Restricciones:</p>
+                <ul className="list-disc list-inside text-sm text-red-800 space-y-1">
+                  <li>No podrá crear presupuestos con esta tarifa</li>
+                  <li>Debe permanecer en estado <strong>Borrador</strong></li>
+                </ul>
+              </div>
+
+              <p className="text-sm text-gray-600">
+                Para activar la tarifa, complete los campos faltantes editando la tarifa.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              onClick={() => setShowIncompleteDialog(false)}
+              className="bg-lime-500 hover:bg-lime-600"
+            >
+              Entendido
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

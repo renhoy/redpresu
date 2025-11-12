@@ -25,6 +25,12 @@ import {
   Copy,
   Lock,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { formatDate } from "@/lib/validators";
 import {
   toggleTariffStatus,
@@ -86,6 +92,8 @@ export function TariffCard({
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [isTogglingTemplate, setIsTogglingTemplate] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
+  const [showIncompleteDialog, setShowIncompleteDialog] = useState(false);
+  const [missingFields, setMissingFields] = useState<string[]>([]);
 
   // Determinar si este recurso debe mostrarse como inactivo por límites del plan
   const isLimitedByPlan = shouldMarkResourceInactive(resourceIndex, 'tariffs', currentPlan);
@@ -100,7 +108,13 @@ export function TariffCard({
         toast.success(`Estado actualizado a ${newStatus}`);
         onStatusChange?.();
       } else {
-        toast.error(result.error || "Error al actualizar estado");
+        // Si hay campos faltantes, mostrar popup en lugar de toast
+        if (result.missingFields && result.missingFields.length > 0) {
+          setMissingFields(result.missingFields);
+          setShowIncompleteDialog(true);
+        } else {
+          toast.error(result.error || "Error al actualizar estado");
+        }
       }
     } catch {
       toast.error("Error inesperado al actualizar estado");
@@ -219,39 +233,53 @@ export function TariffCard({
             {/* Info Grid */}
             <div className="grid grid-cols-2 gap-2 border-t pt-3">
               <div className="min-w-0">
-                <Select
-                  value={tariff.status || "Activa"}
-                  onValueChange={handleStatusChange}
-                >
-                  <SelectTrigger
-                    data-tour="select-estado"
-                    className="w-full h-7 text-xs"
-                  >
-                    <SelectValue>
-                      <Badge
-                        className={
-                          statusColors[
-                            tariff.status as keyof typeof statusColors
-                          ] || "bg-gray-200 text-gray-700"
-                        }
-                      >
-                        {tariff.status || "Activa"}
-                      </Badge>
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Activa">
-                      <Badge className="bg-green-100 text-green-800">
-                        Activa
-                      </Badge>
-                    </SelectItem>
-                    <SelectItem value="Inactiva">
-                      <Badge className="bg-gray-200 text-gray-700">
-                        Inactiva
-                      </Badge>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <Select
+                          value={tariff.status || "Activa"}
+                          onValueChange={handleStatusChange}
+                          disabled={tariff.status === "Borrador" || isLimitedByPlan}
+                        >
+                          <SelectTrigger
+                            data-tour="select-estado"
+                            className="w-full h-7 text-xs"
+                          >
+                            <SelectValue>
+                              <Badge
+                                className={
+                                  statusColors[
+                                    tariff.status as keyof typeof statusColors
+                                  ] || "bg-gray-200 text-gray-700"
+                                }
+                              >
+                                {tariff.status || "Activa"}
+                              </Badge>
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Activa">
+                              <Badge className="bg-green-100 text-green-800">
+                                Activa
+                              </Badge>
+                            </SelectItem>
+                            <SelectItem value="Inactiva">
+                              <Badge className="bg-gray-200 text-gray-700">
+                                Inactiva
+                              </Badge>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </TooltipTrigger>
+                    {tariff.status === "Borrador" && (
+                      <TooltipContent>
+                        <p>Complete los campos obligatorios para activar la tarifa</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
               </div>
 
               {/* Validez */}
@@ -436,39 +464,53 @@ export function TariffCard({
               {/* Columna 3: Estado y Validez */}
               <div className="space-y-1">
                 <div className="flex items-center justify-end">
-                  <Select
-                    value={tariff.status || "Activa"}
-                    onValueChange={handleStatusChange}
-                  >
-                    <SelectTrigger
-                      data-tour="select-estado"
-                      className="w-auto h-7 text-xs"
-                    >
-                      <SelectValue>
-                        <Badge
-                          className={
-                            statusColors[
-                              tariff.status as keyof typeof statusColors
-                            ] || "bg-gray-200 text-gray-700"
-                          }
-                        >
-                          {tariff.status || "Activa"}
-                        </Badge>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Activa">
-                        <Badge className="bg-green-100 text-green-800">
-                          Activa
-                        </Badge>
-                      </SelectItem>
-                      <SelectItem value="Inactiva">
-                        <Badge className="bg-gray-200 text-gray-700">
-                          Inactiva
-                        </Badge>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div>
+                          <Select
+                            value={tariff.status || "Activa"}
+                            onValueChange={handleStatusChange}
+                            disabled={tariff.status === "Borrador" || isLimitedByPlan}
+                          >
+                            <SelectTrigger
+                              data-tour="select-estado"
+                              className="w-auto h-7 text-xs"
+                            >
+                              <SelectValue>
+                                <Badge
+                                  className={
+                                    statusColors[
+                                      tariff.status as keyof typeof statusColors
+                                    ] || "bg-gray-200 text-gray-700"
+                                  }
+                                >
+                                  {tariff.status || "Activa"}
+                                </Badge>
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Activa">
+                                <Badge className="bg-green-100 text-green-800">
+                                  Activa
+                                </Badge>
+                              </SelectItem>
+                              <SelectItem value="Inactiva">
+                                <Badge className="bg-gray-200 text-gray-700">
+                                  Inactiva
+                                </Badge>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </TooltipTrigger>
+                      {tariff.status === "Borrador" && (
+                        <TooltipContent>
+                          <p>Complete los campos obligatorios para activar la tarifa</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
                 <div className="text-sm font-medium text-right">
                   {tariff.validity ? `${tariff.validity} días` : "-"}
@@ -675,6 +717,49 @@ export function TariffCard({
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {isDeleting ? "Eliminando..." : "Eliminar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog de tarifa incompleta */}
+      <AlertDialog open={showIncompleteDialog} onOpenChange={setShowIncompleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>⚠️ Tarifa Incompleta</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-4">
+              <p>
+                La tarifa <strong>&quot;{tariff.title}&quot;</strong> no se puede activar porque está <strong>incompleta</strong>.
+              </p>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p className="font-semibold text-yellow-900 mb-2">Campos faltantes:</p>
+                <ul className="list-disc list-inside text-sm text-yellow-800 space-y-1">
+                  {missingFields.map((field, index) => (
+                    <li key={index}>{field}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="font-semibold text-red-900 mb-2">⛔ Restricciones:</p>
+                <ul className="list-disc list-inside text-sm text-red-800 space-y-1">
+                  <li>No puede crear presupuestos con esta tarifa</li>
+                  <li>Debe permanecer en estado Borrador hasta completar los campos</li>
+                </ul>
+              </div>
+
+              <p className="text-sm text-gray-600">
+                Para activar la tarifa, edítela y complete todos los campos obligatorios.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              onClick={() => setShowIncompleteDialog(false)}
+              className="bg-lime-500 hover:bg-lime-600"
+            >
+              Entendido
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
