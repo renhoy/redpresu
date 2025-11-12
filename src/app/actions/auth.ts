@@ -1,7 +1,7 @@
 'use server'
 import { log } from '@/lib/logger'
 import { sanitizeError } from '@/lib/helpers/error-helpers'
-import { getAppUrl } from '@/lib/helpers/url-helpers'
+import { getAppUrl } from '@/lib/helpers/url-helpers-server'
 
 import { cookies } from 'next/headers'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
@@ -74,10 +74,18 @@ export async function signInAction(email: string, password: string): Promise<Sig
       }
     }
 
-    // Actualizar last_login
+    // REGLA SUPERADMIN: Forzar company_id = 1 (Demo) en cada login
+    const updateData: any = { last_login: new Date().toISOString() }
+
+    if (userData.role === 'superadmin' && userData.company_id !== 1) {
+      log.info(`[Server Action] Forzando superadmin ${data.user.email} a empresa Demo (id = 1)`)
+      updateData.company_id = 1
+    }
+
+    // Actualizar last_login (y company_id si es superadmin)
     const { error: updateError } = await supabase
       .from('redpresu_users')
-      .update({ last_login: new Date().toISOString() })
+      .update(updateData)
       .eq('id', data.user.id)
 
     if (updateError) {
@@ -234,7 +242,7 @@ export interface RegisterData {
   web?: string
   irpfPercentage?: number | null
   issuer_id?: string  // ID del emisor existente (solo para superadmin)
-  role?: 'admin' | 'comercial'  // Rol del nuevo usuario (solo para superadmin)
+  role?: 'admin' | 'comercial' | 'superadmin'  // Rol del nuevo usuario (solo para superadmin)
 }
 
 /**
@@ -266,21 +274,11 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
     const cookieStore = await cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
 
-    // Crear cliente admin de Supabase con service role key
-    const { createClient } = await import('@supabase/supabase-js')
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    )
+    // Usar el cliente admin global (importado de @/lib/supabase/server)
+    // Este cliente ya tiene configurado el service_role_key y bypass de RLS
 
     // Variable para almacenar el ID de la empresa y el emisor
-    let empresaId: number
+    let empresaId: number | null = null
     let emisorId: string | null = null
 
     // ==========================================
@@ -332,7 +330,34 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
       log.info('[registerUser] Usando empresa existente:', empresaId)
 
     // ==========================================
-    // CASO 2: Registro normal (crear nueva empresa y emisor)
+    // CASO 2: Superadmin en empresa Demo (id = 1)
+    // ==========================================
+    } else if (data.role === 'superadmin') {
+      log.info('[registerUser] Creando superadmin en empresa Demo (id = 1)')
+
+      // Verificar que la empresa Demo (id = 1) existe
+      const { data: demoCompany, error: demoError } = await supabaseAdmin
+        .from('redpresu_companies')
+        .select('id, name')
+        .eq('id', 1)
+        .single()
+
+      if (demoError || !demoCompany) {
+        log.error('[registerUser] Empresa Demo (id = 1) no existe:', demoError)
+        return {
+          success: false,
+          error: 'La empresa Demo (id = 1) no existe en el sistema. Por favor, créala primero.'
+        }
+      }
+
+      log.info('[registerUser] Empresa Demo encontrada:', demoCompany.name)
+
+      // Superadmins siempre se crean en empresa Demo (id = 1) por defecto
+      empresaId = 1
+      emisorId = null // Superadmins no tienen issuer
+
+    // ==========================================
+    // CASO 3: Registro normal (crear nueva empresa y emisor)
     // ==========================================
     } else {
       // 1. Validar que el NIF no esté ya registrado en TODA la base de datos
@@ -373,15 +398,28 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
     }
 
     // 4. Crear usuario en auth.users usando admin API para evitar confirmación de email
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    // IMPORTANTE: Solo incluir user_metadata si no es superadmin
+    const createUserPayload: any = {
       email: data.email.trim().toLowerCase(),
       password: data.password,
-      email_confirm: true, // Auto-confirmar email en desarrollo
-      user_metadata: {
+      email_confirm: true, // Auto-confirmar email
+    }
+
+    // Solo añadir user_metadata si NO es superadmin y hay datos válidos
+    if (data.role !== 'superadmin' && data.nombreComercial && data.tipo) {
+      createUserPayload.user_metadata = {
         nombre_comercial: data.nombreComercial,
         tipo: data.tipo
       }
+    }
+
+    log.info('[registerUser] Creando usuario en auth.users:', {
+      email: createUserPayload.email,
+      hasMetadata: !!createUserPayload.user_metadata,
+      role: data.role
     })
+
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser(createUserPayload)
 
     if (authError) {
       log.error('[registerUser] Error en signUp:', authError)
@@ -416,7 +454,15 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
 
     // 5. Crear registro en public.users
     // Usar supabaseAdmin para bypass RLS policies
-    const { error: userError } = await supabaseAdmin
+    log.info('[registerUser] Intentando crear registro en redpresu_users:', {
+      userId,
+      empresaId,
+      userRole,
+      email: data.email.trim().toLowerCase(),
+      status: 'pending'
+    })
+
+    const { data: insertedUser, error: userError } = await supabaseAdmin
       .from('redpresu_users')
       .insert({
         id: userId,
@@ -428,27 +474,44 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
         status: 'pending', // Usuario debe configurar contraseña vía invitación
         invited_by: null // Se asignará cuando acepte la invitación
       })
+      .select()
+      .single()
 
     if (userError) {
-      log.error('[registerUser] Error al crear registro en users:', userError)
+      log.error('[registerUser] Error al crear registro en users:', {
+        error: userError,
+        errorString: JSON.stringify(userError),
+        code: userError.code,
+        message: userError.message,
+        details: userError.details,
+        hint: userError.hint,
+        userId,
+        empresaId,
+        userRole,
+        name: data.name,
+        last_name: data.last_name,
+        email: data.email
+      })
 
       // Intentar eliminar el usuario de auth y la empresa si falla la creación en public.users
       await supabaseAdmin.auth.admin.deleteUser(userId)
-      // Solo eliminar empresa si fue creada en este proceso (no existía issuer_id)
-      if (!data.issuer_id) {
+      // Solo eliminar empresa si fue creada en este proceso (no existía issuer_id Y no es superadmin)
+      if (!data.issuer_id && empresaId) {
         await supabaseAdmin.from('redpresu_companies').delete().eq('id', empresaId)
       }
 
       return {
         success: false,
-        error: 'Error al crear el perfil de usuario'
+        error: `Database error creating new user: ${userError.message || userError.code || 'Unknown error'}`
       }
     }
 
     log.info('[registerUser] Registro en users creado con rol:', userRole)
 
-    // 6. Crear registro en public.issuers SOLO si no se proporcionó issuer_id
-    if (!data.issuer_id) {
+    // 6. Crear registro en public.issuers SOLO si:
+    //    - No se proporcionó issuer_id Y
+    //    - No es un superadmin (superadmins no tienen issuer)
+    if (!data.issuer_id && userRole !== 'superadmin') {
       const { data: issuerData, error: issuerError } = await supabaseAdmin
         .from('redpresu_issuers')
         .insert({
@@ -473,10 +536,12 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
       if (issuerError) {
         log.error('[registerUser] Error al crear issuer:', issuerError)
 
-        // Intentar rollback: eliminar usuario, auth y empresa
+        // Intentar rollback: eliminar usuario, auth y empresa (si existe)
         await supabaseAdmin.from('redpresu_users').delete().eq('id', userId)
         await supabaseAdmin.auth.admin.deleteUser(userId)
-        await supabaseAdmin.from('redpresu_companies').delete().eq('id', empresaId)
+        if (empresaId) {
+          await supabaseAdmin.from('redpresu_companies').delete().eq('id', empresaId)
+        }
 
         return {
           success: false,
@@ -487,10 +552,12 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
       if (!issuerData) {
         log.error('[registerUser] No se obtuvo el issuer creado')
 
-        // Rollback: eliminar usuario, auth y empresa
+        // Rollback: eliminar usuario, auth y empresa (si existe)
         await supabaseAdmin.from('redpresu_users').delete().eq('id', userId)
         await supabaseAdmin.auth.admin.deleteUser(userId)
-        await supabaseAdmin.from('redpresu_companies').delete().eq('id', empresaId)
+        if (empresaId) {
+          await supabaseAdmin.from('redpresu_companies').delete().eq('id', empresaId)
+        }
 
         return {
           success: false,

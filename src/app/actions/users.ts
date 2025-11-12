@@ -288,24 +288,34 @@ export async function createUser(data: CreateUserData) {
     };
   }
 
-  // SECURITY: Validar company_id obligatorio
-  let companyId: number;
-  try {
-    companyId = requireValidCompanyId(currentUser, '[createUser]');
-  } catch (error) {
-    log.error('[createUser] company_id inválido', { error });
-    return {
-      success: false,
-      error: "Usuario sin empresa asignada"
-    };
-  }
+  // EXCEPCIÓN: Si el usuario actual es superadmin y está creando otro superadmin,
+  // no validar company_id (superadmins pueden gestionar múltiples empresas)
+  const isCreatingSuperadmin = data.role === 'superadmin';
+  const isSuperadmin = currentUser.role === 'superadmin';
 
-  // Validar que sea de la misma empresa
-  if (data.company_id !== companyId) {
-    return {
-      success: false,
-      error: "No puedes crear usuarios de otra empresa",
-    };
+  if (isSuperadmin && isCreatingSuperadmin) {
+    // Superadmin creando superadmin: no validar company_id del creador
+    log.info('[createUser] Superadmin creando otro superadmin, bypass validación company_id');
+  } else {
+    // SECURITY: Validar company_id obligatorio para admin/comercial
+    let companyId: number;
+    try {
+      companyId = requireValidCompanyId(currentUser, '[createUser]');
+    } catch (error) {
+      log.error('[createUser] company_id inválido', { error });
+      return {
+        success: false,
+        error: "Usuario sin empresa asignada"
+      };
+    }
+
+    // Validar que sea de la misma empresa (salvo superadmin)
+    if (currentUser.role !== 'superadmin' && data.company_id !== companyId) {
+      return {
+        success: false,
+        error: "No puedes crear usuarios de otra empresa",
+      };
+    }
   }
 
   // Validar schema
@@ -356,6 +366,14 @@ export async function createUser(data: CreateUserData) {
     }
 
     // 2. Crear registro en public.users
+    log.info('[createUser] Intentando crear registro en redpresu_users:', {
+      userId: authData.user.id,
+      email: data.email,
+      role: data.role,
+      company_id: data.company_id,
+      status: 'pending'
+    });
+
     const { data: userData, error: userError } = await supabaseAdmin
       .from("redpresu_users")
       .insert({
@@ -375,7 +393,14 @@ export async function createUser(data: CreateUserData) {
       // Rollback: eliminar usuario de auth
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
 
-      log.error("Error creating user record:", userError);
+      log.error("[createUser] Error creating user record:", {
+        error: userError,
+        errorString: JSON.stringify(userError),
+        code: userError.code,
+        message: userError.message,
+        details: userError.details,
+        hint: userError.hint
+      });
       return {
         success: false,
         error: "Error al crear registro de usuario",
