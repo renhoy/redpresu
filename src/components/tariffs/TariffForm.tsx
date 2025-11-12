@@ -186,6 +186,7 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
 
     // Determinar qué tipo de validación usar según el estado deseado
     const wantsActive = formData.status === "Activa";
+    let fieldsToShow: string[] = []; // Variable local para campos faltantes
 
     if (wantsActive) {
       // Si quiere activar, validar todos los campos
@@ -237,8 +238,9 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
       // Si pasa validación mínima pero está en borrador, verificar si faltan campos
       const completeValidation = validateComplete();
       if (!completeValidation.isValid) {
-        // Guardar pero mostrar advertencia
-        setMissingFields(completeValidation.missingFields);
+        // Guardar los campos faltantes en variable local
+        fieldsToShow = completeValidation.missingFields;
+        setMissingFields(fieldsToShow);
       }
     }
 
@@ -264,7 +266,8 @@ export function TariffForm({ mode, tariffId, initialData }: TariffFormProps) {
 
       if (result.success) {
         // Si se guardó como borrador y faltan campos, mostrar advertencia
-        if (dataWithCSV.status === "Borrador" && missingFields.length > 0) {
+        // Usar variable local en lugar del estado (que es asíncrono)
+        if (dataWithCSV.status === "Borrador" && fieldsToShow.length > 0) {
           setShowIncompleteDialog(true);
         } else {
           router.push("/tariffs");
