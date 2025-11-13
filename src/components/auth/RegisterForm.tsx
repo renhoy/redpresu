@@ -262,37 +262,40 @@ export default function RegisterForm() {
             )}
           </div>
 
-          {/* Email */}
-          <div className="space-y-2">
-            <Input
-              id="email"
-              type="email"
-              placeholder="Email *"
-              value={formData.email}
-              onChange={handleInputChange("email")}
-              className={errors.email ? "border-red-500" : ""}
-              disabled={isLoading}
-              autoComplete="email"
-            />
-            {errors.email && (
-              <p className="text-sm text-red-600">{errors.email}</p>
-            )}
-          </div>
+          {/* Email y Contraseña - 50% cada uno */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Email */}
+            <div className="space-y-2">
+              <Input
+                id="email"
+                type="email"
+                placeholder="Email *"
+                value={formData.email}
+                onChange={handleInputChange("email")}
+                className={errors.email ? "border-red-500" : ""}
+                disabled={isLoading}
+                autoComplete="email"
+              />
+              {errors.email && (
+                <p className="text-sm text-red-600">{errors.email}</p>
+              )}
+            </div>
 
-          {/* Contraseña */}
-          <div className="space-y-2">
-            <PasswordInput
-              id="password"
-              placeholder="Contraseña * (mínimo 6 caracteres)"
-              value={formData.password}
-              onChange={handleInputChange("password")}
-              className={errors.password ? "border-red-500" : ""}
-              disabled={isLoading}
-              autoComplete="new-password"
-            />
-            {errors.password && (
-              <p className="text-sm text-red-600">{errors.password}</p>
-            )}
+            {/* Contraseña */}
+            <div className="space-y-2">
+              <PasswordInput
+                id="password"
+                placeholder="Contraseña * (mínimo 6 caracteres)"
+                value={formData.password}
+                onChange={handleInputChange("password")}
+                className={errors.password ? "border-red-500" : ""}
+                disabled={isLoading}
+                autoComplete="new-password"
+              />
+              {errors.password && (
+                <p className="text-sm text-red-600">{errors.password}</p>
+              )}
+            </div>
           </div>
 
           <Button type="submit" className="w-full" disabled={isLoading}>
