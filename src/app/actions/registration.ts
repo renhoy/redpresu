@@ -236,6 +236,7 @@ export async function completeRegistration(
     // Datos de contacto
     telefono: string;
     email_contacto: string;
+    web?: string;
   }
 ) {
   try {
@@ -323,6 +324,7 @@ export async function completeRegistration(
         provincia: registrationData.provincia || "",
         telefono: registrationData.telefono || "",
         email: registrationData.email_contacto || tokenData.email,
+        web: registrationData.web || "",
         company_id: companyId,
       })
       .select()

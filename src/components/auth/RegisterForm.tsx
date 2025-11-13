@@ -245,12 +245,12 @@ export default function RegisterForm() {
             )}
           </div>
 
-          {/* Nombre */}
+          {/* Nombre de usuario */}
           <div className="space-y-2">
             <Input
               id="name"
               type="text"
-              placeholder="Nombre *"
+              placeholder="Nombre de usuario *"
               value={formData.name}
               onChange={handleInputChange("name")}
               className={errors.name ? "border-red-500" : ""}

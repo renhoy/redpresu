@@ -44,6 +44,7 @@ interface FormErrors {
   provincia?: string;
   telefono?: string;
   email_contacto?: string;
+  web?: string;
   general?: string;
 }
 
@@ -65,6 +66,7 @@ export default function CompleteRegistrationForm({
     provincia: "",
     telefono: "",
     email_contacto: "",
+    web: "",
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -96,12 +98,44 @@ export default function CompleteRegistrationForm({
     validateToken();
   }, [token]);
 
+  // Función auxiliar para validar formato NIF/CIF/NIE
+  const validateNIF = (nif: string): { valid: boolean; error?: string } => {
+    const nifTrimmed = nif.trim().toUpperCase();
+
+    if (!nifTrimmed) {
+      return { valid: false, error: "El NIF/CIF es obligatorio" };
+    }
+
+    // Validar longitud (8-9 caracteres)
+    if (nifTrimmed.length < 8 || nifTrimmed.length > 9) {
+      return { valid: false, error: "El NIF/CIF debe tener 8-9 caracteres" };
+    }
+
+    // Validar formato básico: letras y números
+    const formatoNIF = /^[A-Z0-9]+$/;
+    if (!formatoNIF.test(nifTrimmed)) {
+      return { valid: false, error: "El NIF/CIF contiene caracteres no válidos" };
+    }
+
+    // Validaciones más específicas
+    const formatoCIF = /^[ABCDEFGHJKLMNPQRSUVW]\d{7}[0-9A-J]$/;
+    const formatoDNI = /^\d{8}[A-Z]$/;
+    const formatoNIE = /^[XYZ]\d{7}[A-Z]$/;
+
+    if (!formatoCIF.test(nifTrimmed) && !formatoDNI.test(nifTrimmed) && !formatoNIE.test(nifTrimmed)) {
+      return { valid: false, error: "Formato de NIF/CIF/NIE no válido" };
+    }
+
+    return { valid: true };
+  };
+
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
     // Validar NIF
-    if (!formData.nif.trim()) {
-      newErrors.nif = "El NIF/CIF es obligatorio";
+    const nifValidation = validateNIF(formData.nif);
+    if (!nifValidation.valid) {
+      newErrors.nif = nifValidation.error;
     }
 
     // Validar razón social
@@ -156,6 +190,7 @@ export default function CompleteRegistrationForm({
         provincia: formData.provincia.trim(),
         telefono: formData.telefono.trim(),
         email_contacto: formData.email_contacto.trim() || tokenData?.email || "",
+        web: formData.web.trim(),
       });
 
       if (!result.success) {
@@ -195,6 +230,18 @@ export default function CompleteRegistrationForm({
         ...prev,
         [field]: value,
       }));
+
+      // Validar NIF en tiempo real
+      if (field === "nif" && value.trim()) {
+        const validation = validateNIF(value);
+        if (!validation.valid) {
+          setErrors((prev) => ({
+            ...prev,
+            nif: validation.error,
+          }));
+          return;
+        }
+      }
 
       // Limpiar error del campo cuando el usuario empieza a escribir
       if (errors[field]) {
@@ -500,6 +547,29 @@ export default function CompleteRegistrationForm({
                     <p className="text-sm text-red-600">{errors.email_contacto}</p>
                   )}
                 </div>
+              </div>
+
+              {/* Campo Web */}
+              <div className="space-y-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Input
+                      id="web"
+                      type="url"
+                      placeholder="Sitio Web (opcional)"
+                      value={formData.web}
+                      onChange={handleInputChange("web")}
+                      className={errors.web ? "border-red-500" : ""}
+                      disabled={isLoading}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>www.miempresa.com</p>
+                  </TooltipContent>
+                </Tooltip>
+                {errors.web && (
+                  <p className="text-sm text-red-600">{errors.web}</p>
+                )}
               </div>
             </div>
 
