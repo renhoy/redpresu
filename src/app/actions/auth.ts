@@ -589,14 +589,12 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
       hasCurrentUser: !!currentUser,
       hasIssuerId: !!data.issuer_id,
       newUserEmail: data.email,
-      isDevelopment: process.env.NODE_ENV === 'development'
+      isDevelopment
     })
 
     // 8. Retornar resultado SIN hacer auto-login
     // El componente frontend manejará la UI de confirmación de email
     // Incluir isDevelopment para que el cliente sepa cómo mostrar la UI
-    const isDevelopment = process.env.NODE_ENV === 'development'
-
     return {
       success: true,
       data: {
