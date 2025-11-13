@@ -233,6 +233,7 @@ export async function completeRegistration(
     codigo_postal: string;
     poblacion: string;
     provincia: string;
+    irpf_percentage?: number;
     // Datos de contacto
     telefono: string;
     email_contacto: string;
@@ -325,6 +326,7 @@ export async function completeRegistration(
         telefono: registrationData.telefono || "",
         email: registrationData.email_contacto || tokenData.email,
         web: registrationData.web || "",
+        irpf_percentage: registrationData.irpf_percentage || null,
         company_id: companyId,
       })
       .select()

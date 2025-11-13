@@ -42,6 +42,7 @@ interface FormErrors {
   codigo_postal?: string;
   poblacion?: string;
   provincia?: string;
+  irpf_percentage?: string;
   telefono?: string;
   email_contacto?: string;
   web?: string;
@@ -64,6 +65,7 @@ export default function CompleteRegistrationForm({
     codigo_postal: "",
     poblacion: "",
     provincia: "",
+    irpf_percentage: 15, // Por defecto 15% para autónomos
     telefono: "",
     email_contacto: "",
     web: "",
@@ -165,6 +167,15 @@ export default function CompleteRegistrationForm({
       newErrors.provincia = "La provincia es obligatoria";
     }
 
+    // Validar IRPF para autónomos
+    if (tokenData?.tipo_emisor === "autonomo") {
+      if (formData.irpf_percentage === undefined || formData.irpf_percentage === null) {
+        newErrors.irpf_percentage = "El porcentaje de IRPF es obligatorio para autónomos";
+      } else if (formData.irpf_percentage < 0 || formData.irpf_percentage > 100) {
+        newErrors.irpf_percentage = "El IRPF debe estar entre 0 y 100";
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -188,6 +199,7 @@ export default function CompleteRegistrationForm({
         codigo_postal: formData.codigo_postal.trim(),
         poblacion: formData.poblacion.trim(),
         provincia: formData.provincia.trim(),
+        irpf_percentage: tokenData?.tipo_emisor === "autonomo" ? formData.irpf_percentage : undefined,
         telefono: formData.telefono.trim(),
         email_contacto: formData.email_contacto.trim() || tokenData?.email || "",
         web: formData.web.trim(),
@@ -335,7 +347,7 @@ export default function CompleteRegistrationForm({
             <Alert className="border-lime-200 bg-lime-50">
               <Info className="h-4 w-4 text-lime-600" />
               <AlertDescription className="text-sm text-lime-800">
-                <strong>¿Por qué pedimos estos datos?</strong> Esta información aparecerá en todos los presupuestos que generes. Podrás modificarla más tarde desde el menú <strong>Empresa</strong>.
+                <span className="font-semibold">¿Por qué pedimos estos datos?</span> Esta información aparecerá en todos los presupuestos que generes. Podrás modificarla más tarde desde el menú Empresa.
               </AlertDescription>
             </Alert>
 
@@ -343,64 +355,136 @@ export default function CompleteRegistrationForm({
             <div className="space-y-4">
               <h3 className="font-semibold text-lg">Datos Fiscales</h3>
 
-              {/* Razón Social + NIF */}
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                <div className="md:col-span-9 space-y-2">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Input
-                        id="razon_social"
-                        type="text"
-                        placeholder={
-                          tokenData?.tipo_emisor === "empresa"
-                            ? "Razón Social (Empresa) *"
-                            : "Nombre Completo (Autónomo) *"
-                        }
-                        value={formData.razon_social}
-                        onChange={handleInputChange("razon_social")}
-                        className={errors.razon_social ? "border-red-500" : ""}
-                        disabled={isLoading}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>
-                        {tokenData?.tipo_emisor === "empresa"
-                          ? "Mi Empresa S.L."
-                          : "Juan Pérez García"}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                  {errors.razon_social && (
-                    <p className="text-sm text-red-600">{errors.razon_social}</p>
-                  )}
-                </div>
+              {/* Razón Social + NIF (Empresa) o Nombre + NIF + IRPF (Autónomo) */}
+              {tokenData?.tipo_emisor === "empresa" ? (
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                  {/* Empresa: Razón Social 75% + NIF 25% */}
+                  <div className="md:col-span-9 space-y-2">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Input
+                          id="razon_social"
+                          type="text"
+                          placeholder="Razón Social (Empresa) *"
+                          value={formData.razon_social}
+                          onChange={handleInputChange("razon_social")}
+                          className={errors.razon_social ? "border-red-500" : ""}
+                          disabled={isLoading}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Mi Empresa S.L.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    {errors.razon_social && (
+                      <p className="text-sm text-red-600">{errors.razon_social}</p>
+                    )}
+                  </div>
 
-                <div className="md:col-span-3 space-y-2">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Input
-                        id="nif"
-                        type="text"
-                        placeholder="NIF/CIF *"
-                        value={formData.nif}
-                        onChange={handleInputChange("nif")}
-                        className={errors.nif ? "border-red-500" : ""}
-                        disabled={isLoading}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>
-                        {tokenData?.tipo_emisor === "empresa"
-                          ? "B12345678"
-                          : "12345678A"}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                  {errors.nif && (
-                    <p className="text-sm text-red-600">{errors.nif}</p>
-                  )}
+                  <div className="md:col-span-3 space-y-2">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Input
+                          id="nif"
+                          type="text"
+                          placeholder="NIF/CIF *"
+                          value={formData.nif}
+                          onChange={handleInputChange("nif")}
+                          className={errors.nif ? "border-red-500" : ""}
+                          disabled={isLoading}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>B12345678</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    {errors.nif && (
+                      <p className="text-sm text-red-600">{errors.nif}</p>
+                    )}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                  {/* Autónomo: Nombre 50% + NIF 25% + IRPF 25% */}
+                  <div className="md:col-span-6 space-y-2">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Input
+                          id="razon_social"
+                          type="text"
+                          placeholder="Nombre Completo (Autónomo) *"
+                          value={formData.razon_social}
+                          onChange={handleInputChange("razon_social")}
+                          className={errors.razon_social ? "border-red-500" : ""}
+                          disabled={isLoading}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Juan Pérez García</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    {errors.razon_social && (
+                      <p className="text-sm text-red-600">{errors.razon_social}</p>
+                    )}
+                  </div>
+
+                  <div className="md:col-span-3 space-y-2">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Input
+                          id="nif"
+                          type="text"
+                          placeholder="NIF *"
+                          value={formData.nif}
+                          onChange={handleInputChange("nif")}
+                          className={errors.nif ? "border-red-500" : ""}
+                          disabled={isLoading}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>12345678A</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    {errors.nif && (
+                      <p className="text-sm text-red-600">{errors.nif}</p>
+                    )}
+                  </div>
+
+                  <div className="md:col-span-3 space-y-2">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Input
+                          id="irpf_percentage"
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.01"
+                          placeholder="% IRPF *"
+                          value={formData.irpf_percentage}
+                          onChange={(e) => {
+                            const value = e.target.value ? parseFloat(e.target.value) : 15;
+                            setFormData((prev) => ({
+                              ...prev,
+                              irpf_percentage: value,
+                            }));
+                            if (errors.irpf_percentage) {
+                              setErrors((prev) => ({ ...prev, irpf_percentage: undefined }));
+                            }
+                          }}
+                          className={errors.irpf_percentage ? "border-red-500" : ""}
+                          disabled={isLoading}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Por defecto: 15%</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    {errors.irpf_percentage && (
+                      <p className="text-sm text-red-600">{errors.irpf_percentage}</p>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Dirección + Código Postal */}
               <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
@@ -502,15 +586,15 @@ export default function CompleteRegistrationForm({
             <div className="space-y-4">
               <h3 className="font-semibold text-lg">Datos de Contacto</h3>
 
-              {/* Teléfono + Email de Contacto */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
+              {/* Teléfono 25% + Email 50% + Web 25% */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <div className="md:col-span-3 space-y-2">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Input
                         id="telefono"
                         type="tel"
-                        placeholder="Teléfono (opcional)"
+                        placeholder="Teléfono"
                         value={formData.telefono}
                         onChange={handleInputChange("telefono")}
                         className={errors.telefono ? "border-red-500" : ""}
@@ -526,13 +610,13 @@ export default function CompleteRegistrationForm({
                   )}
                 </div>
 
-                <div className="space-y-2">
+                <div className="md:col-span-6 space-y-2">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Input
                         id="email_contacto"
                         type="email"
-                        placeholder="Email de Contacto (opcional)"
+                        placeholder="Email de Contacto"
                         value={formData.email_contacto}
                         onChange={handleInputChange("email_contacto")}
                         className={errors.email_contacto ? "border-red-500" : ""}
@@ -547,29 +631,28 @@ export default function CompleteRegistrationForm({
                     <p className="text-sm text-red-600">{errors.email_contacto}</p>
                   )}
                 </div>
-              </div>
 
-              {/* Campo Web */}
-              <div className="space-y-2">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Input
-                      id="web"
-                      type="url"
-                      placeholder="Sitio Web (opcional)"
-                      value={formData.web}
-                      onChange={handleInputChange("web")}
-                      className={errors.web ? "border-red-500" : ""}
-                      disabled={isLoading}
-                    />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>www.miempresa.com</p>
-                  </TooltipContent>
-                </Tooltip>
-                {errors.web && (
-                  <p className="text-sm text-red-600">{errors.web}</p>
-                )}
+                <div className="md:col-span-3 space-y-2">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Input
+                        id="web"
+                        type="url"
+                        placeholder="Sitio Web"
+                        value={formData.web}
+                        onChange={handleInputChange("web")}
+                        className={errors.web ? "border-red-500" : ""}
+                        disabled={isLoading}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>www.miempresa.com</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  {errors.web && (
+                    <p className="text-sm text-red-600">{errors.web}</p>
+                  )}
+                </div>
               </div>
             </div>
 
