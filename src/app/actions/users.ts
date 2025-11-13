@@ -519,17 +519,17 @@ export async function updateUser(userId: string, data: UpdateUserData) {
     };
   }
 
-  // REGLA: Si el usuario ES o SE CONVIERTE EN superadmin, forzar company_id = 1
+  // REGLA: Si un usuario SE CONVIERTE EN superadmin (promoción), asignar company_id = 1
+  // Pero si YA ES superadmin, permitir cambio de company_id (temporal)
   const updateData = { ...data };
-  const willBeSuperadmin = data.role === 'superadmin' || targetUser.role === 'superadmin';
+  const isBecomingSuperadmin = data.role === 'superadmin' && targetUser.role !== 'superadmin';
 
-  if (willBeSuperadmin) {
+  if (isBecomingSuperadmin) {
     updateData.company_id = 1;
-    log.info('[updateUser] Forzando company_id = 1 para superadmin:', {
+    log.info('[updateUser] Usuario promovido a superadmin, asignando company_id = 1:', {
       userId,
-      currentRole: targetUser.role,
-      newRole: data.role,
-      originalCompanyId: data.company_id
+      previousRole: targetUser.role,
+      newRole: data.role
     });
   }
 
