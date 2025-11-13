@@ -1,6 +1,7 @@
 "use server";
 
 import { createServerActionClient } from "@/lib/supabase/helpers";
+import { supabaseAdmin } from "@/lib/supabase/server";
 import { Budget, Database } from "@/lib/types/database";
 import { log } from "@/lib/logger";
 import { requireValidCompanyId } from "@/lib/helpers/company-validation";
@@ -36,8 +37,8 @@ export async function getDashboardStats(
       return null;
     }
 
-    // Obtener company_id y rol del usuario
-    const { data: userData, error: userError } = await supabase
+    // Obtener company_id y rol del usuario (usar supabaseAdmin para schema correcto)
+    const { data: userData, error: userError } = await supabaseAdmin
       .from("users")
       .select("company_id, role")
       .eq("id", user.id)
