@@ -377,11 +377,16 @@ export async function createUser(data: CreateUserData) {
     }
 
     // 2. Crear registro en public.users
+    // REGLA: Todos los superadmins deben tener company_id = 1
+    const finalCompanyId = data.role === 'superadmin' ? 1 : data.company_id;
+
     log.info('[createUser] Intentando crear registro en redpresu_users:', {
       userId: authData.user.id,
       email: data.email,
       role: data.role,
-      company_id: data.company_id,
+      company_id: finalCompanyId,
+      originalCompanyId: data.company_id,
+      isSuperadmin: data.role === 'superadmin',
       status: 'pending'
     });
 
@@ -393,7 +398,7 @@ export async function createUser(data: CreateUserData) {
         name: data.name,
         last_name: data.last_name,
         role: data.role,
-        company_id: data.company_id,
+        company_id: finalCompanyId,
         status: "pending", // Usuario debe cambiar password en primer login
         invited_by: null, // Se asignará cuando acepte la invitación
       })
@@ -514,11 +519,25 @@ export async function updateUser(userId: string, data: UpdateUserData) {
     };
   }
 
+  // REGLA: Si el usuario ES o SE CONVIERTE EN superadmin, forzar company_id = 1
+  const updateData = { ...data };
+  const willBeSuperadmin = data.role === 'superadmin' || targetUser.role === 'superadmin';
+
+  if (willBeSuperadmin) {
+    updateData.company_id = 1;
+    log.info('[updateUser] Forzando company_id = 1 para superadmin:', {
+      userId,
+      currentRole: targetUser.role,
+      newRole: data.role,
+      originalCompanyId: data.company_id
+    });
+  }
+
   // Actualizar usuario
   const { data: updatedUser, error: updateError } = await supabaseAdmin
     .from("redpresu_users")
     .update({
-      ...data,
+      ...updateData,
       updated_at: new Date().toISOString(),
     })
     .eq("id", userId)

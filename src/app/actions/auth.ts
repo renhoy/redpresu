@@ -464,11 +464,16 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
     const userRole = data.role || (data.issuer_id ? 'comercial' : 'admin')
 
     // 5. Crear registro en public.users
+    // REGLA: Todos los superadmins deben tener company_id = 1
+    const finalCompanyId = userRole === 'superadmin' ? 1 : empresaId
+
     // Usar supabaseAdmin para bypass RLS policies
     log.info('[registerUser] Intentando crear registro en redpresu_users:', {
       userId,
       empresaId,
       userRole,
+      finalCompanyId,
+      isSuperadmin: userRole === 'superadmin',
       email: data.email.trim().toLowerCase(),
       status: 'pending'
     })
@@ -481,7 +486,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
         last_name: data.last_name.trim(),
         email: data.email.trim().toLowerCase(),
         role: userRole,
-        company_id: empresaId,
+        company_id: finalCompanyId,
         status: 'pending', // Usuario debe configurar contraseña vía invitación
         invited_by: null // Se asignará cuando acepte la invitación
       })
