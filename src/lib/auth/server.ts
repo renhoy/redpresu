@@ -1,4 +1,5 @@
 import { createServerComponentClient } from '@/lib/supabase/helpers'
+import { supabaseAdmin } from '@/lib/supabase/server'
 
 export async function getServerUser() {
   const supabase = await createServerComponentClient()
@@ -13,7 +14,8 @@ export async function getServerUser() {
 
   console.log('[getServerUser] Auth user found:', user.id, user.email)
 
-  const { data: userData, error: dbError } = await supabase
+  // Usar supabaseAdmin para query (bypasea RLS pero es seguro porque filtramos por user.id autenticado)
+  const { data: userData, error: dbError } = await supabaseAdmin
     .from('users')
     .select('*')
     .eq('id', user.id)
