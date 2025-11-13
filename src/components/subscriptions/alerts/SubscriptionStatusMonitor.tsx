@@ -35,7 +35,7 @@ export function SubscriptionStatusMonitor({
     async function checkStatus() {
       try {
         const { data, error } = await supabase
-          .from("redpresu_subscriptions")
+          .from("subscriptions")
           .select("status")
           .eq("company_id", companyId)
           .maybeSingle(); // Usar maybeSingle() en vez de single() para manejar caso de no existe

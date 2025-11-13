@@ -103,12 +103,12 @@ export function BudgetCard({
 
   const days = getDaysRemaining(budget.start_date, budget.validity_days);
 
-  // Obtener título de la tarifa desde la relación redpresu_tariffs
+  // Obtener título de la tarifa desde la relación tariff
   const tariffTitle =
-    (budget as any).redpresu_tariffs &&
-    typeof (budget as any).redpresu_tariffs === "object" &&
-    "title" in (budget as any).redpresu_tariffs
-      ? ((budget as any).redpresu_tariffs as { title: string }).title
+    (budget as any).tariff &&
+    typeof (budget as any).tariff === "object" &&
+    "title" in (budget as any).tariff
+      ? ((budget as any).tariff as { title: string }).title
       : "N/A";
 
   const handleEditAction = () => {

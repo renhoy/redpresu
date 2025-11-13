@@ -27,9 +27,9 @@ export async function GET() {
       })
     }
 
-    // Buscar en redpresu_issuers por company_id
+    // Buscar en issuers por company_id
     const { data: issuer, error } = await supabaseAdmin
-      .from('redpresu_issuers')
+      .from('issuers')
       .select('type, irpf_percentage')
       .eq('company_id', user.company_id)
       .is('deleted_at', null)

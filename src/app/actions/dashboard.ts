@@ -42,7 +42,7 @@ export async function getDashboardStats(
 
     // Obtener company_id y rol del usuario
     const { data: userData, error: userError } = await supabase
-      .from("redpresu_users")
+      .from("users")
       .select("company_id, role")
       .eq("id", user.id)
       .single();
@@ -82,7 +82,7 @@ export async function getDashboardStats(
 
     // Construir query base según rol
     let query = supabase
-      .from("redpresu_budgets")
+      .from("budgets")
       .select("*")
       .eq("company_id", companyId);
 

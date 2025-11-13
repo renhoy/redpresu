@@ -46,7 +46,7 @@ export async function getAllConfig(): Promise<{
 
   try {
     const { data, error } = await supabaseAdmin
-      .from('redpresu_config')
+      .from('config')
       .select('*')
       .order('category, key')
 
@@ -78,7 +78,7 @@ export async function getConfigByCategory(category: string): Promise<{
 
   try {
     const { data, error } = await supabaseAdmin
-      .from('redpresu_config')
+      .from('config')
       .select('*')
       .eq('category', category)
       .order('key')
@@ -115,7 +115,7 @@ export async function updateConfigValue(
   try {
     // Verificar que la config exista
     const { data: existing } = await supabaseAdmin
-      .from('redpresu_config')
+      .from('config')
       .select('is_system')
       .eq('key', key)
       .single()
@@ -128,7 +128,7 @@ export async function updateConfigValue(
     // Se elimina la restricción is_system
 
     const { error } = await supabaseAdmin
-      .from('redpresu_config')
+      .from('config')
       .update({
         value: value as any,
         description,
@@ -189,7 +189,7 @@ export async function createConfigValue(
 
   try {
     const { error } = await supabaseAdmin
-      .from('redpresu_config')
+      .from('config')
       .insert({
         key,
         value: value as any,
@@ -226,7 +226,7 @@ export async function deleteConfigValue(key: string): Promise<{
 
   try {
     const { error } = await supabaseAdmin
-      .from('redpresu_config')
+      .from('config')
       .delete()
       .eq('key', key)
 
@@ -254,7 +254,7 @@ export async function getIVAtoREEquivalencesAction(): Promise<{
 }> {
   try {
     const { data, error } = await supabaseAdmin
-      .from('redpresu_config')
+      .from('config')
       .select('value')
       .eq('key', 'iva_re_equivalences')
       .single()
@@ -311,7 +311,7 @@ export async function getPDFTemplatesAction(): Promise<{
 }> {
   try {
     const { data, error } = await supabaseAdmin
-      .from('redpresu_config')
+      .from('config')
       .select('value')
       .eq('key', 'pdf_templates')
       .single()
@@ -378,7 +378,7 @@ export async function getTariffDefaultsAction(empresaId?: number): Promise<{
   try {
     // Paso 1: Buscar tarifa plantilla (is_template = true) de la empresa especificada
     let query = supabaseAdmin
-      .from('redpresu_tariffs')
+      .from('tariffs')
       .select('*')
       .eq('is_template', true)
 
@@ -414,7 +414,7 @@ export async function getTariffDefaultsAction(empresaId?: number): Promise<{
 
     // Paso 2: Si no hay plantilla, buscar default_tariff en config
     const { data: configData, error: configError } = await supabaseAdmin
-      .from('redpresu_config')
+      .from('config')
       .select('value')
       .eq('key', 'default_tariff')
       .single()
@@ -425,7 +425,7 @@ export async function getTariffDefaultsAction(empresaId?: number): Promise<{
 
       // Buscar plantilla con default: true en pdf_templates
       const { data: templatesData } = await supabaseAdmin
-        .from('redpresu_config')
+        .from('config')
         .select('value')
         .eq('key', 'pdf_templates')
         .single()
@@ -510,7 +510,7 @@ export async function getTariffDefaultsAction(empresaId?: number): Promise<{
 export async function getDefaultEmpresaId(): Promise<number> {
   try {
     const { data, error } = await supabaseAdmin
-      .from('redpresu_config')
+      .from('config')
       .select('value')
       .eq('key', 'default_empresa_id')
       .single()
@@ -541,7 +541,7 @@ export async function getAppNameAction(): Promise<{
 }> {
   try {
     const { data, error } = await supabaseAdmin
-      .from('redpresu_config')
+      .from('config')
       .select('value')
       .eq('key', 'app_name')
       .single()
@@ -573,7 +573,7 @@ export async function getRapidPDFModeAction(): Promise<{
 }> {
   try {
     const { data, error } = await supabaseAdmin
-      .from('redpresu_config')
+      .from('config')
       .select('value')
       .eq('key', 'rapid_pdf_mode')
       .single()
@@ -632,7 +632,7 @@ export async function getIssuerByEmpresaId(empresaId: number): Promise<{
   try {
     // Nota: La tabla issuers usa "company_id" no "company_id"
     const { data, error } = await supabaseAdmin
-      .from('redpresu_issuers')
+      .from('issuers')
       .select('name, nif_nie: nif, type, address, postal_code, locality, province, phone, email, web')
       .eq('company_id', empresaId)
       .single()

@@ -473,10 +473,10 @@ export function BudgetsTable({
   const renderBudgetRow = (budget: Budget, depth: number = 0) => {
     const days = getDaysRemaining(budget.start_date, budget.validity_days);
     const tariffTitle =
-      (budget as any).redpresu_tariffs &&
-      typeof (budget as any).redpresu_tariffs === "object" &&
-      "title" in (budget as any).redpresu_tariffs
-        ? ((budget as any).redpresu_tariffs as { title: string }).title
+      (budget as any).tariff &&
+      typeof (budget as any).tariff === "object" &&
+      "title" in (budget as any).tariff
+        ? ((budget as any).tariff as { title: string }).title
         : "N/A";
     const hasChildren = budget.children && budget.children.length > 0;
     const isExpanded = expandedBudgets.has(budget.id);

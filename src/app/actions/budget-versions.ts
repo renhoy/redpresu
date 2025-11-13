@@ -47,7 +47,7 @@ export async function createBudgetVersion(
 
     // 2. Obtener datos actuales del presupuesto
     const { data: budget, error: budgetError } = await supabase
-      .from('redpresu_budgets')
+      .from('budgets')
       .select('*')
       .eq('id', budgetId)
       .single()
@@ -106,7 +106,7 @@ export async function createBudgetVersion(
 
     // 6. Crear la versión con snapshot completo
     const { data: version, error: insertError } = await supabase
-      .from('redpresu_budget_versions')
+      .from('budget_versions')
       .insert({
         budget_id: budgetId,
         version_number: versionNumber,
@@ -174,7 +174,7 @@ export async function getBudgetVersions(
 
     // SECURITY: Verificar que el budget pertenece a la empresa del usuario
     const { data: budgetData, error: budgetError } = await supabase
-      .from('redpresu_budgets')
+      .from('budgets')
       .select('company_id')
       .eq('id', budgetId)
       .single()
@@ -194,7 +194,7 @@ export async function getBudgetVersions(
 
     // 2. Obtener versiones (RLS policy se encarga de filtrar por empresa)
     const { data: versions, error } = await supabase
-      .from('redpresu_budget_versions')
+      .from('budget_versions')
       .select(`
         *,
         users:created_by (
@@ -242,7 +242,7 @@ export async function restoreBudgetVersion(
 
     // 2. Obtener la versión a restaurar
     const { data: version, error: versionError } = await supabase
-      .from('redpresu_budget_versions')
+      .from('budget_versions')
       .select('*')
       .eq('id', versionId)
       .single()
@@ -254,7 +254,7 @@ export async function restoreBudgetVersion(
 
     // 3. Obtener el presupuesto actual
     const { data: budget, error: budgetError } = await supabase
-      .from('redpresu_budgets')
+      .from('budgets')
       .select('*, users!budgets_user_id_fkey(company_id)')
       .eq('id', version.budget_id)
       .single()
@@ -301,7 +301,7 @@ export async function restoreBudgetVersion(
 
     // 7. Restaurar el presupuesto con los datos de la versión
     const { error: updateError } = await supabase
-      .from('redpresu_budgets')
+      .from('budgets')
       .update({
         json_budget_data: version.json_budget_data,
         json_client_data: version.json_client_data,
@@ -364,7 +364,7 @@ export async function deleteBudgetVersion(
 
     // 2. Eliminar versión (RLS policy verifica permisos)
     const { error } = await supabase
-      .from('redpresu_budget_versions')
+      .from('budget_versions')
       .delete()
       .eq('id', versionId)
 

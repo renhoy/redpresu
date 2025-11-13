@@ -59,7 +59,7 @@ export async function createUserInvitation(
     // Obtener días de expiración desde configuración si no se proporciona
     if (!expirationDays) {
       const { data: configData } = await supabase
-        .from('redpresu_config')
+        .from('config')
         .select('value')
         .eq('key', 'invitation_token_expiration_days')
         .single()
@@ -98,7 +98,7 @@ export async function createUserInvitation(
 
     // Verificar rol (solo admin y superadmin pueden invitar)
     const { data: userData, error: userError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('role, name, email, company_id')
       .eq('id', user.id)
       .single()
@@ -120,7 +120,7 @@ export async function createUserInvitation(
 
     // Verificar el estado del usuario si ya está registrado
     const { data: existingUser, error: checkError } = await supabaseAdmin
-      .from('redpresu_users')
+      .from('users')
       .select('id, email, status')
       .eq('email', email.trim().toLowerCase())
       .maybeSingle()
@@ -147,7 +147,7 @@ export async function createUserInvitation(
 
     // Verificar si ya existe una invitación pendiente para este email
     const { data: existingInvitation, error: invError } = await supabase
-      .from('redpresu_user_invitations')
+      .from('user_invitations')
       .select('id, status, expires_at')
       .eq('email', email.trim().toLowerCase())
       .eq('status', 'pending')
@@ -164,7 +164,7 @@ export async function createUserInvitation(
       } else {
         // Marcar como expirada
         await supabase
-          .from('redpresu_user_invitations')
+          .from('user_invitations')
           .update({ status: 'expired', updated_at: new Date().toISOString() })
           .eq('id', existingInvitation.id)
       }
@@ -179,7 +179,7 @@ export async function createUserInvitation(
 
     // Crear invitación
     const { data: invitationData, error: createError } = await supabase
-      .from('redpresu_user_invitations')
+      .from('user_invitations')
       .insert({
         inviter_id: user.id,
         email: email.trim().toLowerCase(),
@@ -206,7 +206,7 @@ export async function createUserInvitation(
 
     // Obtener plantilla de email desde configuración
     const { data: templateConfig } = await supabase
-      .from('redpresu_config')
+      .from('config')
       .select('value')
       .eq('key', 'invitation_email_template')
       .single()
@@ -284,7 +284,7 @@ export async function validateInvitationToken(token: string): Promise<Invitation
 
     // Buscar invitación usando supabaseAdmin (bypass RLS para tokens públicos)
     const { data: invitation, error: invError } = await supabaseAdmin
-      .from('redpresu_user_invitations')
+      .from('user_invitations')
       .select(`
         id,
         inviter_id,
@@ -326,7 +326,7 @@ export async function validateInvitationToken(token: string): Promise<Invitation
     if (expiresAt < new Date()) {
       // Marcar como expirada
       await supabaseAdmin
-        .from('redpresu_user_invitations')
+        .from('user_invitations')
         .update({ status: 'expired', updated_at: new Date().toISOString() })
         .eq('id', invitation.id)
 
@@ -338,7 +338,7 @@ export async function validateInvitationToken(token: string): Promise<Invitation
 
     // Obtener datos del invitador
     const { data: inviterData, error: inviterError } = await supabaseAdmin
-      .from('redpresu_users')
+      .from('users')
       .select('name, email')
       .eq('id', invitation.inviter_id)
       .single()
@@ -349,7 +349,7 @@ export async function validateInvitationToken(token: string): Promise<Invitation
 
     // Verificar si el usuario ya existe (pre-creado por admin)
     const { data: existingUser } = await supabaseAdmin
-      .from('redpresu_users')
+      .from('users')
       .select('id, name, last_name, status')
       .eq('email', invitation.email)
       .eq('status', 'pending')
@@ -430,7 +430,7 @@ export async function acceptInvitation(
 
     // Obtener invitación
     const { data: invitation, error: invError } = await supabaseAdmin
-      .from('redpresu_user_invitations')
+      .from('user_invitations')
       .select('id, inviter_id, email')
       .eq('token', token)
       .eq('status', 'pending')
@@ -446,7 +446,7 @@ export async function acceptInvitation(
 
     // Obtener company_id del invitador
     const { data: inviterData, error: inviterError } = await supabaseAdmin
-      .from('redpresu_users')
+      .from('users')
       .select('company_id')
       .eq('id', invitation.inviter_id)
       .single()
@@ -461,7 +461,7 @@ export async function acceptInvitation(
 
     // Verificar si el usuario ya existe (pre-creado por admin)
     const { data: existingUser, error: existingUserError } = await supabaseAdmin
-      .from('redpresu_users')
+      .from('users')
       .select('id, status, role, name, last_name')
       .eq('email', invitation.email)
       .maybeSingle()
@@ -496,9 +496,9 @@ export async function acceptInvitation(
         }
       }
 
-      // Actualizar registro en redpresu_users
+      // Actualizar registro en users
       const { error: updateUserError } = await supabaseAdmin
-        .from('redpresu_users')
+        .from('users')
         .update({
           name: name.trim(),
           last_name: lastName.trim(),
@@ -548,9 +548,9 @@ export async function acceptInvitation(
 
       userId = authData.user.id
 
-      // Crear registro en public.redpresu_users
+      // Crear registro en redpresu.users
       const { error: userError } = await supabaseAdmin
-        .from('redpresu_users')
+        .from('users')
         .insert({
           id: userId,
           name: name.trim(),
@@ -577,7 +577,7 @@ export async function acceptInvitation(
 
     // Marcar invitación como aceptada
     await supabaseAdmin
-      .from('redpresu_user_invitations')
+      .from('user_invitations')
       .update({
         status: 'accepted',
         updated_at: new Date().toISOString()
@@ -610,7 +610,7 @@ export async function acceptInvitation(
 
     // Actualizar last_login y obtener rol para redirect
     const { data: userDataForRedirect } = await supabaseAdmin
-      .from('redpresu_users')
+      .from('users')
       .update({ last_login: new Date().toISOString() })
       .eq('id', userId)
       .select('role')
@@ -665,7 +665,7 @@ export async function cancelInvitation(invitationId: string): Promise<Invitation
 
     // Actualizar invitación a cancelled
     const { error: updateError } = await supabase
-      .from('redpresu_user_invitations')
+      .from('user_invitations')
       .update({
         status: 'cancelled',
         updated_at: new Date().toISOString()
@@ -725,7 +725,7 @@ export async function getMyInvitations(): Promise<{
 
     // Obtener invitaciones del usuario con datos del invitador
     const { data: invitations, error: invError } = await supabase
-      .from('redpresu_user_invitations')
+      .from('user_invitations')
       .select(`
         id,
         inviter_id,

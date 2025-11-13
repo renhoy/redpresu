@@ -145,7 +145,7 @@ export async function validateCompanyExists(
 ): Promise<ValidationResult> {
   try {
     const { data, error } = await supabase
-      .from('redpresu_issuers')
+      .from('issuers')
       .select('id')
       .eq('id', companyId)
       .eq('deleted_at', null) // Solo empresas activas
@@ -178,7 +178,7 @@ export async function validateSubscriptionOwnership(
 ): Promise<ValidationResult> {
   try {
     const { data, error } = await supabase
-      .from('redpresu_subscriptions')
+      .from('subscriptions')
       .select('company_id')
       .eq('stripe_subscription_id', stripeSubscriptionId)
       .single()

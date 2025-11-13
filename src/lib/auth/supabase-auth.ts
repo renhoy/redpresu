@@ -47,7 +47,7 @@ export async function getUser(): Promise<AuthResponse<AuthUser>> {
 
     // Obtener datos extendidos del usuario desde public.users
     const { data: userData, error: userError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('id, email, name, role, company_id')
       .eq('id', session.user.id)
       .single()

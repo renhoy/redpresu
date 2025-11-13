@@ -56,7 +56,7 @@ export async function sendContactMessage(
 
     // 1. Guardar mensaje en base de datos
     const { data: savedMessage, error: dbError } = await supabaseAdmin
-      .from("redpresu_contact_messages")
+      .from("contact_messages")
       .insert({
         first_name: data.firstName,
         last_name: data.lastName,

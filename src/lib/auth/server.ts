@@ -16,7 +16,7 @@ export async function getServerUser() {
   console.log('[getServerUser] Auth user found:', user.id, user.email)
 
   const { data: userData, error: dbError } = await supabase
-    .from('redpresu_users')
+    .from('users')
     .select('*')
     .eq('id', user.id)
     .maybeSingle()
@@ -36,10 +36,10 @@ export async function getServerUser() {
   }
 
   if (!userData) {
-    console.error('[getServerUser] No user data found in redpresu_users for authenticated user:', {
+    console.error('[getServerUser] No user data found in users for authenticated user:', {
       userId: user.id,
       userEmail: user.email,
-      hint: 'Usuario existe en auth.users pero no en redpresu_users - posible desincronización'
+      hint: 'Usuario existe en auth.users pero no en users - posible desincronización'
     })
     return null
   }

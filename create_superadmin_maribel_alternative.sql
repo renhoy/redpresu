@@ -37,9 +37,9 @@ async function createSuperadmin() {
 
     console.log('Usuario auth creado:', authData.user.id);
 
-    // 2. Crear registro en redpresu_users
+    // 2. Crear registro en users
     const { error: userError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .insert({
         id: authData.user.id,
         email: 'maribel+super@gmail.com',
@@ -64,11 +64,11 @@ async function createSuperadmin() {
 createSuperadmin();
 */
 
--- OPCIÓN 2: Crear solo el registro en redpresu_users (si ya existe en auth)
--- Si el usuario ya existe en auth.users pero falta en redpresu_users:
+-- OPCIÓN 2: Crear solo el registro en users (si ya existe en auth)
+-- Si el usuario ya existe en auth.users pero falta en users:
 
 /*
-INSERT INTO public.redpresu_users (
+INSERT INTO redpresu.users (
   id,
   email,
   name,

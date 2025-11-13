@@ -53,8 +53,8 @@ BEGIN
     ''
   );
 
-  -- Paso 2: Crear registro en redpresu_users
-  INSERT INTO public.redpresu_users (
+  -- Paso 2: Crear registro en users
+  INSERT INTO redpresu.users (
     id,
     email,
     name,
@@ -93,5 +93,5 @@ SELECT
   u.role,
   u.company_id,
   u.status
-FROM public.redpresu_users u
+FROM redpresu.users u
 WHERE u.email = 'maribel+super@gmail.com';

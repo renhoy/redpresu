@@ -131,7 +131,7 @@ export async function middleware(req: NextRequest) {
     if (isAuthenticated && session?.user && !isPublicRoute) {
       // Obtener rol y status desde la base de datos usando supabaseAdmin (bypasea RLS)
       const { data: userData, error: userError } = await supabaseAdmin
-        .from('redpresu_users')
+        .from('users')
         .select('role, status')
         .eq('id', session.user.id)
         .single()

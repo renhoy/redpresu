@@ -45,7 +45,7 @@ async function getUserIssuer(userId: string): Promise<{
 } | null> {
   try {
     const { data, error } = await supabaseAdmin
-      .from('redpresu_issuers')
+      .from('issuers')
       .select('type, irpf_percentage')
       .eq('user_id', userId)
       .single()
@@ -81,7 +81,7 @@ export async function getActiveTariffs(): Promise<Tariff[]> {
 
     // Obtener company_id del usuario
     const { data: userData, error: userError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('company_id, role')
       .eq('id', user.id)
       .single()
@@ -104,7 +104,7 @@ export async function getActiveTariffs(): Promise<Tariff[]> {
 
     // Obtener tarifas activas de la empresa
     const { data: tariffs, error: tariffsError } = await supabaseAdmin
-      .from('redpresu_tariffs')
+      .from('tariffs')
       .select('*')
       .eq('company_id', empresaId)
       .eq('status', 'Activa')
@@ -187,7 +187,7 @@ export async function checkBudgetNumberExists(
     }
 
     const { data: userData, error: userError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('company_id')
       .eq('id', user.id)
       .single()
@@ -205,7 +205,7 @@ export async function checkBudgetNumberExists(
 
     // Verificar unicidad
     let query = supabaseAdmin
-      .from('redpresu_budgets')
+      .from('budgets')
       .select('id')
       .eq('budget_number', budgetNumber.trim())
       .eq('company_id', empresaId)
@@ -265,7 +265,7 @@ export async function createDraftBudget(data: {
 
     // Obtener company_id del usuario
     const { data: userData, error: userError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('company_id, role')
       .eq('id', user.id)
       .single()
@@ -292,7 +292,7 @@ export async function createDraftBudget(data: {
       const trimmedNumber = data.budgetNumber.trim()
 
       const { data: existingBudget, error: checkError } = await supabaseAdmin
-        .from('redpresu_budgets')
+        .from('budgets')
         .select('id')
         .eq('budget_number', trimmedNumber)
         .eq('company_id', empresaId)
@@ -332,7 +332,7 @@ export async function createDraftBudget(data: {
 
         // Verificar si existe en BD
         const { data: existingBudget, error: checkError } = await supabaseAdmin
-          .from('redpresu_budgets')
+          .from('budgets')
           .select('id')
           .eq('budget_number', candidateNumber)
           .eq('company_id', empresaId)
@@ -418,7 +418,7 @@ export async function createDraftBudget(data: {
 
     for (let retryCount = 0; retryCount < maxInsertRetries && !insertSuccess; retryCount++) {
       const { data: insertedBudget, error: insertError } = await supabaseAdmin
-        .from('redpresu_budgets')
+        .from('budgets')
         .insert({
           company_id: empresaId,
           tariff_id: data.tariffId,
@@ -543,7 +543,7 @@ export async function updateBudgetDraft(
 
     // SECURITY: Obtener datos del usuario actual (VULN-010)
     const { data: userData, error: userError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('company_id, role')
       .eq('id', user.id)
       .single()
@@ -555,7 +555,7 @@ export async function updateBudgetDraft(
 
     // SECURITY: Verificar que el usuario es owner del budget (VULN-010)
     const { data: existingBudget, error: budgetError } = await supabaseAdmin
-      .from('redpresu_budgets')
+      .from('budgets')
       .select('user_id, status, company_id')
       .eq('id', budgetId)
       .single()
@@ -618,7 +618,7 @@ export async function updateBudgetDraft(
 
     // Actualizar
     const { error: updateError } = await supabaseAdmin
-      .from('redpresu_budgets')
+      .from('budgets')
       .update(updateData)
       .eq('id', budgetId)
 
@@ -674,7 +674,7 @@ export async function saveBudget(
 
     // SECURITY: Obtener datos del usuario actual (VULN-010)
     const { data: userData, error: userError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('company_id, role')
       .eq('id', user.id)
       .single()
@@ -686,7 +686,7 @@ export async function saveBudget(
 
     // SECURITY: Obtener budget y validar ownership (VULN-010)
     const { data: budget, error: budgetError } = await supabaseAdmin
-      .from('redpresu_budgets')
+      .from('budgets')
       .select('*')
       .eq('id', budgetId)
       .single()
@@ -857,7 +857,7 @@ export async function saveBudget(
     // Si es la primera vez que se guarda (notas vacías), copiar notas de la tarifa
     if (!budget.summary_note || !budget.conditions_note) {
       const { data: tariff, error: tariffError } = await supabaseAdmin
-        .from('redpresu_tariffs')
+        .from('tariffs')
         .select('summary_note, conditions_note')
         .eq('id', budget.tariff_id)
         .single()
@@ -875,7 +875,7 @@ export async function saveBudget(
 
     // Actualizar como borrador
     const { error: updateError } = await supabaseAdmin
-      .from('redpresu_budgets')
+      .from('budgets')
       .update(updateData)
       .eq('id', budgetId)
 
@@ -940,7 +940,7 @@ export async function duplicateBudget(
 
     // SECURITY: Obtener datos del usuario actual (VULN-010)
     const { data: userData, error: userError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('company_id, role')
       .eq('id', user.id)
       .single()
@@ -952,7 +952,7 @@ export async function duplicateBudget(
 
     // Obtener budget original para copiar datos base
     const { data: originalBudget, error: budgetError } = await supabaseAdmin
-      .from('redpresu_budgets')
+      .from('budgets')
       .select('*')
       .eq('id', originalBudgetId)
       .single()
@@ -1063,7 +1063,7 @@ export async function duplicateBudget(
 
     // Crear NUEVO presupuesto con los datos actualizados
     const { data: newBudget, error: insertError } = await supabaseAdmin
-      .from('redpresu_budgets')
+      .from('budgets')
       .insert({
         company_id: originalBudget.company_id,
         user_id: user.id,
@@ -1163,7 +1163,7 @@ export async function updateBudgetStatus(
 
     // SECURITY: Obtener datos del usuario actual (VULN-010)
     const { data: userData, error: userError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('company_id, role')
       .eq('id', user.id)
       .single()
@@ -1175,7 +1175,7 @@ export async function updateBudgetStatus(
 
     // SECURITY: Obtener budget y validar ownership (VULN-010)
     const { data: budget, error: budgetError } = await supabaseAdmin
-      .from('redpresu_budgets')
+      .from('budgets')
       .select('*')
       .eq('id', budgetId)
       .single()
@@ -1224,7 +1224,7 @@ export async function updateBudgetStatus(
 
     // Actualizar estado
     const { error: updateError } = await supabaseAdmin
-      .from('redpresu_budgets')
+      .from('budgets')
       .update({
         status: newStatus,
         updated_at: new Date().toISOString()
@@ -1268,7 +1268,7 @@ export async function getBudgetById(
 
     // SECURITY: Obtener datos del usuario actual (VULN-010)
     const { data: userData, error: userError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('company_id, role')
       .eq('id', user.id)
       .single()
@@ -1280,7 +1280,7 @@ export async function getBudgetById(
 
     // Obtener budget (RLS se encargará de verificar permisos, pero añadimos defensa en profundidad)
     const { data: budget, error: budgetError } = await supabase
-      .from('redpresu_budgets')
+      .from('budgets')
       .select('*')
       .eq('id', budgetId)
       .single()
@@ -1351,7 +1351,7 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
 
     // SECURITY: Obtener datos del usuario actual (VULN-010)
     const { data: userData, error: userError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('company_id, role')
       .eq('id', user.id)
       .single()
@@ -1363,10 +1363,10 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
 
     // Obtener budget con join a tariff
     const { data: budget, error: budgetError } = await supabase
-      .from('redpresu_budgets')
+      .from('budgets')
       .select(`
         *,
-        tariff:redpresu_tariffs(*)
+        tariff:tariffs(*)
       `)
       .eq('id', budgetId)
       .single()
@@ -1501,7 +1501,7 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
 
     // 6. Actualizar pdf_url en budgets (guardar storage path, no URL pública)
     const { error: updateError } = await supabaseAdmin
-      .from('redpresu_budgets')
+      .from('budgets')
       .update({ pdf_url: storagePath })
       .eq('id', budgetId)
 
@@ -1560,10 +1560,10 @@ export async function getBudgets(filters?: {
     // Construir query base con JOIN a tariffs usando supabaseAdmin
     // Nota: users se obtiene por separado ya que la relación puede no estar definida
     let query = supabaseAdmin
-      .from('redpresu_budgets')
+      .from('budgets')
       .select(`
         *,
-        redpresu_tariffs (
+        tariffs (
           title
         )
       `)
@@ -1606,7 +1606,7 @@ export async function getBudgets(filters?: {
     if (budgets && budgets.length > 0) {
       const userIds = [...new Set(budgets.map(b => b.user_id))]
       const { data: users } = await supabaseAdmin
-        .from('redpresu_users')
+        .from('users')
         .select('id, name, role')
         .in('id', userIds)
 
@@ -1680,7 +1680,7 @@ export async function deleteBudget(budgetId: string): Promise<{
 
     // Obtener presupuesto para verificar permisos
     const { data: budget, error: budgetError } = await supabaseAdmin
-      .from('redpresu_budgets')
+      .from('budgets')
       .select('user_id, pdf_url, company_id')
       .eq('id', budgetId)
       .single()
@@ -1692,7 +1692,7 @@ export async function deleteBudget(budgetId: string): Promise<{
 
     // Verificar permisos
     const { data: userData, error: userError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('role, company_id')
       .eq('id', user.id)
       .single()
@@ -1721,7 +1721,7 @@ export async function deleteBudget(budgetId: string): Promise<{
 
     // Eliminar presupuesto
     const { error: deleteError } = await supabaseAdmin
-      .from('redpresu_budgets')
+      .from('budgets')
       .delete()
       .eq('id', budgetId)
 
@@ -1771,7 +1771,7 @@ export async function deleteBudgetPDF(budgetId: string): Promise<{
 
     // Obtener presupuesto para verificar permisos y obtener pdf_url
     const { data: budget, error: budgetError } = await supabaseAdmin
-      .from('redpresu_budgets')
+      .from('budgets')
       .select('user_id, pdf_url, company_id')
       .eq('id', budgetId)
       .single()
@@ -1783,7 +1783,7 @@ export async function deleteBudgetPDF(budgetId: string): Promise<{
 
     // Verificar permisos
     const { data: userData, error: userError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('role, company_id')
       .eq('id', user.id)
       .single()
@@ -1828,7 +1828,7 @@ export async function deleteBudgetPDF(budgetId: string): Promise<{
 
     // Actualizar BD para quitar pdf_url
     const { error: updateError } = await supabaseAdmin
-      .from('redpresu_budgets')
+      .from('budgets')
       .update({ pdf_url: null })
       .eq('id', budgetId)
 
@@ -1875,7 +1875,7 @@ export async function getBudgetPDFSignedUrl(budgetId: string): Promise<{
 
     // Obtener presupuesto para verificar permisos y pdf_url
     const { data: budget, error: budgetError } = await supabaseAdmin
-      .from('redpresu_budgets')
+      .from('budgets')
       .select('user_id, pdf_url, company_id')
       .eq('id', budgetId)
       .single()
@@ -1891,7 +1891,7 @@ export async function getBudgetPDFSignedUrl(budgetId: string): Promise<{
 
     // Verificar permisos (mismo company_id)
     const { data: userData, error: userError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('company_id, role')
       .eq('id', user.id)
       .single()
@@ -1955,7 +1955,7 @@ export async function userHasBudgets(): Promise<boolean> {
 
     // Contar presupuestos del usuario (limitado a 1 para eficiencia)
     const { count, error } = await supabase
-      .from('redpresu_budgets')
+      .from('budgets')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', user.id)
       .limit(1)
@@ -1997,7 +1997,7 @@ export async function duplicateBudgetCopy(budgetId: string): Promise<{
 
     // Obtener company_id del usuario
     const { data: userData, error: userError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('company_id')
       .eq('id', user.id)
       .single()
@@ -2009,7 +2009,7 @@ export async function duplicateBudgetCopy(budgetId: string): Promise<{
 
     // Obtener presupuesto original
     const { data: originalBudget, error: budgetError } = await supabaseAdmin
-      .from('redpresu_budgets')
+      .from('budgets')
       .select('*')
       .eq('id', budgetId)
       .single()
@@ -2065,7 +2065,7 @@ export async function duplicateBudgetCopy(budgetId: string): Promise<{
 
         // Verificar si el budget_number ya existe en la BD (filtrar por empresa)
         const { data: existingBudget, error: checkError } = await supabaseAdmin
-          .from('redpresu_budgets')
+          .from('budgets')
           .select('id')
           .eq('budget_number', candidateNumber)
           .eq('company_id', originalBudget.company_id)
@@ -2136,7 +2136,7 @@ export async function duplicateBudgetCopy(budgetId: string): Promise<{
 
     for (let retryCount = 0; retryCount < maxInsertRetries && !insertSuccess; retryCount++) {
       const { data: insertedBudget, error: insertError } = await supabaseAdmin
-        .from('redpresu_budgets')
+        .from('budgets')
         .insert({
           company_id: originalBudget.company_id,
           user_id: user.id, // Usuario que crea la copia
@@ -2293,7 +2293,7 @@ export async function updateBudgetNotes(
 
     // SECURITY: Obtener datos del usuario actual
     const { data: userData, error: userError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('company_id, role')
       .eq('id', user.id)
       .single()
@@ -2305,7 +2305,7 @@ export async function updateBudgetNotes(
 
     // SECURITY: Obtener budget y validar ownership
     const { data: budget, error: budgetError } = await supabaseAdmin
-      .from('redpresu_budgets')
+      .from('budgets')
       .select('id, user_id, company_id, pdf_url')
       .eq('id', budgetId)
       .single()
@@ -2360,7 +2360,7 @@ export async function updateBudgetNotes(
 
     // Actualizar notas
     const { error: updateError } = await supabaseAdmin
-      .from('redpresu_budgets')
+      .from('budgets')
       .update(updateData)
       .eq('id', budgetId)
 

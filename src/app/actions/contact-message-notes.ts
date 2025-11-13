@@ -43,7 +43,7 @@ export async function getContactMessageNotes(
 
     // Obtener notas
     const { data: notesData, error: notesError } = await supabaseAdmin
-      .from("redpresu_contact_message_notes")
+      .from("contact_message_notes")
       .select("*")
       .eq("contact_message_id", messageId)
       .order("created_at", { ascending: false });
@@ -61,7 +61,7 @@ export async function getContactMessageNotes(
     // Obtener usuarios para las notas
     const userIds = [...new Set(notesData.map((note) => note.user_id))];
     const { data: usersData, error: usersError } = await supabaseAdmin
-      .from("redpresu_users")
+      .from("users")
       .select("id, name, email")
       .in("id", userIds);
 
@@ -113,7 +113,7 @@ export async function addContactMessageNote(
 
     // Insertar nota
     const { data: noteData, error: noteError } = await supabaseAdmin
-      .from("redpresu_contact_message_notes")
+      .from("contact_message_notes")
       .insert({
         contact_message_id: messageId,
         user_id: user.id,
@@ -129,7 +129,7 @@ export async function addContactMessageNote(
 
     // Obtener datos del usuario
     const { data: userData } = await supabaseAdmin
-      .from("redpresu_users")
+      .from("users")
       .select("id, name, email")
       .eq("id", user.id)
       .single();
@@ -174,7 +174,7 @@ export async function updateContactMessageNote(
 
     // Actualizar nota
     const { data: noteData, error: noteError } = await supabaseAdmin
-      .from("redpresu_contact_message_notes")
+      .from("contact_message_notes")
       .update({
         content: content.trim(),
       })
@@ -190,7 +190,7 @@ export async function updateContactMessageNote(
 
     // Obtener datos del usuario
     const { data: userData } = await supabaseAdmin
-      .from("redpresu_users")
+      .from("users")
       .select("id, name, email")
       .eq("id", user.id)
       .single();
@@ -227,7 +227,7 @@ export async function deleteContactMessageNote(noteId: string): Promise<ActionRe
     }
 
     const { error } = await supabaseAdmin
-      .from("redpresu_contact_message_notes")
+      .from("contact_message_notes")
       .delete()
       .eq("id", noteId);
 
@@ -250,7 +250,7 @@ export async function deleteContactMessageNote(noteId: string): Promise<ActionRe
 export async function getContactMessageNotesCount(messageId: string): Promise<number> {
   try {
     const { count, error } = await supabaseAdmin
-      .from("redpresu_contact_message_notes")
+      .from("contact_message_notes")
       .select("*", { count: "exact", head: true })
       .eq("contact_message_id", messageId);
 

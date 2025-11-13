@@ -195,7 +195,7 @@ export async function createTestSubscription(
 
     // Validar company_id existe (verificar que hay al menos un issuer con ese company_id)
     const { data: issuer, error: issuerError } = await supabaseAdmin
-      .from('redpresu_issuers')
+      .from('issuers')
       .select('company_id')
       .eq('company_id', params.companyId)
       .limit(1)
@@ -231,7 +231,7 @@ export async function createTestSubscription(
 
     // Verificar si ya existe una suscripción activa para esta empresa
     const { data: existingSub } = await supabaseAdmin
-      .from('redpresu_subscriptions')
+      .from('subscriptions')
       .select('id, status')
       .eq('company_id', params.companyId)
       .eq('status', 'active')
@@ -240,7 +240,7 @@ export async function createTestSubscription(
     if (existingSub) {
       // Actualizar existente
       const { data, error } = await supabaseAdmin
-        .from('redpresu_subscriptions')
+        .from('subscriptions')
         .update(subscriptionData)
         .eq('id', existingSub.id)
         .select()
@@ -256,7 +256,7 @@ export async function createTestSubscription(
     } else {
       // Crear nueva
       const { data, error } = await supabaseAdmin
-        .from('redpresu_subscriptions')
+        .from('subscriptions')
         .insert(subscriptionData)
         .select()
         .single();
@@ -305,7 +305,7 @@ export async function updateTestSubscription(
     if (params.currentPeriodEnd) updates.current_period_end = params.currentPeriodEnd;
 
     const { data, error } = await supabaseAdmin
-      .from('redpresu_subscriptions')
+      .from('subscriptions')
       .update(updates)
       .eq('id', params.subscriptionId)
       .select()
@@ -340,7 +340,7 @@ export async function expireSubscription(subscriptionId: string): Promise<Action
     const expiredDate = await subtractDays(now, 10); // 10 días atrás
 
     const { data, error } = await supabaseAdmin
-      .from('redpresu_subscriptions')
+      .from('subscriptions')
       .update({
         current_period_end: expiredDate.toISOString(),
         status: 'canceled',
@@ -380,7 +380,7 @@ export async function extendSubscription(
 
     // Obtener suscripción actual
     const { data: currentSub, error: fetchError } = await supabaseAdmin
-      .from('redpresu_subscriptions')
+      .from('subscriptions')
       .select('current_period_end')
       .eq('id', subscriptionId)
       .single();
@@ -393,7 +393,7 @@ export async function extendSubscription(
     const newEnd = await addDays(currentEnd, days);
 
     const { data, error } = await supabaseAdmin
-      .from('redpresu_subscriptions')
+      .from('subscriptions')
       .update({
         current_period_end: newEnd.toISOString(),
         status: 'active', // Reactivar si estaba expirada
@@ -433,7 +433,7 @@ export async function deleteTestSubscription(subscriptionId: string): Promise<Ac
 
     // 1. Obtener suscripción actual para verificar el plan
     const { data: subscription, error: fetchError } = await supabaseAdmin
-      .from('redpresu_subscriptions')
+      .from('subscriptions')
       .select('plan, company_id')
       .eq('id', subscriptionId)
       .single();
@@ -456,7 +456,7 @@ export async function deleteTestSubscription(subscriptionId: string): Promise<Ac
     log.info('[deleteTestSubscription] Convirtiendo plan', subscription.plan, 'a FREE...');
 
     const { error } = await supabaseAdmin
-      .from('redpresu_subscriptions')
+      .from('subscriptions')
       .update({
         plan: 'free',
         status: 'active',
@@ -499,7 +499,7 @@ export async function getTestCompanies(): Promise<ActionResult<Array<{ id: numbe
 
     // Obtener todos los issuers y agrupar por company_id
     const { data, error } = await supabaseAdmin
-      .from('redpresu_issuers')
+      .from('issuers')
       .select('company_id, name, nif')
       .order('name');
 
@@ -538,7 +538,7 @@ export async function getAllTestSubscriptions(): Promise<ActionResult<Array<Subs
     }
 
     const { data, error } = await supabaseAdmin
-      .from('redpresu_subscriptions')
+      .from('subscriptions')
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -551,7 +551,7 @@ export async function getAllTestSubscriptions(): Promise<ActionResult<Array<Subs
     const subscriptionsWithNames = await Promise.all(
       (data || []).map(async (sub) => {
         const { data: issuer } = await supabaseAdmin
-          .from('redpresu_issuers')
+          .from('issuers')
           .select('name')
           .eq('company_id', sub.company_id)
           .single();
@@ -581,7 +581,7 @@ export async function clearMockEmails(): Promise<ActionResult<{ count: number }>
     }
 
     const { count, error } = await supabaseAdmin
-      .from('redpresu_mock_emails')
+      .from('mock_emails')
       .delete()
       .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
 

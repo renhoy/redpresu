@@ -65,7 +65,7 @@ export async function createRegistrationToken(data: {
 
     // 3. Verificar que el email NO tenga un token pendiente (no usado, no expirado)
     const { data: existingToken } = await supabaseAdmin
-      .from("redpresu_registration_tokens")
+      .from("registration_tokens")
       .select("id")
       .eq("email", data.email.toLowerCase())
       .eq("used", false)
@@ -90,7 +90,7 @@ export async function createRegistrationToken(data: {
 
     // 6. Guardar token en BD
     const { data: savedToken, error: saveError } = await supabaseAdmin
-      .from("redpresu_registration_tokens")
+      .from("registration_tokens")
       .insert({
         token,
         email: data.email.toLowerCase(),
@@ -158,7 +158,7 @@ export async function validateRegistrationToken(token: string) {
 
     // Buscar token en BD
     const { data: tokenData, error } = await supabaseAdmin
-      .from("redpresu_registration_tokens")
+      .from("registration_tokens")
       .select("*")
       .eq("token", token)
       .single();
@@ -303,7 +303,7 @@ export async function completeRegistration(
     console.log("[completeRegistration] Creando empresa...");
 
     const { data: company, error: companyError } = await supabaseAdmin
-      .from("redpresu_companies")
+      .from("companies")
       .insert({
         name: registrationData.razon_social,
       })
@@ -329,7 +329,7 @@ export async function completeRegistration(
     console.log("[completeRegistration] Creando emisor...");
 
     const { data: emisor, error: emisorError } = await supabaseAdmin
-      .from("redpresu_emisores")
+      .from("emisores")
       .insert({
         tipo: tokenData.tipo_emisor,
         nif: registrationData.nif,
@@ -359,7 +359,7 @@ export async function completeRegistration(
 
       // Rollback: eliminar usuario y empresa
       await supabaseAdmin.auth.admin.deleteUser(userId);
-      await supabaseAdmin.from("redpresu_companies").delete().eq("id", companyId);
+      await supabaseAdmin.from("companies").delete().eq("id", companyId);
 
       return {
         success: false,
@@ -369,11 +369,11 @@ export async function completeRegistration(
 
     console.log("[completeRegistration] Emisor creado:", emisor.id);
 
-    // 6. Crear registro de usuario en redpresu_users
+    // 6. Crear registro de usuario en users
     console.log("[completeRegistration] Creando registro de usuario...");
 
     const { error: userError } = await supabaseAdmin
-      .from("redpresu_users")
+      .from("users")
       .insert({
         id: userId,
         name: tokenData.name,
@@ -390,8 +390,8 @@ export async function completeRegistration(
 
       // Rollback completo
       await supabaseAdmin.auth.admin.deleteUser(userId);
-      await supabaseAdmin.from("redpresu_companies").delete().eq("id", companyId);
-      await supabaseAdmin.from("redpresu_emisores").delete().eq("id", emisor.id);
+      await supabaseAdmin.from("companies").delete().eq("id", companyId);
+      await supabaseAdmin.from("emisores").delete().eq("id", emisor.id);
 
       return {
         success: false,
@@ -403,7 +403,7 @@ export async function completeRegistration(
     console.log("[completeRegistration] Marcando token como usado...");
 
     await supabaseAdmin
-      .from("redpresu_registration_tokens")
+      .from("registration_tokens")
       .update({ used: true })
       .eq("token", token);
 

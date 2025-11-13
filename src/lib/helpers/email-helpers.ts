@@ -9,7 +9,7 @@
  * - Nodemailer
  *
  * NUEVO (Testing Suscripciones):
- * - En NODE_ENV !== 'production': emails se guardan en BD (redpresu_mock_emails)
+ * - En NODE_ENV !== 'production': emails se guardan en BD (mock_emails)
  * - En producción: se enviarían vía servicio real
  */
 
@@ -246,7 +246,7 @@ export async function sendSubscriptionEmail(emailData: SubscriptionEmailData): P
     const now = await getCurrentTime();
 
     const { error } = await supabaseAdmin
-      .from('redpresu_mock_emails')
+      .from('mock_emails')
       .insert({
         type: emailData.type,
         to_email: emailData.to,

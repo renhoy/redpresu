@@ -144,7 +144,7 @@ export async function getUsers() {
 
   // Construir query base
   let query = supabaseAdmin
-    .from("redpresu_users")
+    .from("users")
     .select(
       `
       *,
@@ -178,7 +178,7 @@ export async function getUsers() {
   // Obtener nombres de empresas
   const companyIds = [...new Set(users.map(u => u.company_id))];
   const { data: companies } = await supabaseAdmin
-    .from("redpresu_companies")
+    .from("companies")
     .select("id, name")
     .in("id", companyIds);
 
@@ -224,7 +224,7 @@ export async function getUserById(userId: string) {
 
   // Construir query base
   let query = supabaseAdmin
-    .from("redpresu_users")
+    .from("users")
     .select(
       `
       *,
@@ -254,7 +254,7 @@ export async function getUserById(userId: string) {
 
   // Obtener nombre de la empresa
   const { data: company } = await supabaseAdmin
-    .from("redpresu_companies")
+    .from("companies")
     .select("name")
     .eq("id", user.company_id)
     .single();
@@ -380,7 +380,7 @@ export async function createUser(data: CreateUserData) {
     // REGLA: Todos los superadmins deben tener company_id = 1
     const finalCompanyId = data.role === 'superadmin' ? 1 : data.company_id;
 
-    log.info('[createUser] Intentando crear registro en redpresu_users:', {
+    log.info('[createUser] Intentando crear registro en users:', {
       userId: authData.user.id,
       email: data.email,
       role: data.role,
@@ -391,7 +391,7 @@ export async function createUser(data: CreateUserData) {
     });
 
     const { data: userData, error: userError } = await supabaseAdmin
-      .from("redpresu_users")
+      .from("users")
       .insert({
         id: authData.user.id,
         email: data.email,
@@ -487,7 +487,7 @@ export async function updateUser(userId: string, data: UpdateUserData) {
 
   // Verificar que el usuario pertenece a la misma empresa (salvo que sea superadmin cambiando empresa)
   const { data: targetUser, error: checkError } = await supabaseAdmin
-    .from("redpresu_users")
+    .from("users")
     .select("company_id, role")
     .eq("id", userId)
     .single();
@@ -535,7 +535,7 @@ export async function updateUser(userId: string, data: UpdateUserData) {
 
   // Actualizar usuario
   const { data: updatedUser, error: updateError } = await supabaseAdmin
-    .from("redpresu_users")
+    .from("users")
     .update({
       ...updateData,
       updated_at: new Date().toISOString(),
@@ -661,7 +661,7 @@ export async function updateUserComplete(params: {
 
       // Actualizar emisor usando supabaseAdmin
       const { error: issuerError } = await supabaseAdmin
-        .from("redpresu_issuers")
+        .from("issuers")
         .update(updateData)
         .eq("user_id", userId);
 
@@ -697,7 +697,7 @@ export async function updateUserComplete(params: {
       // Si es propio perfil y se proporciona contraseña actual, verificarla
       if (isOwnProfile && passwordData.currentPassword) {
         const { data: userData } = await supabaseAdmin
-          .from("redpresu_users")
+          .from("users")
           .select("email")
           .eq("id", userId)
           .single();
@@ -818,7 +818,7 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
 
   // Verificar que el usuario a eliminar existe
   const { data: targetUser, error: targetError } = await supabaseAdmin
-    .from("redpresu_users")
+    .from("users")
     .select("company_id, role, email")
     .eq("id", userId)
     .single();
@@ -850,7 +850,7 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
   if (targetUser.role === "admin" && targetUser.company_id) {
     // Contar cuántos admins tiene la empresa
     const { count, error: countError } = await supabaseAdmin
-      .from("redpresu_users")
+      .from("users")
       .select("*", { count: "exact", head: true })
       .eq("company_id", targetUser.company_id)
       .eq("role", "admin")
@@ -911,7 +911,7 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
   // Si se va a reasignar, verificar que el usuario destino existe y es válido
   if (reassignToUserId) {
     const { data: reassignUser, error: reassignError } = await supabaseAdmin
-      .from("redpresu_users")
+      .from("users")
       .select("id, company_id, status")
       .eq("id", reassignToUserId)
       .single();
@@ -940,7 +940,7 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
 
     // Reasignar tarifas
     const { error: tariffsError } = await supabaseAdmin
-      .from("redpresu_tariffs")
+      .from("tariffs")
       .update({ user_id: reassignToUserId })
       .eq("user_id", userId);
 
@@ -954,7 +954,7 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
 
     // Reasignar presupuestos
     const { error: budgetsError } = await supabaseAdmin
-      .from("redpresu_budgets")
+      .from("budgets")
       .update({ user_id: reassignToUserId })
       .eq("user_id", userId);
 
@@ -973,7 +973,7 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
 
     // IMPORTANTE: Borrar presupuestos ANTES porque tienen ON DELETE RESTRICT
     const { error: budgetsDeleteError } = await supabaseAdmin
-      .from("redpresu_budgets")
+      .from("budgets")
       .delete()
       .eq("user_id", userId);
 
@@ -987,7 +987,7 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
 
     // Borrar tarifas (aunque tienen ON DELETE SET NULL, es mejor limpiar)
     const { error: tariffsDeleteError } = await supabaseAdmin
-      .from("redpresu_tariffs")
+      .from("tariffs")
       .delete()
       .eq("user_id", userId);
 
@@ -998,7 +998,7 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
 
   // Obtener email del usuario antes de borrarlo (para borrar invitaciones)
   const { data: userToDelete } = await supabaseAdmin
-    .from("redpresu_users")
+    .from("users")
     .select("email")
     .eq("id", userId)
     .single();
@@ -1006,7 +1006,7 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
   // Borrar invitaciones relacionadas con este usuario
   // 1. Donde el usuario es el invitador (inviter_id)
   const { error: inviterError } = await supabaseAdmin
-    .from("redpresu_user_invitations")
+    .from("user_invitations")
     .delete()
     .eq("inviter_id", userId);
 
@@ -1017,7 +1017,7 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
   // 2. Donde el usuario es el invitado (email)
   if (userToDelete?.email) {
     const { error: invitedError } = await supabaseAdmin
-      .from("redpresu_user_invitations")
+      .from("user_invitations")
       .delete()
       .eq("email", userToDelete.email);
 
@@ -1029,7 +1029,7 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
   // Manejar registros de company_deletion_log donde el usuario es deleted_by
   // Actualizar a NULL en lugar de borrar (mantener auditoría)
   const { error: logError } = await supabaseAdmin
-    .from("redpresu_company_deletion_log")
+    .from("company_deletion_log")
     .update({ deleted_by: null })
     .eq("deleted_by", userId);
 
@@ -1037,7 +1037,7 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
     log.error("[deleteUser] Error actualizando company_deletion_log:", logError);
   }
 
-  // Eliminar de auth.users (cascada eliminará de public.redpresu_users)
+  // Eliminar de auth.users (cascada eliminará de public.users)
   const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
   if (authError) {

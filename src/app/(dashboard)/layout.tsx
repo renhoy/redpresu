@@ -57,7 +57,7 @@ export default async function DashboardLayout({
     console.log('[Layout] User company_id:', user.company_id);
 
     const { data: subscription, error } = await supabaseAdmin
-      .from('redpresu_subscriptions')
+      .from('subscriptions')
       .select('plan, company_id, status, updated_at')
       .eq('company_id', user.company_id)
       .order('updated_at', { ascending: false })
@@ -89,7 +89,7 @@ export default async function DashboardLayout({
   const { supabaseAdmin: supabaseAdminForIssuer } = await import('@/lib/supabase/server');
 
   const { data: issuer } = await supabaseAdminForIssuer
-    .from("redpresu_issuers")
+    .from("issuers")
     .select("name, type")
     .eq("user_id", user.id)
     .single();

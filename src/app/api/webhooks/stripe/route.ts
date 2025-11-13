@@ -228,7 +228,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
   // Actualizar suscripción en BD
   const { error } = await supabaseAdmin
-    .from('redpresu_subscriptions')
+    .from('subscriptions')
     .upsert({
       company_id: companyId,
       plan: planId as AllowedPlan,
@@ -302,7 +302,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   }
 
   const { error } = await supabaseAdmin
-    .from('redpresu_subscriptions')
+    .from('subscriptions')
     .update({
       status,
       current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
@@ -359,7 +359,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 
   // Revertir a plan free
   const { error } = await supabaseAdmin
-    .from('redpresu_subscriptions')
+    .from('subscriptions')
     .update({
       plan: 'free',
       status: 'canceled',
@@ -442,7 +442,7 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
 
   // Marcar como past_due
   const { error } = await supabaseAdmin
-    .from('redpresu_subscriptions')
+    .from('subscriptions')
     .update({
       status: 'past_due',
       updated_at: new Date().toISOString(),

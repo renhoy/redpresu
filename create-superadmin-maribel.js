@@ -51,6 +51,9 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
     autoRefreshToken: false,
     persistSession: false
+  },
+  db: {
+    schema: 'redpresu'
   }
 });
 
@@ -96,7 +99,7 @@ async function createSuperadmin() {
     // 2. Crear registro en redpresu_users
     console.log('\n👤 Creando registro en redpresu_users...');
     const { error: userError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .insert({
         id: userId,
         email: 'maribel+super@gmail.com',
@@ -116,7 +119,7 @@ async function createSuperadmin() {
       if (userError.code === '23505') { // Unique violation
         console.log('⚠️  El registro ya existe, actualizando...');
         const { error: updateError } = await supabase
-          .from('redpresu_users')
+          .from('users')
           .update({
             role: 'superadmin',
             company_id: 1,
@@ -139,7 +142,7 @@ async function createSuperadmin() {
     // 3. Verificar
     console.log('\n🔍 Verificando usuario creado...');
     const { data: verifyData, error: verifyError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('id, email, name, last_name, role, company_id, status')
       .eq('email', 'maribel+super@gmail.com')
       .single();

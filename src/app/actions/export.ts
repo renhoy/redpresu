@@ -108,7 +108,7 @@ export async function exportTariffs(
     // SECURITY (VULN-014): Timeout para query pesada de export
     const { data: tariffs, error } = await withTimeout(
       () => supabase
-        .from('redpresu_tariffs')
+        .from('tariffs')
         .select('*')
         .in('id', ids)
         .eq('company_id', empresaId)  // SECURITY: Filtro explícito
@@ -249,7 +249,7 @@ export async function exportBudgets(
     // SECURITY (VULN-014): Timeout para query pesada de export
     const { data: budgets, error } = await withTimeout(
       () => supabase
-        .from('redpresu_budgets')
+        .from('budgets')
         .select('*')
         .in('id', ids)
         .eq('company_id', empresaId)  // SECURITY: Filtro explícito

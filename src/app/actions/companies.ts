@@ -7,7 +7,7 @@ import { requireValidCompanyId } from "@/lib/helpers/company-validation";
 
 export interface Company {
   id: number; // company_id (número, ej: 1, 2, 3...)
-  uuid?: string; // UUID del emisor en redpresu_issuers (opcional)
+  uuid?: string; // UUID del emisor en issuers (opcional)
   user_id: string;
   company_id: number;
   type: "empresa" | "autonomo";
@@ -94,7 +94,7 @@ export async function getCompanies(): Promise<ActionResult> {
 
     // Obtener TODAS las empresas (incluyendo eliminadas) para que superadmin pueda gestionarlas
     const { data: issuers, error } = await supabaseAdmin
-      .from("redpresu_issuers")
+      .from("issuers")
       .select("*")
       .order("created_at", { ascending: false });
 
@@ -108,33 +108,33 @@ export async function getCompanies(): Promise<ActionResult> {
       (issuers || []).map(async (issuer) => {
         // Contar usuarios de esta empresa
         const { count: userCount } = await supabaseAdmin
-          .from("redpresu_users")
+          .from("users")
           .select("*", { count: "exact", head: true })
           .eq("company_id", issuer.company_id);
 
         // Contar usuarios admin de esta empresa
         const { count: adminCount } = await supabaseAdmin
-          .from("redpresu_users")
+          .from("users")
           .select("*", { count: "exact", head: true })
           .eq("company_id", issuer.company_id)
           .eq("role", "admin");
 
         // Contar usuarios comercial de esta empresa
         const { count: comercialCount } = await supabaseAdmin
-          .from("redpresu_users")
+          .from("users")
           .select("*", { count: "exact", head: true })
           .eq("company_id", issuer.company_id)
           .eq("role", "comercial");
 
         // Contar tarifas de esta empresa
         const { count: tariffCount } = await supabaseAdmin
-          .from("redpresu_tariffs")
+          .from("tariffs")
           .select("*", { count: "exact", head: true })
           .eq("company_id", issuer.company_id);
 
         // Contar presupuestos de esta empresa
         const { count: budgetCount } = await supabaseAdmin
-          .from("redpresu_budgets")
+          .from("budgets")
           .select("*", { count: "exact", head: true })
           .eq("company_id", issuer.company_id);
 
@@ -192,7 +192,7 @@ export async function getCompanyById(companyId: string): Promise<ActionResult> {
     // - Superadmin puede ver cualquier empresa
     // - Admin solo puede ver emisor de su propia empresa
     let query = supabaseAdmin
-      .from("redpresu_issuers")
+      .from("issuers")
       .select("*")
       .is("deleted_at", null); // Solo empresas activas
 
@@ -235,7 +235,7 @@ export async function getCompanyById(companyId: string): Promise<ActionResult> {
 
 /**
  * Crear nueva empresa (solo superadmin)
- * Crea registro en redpresu_companies y redpresu_issuers
+ * Crea registro en companies y issuers
  */
 export async function createCompany(data: CreateCompanyData): Promise<ActionResult> {
   try {
@@ -287,9 +287,9 @@ export async function createCompany(data: CreateCompanyData): Promise<ActionResu
       return { success: false, error: "El % IRPF es obligatorio para autónomos" };
     }
 
-    // 1. Crear registro en redpresu_companies
+    // 1. Crear registro en companies
     const { data: newCompany, error: companyError } = await supabaseAdmin
-      .from("redpresu_companies")
+      .from("companies")
       .insert({
         name: data.name.trim(),
         status: "active",
@@ -305,9 +305,9 @@ export async function createCompany(data: CreateCompanyData): Promise<ActionResu
     const companyId = newCompany.id;
     log.info("[createCompany] Company creada con ID:", companyId);
 
-    // 2. Crear registro en redpresu_issuers
+    // 2. Crear registro en issuers
     const { data: newIssuer, error: issuerError } = await supabaseAdmin
-      .from("redpresu_issuers")
+      .from("issuers")
       .insert({
         user_id: user.id, // Superadmin que crea la empresa
         company_id: companyId,
@@ -332,7 +332,7 @@ export async function createCompany(data: CreateCompanyData): Promise<ActionResu
 
       // Rollback: eliminar company creada
       await supabaseAdmin
-        .from("redpresu_companies")
+        .from("companies")
         .delete()
         .eq("id", companyId);
 
@@ -343,7 +343,7 @@ export async function createCompany(data: CreateCompanyData): Promise<ActionResu
 
     // 3. Crear suscripción FREE por defecto
     const { error: subscriptionError } = await supabaseAdmin
-      .from("redpresu_subscriptions")
+      .from("subscriptions")
       .insert({
         company_id: companyId,
         plan: "free",
@@ -411,7 +411,7 @@ export async function updateCompany(
 
     // Primero obtener el emisor para verificar permisos
     const { data: existingCompany, error: fetchError } = await supabaseAdmin
-      .from("redpresu_issuers")
+      .from("issuers")
       .select("company_id")
       .eq("id", companyId)
       .is("deleted_at", null) // Solo empresas activas
@@ -443,7 +443,7 @@ export async function updateCompany(
 
     // Actualizar empresa
     const { data: updatedCompany, error } = await supabaseAdmin
-      .from("redpresu_issuers")
+      .from("issuers")
       .update({
         ...data,
         updated_at: new Date().toISOString(),
@@ -506,7 +506,7 @@ export async function deleteCompany(companyId: string): Promise<ActionResult> {
 
     // Obtener información de la empresa antes de eliminar
     const { data: company, error: companyError } = await supabaseAdmin
-      .from("redpresu_issuers")
+      .from("issuers")
       .select("*")
       .eq("id", companyId)
       .is("deleted_at", null) // Solo empresas activas
@@ -536,23 +536,23 @@ export async function deleteCompany(companyId: string): Promise<ActionResult> {
 
     // SECURITY (VULN-007): Obtener estadísticas antes de eliminar para auditoría
     const { data: companyData } = await supabaseAdmin
-      .from("redpresu_companies")
+      .from("companies")
       .select("*")
       .eq("id", company.company_id)
       .single();
 
     const { count: usersCount } = await supabaseAdmin
-      .from("redpresu_users")
+      .from("users")
       .select("*", { count: "exact", head: true })
       .eq("company_id", company.company_id);
 
     const { count: tariffsCount } = await supabaseAdmin
-      .from("redpresu_tariffs")
+      .from("tariffs")
       .select("*", { count: "exact", head: true })
       .eq("company_id", company.company_id);
 
     const { count: budgetsCount } = await supabaseAdmin
-      .from("redpresu_budgets")
+      .from("budgets")
       .select("*", { count: "exact", head: true })
       .eq("company_id", company.company_id);
 
@@ -562,7 +562,7 @@ export async function deleteCompany(companyId: string): Promise<ActionResult> {
     // - Mantiene integridad referencial
     // - Auditoría completa de eliminaciones
     const { error: deleteError } = await supabaseAdmin
-      .from("redpresu_issuers")
+      .from("issuers")
       .update({ deleted_at: new Date().toISOString() })
       .eq("id", companyId);
 
@@ -573,7 +573,7 @@ export async function deleteCompany(companyId: string): Promise<ActionResult> {
 
     // SECURITY (VULN-007): Registrar en log de auditoría
     const { error: auditError } = await supabaseAdmin
-      .from("redpresu_company_deletion_log")
+      .from("company_deletion_log")
       .insert({
         company_id: company.company_id,
         issuer_id: company.id,
@@ -637,7 +637,7 @@ export async function restoreCompany(companyId: string): Promise<ActionResult> {
 
     // Obtener información de la empresa eliminada
     const { data: company, error: companyError } = await supabaseAdmin
-      .from("redpresu_issuers")
+      .from("issuers")
       .select("*")
       .eq("id", companyId)
       .not("deleted_at", "is", null) // Solo empresas eliminadas
@@ -658,14 +658,14 @@ export async function restoreCompany(companyId: string): Promise<ActionResult> {
 
     // SECURITY (VULN-007): Obtener estadísticas para auditoría
     const { data: companyData } = await supabaseAdmin
-      .from("redpresu_companies")
+      .from("companies")
       .select("*")
       .eq("id", company.company_id)
       .single();
 
     // Restaurar: quitar marca de eliminación
     const { data: restoredCompany, error: restoreError } = await supabaseAdmin
-      .from("redpresu_issuers")
+      .from("issuers")
       .update({ deleted_at: null })
       .eq("id", companyId)
       .select()
@@ -678,7 +678,7 @@ export async function restoreCompany(companyId: string): Promise<ActionResult> {
 
     // SECURITY (VULN-007): Registrar restauración en log de auditoría
     const { error: auditError } = await supabaseAdmin
-      .from("redpresu_company_deletion_log")
+      .from("company_deletion_log")
       .insert({
         company_id: company.company_id,
         issuer_id: company.id,
@@ -717,17 +717,17 @@ export async function restoreCompany(companyId: string): Promise<ActionResult> {
  *
  * Proceso:
  * 1. Verificar que la empresa esté soft-deleted (deleted_at NOT NULL)
- * 2. Crear backup completo en redpresu_company_deletion_log
+ * 2. Crear backup completo en company_deletion_log
  * 3. Eliminar FÍSICAMENTE todos los datos relacionados:
- *    - Usuarios (redpresu_users)
- *    - Tarifas (redpresu_tariffs)
- *    - Presupuestos (redpresu_budgets)
- *    - Emisor (redpresu_issuers)
- *    - Entrada company (redpresu_companies)
+ *    - Usuarios (users)
+ *    - Tarifas (tariffs)
+ *    - Presupuestos (budgets)
+ *    - Emisor (issuers)
+ *    - Entrada company (companies)
  *
  * NOTA: Solo se pueden eliminar permanentemente empresas ya soft-deleted
  *
- * @param companyId - UUID del emisor en redpresu_issuers
+ * @param companyId - UUID del emisor en issuers
  * @param confirmationText - El usuario debe escribir el nombre de la empresa para confirmar
  * @returns ActionResult con información de datos eliminados
  */
@@ -769,7 +769,7 @@ export async function permanentlyDeleteCompany(
 
     // La empresa DEBE estar soft-deleted para poder eliminarla permanentemente
     const { data: company, error: companyError } = await supabaseAdmin
-      .from("redpresu_issuers")
+      .from("issuers")
       .select("*")
       .eq("id", companyId)
       .not("deleted_at", "is", null) // Solo empresas YA eliminadas (soft-delete)
@@ -818,14 +818,14 @@ export async function permanentlyDeleteCompany(
 
     // Obtener company data
     const { data: companyData } = await supabaseAdmin
-      .from("redpresu_companies")
+      .from("companies")
       .select("*")
       .eq("id", company.company_id)
       .single();
 
     // Obtener TODOS los usuarios de esta empresa
     const { data: allUsers } = await supabaseAdmin
-      .from("redpresu_users")
+      .from("users")
       .select("*")
       .eq("company_id", company.company_id);
 
@@ -852,7 +852,7 @@ export async function permanentlyDeleteCompany(
         log.warn("[permanentlyDeleteCompany] Reasignando usuario protegido a empresa 1:", protectedUser.email);
 
         const { error: reassignError } = await supabaseAdmin
-          .from("redpresu_users")
+          .from("users")
           .update({
             company_id: 1,
             updated_at: new Date().toISOString()
@@ -883,19 +883,19 @@ export async function permanentlyDeleteCompany(
 
     // Obtener TODAS las tarifas de esta empresa
     const { data: allTariffs } = await supabaseAdmin
-      .from("redpresu_tariffs")
+      .from("tariffs")
       .select("*")
       .eq("company_id", company.company_id);
 
     // Obtener TODOS los presupuestos de esta empresa
     const { data: allBudgets } = await supabaseAdmin
-      .from("redpresu_budgets")
+      .from("budgets")
       .select("*")
       .eq("company_id", company.company_id);
 
     // SECURITY (VULN-007): Registrar backup ANTES de eliminar (crítico)
     const { error: backupError } = await supabaseAdmin
-      .from("redpresu_company_deletion_log")
+      .from("company_deletion_log")
       .insert({
         company_id: company.company_id,
         issuer_id: company.id,
@@ -946,7 +946,7 @@ export async function permanentlyDeleteCompany(
 
     // 5.1. Eliminar presupuestos
     const { error: budgetsDeleteError, count: budgetsDeleted } = await supabaseAdmin
-      .from("redpresu_budgets")
+      .from("budgets")
       .delete({ count: "exact" })
       .eq("company_id", company.company_id);
 
@@ -962,7 +962,7 @@ export async function permanentlyDeleteCompany(
 
     // 5.2. Eliminar tarifas
     const { error: tariffsDeleteError, count: tariffsDeleted } = await supabaseAdmin
-      .from("redpresu_tariffs")
+      .from("tariffs")
       .delete({ count: "exact" })
       .eq("company_id", company.company_id);
 
@@ -978,7 +978,7 @@ export async function permanentlyDeleteCompany(
 
     // 5.3. Eliminar usuarios
     const { error: usersDeleteError, count: usersDeleted } = await supabaseAdmin
-      .from("redpresu_users")
+      .from("users")
       .delete({ count: "exact" })
       .eq("company_id", company.company_id);
 
@@ -994,7 +994,7 @@ export async function permanentlyDeleteCompany(
 
     // 5.4. Eliminar emisor
     const { error: issuerDeleteError } = await supabaseAdmin
-      .from("redpresu_issuers")
+      .from("issuers")
       .delete()
       .eq("id", companyId);
 
@@ -1010,7 +1010,7 @@ export async function permanentlyDeleteCompany(
 
     // 5.5. Eliminar company
     const { error: companyDeleteError } = await supabaseAdmin
-      .from("redpresu_companies")
+      .from("companies")
       .delete()
       .eq("id", company.company_id);
 
@@ -1077,7 +1077,7 @@ export async function getDeletedCompanies(): Promise<ActionResult> {
 
     // Obtener empresas eliminadas
     const { data: deletedCompanies, error } = await supabaseAdmin
-      .from("redpresu_issuers")
+      .from("issuers")
       .select("*")
       .not("deleted_at", "is", null)
       .order("deleted_at", { ascending: false });
@@ -1091,17 +1091,17 @@ export async function getDeletedCompanies(): Promise<ActionResult> {
     const companiesWithCounts = await Promise.all(
       (deletedCompanies || []).map(async (company) => {
         const { count: userCount } = await supabaseAdmin
-          .from("redpresu_users")
+          .from("users")
           .select("*", { count: "exact", head: true })
           .eq("company_id", company.company_id);
 
         const { count: tariffCount } = await supabaseAdmin
-          .from("redpresu_tariffs")
+          .from("tariffs")
           .select("*", { count: "exact", head: true })
           .eq("company_id", company.company_id);
 
         const { count: budgetCount } = await supabaseAdmin
-          .from("redpresu_budgets")
+          .from("budgets")
           .select("*", { count: "exact", head: true })
           .eq("company_id", company.company_id);
 
@@ -1153,7 +1153,7 @@ export async function duplicateCompany(sourceCompanyUuid: string): Promise<Actio
 
     // 2. Obtener empresa origen
     const { data: sourceCompany, error: fetchError } = await supabaseAdmin
-      .from("redpresu_issuers")
+      .from("issuers")
       .select("*")
       .eq("id", sourceCompanyUuid)
       .is("deleted_at", null)
@@ -1165,9 +1165,9 @@ export async function duplicateCompany(sourceCompanyUuid: string): Promise<Actio
     }
 
     // 3. Obtener el id más alto para generar el siguiente
-    // NOTA: En redpresu_companies la columna se llama 'id', no 'company_id'
+    // NOTA: En companies la columna se llama 'id', no 'company_id'
     const { data: companiesData, error: maxError } = await supabaseAdmin
-      .from("redpresu_companies")
+      .from("companies")
       .select("id")
       .order("id", { ascending: false })
       .limit(1);
@@ -1181,10 +1181,10 @@ export async function duplicateCompany(sourceCompanyUuid: string): Promise<Actio
     const maxCompanyId = companiesData && companiesData.length > 0 ? companiesData[0].id : 1;
     const newCompanyId = maxCompanyId + 1;
 
-    // 4. Crear entrada en redpresu_companies
+    // 4. Crear entrada en companies
     // La columna 'id' es auto-generada (serial), así que no la pasamos
     const { data: newCompany, error: companyError } = await supabaseAdmin
-      .from("redpresu_companies")
+      .from("companies")
       .insert({
         name: `${sourceCompany.name} (Copia)`,
         created_at: new Date().toISOString(),
@@ -1200,7 +1200,7 @@ export async function duplicateCompany(sourceCompanyUuid: string): Promise<Actio
 
     // 5. Crear emisor duplicado (copia de datos)
     const { data: newIssuer, error: issuerError } = await supabaseAdmin
-      .from("redpresu_issuers")
+      .from("issuers")
       .insert({
         user_id: user.id, // Asignar al superadmin que crea la copia
         company_id: newCompany.id, // Usar el id generado automáticamente
@@ -1228,7 +1228,7 @@ export async function duplicateCompany(sourceCompanyUuid: string): Promise<Actio
       log.error("[duplicateCompany] Error al crear emisor:", issuerError);
       // Rollback: eliminar company creada
       await supabaseAdmin
-        .from("redpresu_companies")
+        .from("companies")
         .delete()
         .eq("id", newCompany.id);
       return { success: false, error: "Error al crear emisor de la nueva empresa" };
@@ -1291,7 +1291,7 @@ export async function permanentDeleteCompany(companyUuid: string): Promise<Actio
 
     // 2. Obtener empresa a eliminar (debe estar ya marcada como eliminada)
     const { data: issuer, error: fetchError } = await supabaseAdmin
-      .from("redpresu_issuers")
+      .from("issuers")
       .select("*")
       .eq("id", companyUuid)
       .not("deleted_at", "is", null) // Solo empresas YA eliminadas (soft-deleted)
@@ -1322,29 +1322,29 @@ export async function permanentDeleteCompany(companyUuid: string): Promise<Actio
 
     // 3. Obtener estadísticas para auditoría final
     const { data: companyData } = await supabaseAdmin
-      .from("redpresu_companies")
+      .from("companies")
       .select("*")
       .eq("id", issuer.company_id)
       .single();
 
     const { count: usersCount } = await supabaseAdmin
-      .from("redpresu_users")
+      .from("users")
       .select("*", { count: "exact", head: true })
       .eq("company_id", issuer.company_id);
 
     const { count: tariffsCount } = await supabaseAdmin
-      .from("redpresu_tariffs")
+      .from("tariffs")
       .select("*", { count: "exact", head: true })
       .eq("company_id", issuer.company_id);
 
     const { count: budgetsCount } = await supabaseAdmin
-      .from("redpresu_budgets")
+      .from("budgets")
       .select("*", { count: "exact", head: true })
       .eq("company_id", issuer.company_id);
 
     // 4. Registrar en audit log ANTES de eliminar
     const { error: auditError } = await supabaseAdmin
-      .from("redpresu_company_deletion_log")
+      .from("company_deletion_log")
       .insert({
         company_id: issuer.company_id,
         issuer_id: issuer.id,
@@ -1367,7 +1367,7 @@ export async function permanentDeleteCompany(companyUuid: string): Promise<Actio
 
     // 5.1. Obtener todos los presupuestos para eliminar sus notas y versiones
     const { data: budgets } = await supabaseAdmin
-      .from("redpresu_budgets")
+      .from("budgets")
       .select("id")
       .eq("company_id", issuer.company_id);
 
@@ -1376,7 +1376,7 @@ export async function permanentDeleteCompany(companyUuid: string): Promise<Actio
 
       // Eliminar notas de presupuestos
       const { error: notesError } = await supabaseAdmin
-        .from("redpresu_budget_notes")
+        .from("budget_notes")
         .delete()
         .in("budget_id", budgetIds);
 
@@ -1386,7 +1386,7 @@ export async function permanentDeleteCompany(companyUuid: string): Promise<Actio
 
       // Eliminar versiones de presupuestos
       const { error: versionsError } = await supabaseAdmin
-        .from("redpresu_budget_versions")
+        .from("budget_versions")
         .delete()
         .in("budget_id", budgetIds);
 
@@ -1397,7 +1397,7 @@ export async function permanentDeleteCompany(companyUuid: string): Promise<Actio
 
     // 5.2. Eliminar presupuestos
     const { error: budgetsError } = await supabaseAdmin
-      .from("redpresu_budgets")
+      .from("budgets")
       .delete()
       .eq("company_id", issuer.company_id);
 
@@ -1408,7 +1408,7 @@ export async function permanentDeleteCompany(companyUuid: string): Promise<Actio
 
     // 5.3. Eliminar relaciones cliente-tarifa
     const { error: clientTariffsError } = await supabaseAdmin
-      .from("redpresu_client_tariffs")
+      .from("client_tariffs")
       .delete()
       .eq("company_id", issuer.company_id);
 
@@ -1418,7 +1418,7 @@ export async function permanentDeleteCompany(companyUuid: string): Promise<Actio
 
     // 5.4. Eliminar tarifas
     const { error: tariffsError } = await supabaseAdmin
-      .from("redpresu_tariffs")
+      .from("tariffs")
       .delete()
       .eq("company_id", issuer.company_id);
 
@@ -1429,7 +1429,7 @@ export async function permanentDeleteCompany(companyUuid: string): Promise<Actio
 
     // 5.5. Obtener usuarios para eliminar sus cuentas de auth
     const { data: users } = await supabaseAdmin
-      .from("redpresu_users")
+      .from("users")
       .select("id, email, role")
       .eq("company_id", issuer.company_id);
 
@@ -1456,7 +1456,7 @@ export async function permanentDeleteCompany(companyUuid: string): Promise<Actio
         log.warn("[permanentDeleteCompany] Reasignando usuario protegido a empresa 1:", protectedUser.email);
 
         const { error: reassignError } = await supabaseAdmin
-          .from("redpresu_users")
+          .from("users")
           .update({
             company_id: 1,
             updated_at: new Date().toISOString()
@@ -1498,9 +1498,9 @@ export async function permanentDeleteCompany(companyUuid: string): Promise<Actio
           }
         }
 
-        // Eliminar registros de usuarios en redpresu_users (si quedan, solo NO protegidos)
+        // Eliminar registros de usuarios en users (si quedan, solo NO protegidos)
         const { error: usersError } = await supabaseAdmin
-          .from("redpresu_users")
+          .from("users")
           .delete()
           .eq("company_id", issuer.company_id);
 
@@ -1520,9 +1520,9 @@ export async function permanentDeleteCompany(companyUuid: string): Promise<Actio
         }
       }
 
-      // Eliminar registros de usuarios en redpresu_users (si quedan)
+      // Eliminar registros de usuarios en users (si quedan)
       const { error: usersError } = await supabaseAdmin
-        .from("redpresu_users")
+        .from("users")
         .delete()
         .eq("company_id", issuer.company_id);
 
@@ -1533,7 +1533,7 @@ export async function permanentDeleteCompany(companyUuid: string): Promise<Actio
 
     // 5.6. Eliminar emisor
     const { error: deleteIssuerError } = await supabaseAdmin
-      .from("redpresu_issuers")
+      .from("issuers")
       .delete()
       .eq("id", companyUuid);
 
@@ -1542,9 +1542,9 @@ export async function permanentDeleteCompany(companyUuid: string): Promise<Actio
       return { success: false, error: "Error al eliminar emisor permanentemente" };
     }
 
-    // 5.7. Eliminar entrada en redpresu_companies
+    // 5.7. Eliminar entrada en companies
     const { error: deleteCompanyError } = await supabaseAdmin
-      .from("redpresu_companies")
+      .from("companies")
       .delete()
       .eq("id", issuer.company_id);
 

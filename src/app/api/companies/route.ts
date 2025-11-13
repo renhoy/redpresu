@@ -28,7 +28,7 @@ export async function GET() {
 
     // Obtener todas las empresas
     const { data: companies, error } = await supabaseAdmin
-      .from('redpresu_companies')
+      .from('companies')
       .select('id, name')
       .order('name', { ascending: true });
 

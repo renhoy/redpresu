@@ -50,7 +50,7 @@ export async function getContactMessages(
 
     // Construir query
     let query = supabaseAdmin
-      .from("redpresu_contact_messages")
+      .from("contact_messages")
       .select("*")
       .order("created_at", { ascending: false });
 
@@ -110,7 +110,7 @@ export async function getContactMessageById(
     }
 
     const { data, error } = await supabaseAdmin
-      .from("redpresu_contact_messages")
+      .from("contact_messages")
       .select("*")
       .eq("id", id)
       .single();
@@ -189,7 +189,7 @@ export async function updateContactMessage(
 
     // Actualizar mensaje
     const { data, error } = await supabaseAdmin
-      .from("redpresu_contact_messages")
+      .from("contact_messages")
       .update(updates)
       .eq("id", updateData.id)
       .select()
@@ -238,7 +238,7 @@ export async function getContactMessagesStats(): Promise<ActionResult> {
 
     // Obtener conteos por estado
     const { data: allMessages, error } = await supabaseAdmin
-      .from("redpresu_contact_messages")
+      .from("contact_messages")
       .select("status");
 
     if (error) {
@@ -297,7 +297,7 @@ export async function deleteContactMessage(id: string): Promise<ActionResult> {
 
     // Eliminar mensaje
     const { error } = await supabaseAdmin
-      .from("redpresu_contact_messages")
+      .from("contact_messages")
       .delete()
       .eq("id", id);
 

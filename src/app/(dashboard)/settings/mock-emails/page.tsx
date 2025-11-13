@@ -45,7 +45,7 @@ export default async function MockEmailsPage() {
   // ============================================
 
   const { data: mockEmails, error } = await supabaseAdmin
-    .from('redpresu_mock_emails')
+    .from('mock_emails')
     .select('*')
     .order('created_at', { ascending: false });
 

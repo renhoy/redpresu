@@ -46,7 +46,7 @@ export async function signInAction(email: string, password: string): Promise<Sig
 
     // Obtener datos completos del usuario desde public.users
     const { data: userData, error: userError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('*')
       .eq('id', data.user.id)
       .single()
@@ -84,7 +84,7 @@ export async function signInAction(email: string, password: string): Promise<Sig
 
     // Actualizar last_login (y company_id si es superadmin)
     const { error: updateError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .update(updateData)
       .eq('id', data.user.id)
 
@@ -298,7 +298,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
       }
 
       const { data: userData, error: userError } = await supabase
-        .from('redpresu_users')
+        .from('users')
         .select('role')
         .eq('id', user.id)
         .single()
@@ -312,7 +312,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
 
       // Obtener el emisor existente
       const { data: issuerData, error: issuerError } = await supabaseAdmin
-        .from('redpresu_issuers')
+        .from('issuers')
         .select('id, company_id')
         .eq('id', data.issuer_id)
         .single()
@@ -337,7 +337,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
 
       // Verificar que la empresa Demo (id = 1) existe
       const { data: demoCompany, error: demoError } = await supabaseAdmin
-        .from('redpresu_companies')
+        .from('companies')
         .select('id, name')
         .eq('id', 1)
         .single()
@@ -362,7 +362,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
     } else {
       // 1. Validar que el NIF no esté ya registrado en TODA la base de datos
       const { data: existingIssuer, error: checkError } = await supabase
-        .from('redpresu_issuers')
+        .from('issuers')
         .select('id, nif')
         .eq('nif', data.nif.trim().toUpperCase())
         .maybeSingle()
@@ -377,7 +377,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
 
       // 2. Crear nueva empresa para este emisor
       const { data: empresaData, error: empresaError } = await supabaseAdmin
-        .from('redpresu_companies')
+        .from('companies')
         .insert({
           name: data.nombreComercial,
           status: 'active'
@@ -468,7 +468,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
     const finalCompanyId = userRole === 'superadmin' ? 1 : empresaId
 
     // Usar supabaseAdmin para bypass RLS policies
-    log.info('[registerUser] Intentando crear registro en redpresu_users:', {
+    log.info('[registerUser] Intentando crear registro en users:', {
       userId,
       empresaId,
       userRole,
@@ -479,7 +479,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
     })
 
     const { data: insertedUser, error: userError } = await supabaseAdmin
-      .from('redpresu_users')
+      .from('users')
       .insert({
         id: userId,
         name: data.name.trim(),
@@ -513,7 +513,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
       await supabaseAdmin.auth.admin.deleteUser(userId)
       // Solo eliminar empresa si fue creada en este proceso (no existía issuer_id Y no es superadmin)
       if (!data.issuer_id && empresaId) {
-        await supabaseAdmin.from('redpresu_companies').delete().eq('id', empresaId)
+        await supabaseAdmin.from('companies').delete().eq('id', empresaId)
       }
 
       return {
@@ -529,7 +529,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
     //    - No es un superadmin (superadmins no tienen issuer)
     if (!data.issuer_id && userRole !== 'superadmin') {
       const { data: issuerData, error: issuerError } = await supabaseAdmin
-        .from('redpresu_issuers')
+        .from('issuers')
         .insert({
           user_id: userId,
           company_id: empresaId,
@@ -553,10 +553,10 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
         log.error('[registerUser] Error al crear issuer:', issuerError)
 
         // Intentar rollback: eliminar usuario, auth y empresa (si existe)
-        await supabaseAdmin.from('redpresu_users').delete().eq('id', userId)
+        await supabaseAdmin.from('users').delete().eq('id', userId)
         await supabaseAdmin.auth.admin.deleteUser(userId)
         if (empresaId) {
-          await supabaseAdmin.from('redpresu_companies').delete().eq('id', empresaId)
+          await supabaseAdmin.from('companies').delete().eq('id', empresaId)
         }
 
         return {
@@ -569,10 +569,10 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
         log.error('[registerUser] No se obtuvo el issuer creado')
 
         // Rollback: eliminar usuario, auth y empresa (si existe)
-        await supabaseAdmin.from('redpresu_users').delete().eq('id', userId)
+        await supabaseAdmin.from('users').delete().eq('id', userId)
         await supabaseAdmin.auth.admin.deleteUser(userId)
         if (empresaId) {
-          await supabaseAdmin.from('redpresu_companies').delete().eq('id', empresaId)
+          await supabaseAdmin.from('companies').delete().eq('id', empresaId)
         }
 
         return {
@@ -876,7 +876,7 @@ export async function getUserProfile(): Promise<ProfileResult> {
 
     // Obtener datos del usuario
     const { data: userData, error: userError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('*')
       .eq('id', user.id)
       .single()
@@ -893,7 +893,7 @@ export async function getUserProfile(): Promise<ProfileResult> {
     let companyName: string | null = null
     if (userData.company_id) {
       const { data: companyData } = await supabase
-        .from('redpresu_companies')
+        .from('companies')
         .select('name')
         .eq('id', userData.company_id)
         .single()
@@ -903,7 +903,7 @@ export async function getUserProfile(): Promise<ProfileResult> {
 
     // Obtener datos del issuer usando supabaseAdmin para bypass RLS
     const { data: issuerData, error: issuerError } = await supabaseAdmin
-      .from('redpresu_issuers')
+      .from('issuers')
       .select('*')
       .eq('user_id', user.id)
       .single()
@@ -1053,7 +1053,7 @@ export async function updateUserProfile(data: UpdateProfileData): Promise<Profil
 
       // Actualizar issuer
       const { error: issuerError } = await supabase
-        .from('redpresu_issuers')
+        .from('issuers')
         .update(updateData)
         .eq('user_id', user.id)
 
@@ -1139,7 +1139,7 @@ export async function getIssuers(): Promise<{
     }
 
     const { data: userData, error: userError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('role')
       .eq('id', user.id)
       .single()
@@ -1153,7 +1153,7 @@ export async function getIssuers(): Promise<{
 
     // Obtener lista de emisores ACTIVOS (excluir empresas eliminadas)
     const { data: issuers, error: issuersError } = await supabase
-      .from('redpresu_issuers')
+      .from('issuers')
       .select('id, company_id, type, name, nif, address, postal_code, locality, province, phone, email, web')
       .is('deleted_at', null)
       .order('name')
@@ -1208,7 +1208,7 @@ export async function getUserProfileById(userId: string): Promise<ProfileResult>
 
     // Obtener datos del usuario autenticado
     const { data: currentUserData, error: currentUserError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('role, company_id')
       .eq('id', user.id)
       .single()
@@ -1223,7 +1223,7 @@ export async function getUserProfileById(userId: string): Promise<ProfileResult>
 
     // Obtener datos del usuario a editar
     const { data: targetUserData, error: targetUserError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('*')
       .eq('id', userId)
       .single()
@@ -1261,7 +1261,7 @@ export async function getUserProfileById(userId: string): Promise<ProfileResult>
     let companyName: string | null = null
     if (targetUserData.company_id) {
       const { data: companyData } = await supabase
-        .from('redpresu_companies')
+        .from('companies')
         .select('name')
         .eq('id', targetUserData.company_id)
         .single()
@@ -1271,7 +1271,7 @@ export async function getUserProfileById(userId: string): Promise<ProfileResult>
 
     // Obtener datos del issuer usando supabaseAdmin para bypass RLS
     const { data: issuerData, error: issuerError } = await supabaseAdmin
-      .from('redpresu_issuers')
+      .from('issuers')
       .select('*')
       .eq('user_id', userId)
       .single()
@@ -1351,7 +1351,7 @@ export async function updateUserProfileById(
 
     // Obtener datos del usuario autenticado
     const { data: currentUserData, error: currentUserError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('role, company_id')
       .eq('id', user.id)
       .single()
@@ -1366,7 +1366,7 @@ export async function updateUserProfileById(
 
     // Obtener datos del usuario a editar
     const { data: targetUserData, error: targetUserError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('email, company_id')
       .eq('id', userId)
       .single()
@@ -1463,7 +1463,7 @@ export async function updateUserProfileById(
 
       // Actualizar issuer usando supabaseAdmin para bypass RLS
       const { error: issuerError } = await supabaseAdmin
-        .from('redpresu_issuers')
+        .from('issuers')
         .update(updateData)
         .eq('user_id', userId)
 

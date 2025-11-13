@@ -30,7 +30,7 @@ export default async function BudgetEditNotesPage({
 
   // Obtener rol del usuario
   const { data: userData, error: userError } = await supabase
-    .from("redpresu_users")
+    .from("users")
     .select("role")
     .eq("id", user.id)
     .single();
@@ -43,7 +43,7 @@ export default async function BudgetEditNotesPage({
 
   // Obtener presupuesto
   const { data: budget, error } = await supabase
-    .from("redpresu_budgets")
+    .from("budgets")
     .select("id, budget_number, summary_note, conditions_note, user_id")
     .eq("id", id)
     .single();

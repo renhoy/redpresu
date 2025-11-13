@@ -47,7 +47,7 @@ export async function getCurrentSubscription(): Promise<ActionResult<Subscriptio
     // Usar supabaseAdmin para bypass RLS
     // NO filtrar por status - obtener la más reciente
     const { data, error } = await supabaseAdmin
-      .from('redpresu_subscriptions')
+      .from('subscriptions')
       .select('*')
       .eq('company_id', user.company_id)
       .order('updated_at', { ascending: false })
@@ -123,7 +123,7 @@ export async function isSubscriptionExpired(subscription: Subscription): Promise
 
       // 1. Actualizar suscripción expirada a 'canceled'
       const { error: updateError } = await supabaseAdmin
-        .from('redpresu_subscriptions')
+        .from('subscriptions')
         .update({
           status: 'canceled',
           updated_at: now.toISOString(),
@@ -140,7 +140,7 @@ export async function isSubscriptionExpired(subscription: Subscription): Promise
       log.info('[isSubscriptionExpired] Creando suscripción FREE automática para company_id:', subscription.company_id);
 
       const { error: insertError } = await supabaseAdmin
-        .from('redpresu_subscriptions')
+        .from('subscriptions')
         .insert({
           company_id: subscription.company_id,
           plan: 'free',
@@ -218,7 +218,7 @@ export async function createCheckoutSession(
 
     // Obtener o crear customer ID
     const { data: subscription } = await supabase
-      .from('redpresu_subscriptions')
+      .from('subscriptions')
       .select('stripe_customer_id')
       .eq('company_id', user.company_id)
       .single();
@@ -238,7 +238,7 @@ export async function createCheckoutSession(
 
       // Guardar customer ID
       await supabase
-        .from('redpresu_subscriptions')
+        .from('subscriptions')
         .upsert({
           company_id: user.company_id,
           stripe_customer_id: customerId,
@@ -314,7 +314,7 @@ export async function createPortalSession(
     const supabase = createServerActionClient({ cookies: () => cookieStore });
 
     const { data: subscription } = await supabase
-      .from('redpresu_subscriptions')
+      .from('subscriptions')
       .select('stripe_customer_id')
       .eq('company_id', user.company_id)
       .single();
@@ -383,7 +383,7 @@ export async function checkPlanLimit(
     const limit = planConfig.limits[params.resourceType];
 
     // Contar recursos actuales
-    const tableName = `redpresu_${params.resourceType}`;
+    const tableName = params.resourceType;
     const { count } = await supabase
       .from(tableName)
       .select('*', { count: 'exact', head: true })

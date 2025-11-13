@@ -146,7 +146,7 @@ export async function importTariffs(
     const supabase = createServerActionClient({ cookies: () => cookieStore })
 
     const { data, error } = await supabase
-      .from('redpresu_tariffs')
+      .from('tariffs')
       .insert(tariffsToInsert)
       .select()
 
@@ -260,7 +260,7 @@ export async function importBudgets(
         let tariffId = budget.tariff_id
         if (tariffId) {
           const { data: tariffExists } = await supabase
-            .from('redpresu_tariffs')
+            .from('tariffs')
             .select('id')
             .eq('id', tariffId)
             .eq('company_id', empresaId)  // SECURITY: Usar empresaId validado
@@ -291,7 +291,7 @@ export async function importBudgets(
 
     // 8. Insertar en BD
     const { data, error } = await supabase
-      .from('redpresu_budgets')
+      .from('budgets')
       .insert(budgetsToInsert)
       .select()
 

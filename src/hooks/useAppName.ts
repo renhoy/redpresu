@@ -2,7 +2,7 @@
  * Hook para obtener el nombre de la aplicación dinámicamente
  *
  * Permite que el nombre de la aplicación se obtenga desde la configuración
- * de BD (tabla redpresu_config, clave 'app_name') en lugar de estar hardcodeado.
+ * de BD (tabla config, clave 'app_name') en lugar de estar hardcodeado.
  *
  * Uso:
  * ```tsx

@@ -100,7 +100,7 @@ export async function getTariffs(
   try {
     // Primero obtener tarifas sin el JOIN
     let query = supabase
-      .from('redpresu_tariffs')
+      .from('tariffs')
       .select('*')
       .eq('company_id', empresaId)
       .order('created_at', { ascending: false })
@@ -141,7 +141,7 @@ export async function getTariffs(
     }
 
     const { data: users, error: usersError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('id, name, role')
       .in('id', userIds)
 
@@ -157,7 +157,7 @@ export async function getTariffs(
     // Obtener conteo de presupuestos por tarifa
     const tariffIds = tariffs.map(t => t.id)
     const { data: budgetCounts, error: budgetCountsError } = await supabase
-      .from('redpresu_budgets')
+      .from('budgets')
       .select('tariff_id')
       .in('tariff_id', tariffIds)
 
@@ -226,7 +226,7 @@ export async function toggleTariffStatus(
   if (currentStatus === 'Borrador') {
     // Obtener la tarifa completa para validar
     const { data: tariff, error: fetchError } = await supabase
-      .from('redpresu_tariffs')
+      .from('tariffs')
       .select('*')
       .eq('id', tariffId)
       .single()
@@ -251,7 +251,7 @@ export async function toggleTariffStatus(
 
     // Si está completa, activarla
     const { error } = await supabase
-      .from('redpresu_tariffs')
+      .from('tariffs')
       .update({
         status: 'Activa',
         updated_at: new Date().toISOString()
@@ -274,7 +274,7 @@ export async function toggleTariffStatus(
   const newStatus = currentStatus === 'Activa' ? 'Inactiva' : 'Activa'
 
   const { error } = await supabase
-    .from('redpresu_tariffs')
+    .from('tariffs')
     .update({
       status: newStatus,
       updated_at: new Date().toISOString()
@@ -300,7 +300,7 @@ export async function deleteTariff(
 
   // Verificar si la tarifa tiene presupuestos asociados
   const { data: budgets, error: budgetError } = await supabase
-    .from('redpresu_budgets')
+    .from('budgets')
     .select('id')
     .eq('tariff_id', tariffId)
     .limit(1)
@@ -321,7 +321,7 @@ export async function deleteTariff(
   }
 
   const { error } = await supabase
-    .from('redpresu_tariffs')
+    .from('tariffs')
     .delete()
     .eq('id', tariffId)
 
@@ -343,7 +343,7 @@ export async function getTariffById(
   const supabase = supabaseAdmin
 
   const { data, error } = await supabase
-    .from('redpresu_tariffs')
+    .from('tariffs')
     .select('*')
     .eq('id', tariffId)
     .single()
@@ -406,7 +406,7 @@ export async function createTariff(data: TariffFormData): Promise<{
     // Obtener company_id del usuario actual
     log.info('[createTariff] Obteniendo datos del usuario...')
     const { data: userData, error: userError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('company_id, role')
       .eq('id', user.id)
       .single()
@@ -447,7 +447,7 @@ export async function createTariff(data: TariffFormData): Promise<{
     // Crear tarifa
     log.info('[createTariff] Insertando tarifa en BD...')
     const { error } = await supabase
-      .from('redpresu_tariffs')
+      .from('tariffs')
       .insert({
         company_id: companyId,
         user_id: user.id, // Añadir trazabilidad de creación
@@ -545,7 +545,7 @@ export async function updateTariff(id: string, data: TariffFormData): Promise<{
     // Actualizar tarifa
     log.info('[updateTariff] Actualizando tarifa en BD...')
     const { error } = await supabase
-      .from('redpresu_tariffs')
+      .from('tariffs')
       .update({
         title: data.title,
         description: data.description,
@@ -608,7 +608,7 @@ export async function setTariffAsTemplate(tariffId: string): Promise<{
 
     // Verificar que el usuario es admin/superadmin
     const { data: userData } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('role, company_id')
       .eq('id', user.id)
       .single()
@@ -628,7 +628,7 @@ export async function setTariffAsTemplate(tariffId: string): Promise<{
 
     // Marcar como plantilla (el trigger se encargará de desmarcar las demás)
     const { error } = await supabase
-      .from('redpresu_tariffs')
+      .from('tariffs')
       .update({ is_template: true })
       .eq('id', tariffId)
       .eq('company_id', companyId) // Seguridad: solo su empresa
@@ -670,7 +670,7 @@ export async function unsetTariffAsTemplate(tariffId: string): Promise<{
 
     // Verificar que el usuario es admin/superadmin
     const { data: userData } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('role, company_id')
       .eq('id', user.id)
       .single()
@@ -690,7 +690,7 @@ export async function unsetTariffAsTemplate(tariffId: string): Promise<{
 
     // Desmarcar como plantilla
     const { error } = await supabase
-      .from('redpresu_tariffs')
+      .from('tariffs')
       .update({ is_template: false })
       .eq('id', tariffId)
       .eq('company_id', companyId) // Seguridad: solo su empresa
@@ -721,7 +721,7 @@ export async function getTemplateTariff(empresaId: number): Promise<{
     log.info('[getTemplateTariff] Obteniendo plantilla para empresa:', empresaId)
 
     const { data, error } = await supabaseAdmin
-      .from('redpresu_tariffs')
+      .from('tariffs')
       .select('*')
       .eq('company_id', empresaId)
       .eq('is_template', true)
@@ -944,7 +944,7 @@ export async function getUserIssuerData(userId: string): Promise<{
 }> {
   try {
     const { data, error } = await supabaseAdmin
-      .from('redpresu_issuers')
+      .from('issuers')
       .select('name, nif, address, postal_code, locality, province, phone, email, web')
       .eq('user_id', userId)
       .maybeSingle()
@@ -1022,7 +1022,7 @@ export async function duplicateTariff(tariffId: string): Promise<{
 
     // Obtener company_id del usuario
     const { data: userData, error: userError } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('company_id, role')
       .eq('id', user.id)
       .single()
@@ -1043,7 +1043,7 @@ export async function duplicateTariff(tariffId: string): Promise<{
 
     // Obtener tarifa original
     const { data: originalTariff, error: tariffError } = await supabaseAdmin
-      .from('redpresu_tariffs')
+      .from('tariffs')
       .select('*')
       .eq('id', tariffId)
       .single()
@@ -1061,7 +1061,7 @@ export async function duplicateTariff(tariffId: string): Promise<{
 
     // Crear copia de la tarifa con estado Inactiva y fecha actual
     const { data: newTariff, error: insertError } = await supabaseAdmin
-      .from('redpresu_tariffs')
+      .from('tariffs')
       .insert({
         company_id: originalTariff.company_id,
         user_id: user.id, // Usuario que crea la copia

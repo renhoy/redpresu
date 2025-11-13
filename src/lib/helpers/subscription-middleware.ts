@@ -35,7 +35,7 @@ export async function handleInactiveAccountRedirect(
 
     // Obtener usuario de BD para company_id
     const { data: user } = await supabase
-      .from('redpresu_users')
+      .from('users')
       .select('company_id')
       .eq('id', userId)
       .single();
@@ -46,7 +46,7 @@ export async function handleInactiveAccountRedirect(
 
     // Obtener suscripción más reciente (sin filtrar por status)
     const { data: subscription } = await supabase
-      .from('redpresu_subscriptions')
+      .from('subscriptions')
       .select('status')
       .eq('company_id', user.company_id)
       .order('updated_at', { ascending: false })
