@@ -1,8 +1,7 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { createServerActionClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createServerActionClient } from "@/lib/supabase/helpers";
 import crypto from "crypto";
 
 /**
@@ -410,8 +409,7 @@ export async function completeRegistration(
     // 8. Crear sesión para auto-login
     console.log("[completeRegistration] Creando sesión para auto-login...");
 
-    const cookieStore = await cookies();
-    const supabase = createServerActionClient({ cookies: () => cookieStore });
+    const supabase = await createServerActionClient();
 
     const { data: sessionData, error: sessionError } =
       await supabase.auth.signInWithPassword({

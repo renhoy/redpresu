@@ -1,4 +1,4 @@
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
+import { createMiddlewareClient } from '@/lib/supabase/helpers'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { isMultiEmpresa } from '@/lib/helpers/app-mode'
@@ -29,7 +29,7 @@ export async function middleware(req: NextRequest) {
     const res = NextResponse.next()
 
     // Crear cliente de Supabase pasando req y res para manejo correcto de cookies
-    const supabase = createMiddlewareClient({ req, res })
+    const supabase = createMiddlewareClient(req, res)
 
     // Obtener usuario actual y validar token con el servidor
     // IMPORTANTE: getUser() valida el token con Supabase, getSession() solo lee cookies
