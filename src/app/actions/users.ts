@@ -767,17 +767,27 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
     };
   }
 
-  // SECURITY: Validar company_id obligatorio
-  let companyId: number;
-  try {
-    companyId = requireValidCompanyId(currentUser, '[deleteUser]');
-  } catch (error) {
-    log.error('[deleteUser] company_id inválido', { error });
-    return {
-      success: false,
-      error: "Usuario sin empresa asignada"
-    };
+  // SECURITY: Validar company_id solo para usuarios NO superadmin
+  // Los superadmins NO tienen company_id y pueden borrar usuarios de cualquier empresa
+  let companyId: number | null = null;
+  if (currentUser.role !== "superadmin") {
+    try {
+      companyId = requireValidCompanyId(currentUser, '[deleteUser]');
+    } catch (error) {
+      log.error('[deleteUser] company_id inválido', { error });
+      return {
+        success: false,
+        error: "Usuario sin empresa asignada"
+      };
+    }
   }
+
+  log.info('[deleteUser] Iniciando borrado:', {
+    currentUserId: currentUser.id,
+    currentUserRole: currentUser.role,
+    targetUserId: userId,
+    companyId
+  });
 
   // No permitir auto-eliminación
   if (userId === currentUser.id) {
@@ -801,8 +811,15 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
     };
   }
 
-  // PROTECCIÓN: No permitir eliminar el superadmin principal del sistema
+  log.info('[deleteUser] Usuario encontrado:', {
+    targetEmail: targetUser.email,
+    targetRole: targetUser.role,
+    targetCompanyId: targetUser.company_id
+  });
+
+  // PROTECCIÓN: No permitir eliminar el superadmin supremo del sistema
   if (targetUser.email === "josivela+super@gmail.com") {
+    log.warn('[deleteUser] Intento de borrar superadmin supremo bloqueado');
     return {
       success: false,
       error: "Este usuario no puede ser eliminado del sistema",
@@ -826,6 +843,12 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
         error: "No tienes permisos para eliminar un superadmin",
       };
     }
+  } else {
+    // Superadmin puede borrar cualquier usuario (excepto josivela+super@gmail.com ya validado arriba)
+    log.info('[deleteUser] Superadmin borrando usuario:', {
+      targetEmail: targetUser.email,
+      targetRole: targetUser.role
+    });
   }
 
   // Si se va a reasignar, verificar que el usuario destino existe y es válido
