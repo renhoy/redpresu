@@ -589,8 +589,9 @@ export default function UserTable({
                               </TooltipContent>
                             </Tooltip>
 
-                            {/* Botón Borrar Usuario - Solo admin/superadmin, excepto el superadmin protegido */}
+                            {/* Botón Borrar Usuario - Solo admin/superadmin, excepto el superadmin protegido y el propio usuario */}
                             {currentUserRole !== "comercial" &&
+                             user.id !== currentUserId &&
                              user.email !== "josivela+super@gmail.com" && (
                               <Tooltip>
                                 <TooltipTrigger asChild>

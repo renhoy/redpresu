@@ -23,12 +23,12 @@ export function EmailConfirmationMessage({
   isDevelopment = false,
 }: EmailConfirmationMessageProps) {
   const router = useRouter();
-  const [countdown, setCountdown] = useState(3);
+  const [countdown, setCountdown] = useState(10);
   const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
     if (isDevelopment) {
-      // En desarrollo: contador de 3 segundos y redirigir al login
+      // En desarrollo: contador de 10 segundos y redirigir al login
       const timer = setInterval(() => {
         setCountdown((prev) => {
           if (prev <= 1) {
@@ -49,7 +49,7 @@ export function EmailConfirmationMessage({
   }, [isDevelopment, router]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-lime-50 to-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-b from-lime-50 to-white flex items-center justify-center p-4 py-8">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 w-16 h-16 bg-lime-100 rounded-full flex items-center justify-center">
