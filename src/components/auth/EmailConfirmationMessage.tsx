@@ -49,7 +49,7 @@ export function EmailConfirmationMessage({
   }, [isDevelopment, router]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-lime-50 to-white flex items-center justify-center p-4 py-8">
+    <div className="fixed inset-0 bg-gradient-to-b from-lime-50 to-white flex items-center justify-center p-4 z-50">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 w-16 h-16 bg-lime-100 rounded-full flex items-center justify-center">
