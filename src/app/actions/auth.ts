@@ -42,8 +42,8 @@ export async function signInAction(email: string, password: string): Promise<Sig
       return { success: false, error: 'Error en la autenticación' }
     }
 
-    // Obtener datos completos del usuario desde public.users
-    const { data: userData, error: userError } = await supabase
+    // Obtener datos completos del usuario (usar supabaseAdmin para garantizar schema correcto)
+    const { data: userData, error: userError } = await supabaseAdmin
       .from('users')
       .select('*')
       .eq('id', data.user.id)
@@ -80,8 +80,8 @@ export async function signInAction(email: string, password: string): Promise<Sig
       updateData.company_id = 1
     }
 
-    // Actualizar last_login (y company_id si es superadmin)
-    const { error: updateError } = await supabase
+    // Actualizar last_login (y company_id si es superadmin) - usar supabaseAdmin para schema correcto
+    const { error: updateError } = await supabaseAdmin
       .from('users')
       .update(updateData)
       .eq('id', data.user.id)
