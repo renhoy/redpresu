@@ -77,8 +77,8 @@ export async function getDashboardStats(
         break;
     }
 
-    // Construir query base según rol
-    let query = supabase
+    // Construir query base según rol (usar supabaseAdmin para schema correcto)
+    let query = supabaseAdmin
       .from("budgets")
       .select("*")
       .eq("company_id", companyId);
