@@ -3,29 +3,38 @@
  *
  * IMPORTANTE: Usar estos helpers en lugar de crear clientes directamente
  * para asegurar que todos usen el schema 'redpresu'
+ *
+ * NOTA: Estos helpers usan createClient directamente en lugar de los wrappers
+ * de auth-helpers porque esos wrappers NO respetan la configuración de schema
  */
 
 import { cookies } from 'next/headers'
-import {
-  createServerActionClient as createServerActionClientBase,
-  createServerComponentClient as createServerComponentClientBase,
-  createRouteHandlerClient as createRouteHandlerClientBase,
-  createMiddlewareClient as createMiddlewareClientBase,
-  type CookieOptions
-} from '@supabase/auth-helpers-nextjs'
-import type { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/database.types'
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+if (!supabaseUrl) {
+  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL')
+}
+
+if (!supabaseAnonKey) {
+  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY')
+}
 
 // Configuración compartida
 const supabaseConfig = {
-  supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  options: {
-    db: { schema: 'redpresu' },
-    auth: {
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: true
+  db: { schema: 'redpresu' },
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    flowType: 'pkce' as const
+  },
+  global: {
+    headers: {
+      'x-client-info': 'redpresu-client'
     }
   }
 }
@@ -39,9 +48,21 @@ const supabaseConfig = {
  */
 export async function createServerActionClient() {
   const cookieStore = await cookies()
-  return createServerActionClientBase<Database>({
-    cookies: () => cookieStore
-  }, supabaseConfig)
+
+  return createClient<Database>(supabaseUrl, supabaseAnonKey, {
+    ...supabaseConfig,
+    cookies: {
+      get(name: string) {
+        return cookieStore.get(name)?.value
+      },
+      set(name: string, value: string, options: any) {
+        cookieStore.set({ name, value, ...options })
+      },
+      remove(name: string, options: any) {
+        cookieStore.set({ name, value: '', ...options })
+      }
+    }
+  })
 }
 
 /**
@@ -53,9 +74,15 @@ export async function createServerActionClient() {
  */
 export async function createServerComponentClient() {
   const cookieStore = await cookies()
-  return createServerComponentClientBase<Database>({
-    cookies: () => cookieStore
-  }, supabaseConfig)
+
+  return createClient<Database>(supabaseUrl, supabaseAnonKey, {
+    ...supabaseConfig,
+    cookies: {
+      get(name: string) {
+        return cookieStore.get(name)?.value
+      }
+    }
+  })
 }
 
 /**
@@ -67,9 +94,21 @@ export async function createServerComponentClient() {
  */
 export async function createRouteHandlerClient() {
   const cookieStore = await cookies()
-  return createRouteHandlerClientBase<Database>({
-    cookies: () => cookieStore
-  }, supabaseConfig)
+
+  return createClient<Database>(supabaseUrl, supabaseAnonKey, {
+    ...supabaseConfig,
+    cookies: {
+      get(name: string) {
+        return cookieStore.get(name)?.value
+      },
+      set(name: string, value: string, options: any) {
+        cookieStore.set({ name, value, ...options })
+      },
+      remove(name: string, options: any) {
+        cookieStore.set({ name, value: '', ...options })
+      }
+    }
+  })
 }
 
 /**
@@ -81,9 +120,19 @@ export async function createRouteHandlerClient() {
  * const supabase = createMiddlewareClient(req, res)
  * const { data } = await supabase.auth.getUser()
  */
-export function createMiddlewareClient(req: NextRequest, res: NextResponse) {
-  return createMiddlewareClientBase<Database>({
-    req,
-    res
-  }, supabaseConfig)
+export function createMiddlewareClient(req: any, res: any) {
+  return createClient<Database>(supabaseUrl, supabaseAnonKey, {
+    ...supabaseConfig,
+    cookies: {
+      get(name: string) {
+        return req.cookies.get(name)?.value
+      },
+      set(name: string, value: string, options: any) {
+        res.cookies.set({ name, value, ...options })
+      },
+      remove(name: string, options: any) {
+        res.cookies.set({ name, value: '', ...options })
+      }
+    }
+  })
 }
