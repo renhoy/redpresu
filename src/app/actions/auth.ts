@@ -582,44 +582,27 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
 
     log.info('[registerUser] Registro completado exitosamente')
 
-    // 7. Iniciar sesión automáticamente SOLO si es registro público (no hay usuario autenticado)
-    // Si ya hay un admin/superadmin autenticado creando el usuario, NO hacer auto-login
+    // 7. Determinar si hay usuario autenticado (admin creando usuario)
     const { data: { user: currentUser } } = await supabase.auth.getUser()
 
-    log.info('[registerUser] Verificando auto-login:', {
+    log.info('[registerUser] Usuario creado:', {
       hasCurrentUser: !!currentUser,
       hasIssuerId: !!data.issuer_id,
-      newUserEmail: data.email
+      newUserEmail: data.email,
+      isDevelopment: process.env.NODE_ENV === 'development'
     })
 
-    // Solo hacer auto-login si:
-    // 1. NO hay usuario autenticado (registro público)
-    // 2. NO se proporcionó issuer_id (no es asignación a empresa existente)
-    if (!currentUser && !data.issuer_id) {
-      log.info('[registerUser] Haciendo auto-login para registro público')
+    // 8. Retornar resultado SIN hacer auto-login
+    // El componente frontend manejará la UI de confirmación de email
+    // Incluir isDevelopment para que el cliente sepa cómo mostrar la UI
+    const isDevelopment = process.env.NODE_ENV === 'development'
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: data.email.trim().toLowerCase(),
-        password: data.password
-      })
-
-      if (signInError) {
-        log.error('[registerUser] Error al iniciar sesión automática:', signInError)
-        // No es crítico, el usuario puede hacer login manual
-      }
-
-      // Redirect a dashboard
-      redirect('/dashboard')
-    } else {
-      log.info('[registerUser] Saltando auto-login (usuario creado por admin/superadmin)')
-    }
-
-    // 8. Si es superadmin, retornar resultado sin redirect
     return {
       success: true,
       data: {
         userId,
-        emisorId
+        emisorId,
+        isDevelopment, // Para que el cliente sepa si mostrar timer de 3s
       }
     }
 

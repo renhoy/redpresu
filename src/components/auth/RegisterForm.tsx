@@ -29,6 +29,7 @@ import {
   type RegisterFormData,
 } from "@/lib/validators/auth-schemas";
 import { validateEmail } from "@/lib/helpers/email-validation";
+import { EmailConfirmationMessage } from "@/components/auth/EmailConfirmationMessage";
 
 interface RegisterFormErrors {
   nombre?: string;
@@ -75,6 +76,9 @@ export default function RegisterForm() {
 
   const [errors, setErrors] = useState<RegisterFormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState<string>("");
+  const [isDevelopment, setIsDevelopment] = useState(false);
 
   // Debug: Ver cambios en errors
   useEffect(() => {
@@ -174,7 +178,11 @@ export default function RegisterForm() {
         return;
       }
 
-      // El Server Action maneja el redirect automáticamente
+      // Registro exitoso: mostrar mensaje de confirmación de email
+      console.log("[RegisterForm] Registro exitoso, mostrando mensaje de confirmación");
+      setRegisteredEmail(formData.email!);
+      setIsDevelopment(result.data?.isDevelopment || false);
+      setRegistrationSuccess(true);
     } catch (error) {
       setErrors({
         general:
@@ -242,6 +250,16 @@ export default function RegisterForm() {
       }));
     }
   };
+
+  // Si el registro fue exitoso, mostrar mensaje de confirmación de email
+  if (registrationSuccess && registeredEmail) {
+    return (
+      <EmailConfirmationMessage
+        email={registeredEmail}
+        isDevelopment={isDevelopment}
+      />
+    );
+  }
 
   return (
     <TooltipProvider>
