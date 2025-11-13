@@ -7,8 +7,7 @@
 'use server'
 import { log } from '@/lib/logger'
 
-import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createServerActionClient } from "@/lib/supabase/helpers"
 import { getServerUser } from '@/lib/auth/server'
 import type { ActionResult } from '@/lib/types/database'
 import { requireValidCompanyId } from '@/lib/helpers/company-validation'
@@ -102,8 +101,7 @@ export async function exportTariffs(
     }
 
     // 3. Obtener tarifas (RLS filtra por empresa automáticamente)
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // SECURITY (VULN-014): Timeout para query pesada de export
     const { data: tariffs, error } = await withTimeout(
@@ -243,8 +241,7 @@ export async function exportBudgets(
     }
 
     // 3. Obtener presupuestos (RLS filtra por empresa automáticamente)
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // SECURITY (VULN-014): Timeout para query pesada de export
     const { data: budgets, error } = await withTimeout(

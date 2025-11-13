@@ -1,7 +1,6 @@
 "use server"
 
-import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createServerActionClient } from "@/lib/supabase/helpers"
 import { getServerUser } from '@/lib/auth/server'
 import { log } from '@/lib/logger'
 import { requireValidCompanyId } from '@/lib/helpers/company-validation'
@@ -46,8 +45,7 @@ export async function getBudgetNotes(budgetId: string): Promise<ActionResult> {
       return { success: false, error: 'Usuario sin empresa asignada' }
     }
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // SECURITY: Verificar que el budget pertenece a la empresa del usuario
     const { data: budgetData, error: budgetError } = await supabase
@@ -138,8 +136,7 @@ export async function addBudgetNote(budgetId: string, content: string): Promise<
       return { success: false, error: 'Usuario sin empresa asignada' }
     }
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // SECURITY: Verificar que el budget pertenece a la empresa del usuario
     const { data: budgetData, error: budgetError } = await supabase
@@ -215,8 +212,7 @@ export async function updateBudgetNote(noteId: string, content: string): Promise
       return { success: false, error: 'No autenticado' }
     }
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Actualizar nota
     const { data: noteData, error: noteError } = await supabase
@@ -268,8 +264,7 @@ export async function deleteBudgetNote(noteId: string): Promise<ActionResult> {
       return { success: false, error: 'No autenticado' }
     }
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Verificar si es superadmin
     const isSuperadmin = user.role === 'superadmin'
@@ -305,8 +300,7 @@ export async function deleteBudgetNote(noteId: string): Promise<ActionResult> {
  */
 export async function getBudgetNotesCount(budgetId: string): Promise<number> {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     const { count, error } = await supabase
       .from('budget_notes')

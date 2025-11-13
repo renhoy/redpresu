@@ -11,7 +11,7 @@
  * - Verificar límites del plan
  */
 
-import { createServerActionClient } from "@supabase/auth-helpers-nextjs";
+import { createServerActionClient } from "@/lib/supabase/helpers";
 import { cookies } from "next/headers";
 import { getServerUser } from "@/lib/auth/server";
 import { getStripeClient, isSubscriptionsEnabled, getStripePlan, type PlanType } from "@/lib/stripe";
@@ -214,7 +214,7 @@ export async function createCheckoutSession(
     }
 
     const cookieStore = await cookies();
-    const supabase = createServerActionClient({ cookies: () => cookieStore });
+    const supabase = await createServerActionClient();
 
     // Obtener o crear customer ID
     const { data: subscription } = await supabase
@@ -311,7 +311,7 @@ export async function createPortalSession(
     }
 
     const cookieStore = await cookies();
-    const supabase = createServerActionClient({ cookies: () => cookieStore });
+    const supabase = await createServerActionClient();
 
     const { data: subscription } = await supabase
       .from('subscriptions')
@@ -359,7 +359,7 @@ export async function checkPlanLimit(
     }
 
     const cookieStore = await cookies();
-    const supabase = createServerActionClient({ cookies: () => cookieStore });
+    const supabase = await createServerActionClient();
 
     // Llamar función SQL que verifica límites
     const { data, error } = await supabase.rpc('check_plan_limit', {

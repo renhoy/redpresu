@@ -3,7 +3,7 @@ import { log } from '@/lib/logger'
 import { requireValidCompanyId, validateUserCompanyId } from '@/lib/helpers/company-validation'
 
 import { cookies } from 'next/headers'
-import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
+import { createServerActionClient } from "@/lib/supabase/helpers"
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { Database } from '@/lib/types/database.types'
 import { revalidatePath } from 'next/cache'

@@ -713,7 +713,7 @@ export async function updateUserComplete(params: {
         const { createServerActionClient } = require("@supabase/auth-helpers-nextjs");
         const { cookies } = require("next/headers");
         const cookieStore = await cookies();
-        const supabase = createServerActionClient({ cookies: () => cookieStore });
+        const supabase = await createServerActionClient();
 
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email: userData.email,

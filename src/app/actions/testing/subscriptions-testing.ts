@@ -9,7 +9,7 @@
  * ⚠️ IMPORTANTE: Estas acciones solo funcionan en NODE_ENV !== 'production'
  */
 
-import { createServerActionClient } from "@supabase/auth-helpers-nextjs";
+import { createServerActionClient } from "@/lib/supabase/helpers";
 import { cookies } from "next/headers";
 import { getServerUser } from "@/lib/auth/server";
 import { supabaseAdmin } from "@/lib/supabase/server";

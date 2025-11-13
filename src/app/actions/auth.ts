@@ -3,8 +3,7 @@ import { log } from '@/lib/logger'
 import { sanitizeError } from '@/lib/helpers/error-helpers'
 import { getAppUrl } from '@/lib/helpers/url-helpers-server'
 
-import { cookies } from 'next/headers'
-import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
+import { createServerActionClient } from "@/lib/supabase/helpers"
 import { redirect } from 'next/navigation'
 import { supabaseAdmin } from '@/lib/supabase/server'
 
@@ -15,8 +14,7 @@ export interface SignInResult {
 
 export async function signInAction(email: string, password: string): Promise<SignInResult> {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email.trim().toLowerCase(),
@@ -127,8 +125,7 @@ export async function signInAction(email: string, password: string): Promise<Sig
 
 export async function signOutAction(): Promise<SignInResult> {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Verificar si hay una sesión activa antes de intentar cerrar sesión
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
@@ -175,8 +172,7 @@ export async function signOutAction(): Promise<SignInResult> {
  */
 export async function signOutAndRedirectToContact(): Promise<SignInResult> {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     log.info('[signOutAndRedirectToContact] Iniciando logout...')
 
@@ -271,8 +267,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
       hasIssuerId: !!data.issuer_id
     })
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Usar el cliente admin global (importado de @/lib/supabase/server)
     // Este cliente ya tiene configurado el service_role_key y bypass de RLS
@@ -661,8 +656,7 @@ export async function requestPasswordReset(email: string): Promise<PasswordReset
       }
     }
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Obtener URL base de la aplicación
     const baseUrl = await getAppUrl()
@@ -736,8 +730,7 @@ export async function resetPassword(newPassword: string): Promise<PasswordResetR
       }
     }
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Verificar que hay una sesión activa (del link de reset)
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
@@ -860,8 +853,7 @@ export async function getUserProfile(): Promise<ProfileResult> {
   try {
     log.info('[getUserProfile] Iniciando...')
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Obtener usuario autenticado
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -960,8 +952,7 @@ export async function updateUserProfile(data: UpdateProfileData): Promise<Profil
   try {
     log.info('[updateUserProfile] Iniciando...', { hasPasswordChange: !!data.currentPassword })
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Obtener usuario autenticado
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -1125,8 +1116,7 @@ export async function getIssuers(): Promise<{
   try {
     log.info('[getIssuers] Obteniendo lista de emisores...')
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Verificar que el usuario es superadmin
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -1192,8 +1182,7 @@ export async function getUserProfileById(userId: string): Promise<ProfileResult>
   try {
     log.info('[getUserProfileById] Iniciando...', { userId })
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Obtener usuario autenticado
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -1335,8 +1324,7 @@ export async function updateUserProfileById(
       hasPasswordChange: !!data.newPassword
     })
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Obtener usuario autenticado
     const { data: { user }, error: authError } = await supabase.auth.getUser()

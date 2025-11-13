@@ -1,8 +1,7 @@
 'use server'
 
 import { log } from '@/lib/logger'
-import { cookies } from 'next/headers'
-import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
+import { createServerActionClient } from "@/lib/supabase/helpers"
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import crypto from 'crypto'
@@ -53,8 +52,7 @@ export async function createUserInvitation(
   expirationDays?: number
 ): Promise<InvitationResult> {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Obtener días de expiración desde configuración si no se proporciona
     if (!expirationDays) {
@@ -587,8 +585,7 @@ export async function acceptInvitation(
     log.info('[acceptInvitation] Usuario creado exitosamente:', userId)
 
     // Iniciar sesión automáticamente
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email: invitation.email,
@@ -650,8 +647,7 @@ export async function cancelInvitation(invitationId: string): Promise<Invitation
   try {
     log.info('[cancelInvitation] Cancelando invitación:', invitationId)
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Obtener usuario autenticado
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -710,8 +706,7 @@ export async function getMyInvitations(): Promise<{
   try {
     log.info('[getMyInvitations] Obteniendo invitaciones...')
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Obtener usuario autenticado
     const { data: { user }, error: authError } = await supabase.auth.getUser()

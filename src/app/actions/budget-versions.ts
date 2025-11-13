@@ -1,8 +1,7 @@
 'use server'
 import { log } from '@/lib/logger'
 
-import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createServerActionClient } from "@/lib/supabase/helpers"
 import { getServerUser } from '@/lib/auth/server'
 import { BudgetVersion } from '@/lib/types/database'
 import { requireValidCompanyId } from '@/lib/helpers/company-validation'
@@ -42,8 +41,7 @@ export async function createBudgetVersion(
       return { success: false, error: 'Usuario sin empresa asignada' }
     }
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // 2. Obtener datos actuales del presupuesto
     const { data: budget, error: budgetError } = await supabase
@@ -169,8 +167,7 @@ export async function getBudgetVersions(
       return { success: false, error: 'Usuario sin empresa asignada' }
     }
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // SECURITY: Verificar que el budget pertenece a la empresa del usuario
     const { data: budgetData, error: budgetError } = await supabase
@@ -237,8 +234,7 @@ export async function restoreBudgetVersion(
       return { success: false, error: 'No autenticado' }
     }
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // 2. Obtener la versión a restaurar
     const { data: version, error: versionError } = await supabase
@@ -359,8 +355,7 @@ export async function deleteBudgetVersion(
       return { success: false, error: 'Sin permisos para eliminar versiones' }
     }
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // 2. Eliminar versión (RLS policy verifica permisos)
     const { error } = await supabase

@@ -3,8 +3,7 @@ import { log } from '@/lib/logger'
 import { requireValidCompanyId } from '@/lib/helpers/company-validation'
 import { sanitizeError } from '@/lib/helpers/error-helpers'
 
-import { cookies } from 'next/headers'
-import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
+import { createServerActionClient } from "@/lib/supabase/helpers"
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { Tariff, Budget, BudgetStatus } from '@/lib/types/database'
 import { revalidatePath } from 'next/cache'
@@ -69,8 +68,7 @@ export async function getActiveTariffs(): Promise<Tariff[]> {
   try {
     log.info('[getActiveTariffs] Obteniendo tarifas activas...')
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Obtener usuario actual
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -177,8 +175,7 @@ export async function checkBudgetNumberExists(
       return { exists: false }
     }
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Obtener usuario y empresa
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -253,8 +250,7 @@ export async function createDraftBudget(data: {
       return { success: false, error: limitCheck.message }
     }
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Obtener usuario actual
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -531,8 +527,7 @@ export async function updateBudgetDraft(
   try {
     log.info('[updateBudgetDraft] Actualizando borrador:', budgetId)
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Obtener usuario actual
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -662,8 +657,7 @@ export async function saveBudget(
   }
 ): Promise<{ success: boolean; error?: string; had_pdf?: boolean }> {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Obtener usuario actual
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -928,8 +922,7 @@ export async function duplicateBudget(
   try {
     log.info('[duplicateBudget] Duplicando presupuesto:', originalBudgetId)
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Obtener usuario actual
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -1151,8 +1144,7 @@ export async function updateBudgetStatus(
   newStatus: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Obtener usuario actual
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -1256,8 +1248,7 @@ export async function getBudgetById(
   try {
     log.info('[getBudgetById] Obteniendo budget:', budgetId)
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Obtener usuario actual
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -1339,8 +1330,7 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
   try {
     log.info('[generateBudgetPDF] Iniciando generación PDF para budget:', budgetId)
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Obtener usuario actual
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -1668,8 +1658,7 @@ export async function deleteBudget(budgetId: string): Promise<{
   try {
     log.info('[deleteBudget] Eliminando presupuesto:', budgetId)
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Obtener usuario actual
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -1759,8 +1748,7 @@ export async function deleteBudgetPDF(budgetId: string): Promise<{
   try {
     log.info('[deleteBudgetPDF] Eliminando PDF del presupuesto:', budgetId)
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Obtener usuario actual
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -1863,8 +1851,7 @@ export async function getBudgetPDFSignedUrl(budgetId: string): Promise<{
   try {
     log.info('[getBudgetPDFSignedUrl] Obteniendo URL firmada para budget:', budgetId)
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Autenticación
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -1944,8 +1931,7 @@ export async function getBudgetPDFSignedUrl(budgetId: string): Promise<{
  */
 export async function userHasBudgets(): Promise<boolean> {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Obtener usuario actual
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -1985,8 +1971,7 @@ export async function duplicateBudgetCopy(budgetId: string): Promise<{
   try {
     log.info('[duplicateBudgetCopy] Duplicando presupuesto:', budgetId)
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Obtener usuario actual
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -2281,8 +2266,7 @@ export async function updateBudgetNotes(
   try {
     log.info('[updateBudgetNotes] Actualizando notas del presupuesto:', budgetId)
 
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     // Obtener usuario actual
     const { data: { user }, error: authError } = await supabase.auth.getUser()

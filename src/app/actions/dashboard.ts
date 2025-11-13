@@ -1,7 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { createServerActionClient } from "@supabase/auth-helpers-nextjs";
+import { createServerActionClient } from "@/lib/supabase/helpers";
 import { Budget, Database } from "@/lib/types/database";
 import { log } from "@/lib/logger";
 import { requireValidCompanyId } from "@/lib/helpers/company-validation";

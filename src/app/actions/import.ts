@@ -8,8 +8,7 @@
 'use server'
 import { log } from '@/lib/logger'
 
-import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createServerActionClient } from "@/lib/supabase/helpers"
 import { getServerUser } from '@/lib/auth/server'
 import type { ActionResult } from '@/lib/types/database'
 import { revalidatePath } from 'next/cache'
@@ -142,8 +141,7 @@ export async function importTariffs(
     })
 
     // 8. Insertar en BD
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     const { data, error } = await supabase
       .from('tariffs')
@@ -251,8 +249,7 @@ export async function importBudgets(
     }
 
     // 7. Preparar presupuestos para inserción
-    const cookieStore = await cookies()
-    const supabase = createServerActionClient({ cookies: () => cookieStore })
+        const supabase = await createServerActionClient()
 
     const budgetsToInsert = await Promise.all(
       validatedBudgets.map(async (budget, i) => {

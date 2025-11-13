@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { createServerActionClient } from "@supabase/auth-helpers-nextjs";
+import { createServerActionClient } from "@/lib/supabase/helpers";
 import { cookies } from "next/headers";
 import { BudgetNotesForm } from "@/components/budgets/BudgetNotesForm";
 
