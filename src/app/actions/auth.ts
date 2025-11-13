@@ -397,12 +397,23 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
       log.info('[registerUser] Empresa creada:', empresaId)
     }
 
-    // 4. Crear usuario en auth.users usando admin API para evitar confirmación de email
+    // 4. Crear usuario en auth.users usando admin API
+    // Determinar si debemos auto-confirmar email según entorno
+    // DESARROLLO: auto-confirmar para facilitar testing
+    // PRODUCCIÓN: Requiere confirmación de email (Supabase enviará email automáticamente)
+    const isDevelopment = process.env.NODE_ENV === 'development'
+
+    log.info('[registerUser] Entorno:', {
+      NODE_ENV: process.env.NODE_ENV,
+      isDevelopment,
+      emailConfirm: isDevelopment
+    })
+
     // IMPORTANTE: Solo incluir user_metadata si no es superadmin
     const createUserPayload: any = {
       email: data.email.trim().toLowerCase(),
       password: data.password,
-      email_confirm: true, // Auto-confirmar email
+      email_confirm: isDevelopment, // Auto-confirmar SOLO en desarrollo
     }
 
     // Solo añadir user_metadata si NO es superadmin y hay datos válidos
@@ -571,8 +582,22 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
 
     log.info('[registerUser] Registro completado exitosamente')
 
-    // 7. Iniciar sesión automáticamente (solo si no es superadmin creando usuario)
-    if (!data.issuer_id) {
+    // 7. Iniciar sesión automáticamente SOLO si es registro público (no hay usuario autenticado)
+    // Si ya hay un admin/superadmin autenticado creando el usuario, NO hacer auto-login
+    const { data: { user: currentUser } } = await supabase.auth.getUser()
+
+    log.info('[registerUser] Verificando auto-login:', {
+      hasCurrentUser: !!currentUser,
+      hasIssuerId: !!data.issuer_id,
+      newUserEmail: data.email
+    })
+
+    // Solo hacer auto-login si:
+    // 1. NO hay usuario autenticado (registro público)
+    // 2. NO se proporcionó issuer_id (no es asignación a empresa existente)
+    if (!currentUser && !data.issuer_id) {
+      log.info('[registerUser] Haciendo auto-login para registro público')
+
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: data.email.trim().toLowerCase(),
         password: data.password
@@ -585,6 +610,8 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
 
       // Redirect a dashboard
       redirect('/dashboard')
+    } else {
+      log.info('[registerUser] Saltando auto-login (usuario creado por admin/superadmin)')
     }
 
     // 8. Si es superadmin, retornar resultado sin redirect

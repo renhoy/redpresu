@@ -333,12 +333,23 @@ export async function createUser(data: CreateUserData) {
   const temporaryPassword = generateTemporaryPassword();
 
   try {
+    // Determinar si debemos auto-confirmar email según entorno
+    // DESARROLLO: auto-confirmar para facilitar testing
+    // PRODUCCIÓN: NO auto-confirmar, forzar flujo de invitación
+    const isDevelopment = process.env.NODE_ENV === 'development'
+
+    log.info('[createUser] Entorno:', {
+      NODE_ENV: process.env.NODE_ENV,
+      isDevelopment,
+      emailConfirm: isDevelopment
+    })
+
     // 1. Crear usuario en auth.users
     const { data: authData, error: authError } =
       await supabaseAdmin.auth.admin.createUser({
         email: data.email,
         password: temporaryPassword,
-        email_confirm: true, // Auto-confirmar email
+        email_confirm: isDevelopment, // Auto-confirmar SOLO en desarrollo
       });
 
     if (authError) {
