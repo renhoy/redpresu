@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { createRegistrationToken } from "@/app/actions/registration";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import {
   Card,
   CardContent,
@@ -18,25 +18,20 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Building2, User } from "lucide-react";
 import { validateEmail } from "@/lib/helpers/email-validation";
-import { EmailConfirmationMessage } from "@/components/auth/EmailConfirmationMessage";
 
 interface RegisterStep1Errors {
   name?: string;
-  last_name?: string;
   email?: string;
-  confirmEmail?: string;
+  password?: string;
   tipo?: string;
   general?: string;
 }
 
 export default function RegisterForm() {
-  const router = useRouter();
-
   const [formData, setFormData] = useState({
     name: "",
-    last_name: "",
     email: "",
-    confirmEmail: "",
+    password: "",
     tipo: "empresa" as "empresa" | "autonomo",
   });
 
@@ -44,8 +39,6 @@ export default function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState<string>("");
-  const [registrationToken, setRegistrationToken] = useState<string>("");
-  const [isDevelopment, setIsDevelopment] = useState(false);
 
   const validateForm = (): boolean => {
     const newErrors: RegisterStep1Errors = {};
@@ -53,11 +46,6 @@ export default function RegisterForm() {
     // Validar nombre
     if (!formData.name.trim()) {
       newErrors.name = "El nombre es obligatorio";
-    }
-
-    // Validar apellidos
-    if (!formData.last_name.trim()) {
-      newErrors.last_name = "Los apellidos son obligatorios";
     }
 
     // Validar email
@@ -70,11 +58,11 @@ export default function RegisterForm() {
       }
     }
 
-    // Validar confirmación de email
-    if (!formData.confirmEmail.trim()) {
-      newErrors.confirmEmail = "Debes confirmar el email";
-    } else if (formData.email !== formData.confirmEmail) {
-      newErrors.confirmEmail = "Los emails no coinciden";
+    // Validar contraseña
+    if (!formData.password) {
+      newErrors.password = "La contraseña es obligatoria";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "La contraseña debe tener al menos 6 caracteres";
     }
 
     // Validar tipo
@@ -100,8 +88,8 @@ export default function RegisterForm() {
     try {
       const result = await createRegistrationToken({
         name: formData.name.trim(),
-        last_name: formData.last_name.trim(),
         email: formData.email.trim(),
+        password: formData.password,
         tipo_emisor: formData.tipo,
       });
 
@@ -114,19 +102,10 @@ export default function RegisterForm() {
 
       // PASO 1 completado exitosamente
       console.log("[RegisterForm PASO 1] Token creado exitosamente");
+      console.log("[RegisterForm PASO 1] Enlace de verificación: /register/complete?token=" + result.data?.token);
 
       setRegisteredEmail(formData.email);
-      setRegistrationToken(result.data?.token || "");
-      setIsDevelopment(process.env.NODE_ENV === "development");
       setRegistrationSuccess(true);
-
-      // En desarrollo: auto-redirigir a PASO 2 después de 10s
-      if (process.env.NODE_ENV === "development" && result.data?.token) {
-        console.log("[RegisterForm PASO 1] Modo desarrollo: programando redirección a PASO 2");
-        setTimeout(() => {
-          router.push(`/register/complete?token=${result.data.token}`);
-        }, 10000);
-      }
     } catch (error) {
       console.error("[RegisterForm PASO 1] Error inesperado:", error);
       setErrors({
@@ -188,10 +167,38 @@ export default function RegisterForm() {
   // Si el PASO 1 fue exitoso, mostrar mensaje de confirmación de email
   if (registrationSuccess && registeredEmail) {
     return (
-      <EmailConfirmationMessage
-        email={registeredEmail}
-        isDevelopment={isDevelopment}
-      />
+      <div className="fixed inset-0 bg-gradient-to-b from-lime-50 to-white flex items-center justify-center p-4 z-50">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 w-16 h-16 bg-lime-100 rounded-full flex items-center justify-center">
+              <User className="h-8 w-8 text-lime-600" />
+            </div>
+            <CardTitle className="text-2xl">Confirma tu email</CardTitle>
+            <CardDescription>
+              Hemos enviado un correo de verificación
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert>
+              <AlertDescription className="text-sm">
+                <p className="mb-2">
+                  Hemos enviado un correo electrónico a:
+                </p>
+                <p className="font-semibold text-gray-900">{registeredEmail}</p>
+              </AlertDescription>
+            </Alert>
+
+            <div className="space-y-2 text-sm text-gray-600">
+              <p>Para completar tu registro:</p>
+              <ol className="list-decimal list-inside space-y-1 ml-2">
+                <li>Revisa tu bandeja de entrada</li>
+                <li>Haz clic en el enlace de verificación</li>
+                <li>Completa los datos de tu empresa</li>
+              </ol>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
@@ -202,7 +209,7 @@ export default function RegisterForm() {
           Crear Cuenta - Paso 1 de 2
         </CardTitle>
         <CardDescription className="text-center">
-          Datos de Acceso (Administrador)
+          Datos básicos para crear tu cuenta
         </CardDescription>
       </CardHeader>
 
@@ -238,84 +245,55 @@ export default function RegisterForm() {
             )}
           </div>
 
-          {/* Nombre y Apellidos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Input
-                id="name"
-                type="text"
-                placeholder="Nombre *"
-                value={formData.name}
-                onChange={handleInputChange("name")}
-                className={errors.name ? "border-red-500" : ""}
-                disabled={isLoading}
-                autoComplete="given-name"
-              />
-              {errors.name && (
-                <p className="text-sm text-red-600">{errors.name}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Input
-                id="last_name"
-                type="text"
-                placeholder="Apellidos *"
-                value={formData.last_name}
-                onChange={handleInputChange("last_name")}
-                className={errors.last_name ? "border-red-500" : ""}
-                disabled={isLoading}
-                autoComplete="family-name"
-              />
-              {errors.last_name && (
-                <p className="text-sm text-red-600">{errors.last_name}</p>
-              )}
-            </div>
+          {/* Nombre */}
+          <div className="space-y-2">
+            <Input
+              id="name"
+              type="text"
+              placeholder="Nombre *"
+              value={formData.name}
+              onChange={handleInputChange("name")}
+              className={errors.name ? "border-red-500" : ""}
+              disabled={isLoading}
+              autoComplete="given-name"
+            />
+            {errors.name && (
+              <p className="text-sm text-red-600">{errors.name}</p>
+            )}
           </div>
 
-          {/* Email y Confirmar Email */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Input
-                id="email"
-                type="email"
-                placeholder="Email *"
-                value={formData.email}
-                onChange={handleInputChange("email")}
-                className={errors.email ? "border-red-500" : ""}
-                disabled={isLoading}
-                autoComplete="email"
-              />
-              {errors.email && (
-                <p className="text-sm text-red-600">{errors.email}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Input
-                id="confirmEmail"
-                type="email"
-                placeholder="Confirmar Email *"
-                value={formData.confirmEmail}
-                onChange={handleInputChange("confirmEmail")}
-                className={errors.confirmEmail ? "border-red-500" : ""}
-                disabled={isLoading}
-                autoComplete="email"
-              />
-              {errors.confirmEmail && (
-                <p className="text-sm text-red-600">{errors.confirmEmail}</p>
-              )}
-            </div>
+          {/* Email */}
+          <div className="space-y-2">
+            <Input
+              id="email"
+              type="email"
+              placeholder="Email *"
+              value={formData.email}
+              onChange={handleInputChange("email")}
+              className={errors.email ? "border-red-500" : ""}
+              disabled={isLoading}
+              autoComplete="email"
+            />
+            {errors.email && (
+              <p className="text-sm text-red-600">{errors.email}</p>
+            )}
           </div>
 
-          {/* Texto aclaratorio sobre el email */}
-          <Alert>
-            <AlertDescription className="text-sm text-muted-foreground">
-              <strong>Nota importante:</strong> Este correo electrónico es el que
-              se usará para el administrador y para hacer login en el sistema como
-              administrador.
-            </AlertDescription>
-          </Alert>
+          {/* Contraseña */}
+          <div className="space-y-2">
+            <PasswordInput
+              id="password"
+              placeholder="Contraseña * (mínimo 6 caracteres)"
+              value={formData.password}
+              onChange={handleInputChange("password")}
+              className={errors.password ? "border-red-500" : ""}
+              disabled={isLoading}
+              autoComplete="new-password"
+            />
+            {errors.password && (
+              <p className="text-sm text-red-600">{errors.password}</p>
+            )}
+          </div>
 
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? (
@@ -324,7 +302,7 @@ export default function RegisterForm() {
                 Procesando...
               </>
             ) : (
-              "Continuar al Paso 2"
+              "Crear Cuenta"
             )}
           </Button>
         </CardContent>

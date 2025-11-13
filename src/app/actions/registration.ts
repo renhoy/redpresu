@@ -9,13 +9,13 @@ import crypto from "crypto";
  * PASO 1: Crear token de registro
  * Almacena datos básicos del usuario y genera token único
  *
- * @param data - Datos básicos del usuario (nombre, apellidos, email, tipo)
+ * @param data - Datos básicos del usuario (nombre, email, contraseña, tipo)
  * @returns Token generado o error
  */
 export async function createRegistrationToken(data: {
   name: string;
-  last_name: string;
   email: string;
+  password: string;
   tipo_emisor: "empresa" | "autonomo";
 }) {
   try {
@@ -25,10 +25,18 @@ export async function createRegistrationToken(data: {
     });
 
     // 1. Validar entrada
-    if (!data.name || !data.last_name || !data.email || !data.tipo_emisor) {
+    if (!data.name || !data.email || !data.password || !data.tipo_emisor) {
       return {
         success: false,
         error: "Todos los campos son obligatorios",
+      };
+    }
+
+    // Validar longitud de contraseña
+    if (data.password.length < 6) {
+      return {
+        success: false,
+        error: "La contraseña debe tener al menos 6 caracteres",
       };
     }
 
@@ -87,7 +95,7 @@ export async function createRegistrationToken(data: {
         token,
         email: data.email.toLowerCase(),
         name: data.name,
-        last_name: data.last_name,
+        password: data.password, // Guardada temporalmente (se elimina al completar)
         tipo_emisor: data.tipo_emisor,
         expires_at: expiresAt.toISOString(),
         used: false,
@@ -109,8 +117,7 @@ export async function createRegistrationToken(data: {
       expiresAt: expiresAt.toISOString(),
     });
 
-    // 7. En producción, aquí se enviaría el email con el enlace
-    // TODO: Integrar envío de email con template personalizado
+    // 7. TODO: Integrar envío de email con template personalizado
     // const completionLink = `${process.env.NEXT_PUBLIC_APP_URL}/register/complete?token=${token}`;
     // await sendRegistrationEmail(data.email, completionLink);
 
@@ -195,7 +202,7 @@ export async function validateRegistrationToken(token: string) {
       data: {
         email: tokenData.email,
         name: tokenData.name,
-        last_name: tokenData.last_name,
+        password: tokenData.password,
         tipo_emisor: tokenData.tipo_emisor as "empresa" | "autonomo",
       },
     };
@@ -213,13 +220,12 @@ export async function validateRegistrationToken(token: string) {
  * Crea el usuario en Supabase Auth, crea la empresa/emisor y completa el registro
  *
  * @param token - Token de registro
- * @param registrationData - Datos completos del registro (contraseña + datos fiscales/contacto)
+ * @param registrationData - Datos completos del registro (datos fiscales/contacto)
  * @returns Usuario creado o error
  */
 export async function completeRegistration(
   token: string,
   registrationData: {
-    password: string;
     // Datos fiscales
     nif: string;
     razon_social: string;
@@ -245,13 +251,6 @@ export async function completeRegistration(
     const tokenData = tokenValidation.data;
 
     // 2. Validar datos de entrada
-    if (!registrationData.password || registrationData.password.length < 6) {
-      return {
-        success: false,
-        error: "La contraseña debe tener al menos 6 caracteres",
-      };
-    }
-
     if (!registrationData.nif || !registrationData.razon_social) {
       return {
         success: false,
@@ -265,11 +264,10 @@ export async function completeRegistration(
     const { data: authUser, error: authError } =
       await supabaseAdmin.auth.admin.createUser({
         email: tokenData.email,
-        password: registrationData.password,
-        email_confirm: process.env.NODE_ENV === "development", // Auto-confirmar en desarrollo
+        password: tokenData.password, // Usar contraseña guardada en PASO 1
+        email_confirm: true, // Email ya verificado mediante token
         user_metadata: {
           name: tokenData.name,
-          last_name: tokenData.last_name,
         },
       });
 
@@ -353,7 +351,7 @@ export async function completeRegistration(
       .insert({
         id: userId,
         name: tokenData.name,
-        last_name: tokenData.last_name,
+        last_name: "", // No se recopila en PASO 1, se puede completar después
         email: tokenData.email,
         role: "admin", // El usuario que se registra es admin de su empresa
         status: "active",
@@ -392,7 +390,7 @@ export async function completeRegistration(
     const { data: sessionData, error: sessionError } =
       await supabase.auth.signInWithPassword({
         email: tokenData.email,
-        password: registrationData.password,
+        password: tokenData.password,
       });
 
     if (sessionError) {
@@ -414,7 +412,6 @@ export async function completeRegistration(
           id: userId,
           email: tokenData.email,
           name: tokenData.name,
-          last_name: tokenData.last_name,
           role: "admin",
         },
         company: {

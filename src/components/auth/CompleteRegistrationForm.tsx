@@ -8,7 +8,6 @@ import {
 } from "@/app/actions/registration";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PasswordInput } from "@/components/ui/password-input";
 import {
   Card,
   CardContent,
@@ -23,7 +22,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Loader2, CheckCircle2 } from "lucide-react";
+import { Loader2, CheckCircle2, Info } from "lucide-react";
 
 interface CompleteRegistrationFormProps {
   token: string;
@@ -32,13 +31,11 @@ interface CompleteRegistrationFormProps {
 interface TokenData {
   email: string;
   name: string;
-  last_name: string;
+  password: string;
   tipo_emisor: "empresa" | "autonomo";
 }
 
 interface FormErrors {
-  password?: string;
-  confirmPassword?: string;
   nif?: string;
   razon_social?: string;
   domicilio?: string;
@@ -60,8 +57,6 @@ export default function CompleteRegistrationForm({
   const [tokenError, setTokenError] = useState<string>("");
 
   const [formData, setFormData] = useState({
-    password: "",
-    confirmPassword: "",
     nif: "",
     razon_social: "",
     domicilio: "",
@@ -103,20 +98,6 @@ export default function CompleteRegistrationForm({
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
-
-    // Validar contraseña
-    if (!formData.password) {
-      newErrors.password = "La contraseña es obligatoria";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "La contraseña debe tener al menos 6 caracteres";
-    }
-
-    // Validar confirmación de contraseña
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "Debes confirmar la contraseña";
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Las contraseñas no coinciden";
-    }
 
     // Validar NIF
     if (!formData.nif.trim()) {
@@ -167,7 +148,6 @@ export default function CompleteRegistrationForm({
 
     try {
       const result = await completeRegistration(token, {
-        password: formData.password,
         nif: formData.nif.trim(),
         razon_social: formData.razon_social.trim(),
         domicilio: formData.domicilio.trim(),
@@ -291,7 +271,7 @@ export default function CompleteRegistrationForm({
             Completar Registro - Paso 2 de 2
           </CardTitle>
           <CardDescription className="text-center">
-            Hola {tokenData?.name}, completa tu registro para acceder al sistema
+            Hola {tokenData?.name}, completa los datos de tu {tokenData?.tipo_emisor === "empresa" ? "empresa" : "actividad"}
           </CardDescription>
         </CardHeader>
 
@@ -304,60 +284,13 @@ export default function CompleteRegistrationForm({
               </Alert>
             )}
 
-            {/* Sección: Datos de Acceso (Contraseña) */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">
-                Datos de Acceso (Administrador)
-              </h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <PasswordInput
-                        id="password"
-                        placeholder="Contraseña *"
-                        value={formData.password}
-                        onChange={handleInputChange("password")}
-                        className={errors.password ? "border-red-500" : ""}
-                        disabled={isLoading}
-                        autoComplete="new-password"
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Mínimo 6 caracteres</p>
-                    </TooltipContent>
-                  </Tooltip>
-                  {errors.password && (
-                    <p className="text-sm text-red-600">{errors.password}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <PasswordInput
-                        id="confirmPassword"
-                        placeholder="Confirmar Contraseña *"
-                        value={formData.confirmPassword}
-                        onChange={handleInputChange("confirmPassword")}
-                        className={errors.confirmPassword ? "border-red-500" : ""}
-                        disabled={isLoading}
-                        autoComplete="new-password"
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Confirma tu contraseña</p>
-                    </TooltipContent>
-                  </Tooltip>
-                  {errors.confirmPassword && (
-                    <p className="text-sm text-red-600">
-                      {errors.confirmPassword}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
+            {/* Información sobre los datos fiscales */}
+            <Alert className="border-lime-200 bg-lime-50">
+              <Info className="h-4 w-4 text-lime-600" />
+              <AlertDescription className="text-sm text-lime-800">
+                <strong>¿Por qué pedimos estos datos?</strong> Esta información aparecerá en todos los presupuestos que generes. Podrás modificarla más tarde desde el menú <strong>Empresa</strong>.
+              </AlertDescription>
+            </Alert>
 
             {/* Sección: Datos Fiscales */}
             <div className="space-y-4">
@@ -530,7 +463,7 @@ export default function CompleteRegistrationForm({
                       <Input
                         id="telefono"
                         type="tel"
-                        placeholder="Teléfono"
+                        placeholder="Teléfono (opcional)"
                         value={formData.telefono}
                         onChange={handleInputChange("telefono")}
                         className={errors.telefono ? "border-red-500" : ""}
