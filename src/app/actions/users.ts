@@ -845,6 +845,44 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
     };
   }
 
+  // PROTECCIÓN: No permitir eliminar el último admin de una empresa
+  // Cada empresa debe tener al menos un admin para gestionarla
+  if (targetUser.role === "admin" && targetUser.company_id) {
+    // Contar cuántos admins tiene la empresa
+    const { count, error: countError } = await supabaseAdmin
+      .from("redpresu_users")
+      .select("*", { count: "exact", head: true })
+      .eq("company_id", targetUser.company_id)
+      .eq("role", "admin")
+      .eq("status", "active");
+
+    if (countError) {
+      log.error('[deleteUser] Error contando admins:', countError);
+      return {
+        success: false,
+        error: "Error al verificar usuarios de la empresa",
+      };
+    }
+
+    // Si es el último admin activo, bloquear borrado
+    if (count !== null && count <= 1) {
+      log.warn('[deleteUser] Intento de borrar último admin de empresa bloqueado:', {
+        targetEmail: targetUser.email,
+        companyId: targetUser.company_id,
+        adminCount: count
+      });
+      return {
+        success: false,
+        error: "No se puede eliminar el último administrador de la empresa. Cada empresa debe tener al menos un administrador activo.",
+      };
+    }
+
+    log.info('[deleteUser] Empresa tiene múltiples admins:', {
+      companyId: targetUser.company_id,
+      adminCount: count
+    });
+  }
+
   // Si el usuario actual NO es superadmin, verificar permisos adicionales
   if (currentUser.role !== "superadmin") {
     // Admin solo puede borrar usuarios de su misma empresa
