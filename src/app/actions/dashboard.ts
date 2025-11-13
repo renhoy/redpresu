@@ -1,6 +1,5 @@
 "use server";
 
-import { cookies } from "next/headers";
 import { createServerActionClient } from "@/lib/supabase/helpers";
 import { Budget, Database } from "@/lib/types/database";
 import { log } from "@/lib/logger";
@@ -25,10 +24,7 @@ export async function getDashboardStats(
   periodo: Periodo = "mes"
 ): Promise<DashboardStats | null> {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerActionClient<Database>({
-      cookies: () => cookieStore,
-    });
+    const supabase = await createServerActionClient();
 
     // Obtener usuario actual
     const {

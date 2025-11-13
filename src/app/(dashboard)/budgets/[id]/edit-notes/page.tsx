@@ -1,7 +1,6 @@
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createServerActionClient } from "@/lib/supabase/helpers";
-import { cookies } from "next/headers";
 import { BudgetNotesForm } from "@/components/budgets/BudgetNotesForm";
 
 export const metadata: Metadata = {
@@ -16,8 +15,7 @@ export default async function BudgetEditNotesPage({
 }) {
   const { id } = await params;
 
-  const cookieStore = await cookies();
-  const supabase = createServerActionClient({ cookies: () => cookieStore });
+  const supabase = await createServerActionClient();
 
   // Verificar autenticación
   const {
