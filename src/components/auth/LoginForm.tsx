@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signInAction } from "@/app/actions/auth";
+import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -76,28 +76,35 @@ export default function LoginForm() {
     setIsLoading(true);
 
     try {
-      const result = await signInAction(
-        formData.email.trim().toLowerCase(),
-        formData.password
-      );
+      // Login directo con cliente de Supabase
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password,
+      });
 
-      if (!result.success) {
-        // Verificar si el error es por usuario inactivo
-        if (result.error === 'INACTIVE_USER') {
-          // Mostrar diálogo de usuario inactivo
-          setShowInactiveDialog(true);
-          return;
+      if (error) {
+        // Mapear errores a español
+        let errorMessage = error.message;
+        if (error.message.includes('Invalid login credentials')) {
+          errorMessage = 'Credenciales de acceso incorrectas';
+        } else if (error.message.includes('Email not confirmed')) {
+          errorMessage = 'Email no confirmado';
+        } else if (error.message.includes('Too many requests')) {
+          errorMessage = 'Demasiados intentos de login. Intenta de nuevo más tarde';
         }
 
-        // Otros errores se muestran normalmente
-        setErrors({
-          general: result.error || "Error desconocido durante el login",
-        });
+        setErrors({ general: errorMessage });
         return;
       }
 
-      // El Server Action maneja el redirect automáticamente
-      // No necesitamos hacer nada más aquí
+      if (!data.session || !data.user) {
+        setErrors({ general: 'Error en la autenticación' });
+        return;
+      }
+
+      // Login exitoso - redirigir al dashboard
+      router.push('/dashboard');
+      router.refresh(); // Forzar recarga para que el servidor re-lea la sesión
     } catch (error) {
       setErrors({
         general:

@@ -56,10 +56,19 @@ export async function createServerActionClient() {
         return cookieStore.get(name)?.value
       },
       set(name: string, value: string, options: any) {
-        cookieStore.set({ name, value, ...options })
+        try {
+          cookieStore.set({ name, value, ...options })
+        } catch (error) {
+          // En Server Actions, las cookies solo pueden establecerse dentro del request context
+          // Este error es esperado si intentamos set después de que la respuesta fue enviada
+        }
       },
       remove(name: string, options: any) {
-        cookieStore.set({ name, value: '', ...options })
+        try {
+          cookieStore.set({ name, value: '', ...options })
+        } catch (error) {
+          // Ignorar errores al remover cookies
+        }
       }
     }
   })
