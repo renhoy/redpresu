@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +45,7 @@ interface FormData {
   role: "comercial" | "admin" | "superadmin";
   status: "active" | "inactive" | "pending";
   issuer_id?: string;
+  company_id?: number; // Para que superadmin pueda cambiar empresa
 
   // Datos emisor
   nombre_comercial: string;
@@ -84,6 +85,7 @@ export default function UnifiedUserEditForm({
     role: user.role,
     status: user.status || "active",
     issuer_id: user.issuer_id,
+    company_id: user.company_id,
 
     // Datos emisor
     nombre_comercial: profile.emisor?.nombre_comercial || "",
@@ -107,6 +109,8 @@ export default function UnifiedUserEditForm({
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
   const [showPasswordSection, setShowPasswordSection] = useState(false);
+  const [companies, setCompanies] = useState<Array<{ id: number; name: string }>>([]);
+  const [loadingCompanies, setLoadingCompanies] = useState(false);
 
   // Determinar permisos de edición
   const canEditBasicInfo =
@@ -117,6 +121,31 @@ export default function UnifiedUserEditForm({
     ["admin", "superadmin"].includes(currentUserRole) && !isOwnProfile;
   const canEditEmisor = true; // Todos pueden editar emisor según el plan
   const canChangePassword = true; // Todos pueden cambiar contraseña
+  const canEditCompany =
+    currentUserRole === "superadmin" && user.role === "superadmin"; // Solo superadmin puede cambiar empresa de superadmins
+
+  // Cargar lista de empresas si el usuario actual es superadmin
+  useEffect(() => {
+    if (canEditCompany) {
+      loadCompanies();
+    }
+  }, [canEditCompany]);
+
+  const loadCompanies = async () => {
+    setLoadingCompanies(true);
+    try {
+      const response = await fetch("/api/companies");
+      if (response.ok) {
+        const data = await response.json();
+        setCompanies(data);
+      }
+    } catch (error) {
+      console.error("Error loading companies:", error);
+      toast.error("Error al cargar empresas");
+    } finally {
+      setLoadingCompanies(false);
+    }
+  };
 
   const handleInputChange =
     (field: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -211,6 +240,9 @@ export default function UnifiedUserEditForm({
       }
       if (canEditStatus && formData.status !== user.status) {
         basicData.status = formData.status;
+      }
+      if (canEditCompany && formData.company_id !== user.company_id) {
+        basicData.company_id = formData.company_id;
       }
 
       // Preparar datos emisor
@@ -437,12 +469,52 @@ export default function UnifiedUserEditForm({
             </div>
           </div>
 
-          {/* Empresa */}
+          {/* Empresa - Editable solo para superadmins editando superadmins */}
           <div className="space-y-2">
-            <Label>Empresa</Label>
-            <div className="py-2 px-3 bg-muted rounded-md text-sm">
-              {profile.company_name || "Sin empresa"}
-            </div>
+            <Label htmlFor="company_id">Empresa</Label>
+            {canEditCompany ? (
+              <Select
+                value={formData.company_id?.toString() || ""}
+                onValueChange={(value) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    company_id: parseInt(value, 10),
+                  }));
+                  if (errors.company_id) {
+                    setErrors((prev) => ({ ...prev, company_id: "" }));
+                  }
+                }}
+                disabled={isLoading || loadingCompanies}
+              >
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Seleccionar empresa" />
+                </SelectTrigger>
+                <SelectContent>
+                  {loadingCompanies ? (
+                    <SelectItem value="loading" disabled>
+                      Cargando empresas...
+                    </SelectItem>
+                  ) : companies.length === 0 ? (
+                    <SelectItem value="empty" disabled>
+                      No hay empresas disponibles
+                    </SelectItem>
+                  ) : (
+                    companies.map((company) => (
+                      <SelectItem key={company.id} value={company.id.toString()}>
+                        {company.name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="py-2 px-3 bg-muted rounded-md text-sm">
+                {profile.company_name || "Sin empresa"}
+              </div>
+            )}
+            {errors.company_id && (
+              <p className="text-sm text-red-600">{errors.company_id}</p>
+            )}
           </div>
         </CardContent>
       </Card>
