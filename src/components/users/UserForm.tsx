@@ -226,8 +226,11 @@ export default function UserForm({
       if (mode === "create") {
         // Si es superadmin, validar y usar registerUser
         if (currentUserRole === "superadmin") {
-          // Validar que se haya seleccionado una empresa
-          if (!formData.issuer_id || !selectedIssuer) {
+          // EXCEPCIÓN: Si se está creando otro superadmin, NO requiere empresa
+          const isCreatingSuperadmin = formData.role === "superadmin";
+
+          // Validar que se haya seleccionado una empresa (salvo si es superadmin)
+          if (!isCreatingSuperadmin && (!formData.issuer_id || !selectedIssuer)) {
             setErrors({ issuer_id: "Debes seleccionar una empresa" });
             setIsLoading(false);
             return;
@@ -245,13 +248,32 @@ export default function UserForm({
             nombreComercial: "", // No importa, no se usará
             nif: "", // No importa, no se usará
             direccionFiscal: "", // No importa, no se usará
-            issuer_id: formData.issuer_id,
+            issuer_id: isCreatingSuperadmin ? undefined : formData.issuer_id, // No asignar empresa si es superadmin
             role: formData.role,
           };
 
+          console.log('[UserForm] Llamando registerUser con:', {
+            email: registerData.email,
+            role: registerData.role,
+            issuer_id: registerData.issuer_id,
+            hasPassword: !!registerData.password
+          });
+
           const result = await registerUser(registerData);
 
+          console.log('[UserForm] Resultado registerUser:', {
+            success: result.success,
+            error: result.error,
+            errorType: typeof result.error,
+            errorKeys: result.error ? Object.keys(result.error) : [],
+            data: result.data
+          });
+
           if (!result.success) {
+            console.error('[UserForm] Error creando usuario:', {
+              error: result.error,
+              fullResult: JSON.stringify(result, null, 2)
+            });
             setErrors({ general: result.error || "Error al crear usuario" });
             return;
           }
@@ -568,15 +590,25 @@ export default function UserForm({
           {/* Línea 3: Descripción de roles */}
           <div className="p-4 bg-lime-50 border border-lime-200 rounded-lg">
             <p className="text-sm text-gray-700">
-              <strong>Superadmin:</strong> Acceso total al sistema.{" "}
+              <strong>Superadmin:</strong> Acceso total al sistema. Siempre inicia en empresa "Demo".{" "}
               <strong>Admin:</strong> Gestión completa empresa y usuarios Admin
               y Comercial. <strong>Comercial:</strong> Solo crear/editar
               presupuestos.
             </p>
           </div>
 
-          {/* Selección de Empresa (solo para superadmin) */}
-          {currentUserRole === "superadmin" && (
+          {/* Mensaje especial cuando se selecciona Superadmin */}
+          {currentUserRole === "superadmin" && formData.role === "superadmin" && (
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>ℹ️ Nota:</strong> Los superadmins se crean automáticamente en la empresa <strong>"Demo" (ID: 1)</strong>.
+                Podrás cambiar la empresa posteriormente desde el perfil del usuario.
+              </p>
+            </div>
+          )}
+
+          {/* Selección de Empresa (solo para superadmin Y NO es rol superadmin) */}
+          {currentUserRole === "superadmin" && formData.role !== "superadmin" && (
             <>
               {/* Línea 5: Título y Filtros */}
               <div className="pt-4 border-t space-y-4">

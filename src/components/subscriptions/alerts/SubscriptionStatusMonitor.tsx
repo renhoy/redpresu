@@ -23,6 +23,12 @@ export function SubscriptionStatusMonitor({
   const [lastStatus, setLastStatus] = useState(initialStatus);
 
   useEffect(() => {
+    // Validar que tenemos un company_id válido
+    if (!companyId || companyId <= 0) {
+      console.warn("[SubscriptionMonitor] company_id inválido, monitor desactivado");
+      return;
+    }
+
     console.log("[SubscriptionMonitor] Iniciando monitor para company_id:", companyId);
 
     // Función para verificar el estado
@@ -32,14 +38,42 @@ export function SubscriptionStatusMonitor({
           .from("redpresu_subscriptions")
           .select("status")
           .eq("company_id", companyId)
-          .single();
+          .maybeSingle(); // Usar maybeSingle() en vez de single() para manejar caso de no existe
 
         if (error) {
-          console.error("[SubscriptionMonitor] Error al verificar estado:", error);
+          // Si hay error, verificar si es un error vacío (problema RLS)
+          // o un error real que debemos loguear
+          const errorCode = error?.code;
+          const errorMessage = error?.message;
+          const errorDetails = error?.details;
+          const hasErrorInfo = errorCode || errorMessage || errorDetails;
+
+          if (!hasErrorInfo) {
+            // Error vacío (probablemente RLS bloqueando acceso)
+            // Esto es esperado si el usuario no tiene acceso a la tabla
+            // No loguear para evitar spam en consola
+            return;
+          }
+
+          // Solo loguear errores que no sean de "no encontrado"
+          if (errorCode !== 'PGRST116') {
+            console.error("[SubscriptionMonitor] Error al verificar estado:", {
+              code: errorCode,
+              message: errorMessage,
+              details: errorDetails,
+              hint: error?.hint
+            });
+          }
           return;
         }
 
-        if (data && data.status !== lastStatus) {
+        // Si no hay datos, significa que no existe suscripción (plan free)
+        if (!data) {
+          // No loguear en cada polling para evitar spam
+          return;
+        }
+
+        if (data.status !== lastStatus) {
           console.log(
             `[SubscriptionMonitor] ¡Cambio detectado! ${lastStatus} → ${data.status}`
           );
@@ -55,7 +89,10 @@ export function SubscriptionStatusMonitor({
           }
         }
       } catch (error) {
-        console.error("[SubscriptionMonitor] Error en checkStatus:", error);
+        // Solo loguear errores inesperados que tengan información real
+        if (error && typeof error === 'object' && Object.keys(error).length > 0) {
+          console.error("[SubscriptionMonitor] Error inesperado en checkStatus:", error);
+        }
       }
     }
 

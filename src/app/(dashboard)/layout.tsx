@@ -130,7 +130,7 @@ export default async function DashboardLayout({
       <SubscriptionStatusManager />
 
       {/* Subscription Status Monitor (polling para detectar cambios en tiempo real) */}
-      {showSubscriptions && (
+      {showSubscriptions && user.company_id && (
         <SubscriptionStatusMonitor
           companyId={user.company_id}
           initialStatus={subscriptionStatus}

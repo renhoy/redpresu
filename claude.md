@@ -55,13 +55,25 @@
 - ⚠️ `package.json` (consultar antes de añadir deps)
 - ❌ `components.json` (shadcn/ui)
 
-### Base de Datos Fase 1
+### Base de Datos
 
-- ❌ `migrations/001_initial_schema.sql`
-- ❌ `migrations/002_rls_policies.sql`
-- ❌ `migrations/003_seed_data.sql`
+**Nueva ubicación:** `docs/migrations/`
 
-**IMPORTANTE:** Documentar en commit si modificas archivo READ-ONLY por bug crítico
+- ✅ `docs/migrations/` - Migraciones activas/pendientes de aplicar
+- ✅ `docs/migrations/old/` - Migraciones ya aplicadas (historial)
+- ✅ `docs/migrations/README.md` - Documentación del sistema de migraciones
+- ✅ `docs/migrations/INSTRUCCIONES.md` - Guía paso a paso para aplicar migraciones
+
+**Flujo de trabajo:**
+1. Crear nueva migración en `docs/migrations/`
+2. Aplicar en Supabase Studio (SQL Editor)
+3. Verificar que funciona correctamente
+4. Mover a `docs/migrations/old/` cuando esté aplicada
+
+**IMPORTANTE:**
+- Usar Supabase Studio Web Editor para aplicar migraciones (NO psql)
+- Siempre hacer backup antes de migrar en producción
+- Documentar en commit si modificas archivo READ-ONLY por bug crítico
 
 ---
 
@@ -72,8 +84,8 @@
 **Status:** ⏳ Activo
 
 ```
-✅ migrations/004_emisores_table.sql (NUEVO)
-✅ migrations/005_users_status_fields.sql (NUEVO)
+✅ docs/migrations/old/004_emisores_table.sql (APLICADO)
+✅ docs/migrations/old/005_users_status_fields.sql (APLICADO)
 ✅ src/app/(auth)/register/ (NUEVO)
 ✅ src/app/(auth)/forgot-password/ (NUEVO)
 ✅ src/app/(auth)/reset-password/ (NUEVO)
@@ -92,9 +104,9 @@
 **Status:** ⏳ Pendiente
 
 ```
-✅ migrations/006_tariffs_user_id.sql (NUEVO)
-✅ migrations/007_tariffs_ivas_presentes.sql (NUEVO)
-✅ migrations/008_tariffs_template.sql (NUEVO)
+✅ docs/migrations/old/006_tariffs_user_id.sql (APLICADO)
+✅ docs/migrations/old/007_tariffs_ivas_presentes.sql (APLICADO)
+✅ docs/migrations/old/008_tariffs_template.sql (APLICADO)
 ⚠️ src/app/actions/tariffs.ts (EXTENDER - añadir funciones)
 ⚠️ src/components/tariffs/TariffList.tsx (MODIFICAR - añadir columnas)
 ⚠️ src/lib/validators/csv-converter.ts (EXTENDER - detectIVAsPresentes)
@@ -105,7 +117,7 @@
 **Status:** ⏳ Pendiente
 
 ```
-✅ migrations/009_config_table.sql (NUEVO)
+✅ docs/migrations/old/009_config_table.sql (APLICADO)
 ✅ src/lib/helpers/config-helpers.ts (NUEVO)
 ✅ src/app/actions/config.ts (NUEVO)
 ✅ src/app/settings/ (NUEVO)
@@ -129,8 +141,8 @@
 **Status:** ⏳ Pendiente
 
 ```
-✅ migrations/010_budget_versions.sql (NUEVO)
-✅ migrations/011_budget_notes.sql (NUEVO)
+✅ docs/migrations/old/010_budget_versions.sql (APLICADO)
+✅ docs/migrations/old/011_budget_notes.sql (APLICADO)
 ✅ src/app/actions/budget-versions.ts (NUEVO)
 ✅ src/app/actions/budget-notes.ts (NUEVO)
 ✅ src/app/budgets/[id]/versions/ (NUEVO)
@@ -221,7 +233,8 @@
 **Status:** ⏳ Parcial (70% - Base implementada, falta integración completa)
 
 ```
-✅ migrations/025_subscriptions.sql (NUEVO - tabla redpresu_subscriptions con RLS)
+✅ docs/migrations/old/025_subscriptions.sql (APLICADO - tabla redpresu_subscriptions con RLS)
+⏳ docs/migrations/045_fix_subscriptions_rls_policies.sql (PENDIENTE - corregir RLS para multi-tenant)
 ✅ src/lib/stripe.ts (NUEVO - getStripeClient, STRIPE_PLANS [free/pro/enterprise], canCreateResource, getLimitMessage)
 ✅ src/app/actions/subscriptions.ts (PARCIAL - getCurrentSubscription implementado)
 ✅ src/app/api/webhooks/stripe/route.ts (NUEVO - webhook handler base)
@@ -272,7 +285,7 @@
 - Nuevas páginas para features adicionales
 - Nuevas Server Actions en archivos nuevos
 - Tests (crear carpeta `__tests__` si no existe)
-- Migraciones SQL numeradas secuencialmente (004, 005, 006...)
+- Migraciones SQL en `docs/migrations/` (ver sección "Gestión de Migraciones" abajo)
 
 ### ⚠️ Permitido MODIFICAR (con precaución):
 
@@ -519,6 +532,94 @@ docs(users): actualizar README con flujo registro
 - `marked` - Markdown to HTML converter (Bloque 10)
 - `driver.js` - Interactive tours library (Bloque 10)
 - `stripe` - Stripe SDK para suscripciones (Bloque 11)
+
+---
+
+## 🗄️ Gestión de Migraciones SQL
+
+### Nueva Estructura (Actualizado 2025-01-29)
+
+**Ubicación:** `docs/migrations/`
+
+```
+docs/migrations/
+├── README.md                                  # Documentación del sistema
+├── INSTRUCCIONES.md                           # Guía paso a paso
+├── 045_fix_subscriptions_rls_policies.sql    # Migración activa
+└── old/                                       # Historial de migraciones aplicadas
+    ├── 001_initial_schema.sql
+    ├── 002_rls_policies.sql
+    └── ... (044 migraciones)
+```
+
+### Flujo de Trabajo
+
+1. **Crear migración:**
+   - Crear archivo en `docs/migrations/XXX_description.sql`
+   - Usar numeración secuencial (045, 046, 047...)
+   - Incluir bloque `BEGIN/COMMIT` y `ROLLBACK` comentado
+
+2. **Aplicar migración:**
+   - Abrir [Supabase Studio](https://supabase.com/dashboard)
+   - IR a **SQL Editor**
+   - Copiar contenido del archivo `.sql`
+   - Pegar y ejecutar con **Run**
+   - Verificar resultado (sin errores)
+
+3. **Verificar aplicación:**
+   - Ejecutar queries de verificación
+   - Probar funcionalidad en la app
+   - Confirmar que no hay errores en consola
+
+4. **Archivar migración:**
+   ```bash
+   mv docs/migrations/045_*.sql docs/migrations/old/
+   ```
+
+### Reglas Importantes
+
+- ✅ **SIEMPRE** usar Supabase Studio (NO `psql`)
+- ✅ **SIEMPRE** hacer backup antes de migrar en producción
+- ✅ **SIEMPRE** probar en desarrollo primero
+- ✅ **SIEMPRE** incluir bloque ROLLBACK comentado
+- ✅ **SIEMPRE** documentar cambios en commit
+- ❌ **NUNCA** modificar migraciones en `old/`
+- ❌ **NUNCA** saltarse numeración secuencial
+
+### Plantilla de Migración
+
+```sql
+-- ============================================
+-- Migración XXX: Descripción corta
+-- ============================================
+-- Descripción detallada de los cambios
+-- Fecha: YYYY-MM-DD
+-- Bloque: N - Nombre del bloque
+--
+-- IMPORTANTE: Ejecutar en Supabase Studio (SQL Editor)
+-- ============================================
+
+BEGIN;
+
+-- Tu código SQL aquí
+
+COMMIT;
+
+-- ============================================
+-- ROLLBACK (en caso de necesitar revertir)
+-- ============================================
+-- BEGIN;
+--
+-- Código de rollback aquí
+--
+-- COMMIT;
+```
+
+### Documentación Completa
+
+Ver archivos en `docs/migrations/`:
+- `README.md` - Estado actual y migraciones pendientes
+- `INSTRUCCIONES.md` - Guía detallada paso a paso
 
 ---
 
@@ -786,10 +887,11 @@ test("register and create first tariff", async ({ page }) => {
 psql -d postgres -c "SELECT version FROM schema_migrations;"
 
 # Rollback manual si necesario
-psql -d postgres -f migrations/rollback_XXX.sql
+# Aplicar rollback usando Supabase Studio SQL Editor
+# (copiar contenido del bloque ROLLBACK del archivo de migración)
 
-# Re-ejecutar migración
-psql -d postgres -f migrations/XXX_description.sql
+# Re-ejecutar migración en Supabase Studio
+# Ver docs/migrations/INSTRUCCIONES.md para guía detallada
 ```
 
 ### Problema: Cálculos IRPF incorrectos
@@ -906,7 +1008,7 @@ export async function myNewAction(params: MyParams): Promise<ActionResult> {
 ### Nueva Migración SQL:
 
 ```sql
--- migrations/XXX_description.sql
+-- docs/migrations/XXX_description.sql
 -- Descripción: [Qué hace esta migración]
 -- Fecha: YYYY-MM-DD
 -- Bloque: [1-9]

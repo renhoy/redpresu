@@ -6,7 +6,7 @@ import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import crypto from 'crypto'
-import { getAppUrl } from '@/lib/helpers/url-helpers'
+import { getAppUrl } from '@/lib/helpers/url-helpers-server'
 
 /**
  * Interfaz para datos de invitación

@@ -15,7 +15,7 @@
 
 import { supabaseAdmin } from '@/lib/supabase/server';
 import { getCurrentTime } from '@/lib/helpers/time-helpers';
-import { getAppUrl } from '@/lib/helpers/url-helpers';
+import { getAppUrl } from '@/lib/helpers/url-helpers-server';
 
 // ============================================
 // Tipos - Formulario de Contacto
