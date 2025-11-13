@@ -323,6 +323,7 @@ export async function completeRegistration(
         codigo_postal: registrationData.codigo_postal || "",
         poblacion: registrationData.poblacion || "",
         provincia: registrationData.provincia || "",
+        pais: "España", // Campo obligatorio por defecto
         telefono: registrationData.telefono || "",
         email: registrationData.email_contacto || tokenData.email,
         web: registrationData.web || "",
@@ -334,6 +335,12 @@ export async function completeRegistration(
 
     if (emisorError || !emisor) {
       console.error("[completeRegistration] Error creando emisor:", emisorError);
+      console.error("[completeRegistration] Datos del emisor:", {
+        tipo: tokenData.tipo_emisor,
+        nif: registrationData.nif,
+        razon_social: registrationData.razon_social,
+        company_id: companyId,
+      });
 
       // Rollback: eliminar usuario y empresa
       await supabaseAdmin.auth.admin.deleteUser(userId);
@@ -341,7 +348,7 @@ export async function completeRegistration(
 
       return {
         success: false,
-        error: "Error al crear el emisor",
+        error: `Error al crear el emisor: ${emisorError?.message || "Error desconocido"}`,
       };
     }
 

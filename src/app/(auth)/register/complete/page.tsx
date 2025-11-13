@@ -5,12 +5,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 
 // Componente wrapper para manejar searchParams
-function CompleteRegistrationContent({
+async function CompleteRegistrationContent({
   searchParams,
 }: {
-  searchParams: { token?: string };
+  searchParams: Promise<{ token?: string }>;
 }) {
-  const token = searchParams.token;
+  const params = await searchParams;
+  const token = params.token;
 
   // Si no hay token, redirigir al registro
   if (!token) {
@@ -35,7 +36,7 @@ function LoadingFallback() {
 export default function CompleteRegistrationPage({
   searchParams,
 }: {
-  searchParams: { token?: string };
+  searchParams: Promise<{ token?: string }>;
 }) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-lime-50 to-white flex items-center justify-center p-4 py-8">
