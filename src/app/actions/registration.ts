@@ -273,6 +273,21 @@ export async function completeRegistration(
         },
       });
 
+    // Si el usuario se creó pero el email no está confirmado, confirmarlo
+    if (authUser?.user && !authUser.user.email_confirmed_at) {
+      console.log("[completeRegistration] Confirmando email del usuario...");
+      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+        authUser.user.id,
+        {
+          email_confirm: true,
+        }
+      );
+
+      if (updateError) {
+        console.error("[completeRegistration] Error confirmando email:", updateError);
+      }
+    }
+
     if (authError || !authUser.user) {
       console.error("[completeRegistration] Error creando usuario en Auth:", authError);
       return {
