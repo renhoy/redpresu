@@ -26,36 +26,38 @@ export async function GET() {
       );
     }
 
-    // Obtener todas las empresas con sus datos fiscales (issuers)
-    // El schema 'redpresu' ya está configurado globalmente en supabaseAdmin
-    const { data: companies, error } = await supabaseAdmin
+    // Obtener todas las empresas
+    const { data: companies, error: companiesError } = await supabaseAdmin
       .from('companies')
-      .select(`
-        id,
-        name,
-        issuers (
-          nif,
-          type,
-          address,
-          locality,
-          province,
-          phone,
-          email
-        )
-      `)
+      .select('id, name')
       .order('name', { ascending: true });
 
-    if (error) {
-      console.error('[API /companies] Error:', error);
+    if (companiesError) {
+      console.error('[API /companies] Error al obtener companies:', companiesError);
       return NextResponse.json(
         { error: 'Error al obtener empresas' },
         { status: 500 }
       );
     }
 
-    // Transformar datos: aplanar issuers en el objeto company
+    // Obtener todos los issuers
+    const { data: issuers, error: issuersError } = await supabaseAdmin
+      .from('issuers')
+      .select('company_id, nif, type, address, locality, province, phone, email');
+
+    if (issuersError) {
+      console.error('[API /companies] Error al obtener issuers:', issuersError);
+      return NextResponse.json(
+        { error: 'Error al obtener datos fiscales' },
+        { status: 500 }
+      );
+    }
+
+    // Hacer el JOIN manualmente en JavaScript
     const companiesWithIssuers = (companies || []).map((company: any) => {
-      const issuer = company.issuers?.[0]; // Tomar el primer issuer (cada empresa debería tener uno)
+      // Buscar el issuer correspondiente a esta company
+      const issuer = issuers?.find((i: any) => i.company_id === company.id);
+
       return {
         id: company.id,
         name: company.name,
