@@ -522,13 +522,9 @@ export async function updateUser(userId: string, data: UpdateUserData) {
   }
 
   // REGLA: Si un usuario SE CONVIERTE EN superadmin (promoción), asignar company_id = 1
-  // Pero si YA ES superadmin, permitir cambio de company_id (temporal)
+  // Si YA ES superadmin, permitir cambio de company_id (mantener rol superadmin)
   const updateData = { ...data };
   const isBecomingSuperadmin = data.role === 'superadmin' && targetUser.role !== 'superadmin';
-  const isSuperadminChangingCompany =
-    targetUser.role === 'superadmin' &&
-    data.company_id !== undefined &&
-    data.company_id !== targetUser.company_id;
 
   if (isBecomingSuperadmin) {
     updateData.company_id = 1;
@@ -537,10 +533,11 @@ export async function updateUser(userId: string, data: UpdateUserData) {
       previousRole: targetUser.role,
       newRole: data.role
     });
-  } else if (isSuperadminChangingCompany) {
-    // Cuando un superadmin cambia a otra empresa, convertirlo en admin
-    updateData.role = 'admin';
-    log.info('[updateUser] Superadmin cambiando a otra empresa, convirtiendo a admin:', {
+  }
+
+  // Superadmin puede cambiar de empresa temporalmente sin perder su rol
+  if (targetUser.role === 'superadmin' && data.company_id !== undefined) {
+    log.info('[updateUser] Superadmin cambiando de empresa (mantiene rol superadmin):', {
       userId,
       previousCompanyId: targetUser.company_id,
       newCompanyId: data.company_id
