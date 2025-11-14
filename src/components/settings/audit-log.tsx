@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { AuditLogEntry } from '@/lib/types/business-rules';
 
@@ -50,7 +50,6 @@ export function AuditLog() {
   const [loading, setLoading] = useState(false);
   const [loadingCompanies, setLoadingCompanies] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
-  const { toast } = useToast();
 
   const LIMIT = 20;
 
@@ -63,11 +62,7 @@ export function AuditLog() {
         const data = await res.json();
         setCompanies(data);
       } catch (error) {
-        toast({
-          title: 'Error',
-          description: 'No se pudieron cargar las empresas',
-          variant: 'destructive',
-        });
+        toast.error('No se pudieron cargar las empresas');
       } finally {
         setLoadingCompanies(false);
       }
@@ -91,11 +86,7 @@ export function AuditLog() {
         const data = await res.json();
         setAuditData(data);
       } catch (error) {
-        toast({
-          title: 'Error',
-          description: 'No se pudo cargar el historial',
-          variant: 'destructive',
-        });
+        toast.error('No se pudo cargar el historial');
       } finally {
         setLoading(false);
       }

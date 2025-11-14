@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { Loader2, Save, Undo2, CheckCircle2, AlertTriangle } from 'lucide-react';
 import type { BusinessRulesConfig } from '@/lib/types/business-rules';
 
@@ -35,7 +35,6 @@ export function RulesEditor() {
   const [loadingCompanies, setLoadingCompanies] = useState(true);
   const [validationStatus, setValidationStatus] = useState<'valid' | 'invalid' | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
-  const { toast } = useToast();
 
   // Cargar lista de empresas
   useEffect(() => {
@@ -46,11 +45,7 @@ export function RulesEditor() {
         const data = await res.json();
         setCompanies(data);
       } catch (error) {
-        toast({
-          title: 'Error',
-          description: 'No se pudieron cargar las empresas',
-          variant: 'destructive',
-        });
+        toast.error('No se pudieron cargar las empresas');
       } finally {
         setLoadingCompanies(false);
       }
@@ -74,11 +69,7 @@ export function RulesEditor() {
         setHasChanges(false);
         setValidationStatus(null);
       } catch (error) {
-        toast({
-          title: 'Error',
-          description: 'No se pudieron cargar las reglas',
-          variant: 'destructive',
-        });
+        toast.error('No se pudieron cargar las reglas');
       } finally {
         setLoading(false);
       }
@@ -120,27 +111,20 @@ export function RulesEditor() {
       const result = await res.json();
 
       if (result.valid) {
-        toast({
-          title: '✅ Reglas válidas',
-          description: result.matchedRule
-            ? `Regla coincidente: ${result.matchedRule.name}`
-            : 'Las reglas son válidas y están listas para guardar',
-        });
+        toast.success(
+          result.matchedRule
+            ? `✅ Reglas válidas. Regla coincidente: ${result.matchedRule.name}`
+            : '✅ Las reglas son válidas y están listas para guardar'
+        );
         setValidationStatus('valid');
       } else {
-        toast({
-          title: '❌ Reglas inválidas',
-          description: result.error || 'Error en la validación',
-          variant: 'destructive',
-        });
+        toast.error(`❌ Reglas inválidas: ${result.error || 'Error en la validación'}`);
         setValidationStatus('invalid');
       }
     } catch (error) {
-      toast({
-        title: 'Error de validación',
-        description: error instanceof Error ? error.message : 'JSON inválido',
-        variant: 'destructive',
-      });
+      toast.error(
+        `Error de validación: ${error instanceof Error ? error.message : 'JSON inválido'}`
+      );
       setValidationStatus('invalid');
     } finally {
       setLoading(false);
@@ -169,16 +153,11 @@ export function RulesEditor() {
       setOriginalRules(rulesJson);
       setHasChanges(false);
 
-      toast({
-        title: '✅ Reglas guardadas',
-        description: `Versión ${data.version} guardada correctamente`,
-      });
+      toast.success(`✅ Reglas guardadas - Versión ${data.version}`);
     } catch (error) {
-      toast({
-        title: 'Error al guardar',
-        description: error instanceof Error ? error.message : 'Error desconocido',
-        variant: 'destructive',
-      });
+      toast.error(
+        `Error al guardar: ${error instanceof Error ? error.message : 'Error desconocido'}`
+      );
     } finally {
       setLoading(false);
     }
@@ -209,16 +188,13 @@ export function RulesEditor() {
       setOriginalRules(rulesJson);
       setHasChanges(false);
 
-      toast({
-        title: '✅ Rollback exitoso',
-        description: `Se restauró la versión anterior. Nueva versión: ${data.data.version}`,
-      });
+      toast.success(
+        `✅ Rollback exitoso - Se restauró la versión anterior. Nueva versión: ${data.data.version}`
+      );
     } catch (error) {
-      toast({
-        title: 'Error en rollback',
-        description: error instanceof Error ? error.message : 'Error desconocido',
-        variant: 'destructive',
-      });
+      toast.error(
+        `Error en rollback: ${error instanceof Error ? error.message : 'Error desconocido'}`
+      );
     } finally {
       setLoading(false);
     }

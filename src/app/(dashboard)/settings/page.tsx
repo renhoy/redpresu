@@ -2,8 +2,10 @@ import { redirect } from "next/navigation";
 import { getServerUser } from "@/lib/auth/server";
 import { getAllConfig } from "@/app/actions/config";
 import { ConfigTable } from "@/components/settings/ConfigTable";
-import { Settings } from "lucide-react";
+import { Settings, Shield } from "lucide-react";
 import { generatePageMetadata } from "@/lib/helpers/metadata-helpers";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export async function generateMetadata() {
   return generatePageMetadata(
@@ -104,6 +106,16 @@ export default async function SettingsPage() {
           <p className="text-sm">
             Gestión de configuración global (solo superadmin)
           </p>
+        </div>
+
+        {/* Acceso rápido a Business Rules */}
+        <div className="mb-8">
+          <Link href="/settings/business-rules">
+            <Button className="w-full md:w-auto" size="lg">
+              <Shield className="mr-2 h-5 w-5" />
+              Reglas de Negocio
+            </Button>
+          </Link>
         </div>
 
         {/* Configuración por categorías personalizadas */}
