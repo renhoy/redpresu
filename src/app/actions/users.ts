@@ -454,16 +454,18 @@ export async function updateUser(userId: string, data: UpdateUserData) {
     };
   }
 
-  // SECURITY: Validar company_id obligatorio
-  let companyId: number;
-  try {
-    companyId = requireValidCompanyId(currentUser, '[updateUser]');
-  } catch (error) {
-    log.error('[updateUser] company_id inválido', { error });
-    return {
-      success: false,
-      error: "Usuario sin empresa asignada"
-    };
+  // SECURITY: Validar company_id obligatorio (excepto para superadmin)
+  let companyId: number | null = null;
+  if (currentUser.role !== 'superadmin') {
+    try {
+      companyId = requireValidCompanyId(currentUser, '[updateUser]');
+    } catch (error) {
+      log.error('[updateUser] company_id inválido', { error });
+      return {
+        success: false,
+        error: "Usuario sin empresa asignada"
+      };
+    }
   }
 
   // Validar schema
@@ -500,7 +502,7 @@ export async function updateUser(userId: string, data: UpdateUserData) {
   }
 
   // Si no es superadmin, verificar misma empresa
-  if (currentUser.role !== "superadmin" && targetUser.company_id !== companyId) {
+  if (currentUser.role !== "superadmin" && companyId !== null && targetUser.company_id !== companyId) {
     return {
       success: false,
       error: "No puedes actualizar usuarios de otra empresa",
@@ -523,6 +525,10 @@ export async function updateUser(userId: string, data: UpdateUserData) {
   // Pero si YA ES superadmin, permitir cambio de company_id (temporal)
   const updateData = { ...data };
   const isBecomingSuperadmin = data.role === 'superadmin' && targetUser.role !== 'superadmin';
+  const isSuperadminChangingCompany =
+    targetUser.role === 'superadmin' &&
+    data.company_id !== undefined &&
+    data.company_id !== targetUser.company_id;
 
   if (isBecomingSuperadmin) {
     updateData.company_id = 1;
@@ -530,6 +536,14 @@ export async function updateUser(userId: string, data: UpdateUserData) {
       userId,
       previousRole: targetUser.role,
       newRole: data.role
+    });
+  } else if (isSuperadminChangingCompany) {
+    // Cuando un superadmin cambia a otra empresa, convertirlo en admin
+    updateData.role = 'admin';
+    log.info('[updateUser] Superadmin cambiando a otra empresa, convirtiendo a admin:', {
+      userId,
+      previousCompanyId: targetUser.company_id,
+      newCompanyId: data.company_id
     });
   }
 

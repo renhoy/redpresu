@@ -22,7 +22,16 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, User, Building2, Lock, Users, Play } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Loader2, User, Building2, Lock, Users, Play, Search } from "lucide-react";
 import { toast } from "sonner";
 import { startTour } from "@/lib/helpers/tour-helpers";
 import { ActionButtons } from "@/components/shared/ActionButtons";
@@ -109,8 +118,9 @@ export default function UnifiedUserEditForm({
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
   const [showPasswordSection, setShowPasswordSection] = useState(false);
-  const [companies, setCompanies] = useState<Array<{ id: number; name: string }>>([]);
+  const [companies, setCompanies] = useState<Array<{ id: number; name: string; type: string; nif: string }>>([]);
   const [loadingCompanies, setLoadingCompanies] = useState(false);
+  const [companySearch, setCompanySearch] = useState("");
 
   // Determinar permisos de edición
   const canEditBasicInfo =
@@ -469,55 +479,149 @@ export default function UnifiedUserEditForm({
             </div>
           </div>
 
-          {/* Empresa - Editable solo para superadmins editando superadmins */}
+          {/* Empresa Actual - Solo lectura */}
           <div className="space-y-2">
-            <Label htmlFor="company_id">Empresa</Label>
-            {canEditCompany ? (
-              <Select
-                value={formData.company_id?.toString() || ""}
-                onValueChange={(value) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    company_id: parseInt(value, 10),
-                  }));
-                  if (errors.company_id) {
-                    setErrors((prev) => ({ ...prev, company_id: "" }));
-                  }
-                }}
-                disabled={isLoading || loadingCompanies}
-              >
-                <SelectTrigger className="bg-white">
-                  <SelectValue placeholder="Seleccionar empresa" />
-                </SelectTrigger>
-                <SelectContent>
-                  {loadingCompanies ? (
-                    <SelectItem value="loading" disabled>
-                      Cargando empresas...
-                    </SelectItem>
-                  ) : companies.length === 0 ? (
-                    <SelectItem value="empty" disabled>
-                      No hay empresas disponibles
-                    </SelectItem>
-                  ) : (
-                    companies.map((company) => (
-                      <SelectItem key={company.id} value={company.id.toString()}>
-                        {company.name}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            ) : (
-              <div className="py-2 px-3 bg-muted rounded-md text-sm">
-                {profile.company_name || "Sin empresa"}
-              </div>
-            )}
-            {errors.company_id && (
-              <p className="text-sm text-red-600">{errors.company_id}</p>
-            )}
+            <Label>Empresa Actual</Label>
+            <div className="py-2 px-3 bg-muted rounded-md text-sm font-medium">
+              {profile.company_name || "Sin empresa asignada"}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {canEditCompany
+                ? "Como superadmin, puedes cambiar a cualquier empresa para realizar tareas de soporte"
+                : "Tu empresa asignada"}
+            </p>
           </div>
         </CardContent>
       </Card>
+
+      {/* Card: Seleccionar Empresa (Solo superadmin) */}
+      {canEditCompany && (
+        <Card id="card-seleccionar-empresa" className="bg-lime-100">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              Cambiar de Empresa
+            </CardTitle>
+            <CardDescription>
+              Selecciona la empresa a la que deseas cambiar para realizar tareas de soporte
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Buscador */}
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nombre o NIF..."
+                  value={companySearch}
+                  onChange={(e) => setCompanySearch(e.target.value)}
+                  className="bg-white pl-10"
+                  disabled={loadingCompanies}
+                />
+              </div>
+            </div>
+
+            {/* Tabla de empresas */}
+            {loadingCompanies ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-lime-600" />
+                <span className="ml-2 text-sm text-muted-foreground">
+                  Cargando empresas...
+                </span>
+              </div>
+            ) : companies.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No hay empresas disponibles
+              </div>
+            ) : (
+              <div className="rounded-md border bg-white max-h-96 overflow-y-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead className="w-12"></TableHead>
+                      <TableHead>Empresa</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>NIF/CIF</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {companies
+                      .filter((company) => {
+                        if (!companySearch) return true;
+                        const search = companySearch.toLowerCase();
+                        return (
+                          company.name.toLowerCase().includes(search) ||
+                          company.nif.toLowerCase().includes(search)
+                        );
+                      })
+                      .map((company) => (
+                        <TableRow
+                          key={company.id}
+                          className={`cursor-pointer hover:bg-lime-50 ${
+                            formData.company_id === company.id ? "bg-lime-100" : ""
+                          }`}
+                          onClick={() => {
+                            setFormData((prev) => ({
+                              ...prev,
+                              company_id: company.id,
+                            }));
+                          }}
+                        >
+                          <TableCell>
+                            <RadioGroup value={formData.company_id?.toString() || ""}>
+                              <RadioGroupItem
+                                value={company.id.toString()}
+                                checked={formData.company_id === company.id}
+                              />
+                            </RadioGroup>
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {company.name}
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-xs px-2 py-1 rounded-full bg-lime-100 text-lime-800">
+                              {company.type === "empresa" ? "Empresa" : "Autónomo"}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {company.nif}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+
+            {/* Contador de resultados */}
+            {!loadingCompanies && companies.length > 0 && (
+              <div className="text-sm text-muted-foreground">
+                Mostrando{" "}
+                {
+                  companies.filter((company) => {
+                    if (!companySearch) return true;
+                    const search = companySearch.toLowerCase();
+                    return (
+                      company.name.toLowerCase().includes(search) ||
+                      company.nif.toLowerCase().includes(search)
+                    );
+                  }).length
+                }{" "}
+                de {companies.length} empresas
+              </div>
+            )}
+
+            {formData.company_id !== user.company_id && formData.company_id && (
+              <Alert className="bg-yellow-50 border-yellow-200">
+                <AlertDescription className="text-sm text-yellow-800">
+                  <strong>⚠️ Importante:</strong> Al guardar, tu rol cambiará automáticamente de <strong>Superadmin</strong> a <strong>Administrador</strong> de la empresa seleccionada.
+                  Esto te permitirá realizar tareas de soporte y mantenimiento con permisos de admin.
+                </AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* 2. Card: Datos del Emisor */}
       {profile.emisor && canEditEmisor && (

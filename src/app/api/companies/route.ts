@@ -26,10 +26,10 @@ export async function GET() {
       );
     }
 
-    // Obtener todas las empresas
+    // Obtener todas las empresas con campos adicionales
     const { data: companies, error } = await supabaseAdmin
       .from('companies')
-      .select('id, name')
+      .select('id, name, type, nif')
       .order('name', { ascending: true });
 
     if (error) {
