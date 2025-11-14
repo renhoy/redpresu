@@ -132,7 +132,8 @@ export default function UnifiedUserEditForm({
   const canEditEmisor = true; // Todos pueden editar emisor según el plan
   const canChangePassword = true; // Todos pueden cambiar contraseña
   const canEditCompany =
-    currentUserRole === "superadmin" && user.role === "superadmin"; // Solo superadmin puede cambiar empresa de superadmins
+    currentUserRole?.toLowerCase().trim() === "superadmin" &&
+    user.role?.toLowerCase().trim() === "superadmin"; // Solo superadmin puede cambiar empresa de superadmins
 
   // Cargar lista de empresas si el usuario actual es superadmin
   useEffect(() => {

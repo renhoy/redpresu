@@ -28,6 +28,7 @@ export async function GET() {
 
     // Obtener todas las empresas con campos adicionales
     const { data: companies, error } = await supabaseAdmin
+      .schema('redpresu')
       .from('companies')
       .select('id, name, type, nif')
       .order('name', { ascending: true });
@@ -40,6 +41,7 @@ export async function GET() {
       );
     }
 
+    console.log('[API /companies] Empresas encontradas:', companies?.length || 0, companies);
     return NextResponse.json(companies || []);
   } catch (error) {
     console.error('[API /companies] Error inesperado:', error);
