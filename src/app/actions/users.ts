@@ -1037,15 +1037,29 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
     log.error("[deleteUser] Error actualizando company_deletion_log:", logError);
   }
 
-  // Eliminar de auth.users (cascada eliminará de public.users)
+  // IMPORTANTE: Eliminar primero de redpresu.users antes que de auth
+  // (el CASCADE de auth.users -> public.users no funciona con schema redpresu)
+  const { error: usersError } = await supabaseAdmin
+    .from("users")
+    .delete()
+    .eq("id", userId);
+
+  if (usersError) {
+    log.error("[deleteUser] Error eliminando usuario de tabla users:", usersError);
+    return {
+      success: false,
+      error: "Error al eliminar registro de usuario",
+    };
+  }
+
+  // Ahora eliminar de auth.users
   const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
   if (authError) {
     log.error("[deleteUser] Error eliminando usuario de auth:", authError);
-    return {
-      success: false,
-      error: "Error al eliminar usuario del sistema de autenticación",
-    };
+    // No retornar error aquí porque el usuario ya fue eliminado de la tabla users
+    // El error de auth no es crítico si ya se eliminó de la BD
+    log.warn("[deleteUser] Usuario eliminado de BD pero no de auth - requiere limpieza manual");
   }
 
   log.info(`[deleteUser] Usuario ${userId} eliminado correctamente`);
