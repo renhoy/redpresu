@@ -613,35 +613,50 @@ export default function UnifiedUserEditForm({
                                 ? "bg-lime-200 hover:bg-lime-200"
                                 : "bg-white hover:bg-lime-100"
                             }`}
-                            onClick={() => {
-                              setFormData((prev) => ({
-                                ...prev,
-                                company_id: company.id,
-                              }));
-                            }}
                           >
                             <TableCell>
                               <RadioGroupItem
+                                id={`company-${company.id}`}
                                 value={company.id.toString()}
                               />
                             </TableCell>
                             <TableCell className="font-medium">
-                              {company.name}
+                              <label
+                                htmlFor={`company-${company.id}`}
+                                className="cursor-pointer block w-full"
+                              >
+                                {company.name}
+                              </label>
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">
-                              {company.nif || '-'}
+                              <label
+                                htmlFor={`company-${company.id}`}
+                                className="cursor-pointer block w-full"
+                              >
+                                {company.nif || '-'}
+                              </label>
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">
-                              {company.address ? (
-                                <div className="max-w-xs truncate">
-                                  {company.address}
-                                  {company.locality && `, ${company.locality}`}
-                                  {company.province && ` (${company.province})`}
-                                </div>
-                              ) : '-'}
+                              <label
+                                htmlFor={`company-${company.id}`}
+                                className="cursor-pointer block w-full"
+                              >
+                                {company.address ? (
+                                  <div className="max-w-xs truncate">
+                                    {company.address}
+                                    {company.locality && `, ${company.locality}`}
+                                    {company.province && ` (${company.province})`}
+                                  </div>
+                                ) : '-'}
+                              </label>
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">
-                              {company.phone || '-'}
+                              <label
+                                htmlFor={`company-${company.id}`}
+                                className="cursor-pointer block w-full"
+                              >
+                                {company.phone || '-'}
+                              </label>
                             </TableCell>
                           </TableRow>
                         ))}
