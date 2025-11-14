@@ -26,54 +26,54 @@ export async function GET() {
       );
     }
 
-    // Obtener solo empresas activas (mismo filtro que en /companies)
-    const { data: companies, error: companiesError } = await supabaseAdmin
-      .from('companies')
-      .select('id, name')
-      .eq('status', 'active')
+    // Obtener solo issuers activos (mismo approach que /companies)
+    // Los issuers son las empresas reales, companies es solo metadata
+    const { data: issuers, error: issuersError } = await supabaseAdmin
+      .from('issuers')
+      .select('company_id, name, nif, type, address, locality, province, phone, email')
+      .is('deleted_at', null)
       .order('name', { ascending: true });
 
-    if (companiesError) {
-      console.error('[API /companies] Error al obtener companies:', companiesError);
+    if (issuersError) {
+      console.error('[API /companies] Error al obtener issuers:', issuersError);
       return NextResponse.json(
         { error: 'Error al obtener empresas' },
         { status: 500 }
       );
     }
 
-    // Obtener issuers solo de empresas activas y que no estén eliminados
-    const companyIds = (companies || []).map((c: any) => c.id);
-    const { data: issuers, error: issuersError } = await supabaseAdmin
-      .from('issuers')
-      .select('company_id, nif, type, address, locality, province, phone, email')
-      .in('company_id', companyIds)
-      .is('deleted_at', null);
+    // Obtener companies metadata solo para verificar status
+    const companyIds = (issuers || []).map((i: any) => i.company_id);
+    const { data: companies, error: companiesError } = await supabaseAdmin
+      .from('companies')
+      .select('id, status')
+      .in('id', companyIds);
 
-    if (issuersError) {
-      console.error('[API /companies] Error al obtener issuers:', issuersError);
-      return NextResponse.json(
-        { error: 'Error al obtener datos fiscales' },
-        { status: 500 }
-      );
+    if (companiesError) {
+      console.error('[API /companies] Error al obtener companies metadata:', companiesError);
+      // No es crítico, continuar sin filtrar por status
     }
 
-    // Hacer el JOIN manualmente en JavaScript
-    const companiesWithIssuers = (companies || []).map((company: any) => {
-      // Buscar el issuer correspondiente a esta company
-      const issuer = issuers?.find((i: any) => i.company_id === company.id);
+    // Filtrar solo issuers cuya company esté activa
+    const activeCompanyIds = new Set(
+      (companies || [])
+        .filter((c: any) => c.status === 'active')
+        .map((c: any) => c.id)
+    );
 
-      return {
-        id: company.id,
-        name: company.name,
-        nif: issuer?.nif || '',
-        type: issuer?.type || '',
-        address: issuer?.address || '',
-        locality: issuer?.locality || '',
-        province: issuer?.province || '',
-        phone: issuer?.phone || '',
-        email: issuer?.email || '',
-      };
-    });
+    const companiesWithIssuers = (issuers || [])
+      .filter((issuer: any) => activeCompanyIds.has(issuer.company_id))
+      .map((issuer: any) => ({
+        id: issuer.company_id,
+        name: issuer.name,
+        nif: issuer.nif || '',
+        type: issuer.type || '',
+        address: issuer.address || '',
+        locality: issuer.locality || '',
+        province: issuer.province || '',
+        phone: issuer.phone || '',
+        email: issuer.email || '',
+      }));
 
     console.log('[API /companies] Empresas encontradas:', companiesWithIssuers.length, companiesWithIssuers);
     return NextResponse.json(companiesWithIssuers);
