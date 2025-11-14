@@ -328,11 +328,21 @@ export default function UnifiedUserEditForm({
 
       toast.success("Usuario actualizado correctamente");
 
-      // Si estoy editando mi propio perfil, recargar
-      // Si soy admin editando otro usuario, volver a listado
-      if (isOwnProfile) {
+      // Si un superadmin cambió de empresa (su propio perfil), redirigir a /users con recarga completa
+      // porque el backend lo habrá convertido a admin de la nueva empresa
+      const superadminChangedCompany =
+        isOwnProfile &&
+        basicData.company_id !== undefined &&
+        user.role === 'superadmin';
+
+      if (superadminChangedCompany) {
+        // Forzar recarga completa para actualizar sesión con nuevo rol (admin)
+        window.location.href = "/users";
+      } else if (isOwnProfile) {
+        // Si estoy editando mi propio perfil (sin cambio de empresa), recargar
         router.refresh();
       } else {
+        // Si soy admin editando otro usuario, volver a listado
         router.push("/users");
       }
     } catch (error) {
