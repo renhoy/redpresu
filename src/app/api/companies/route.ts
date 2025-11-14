@@ -26,10 +26,11 @@ export async function GET() {
       );
     }
 
-    // Obtener todas las empresas
+    // Obtener solo empresas activas (mismo filtro que en /companies)
     const { data: companies, error: companiesError } = await supabaseAdmin
       .from('companies')
       .select('id, name')
+      .eq('status', 'active')
       .order('name', { ascending: true });
 
     if (companiesError) {
@@ -40,10 +41,13 @@ export async function GET() {
       );
     }
 
-    // Obtener todos los issuers
+    // Obtener issuers solo de empresas activas y que no estén eliminados
+    const companyIds = (companies || []).map((c: any) => c.id);
     const { data: issuers, error: issuersError } = await supabaseAdmin
       .from('issuers')
-      .select('company_id, nif, type, address, locality, province, phone, email');
+      .select('company_id, nif, type, address, locality, province, phone, email')
+      .in('company_id', companyIds)
+      .is('deleted_at', null);
 
     if (issuersError) {
       console.error('[API /companies] Error al obtener issuers:', issuersError);
