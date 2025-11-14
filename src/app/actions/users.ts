@@ -833,7 +833,7 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
   // Verificar que el usuario a eliminar existe
   const { data: targetUser, error: targetError } = await supabaseAdmin
     .from("users")
-    .select("company_id, role, email")
+    .select("company_id, role, email, status")
     .eq("id", userId)
     .single();
 
