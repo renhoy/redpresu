@@ -88,14 +88,27 @@ export default async function DashboardLayout({
   // Usar supabaseAdmin para bypass RLS
   const { supabaseAdmin: supabaseAdminForIssuer } = await import('@/lib/supabase/server');
 
+  // IMPORTANTE: Buscar issuer de la empresa ACTUAL (company_id), no del usuario
+  // Esto permite que superadmin vea el nombre correcto al cambiar de empresa
   const { data: issuer } = await supabaseAdminForIssuer
     .from("issuers")
     .select("name, type")
-    .eq("user_id", user.id)
-    .single();
+    .eq("company_id", user.company_id)
+    .is("deleted_at", null)
+    .limit(1)
+    .maybeSingle();
 
-  // Nombre del emisor y tipo
-  const companyName = issuer?.name || user.name;
+  // Fallback: si no hay issuer, buscar el nombre de la company
+  let companyName = issuer?.name;
+  if (!companyName && user.company_id) {
+    const { data: company } = await supabaseAdminForIssuer
+      .from("companies")
+      .select("name")
+      .eq("id", user.company_id)
+      .single();
+    companyName = company?.name || user.name;
+  }
+
   const issuerType = issuer?.type === "empresa" ? "Empresa" : "Autónomo";
 
   // Detectar modo testing (mock time activo)

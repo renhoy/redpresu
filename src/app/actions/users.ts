@@ -454,16 +454,18 @@ export async function updateUser(userId: string, data: UpdateUserData) {
     };
   }
 
-  // SECURITY: Validar company_id obligatorio
-  let companyId: number;
-  try {
-    companyId = requireValidCompanyId(currentUser, '[updateUser]');
-  } catch (error) {
-    log.error('[updateUser] company_id inválido', { error });
-    return {
-      success: false,
-      error: "Usuario sin empresa asignada"
-    };
+  // SECURITY: Validar company_id obligatorio (excepto para superadmin)
+  let companyId: number | null = null;
+  if (currentUser.role !== 'superadmin') {
+    try {
+      companyId = requireValidCompanyId(currentUser, '[updateUser]');
+    } catch (error) {
+      log.error('[updateUser] company_id inválido', { error });
+      return {
+        success: false,
+        error: "Usuario sin empresa asignada"
+      };
+    }
   }
 
   // Validar schema
@@ -500,7 +502,7 @@ export async function updateUser(userId: string, data: UpdateUserData) {
   }
 
   // Si no es superadmin, verificar misma empresa
-  if (currentUser.role !== "superadmin" && targetUser.company_id !== companyId) {
+  if (currentUser.role !== "superadmin" && companyId !== null && targetUser.company_id !== companyId) {
     return {
       success: false,
       error: "No puedes actualizar usuarios de otra empresa",
@@ -520,7 +522,7 @@ export async function updateUser(userId: string, data: UpdateUserData) {
   }
 
   // REGLA: Si un usuario SE CONVIERTE EN superadmin (promoción), asignar company_id = 1
-  // Pero si YA ES superadmin, permitir cambio de company_id (temporal)
+  // Si YA ES superadmin, permitir cambio de company_id (mantener rol superadmin)
   const updateData = { ...data };
   const isBecomingSuperadmin = data.role === 'superadmin' && targetUser.role !== 'superadmin';
 
@@ -530,6 +532,15 @@ export async function updateUser(userId: string, data: UpdateUserData) {
       userId,
       previousRole: targetUser.role,
       newRole: data.role
+    });
+  }
+
+  // Superadmin puede cambiar de empresa temporalmente sin perder su rol
+  if (targetUser.role === 'superadmin' && data.company_id !== undefined) {
+    log.info('[updateUser] Superadmin cambiando de empresa (mantiene rol superadmin):', {
+      userId,
+      previousCompanyId: targetUser.company_id,
+      newCompanyId: data.company_id
     });
   }
 
@@ -819,7 +830,7 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
   // Verificar que el usuario a eliminar existe
   const { data: targetUser, error: targetError } = await supabaseAdmin
     .from("users")
-    .select("company_id, role, email")
+    .select("company_id, role, email, status")
     .eq("id", userId)
     .single();
 
@@ -906,6 +917,24 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
       targetEmail: targetUser.email,
       targetRole: targetUser.role
     });
+
+    // PROTECCIÓN: No permitir eliminar superadmins a menos que estén inactivos
+    // DEBUG: Log detallado del status
+    log.info('[deleteUser] DEBUG - Verificando status:', {
+      status: targetUser.status,
+      statusType: typeof targetUser.status,
+      statusLength: targetUser.status?.length,
+      statusJSON: JSON.stringify(targetUser.status),
+      isInactive: targetUser.status === 'inactive',
+      comparison: targetUser.status !== 'inactive'
+    });
+
+    if (targetUser.role === 'superadmin' && targetUser.status !== 'inactive') {
+      return {
+        success: false,
+        error: 'PROTECCIÓN SISTEMA: No se puede eliminar usuarios superadmin activos. Desactiva primero el usuario (status=inactive) antes de eliminarlo.',
+      };
+    }
   }
 
   // Si se va a reasignar, verificar que el usuario destino existe y es válido
@@ -1037,15 +1066,35 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
     log.error("[deleteUser] Error actualizando company_deletion_log:", logError);
   }
 
-  // Eliminar de auth.users (cascada eliminará de public.users)
+  // IMPORTANTE: Eliminar primero de redpresu.users antes que de auth
+  // (el CASCADE de auth.users -> public.users no funciona con schema redpresu)
+  const { error: usersError } = await supabaseAdmin
+    .from("users")
+    .delete()
+    .eq("id", userId);
+
+  if (usersError) {
+    log.error("[deleteUser] Error eliminando usuario de tabla users:", usersError);
+
+    // Extraer mensaje descriptivo del error de PostgreSQL si está disponible
+    const errorMessage = usersError.message || "Error al eliminar registro de usuario";
+
+    // El error P0001 (raise_exception) contiene mensajes personalizados de triggers/constraints
+    // que son más informativos que un mensaje genérico
+    return {
+      success: false,
+      error: errorMessage,
+    };
+  }
+
+  // Ahora eliminar de auth.users
   const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
   if (authError) {
     log.error("[deleteUser] Error eliminando usuario de auth:", authError);
-    return {
-      success: false,
-      error: "Error al eliminar usuario del sistema de autenticación",
-    };
+    // No retornar error aquí porque el usuario ya fue eliminado de la tabla users
+    // El error de auth no es crítico si ya se eliminó de la BD
+    log.warn("[deleteUser] Usuario eliminado de BD pero no de auth - requiere limpieza manual");
   }
 
   log.info(`[deleteUser] Usuario ${userId} eliminado correctamente`);

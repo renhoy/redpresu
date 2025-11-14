@@ -699,83 +699,85 @@ export default function UserTable({
             <AlertDialogTitle className="text-red-600">
               ⚠️ Borrar Usuario
             </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-4">
-              <div>
-                ¿Estás seguro de que quieres borrar a{" "}
-                <strong className="text-foreground">
-                  {selectedUser?.name} {selectedUser?.last_name}
-                </strong>
-                ?
-              </div>
-
-              <div className="bg-red-50 border border-red-200 rounded-md p-3">
-                <div className="text-sm text-red-800">
-                  <strong>⚠️ Advertencia:</strong> Esta acción no se puede deshacer.
+            <AlertDialogDescription asChild>
+              <div className="space-y-4">
+                <div>
+                  ¿Estás seguro de que quieres borrar a{" "}
+                  <strong className="text-foreground">
+                    {selectedUser?.name} {selectedUser?.last_name}
+                  </strong>
+                  ?
                 </div>
-              </div>
 
-              <div className="space-y-3">
-                <label className="text-sm font-medium text-foreground">
-                  ¿Qué hacer con los datos del usuario? (tarifas, presupuestos, etc.):
-                </label>
-
-                <RadioGroup value={deleteAction} onValueChange={(value: "delete" | "reassign") => setDeleteAction(value)}>
-                  <div className="flex items-start space-x-3 p-3 rounded-lg border-2 border-gray-200 hover:border-gray-300">
-                    <RadioGroupItem value="delete" id="delete" className="mt-1" />
-                    <Label htmlFor="delete" className="flex-1 cursor-pointer">
-                      <div className="space-y-1">
-                        <div className="font-semibold text-base">Borrar todos los datos</div>
-                        <div className="text-sm text-gray-600">
-                          Se eliminarán permanentemente todas las tarifas, presupuestos y demás datos creados por este usuario.
-                        </div>
-                      </div>
-                    </Label>
+                <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                  <div className="text-sm text-red-800">
+                    <strong>⚠️ Advertencia:</strong> Esta acción no se puede deshacer.
                   </div>
+                </div>
 
-                  <div className="flex items-start space-x-3 p-3 rounded-lg border-2 border-gray-200 hover:border-gray-300">
-                    <RadioGroupItem value="reassign" id="reassign" className="mt-1" />
-                    <Label htmlFor="reassign" className="flex-1 cursor-pointer">
-                      <div className="space-y-1">
-                        <div className="font-semibold text-base">Reasignar datos a otro usuario</div>
-                        <div className="text-sm text-gray-600">
-                          Los datos del usuario (tarifas, presupuestos, etc.) se asignarán al usuario que selecciones.
-                        </div>
-                      </div>
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              {deleteAction === "reassign" && (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <label className="text-sm font-medium text-foreground">
-                    Reasignar registros a:
+                    ¿Qué hacer con los datos del usuario? (tarifas, presupuestos, etc.):
                   </label>
-                  <Select value={reassignUserId} onValueChange={setReassignUserId}>
-                    <SelectTrigger className="w-full bg-white">
-                      <SelectValue placeholder="Selecciona un usuario" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      {users
-                        .filter(
-                          (u) =>
-                            u.id !== selectedUser?.id &&
-                            u.status === "active"
-                        )
-                        .map((user) => (
-                          <SelectItem key={user.id} value={user.id}>
-                            {user.name} {user.last_name} ({user.email})
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                  {!reassignUserId && (
-                    <div className="text-xs text-muted-foreground">
-                      Debes seleccionar un usuario para continuar
+
+                  <RadioGroup value={deleteAction} onValueChange={(value: "delete" | "reassign") => setDeleteAction(value)}>
+                    <div className="flex items-start space-x-3 p-3 rounded-lg border-2 border-gray-200 hover:border-gray-300">
+                      <RadioGroupItem value="delete" id="delete" className="mt-1" />
+                      <Label htmlFor="delete" className="flex-1 cursor-pointer">
+                        <div className="space-y-1">
+                          <div className="font-semibold text-base">Borrar todos los datos</div>
+                          <div className="text-sm text-gray-600">
+                            Se eliminarán permanentemente todas las tarifas, presupuestos y demás datos creados por este usuario.
+                          </div>
+                        </div>
+                      </Label>
                     </div>
-                  )}
+
+                    <div className="flex items-start space-x-3 p-3 rounded-lg border-2 border-gray-200 hover:border-gray-300">
+                      <RadioGroupItem value="reassign" id="reassign" className="mt-1" />
+                      <Label htmlFor="reassign" className="flex-1 cursor-pointer">
+                        <div className="space-y-1">
+                          <div className="font-semibold text-base">Reasignar datos a otro usuario</div>
+                          <div className="text-sm text-gray-600">
+                            Los datos del usuario (tarifas, presupuestos, etc.) se asignarán al usuario que selecciones.
+                          </div>
+                        </div>
+                      </Label>
+                    </div>
+                  </RadioGroup>
                 </div>
-              )}
+
+                {deleteAction === "reassign" && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">
+                      Reasignar registros a:
+                    </label>
+                    <Select value={reassignUserId} onValueChange={setReassignUserId}>
+                      <SelectTrigger className="w-full bg-white">
+                        <SelectValue placeholder="Selecciona un usuario" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        {users
+                          .filter(
+                            (u) =>
+                              u.id !== selectedUser?.id &&
+                              u.status === "active"
+                          )
+                          .map((user) => (
+                            <SelectItem key={user.id} value={user.id}>
+                              {user.name} {user.last_name} ({user.email})
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    {!reassignUserId && (
+                      <div className="text-xs text-muted-foreground">
+                        Debes seleccionar un usuario para continuar
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

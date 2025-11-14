@@ -101,27 +101,25 @@ export function UserMenu({
       <DropdownMenuContent align="end" className="w-44">
         {/* Header del menú */}
         <DropdownMenuLabel>
+          {/* Primera sección: Nombre y Rol */}
           <div className="py-1.5 flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{userName}</p>
             <p className="text-xs leading-none text-muted-foreground">
               {getRoleLabel(userRole)}
             </p>
           </div>
+
           <DropdownMenuSeparator />
+
+          {/* Segunda sección: Empresa y Tipo */}
           <div className="py-1.5 flex flex-col space-y-1">
             <p className="text-xs font-medium leading-none mt-2">
               {companyName || userName}
             </p>
             {issuerType && (
-              <Badge
-                className={
-                  issuerType === "Empresa"
-                    ? "bg-lime-50 text-blue-800 text-[10px] px-1.5 py-0 w-fit"
-                    : "bg-purple-50 text-purple-800 text-[10px] px-1.5 py-0 w-fit"
-                }
-              >
-                {issuerType}
-              </Badge>
+              <p className="text-[10px] text-muted-foreground leading-none">
+                ({issuerType})
+              </p>
             )}
           </div>
         </DropdownMenuLabel>
@@ -175,8 +173,8 @@ export function UserMenu({
           <Link
             href={userRole === "superadmin" ? "/companies" : "/companies/edit"}
           >
-            <DropdownMenuItem className="cursor-pointer">
-              <Building2 className="mr-2 h-4 w-4" />
+            <DropdownMenuItem className={`cursor-pointer ${userRole === "superadmin" ? "text-lime-600 hover:text-lime-700 hover:bg-lime-50" : ""}`}>
+              <Building2 className={`mr-2 h-4 w-4 ${userRole === "superadmin" ? "text-lime-600" : ""}`} />
               <span>{userRole === "superadmin" ? "Empresas" : "Empresa"}</span>
             </DropdownMenuItem>
           </Link>
@@ -185,8 +183,8 @@ export function UserMenu({
         {/* Mensajes de Contacto - Solo superadmin */}
         {userRole === "superadmin" && (
           <Link href="/contact-messages">
-            <DropdownMenuItem className="cursor-pointer">
-              <Mail className="mr-2 h-4 w-4" />
+            <DropdownMenuItem className="cursor-pointer text-lime-600 hover:text-lime-700 hover:bg-lime-50">
+              <Mail className="mr-2 h-4 w-4 text-lime-600" />
               <span>Mensajes</span>
             </DropdownMenuItem>
           </Link>
@@ -197,17 +195,17 @@ export function UserMenu({
           <>
             <DropdownMenuSeparator />
             <div className="px-2 py-1">
-              <p className="text-xs text-muted-foreground font-semibold">Testing</p>
+              <p className="text-xs text-lime-600 font-semibold">Testing</p>
             </div>
             <Link href="/settings/subscriptions-testing">
-              <DropdownMenuItem className="cursor-pointer">
-                <FlaskConical className="mr-2 h-4 w-4" />
+              <DropdownMenuItem className="cursor-pointer text-lime-600 hover:text-lime-700 hover:bg-lime-50">
+                <FlaskConical className="mr-2 h-4 w-4 text-lime-600" />
                 <span>Suscripciones</span>
               </DropdownMenuItem>
             </Link>
             <Link href="/settings/mock-emails">
-              <DropdownMenuItem className="cursor-pointer">
-                <MailCheck className="mr-2 h-4 w-4" />
+              <DropdownMenuItem className="cursor-pointer text-lime-600 hover:text-lime-700 hover:bg-lime-50">
+                <MailCheck className="mr-2 h-4 w-4 text-lime-600" />
                 <span>Emails Mock</span>
               </DropdownMenuItem>
             </Link>
@@ -233,8 +231,8 @@ export function UserMenu({
 
         {showSettings && (
           <Link href="/settings">
-            <DropdownMenuItem className="cursor-pointer">
-              <Settings className="mr-2 h-4 w-4" />
+            <DropdownMenuItem className="cursor-pointer text-lime-600 hover:text-lime-700 hover:bg-lime-50">
+              <Settings className="mr-2 h-4 w-4 text-lime-600" />
               <span>Configuración</span>
             </DropdownMenuItem>
           </Link>
