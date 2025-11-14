@@ -922,6 +922,16 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
     });
 
     // PROTECCIÓN: No permitir eliminar superadmins a menos que estén inactivos
+    // DEBUG: Log detallado del status
+    log.info('[deleteUser] DEBUG - Verificando status:', {
+      status: targetUser.status,
+      statusType: typeof targetUser.status,
+      statusLength: targetUser.status?.length,
+      statusJSON: JSON.stringify(targetUser.status),
+      isInactive: targetUser.status === 'inactive',
+      comparison: targetUser.status !== 'inactive'
+    });
+
     if (targetUser.role === 'superadmin' && targetUser.status !== 'inactive') {
       return {
         success: false,
