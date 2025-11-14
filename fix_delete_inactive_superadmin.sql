@@ -1,12 +1,12 @@
 -- ============================================================================
--- Migración: Permitir eliminar superadmins de empresa 1 si están inactivos
+-- Migración: Permitir eliminar superadmins solo si están inactivos
 -- ============================================================================
 -- Fecha: 2025-01-14
--- Descripción: Modifica la protección de usuarios superadmin de la empresa 1
---              para permitir su eliminación únicamente si están inactivos.
+-- Descripción: Modifica la protección de usuarios superadmin para permitir
+--              su eliminación únicamente si están inactivos.
 --
--- ANTES: No se podía eliminar ningún superadmin de la empresa 1
--- AHORA: Se puede eliminar solo si status = 'inactive'
+-- ANTES: No se podía eliminar ningún superadmin (protección empresa 1)
+-- AHORA: Se puede eliminar cualquier superadmin solo si status = 'inactive'
 -- ============================================================================
 
 -- Paso 1: Eliminar el trigger anterior si existe
@@ -19,18 +19,18 @@ DROP FUNCTION IF EXISTS redpresu.prevent_delete_critical_superadmin();
 CREATE OR REPLACE FUNCTION redpresu.prevent_delete_critical_superadmin()
 RETURNS TRIGGER AS $$
 BEGIN
-  -- Verificar si es un superadmin de la empresa 1 (empresa crítica)
-  IF OLD.role = 'superadmin' AND OLD.company_id = 1 THEN
+  -- Verificar si es un superadmin (cualquier empresa)
+  IF OLD.role = 'superadmin' THEN
     -- Si el usuario está ACTIVO, no permitir eliminación
     IF OLD.status = 'active' THEN
-      RAISE EXCEPTION 'PROTECCIÓN SISTEMA: No se puede eliminar usuarios superadmin activos de la empresa 1 (id: %). Desactiva primero el usuario (status=inactive) antes de eliminarlo.', OLD.id
+      RAISE EXCEPTION 'PROTECCIÓN SISTEMA: No se puede eliminar usuarios superadmin activos (id: %). Desactiva primero el usuario (status=inactive) antes de eliminarlo.', OLD.id
         USING HINT = 'Cambia el status a inactive antes de intentar eliminar';
     END IF;
 
     -- Si el usuario está INACTIVO, permitir eliminación (no hacer nada, continuar)
     -- Log opcional para auditoría (solo si tienes tabla de logs)
     -- INSERT INTO redpresu.audit_log (action, user_id, details)
-    -- VALUES ('delete_inactive_superadmin', OLD.id, 'Superadmin inactivo eliminado de empresa 1');
+    -- VALUES ('delete_inactive_superadmin', OLD.id, 'Superadmin inactivo eliminado');
   END IF;
 
   RETURN OLD;
@@ -48,13 +48,13 @@ CREATE TRIGGER prevent_delete_critical_superadmin
 -- ============================================================================
 -- Para verificar que el trigger funciona correctamente:
 
--- 1. Intentar eliminar un superadmin ACTIVO de empresa 1 (debe fallar):
--- DELETE FROM redpresu.users WHERE id = 'algún-superadmin-activo' AND company_id = 1;
+-- 1. Intentar eliminar un superadmin ACTIVO (debe fallar):
+-- DELETE FROM redpresu.users WHERE id = 'algún-superadmin-activo' AND role = 'superadmin';
 -- Resultado esperado: ERROR con mensaje "PROTECCIÓN SISTEMA..."
 
--- 2. Intentar eliminar un superadmin INACTIVO de empresa 1 (debe funcionar):
+-- 2. Intentar eliminar un superadmin INACTIVO (debe funcionar):
 -- UPDATE redpresu.users SET status = 'inactive' WHERE id = 'algún-superadmin';
--- DELETE FROM redpresu.users WHERE id = 'algún-superadmin' AND company_id = 1;
+-- DELETE FROM redpresu.users WHERE id = 'algún-superadmin';
 -- Resultado esperado: Usuario eliminado correctamente
 
 -- 3. Ver triggers existentes:
@@ -71,7 +71,8 @@ CREATE TRIGGER prevent_delete_critical_superadmin
 -- ============================================================================
 -- Notas adicionales
 -- ============================================================================
--- - Esta protección solo aplica a superadmins de la empresa 1
--- - Usuarios de otras empresas pueden eliminarse sin restricción
+-- - Esta protección aplica a TODOS los superadmins de cualquier empresa
+-- - Superadmins activos NO pueden ser eliminados (deben desactivarse primero)
+-- - Superadmins inactivos SÍ pueden ser eliminados
 -- - Otros roles (admin, comercial) pueden eliminarse sin restricción
 -- - La validación también existe en el código TypeScript (doble protección)

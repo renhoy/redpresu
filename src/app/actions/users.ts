@@ -921,11 +921,11 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
       targetRole: targetUser.role
     });
 
-    // PROTECCIÓN: No permitir eliminar superadmins de la empresa 1 (crítica) a menos que estén inactivos
-    if (targetUser.role === 'superadmin' && targetUser.company_id === 1 && targetUser.status !== 'inactive') {
+    // PROTECCIÓN: No permitir eliminar superadmins a menos que estén inactivos
+    if (targetUser.role === 'superadmin' && targetUser.status !== 'inactive') {
       return {
         success: false,
-        error: 'PROTECCIÓN SISTEMA: No se puede eliminar usuarios superadmin activos de la empresa 1. Desactiva primero el usuario (status=inactive) antes de eliminarlo.',
+        error: 'PROTECCIÓN SISTEMA: No se puede eliminar usuarios superadmin activos. Desactiva primero el usuario (status=inactive) antes de eliminarlo.',
       };
     }
   }
