@@ -1060,9 +1060,15 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
 
   if (usersError) {
     log.error("[deleteUser] Error eliminando usuario de tabla users:", usersError);
+
+    // Extraer mensaje descriptivo del error de PostgreSQL si está disponible
+    const errorMessage = usersError.message || "Error al eliminar registro de usuario";
+
+    // El error P0001 (raise_exception) contiene mensajes personalizados de triggers/constraints
+    // que son más informativos que un mensaje genérico
     return {
       success: false,
-      error: "Error al eliminar registro de usuario",
+      error: errorMessage,
     };
   }
 
