@@ -60,22 +60,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
         {/* Diálogo de usuario inactivo */}
         <InactiveUserDialog showDialog={reason === 'inactive'} />
-
-        {/* Footer con info adicional - Solo en desarrollo */}
-        {isDev && (
-          <div className="text-center">
-            <p className="text-xs text-gray-500">
-              Compatible con tablets y dispositivos móviles
-            </p>
-            <div className="mt-4 flex justify-center space-x-4 text-xs text-gray-400">
-              <span>Usuarios de prueba:</span>
-            </div>
-            <div className="mt-1 text-xs text-gray-500">
-              <div>Admin: admin@jeyca.net / Admin123!</div>
-              <div>Comercial: comercial@jeyca.net / Vendedor123!</div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

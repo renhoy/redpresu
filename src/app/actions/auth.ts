@@ -10,19 +10,36 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 export interface SignInResult {
   success: boolean
   error?: string
+  redirectTo?: string
+}
+
+// Función de prueba para verificar que las Server Actions funcionan
+export async function testServerAction(): Promise<{ message: string }> {
+  console.log('🔥🔥🔥 TEST SERVER ACTION EJECUTADA 🔥🔥🔥')
+  return { message: 'Server Action funciona correctamente' }
 }
 
 export async function signInAction(email: string, password: string): Promise<SignInResult> {
+  console.log('=====================================')
+  console.log('[signInAction] *** SERVER ACTION EJECUTADA ***')
+  console.log('[signInAction] Email:', email)
+  console.log('=====================================')
+
   try {
+    console.log('[signInAction] Iniciando login para:', email)
         const supabase = await createServerActionClient()
 
+    console.log('[signInAction] Cliente creado, llamando a signInWithPassword...')
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email.trim().toLowerCase(),
       password,
     })
 
+    console.log('[signInAction] Respuesta de Supabase:', { hasData: !!data, hasError: !!error, errorMsg: error?.message })
+
     if (error) {
       log.error('[Server Action] Login error:', error)
+      console.error('[signInAction] Error de autenticación:', error.message)
 
       // Mapear errores comunes a mensajes en español
       let errorMessage = error.message
@@ -41,6 +58,20 @@ export async function signInAction(email: string, password: string): Promise<Sig
     if (!data.session || !data.user) {
       return { success: false, error: 'Error en la autenticación' }
     }
+
+    // CRÍTICO: Forzar que Supabase guarde la sesión en cookies
+    console.log('[signInAction] Estableciendo sesión manualmente...')
+    const { error: sessionError } = await supabase.auth.setSession({
+      access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token
+    })
+
+    if (sessionError) {
+      console.error('[signInAction] Error al establecer sesión:', sessionError)
+      return { success: false, error: 'Error al guardar la sesión' }
+    }
+
+    console.log('[signInAction] Sesión establecida correctamente')
 
     // Obtener datos completos del usuario (usar supabaseAdmin para garantizar schema correcto)
     const { data: userData, error: userError } = await supabaseAdmin
@@ -95,12 +126,14 @@ export async function signInAction(email: string, password: string): Promise<Sig
 
     log.info(`[Server Action] Login exitoso: ${data.user.email}, Rol: ${userData.role}`)
 
-    // Redirect según rol usando Next.js redirect
-    if (userData.role === 'comercial') {
-      redirect('/budgets')
-    } else {
-      // admin o superadmin
-      redirect('/dashboard')
+    console.log('[signInAction] Login completado exitosamente, retornando success=true')
+
+    // NO usar redirect() aquí - dejar que el cliente maneje la navegación
+    // para asegurar que las cookies se establezcan correctamente
+    return {
+      success: true,
+      // Indicar al cliente dónde debe redirigir según el rol
+      redirectTo: userData.role === 'comercial' ? '/budgets' : '/dashboard'
     }
 
   } catch (error) {
@@ -866,8 +899,8 @@ export async function getUserProfile(): Promise<ProfileResult> {
       }
     }
 
-    // Obtener datos del usuario
-    const { data: userData, error: userError } = await supabase
+    // Obtener datos del usuario usando supabaseAdmin para evitar problemas de schema
+    const { data: userData, error: userError } = await supabaseAdmin
       .from('users')
       .select('*')
       .eq('id', user.id)
@@ -881,10 +914,10 @@ export async function getUserProfile(): Promise<ProfileResult> {
       }
     }
 
-    // Obtener nombre de empresa (query separada para evitar problemas con RLS)
+    // Obtener nombre de empresa
     let companyName: string | null = null
     if (userData.company_id) {
-      const { data: companyData } = await supabase
+      const { data: companyData } = await supabaseAdmin
         .from('companies')
         .select('name')
         .eq('id', userData.company_id)
@@ -1195,8 +1228,8 @@ export async function getUserProfileById(userId: string): Promise<ProfileResult>
       }
     }
 
-    // Obtener datos del usuario autenticado
-    const { data: currentUserData, error: currentUserError } = await supabase
+    // Obtener datos del usuario autenticado usando supabaseAdmin
+    const { data: currentUserData, error: currentUserError } = await supabaseAdmin
       .from('users')
       .select('role, company_id')
       .eq('id', user.id)
@@ -1210,8 +1243,8 @@ export async function getUserProfileById(userId: string): Promise<ProfileResult>
       }
     }
 
-    // Obtener datos del usuario a editar
-    const { data: targetUserData, error: targetUserError } = await supabase
+    // Obtener datos del usuario a editar usando supabaseAdmin
+    const { data: targetUserData, error: targetUserError } = await supabaseAdmin
       .from('users')
       .select('*')
       .eq('id', userId)
@@ -1246,10 +1279,10 @@ export async function getUserProfileById(userId: string): Promise<ProfileResult>
       }
     }
 
-    // Obtener nombre de empresa (query separada para evitar problemas con RLS)
+    // Obtener nombre de empresa usando supabaseAdmin
     let companyName: string | null = null
     if (targetUserData.company_id) {
-      const { data: companyData } = await supabase
+      const { data: companyData } = await supabaseAdmin
         .from('companies')
         .select('name')
         .eq('id', targetUserData.company_id)

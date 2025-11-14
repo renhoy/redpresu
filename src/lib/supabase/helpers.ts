@@ -49,29 +49,49 @@ const supabaseConfig = {
 export async function createServerActionClient() {
   const cookieStore = await cookies()
 
-  return createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  const client = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     ...supabaseConfig,
     cookies: {
       get(name: string) {
-        return cookieStore.get(name)?.value
+        const value = cookieStore.get(name)?.value
+        console.log(`[ServerActionClient] GET cookie "${name}":`, value ? 'exists' : 'not found')
+        return value
       },
       set(name: string, value: string, options: any) {
         try {
+          console.log(`[ServerActionClient] SET cookie "${name}"`, { valueLength: value.length, options })
           cookieStore.set({ name, value, ...options })
+          console.log(`[ServerActionClient] ✅ Cookie "${name}" set successfully`)
         } catch (error) {
+          console.error(`[ServerActionClient] ❌ ERROR setting cookie "${name}":`, error)
           // En Server Actions, las cookies solo pueden establecerse dentro del request context
           // Este error es esperado si intentamos set después de que la respuesta fue enviada
         }
       },
       remove(name: string, options: any) {
         try {
+          console.log(`[ServerActionClient] REMOVE cookie "${name}"`)
           cookieStore.set({ name, value: '', ...options })
         } catch (error) {
+          console.error(`[ServerActionClient] ❌ ERROR removing cookie "${name}":`, error)
           // Ignorar errores al remover cookies
         }
       }
     }
   })
+
+  // CRÍTICO: Restaurar sesión desde cookies manuales si existen
+  const accessToken = cookieStore.get('sb-access-token')?.value
+  const refreshToken = cookieStore.get('sb-refresh-token')?.value
+
+  if (accessToken && refreshToken) {
+    await client.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken
+    })
+  }
+
+  return client
 }
 
 /**
@@ -84,7 +104,7 @@ export async function createServerActionClient() {
 export async function createServerComponentClient() {
   const cookieStore = await cookies()
 
-  return createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  const client = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     ...supabaseConfig,
     cookies: {
       get(name: string) {
@@ -92,6 +112,19 @@ export async function createServerComponentClient() {
       }
     }
   })
+
+  // CRÍTICO: Restaurar sesión desde cookies manuales si existen
+  const accessToken = cookieStore.get('sb-access-token')?.value
+  const refreshToken = cookieStore.get('sb-refresh-token')?.value
+
+  if (accessToken && refreshToken) {
+    await client.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken
+    })
+  }
+
+  return client
 }
 
 /**
@@ -134,13 +167,27 @@ export function createMiddlewareClient(req: any, res: any) {
     ...supabaseConfig,
     cookies: {
       get(name: string) {
-        return req.cookies.get(name)?.value
+        const value = req.cookies.get(name)?.value
+        console.log(`[MiddlewareClient] GET cookie "${name}":`, value ? 'exists' : 'not found')
+        return value
       },
       set(name: string, value: string, options: any) {
+        console.log(`[MiddlewareClient] SET cookie "${name}"`)
         res.cookies.set({ name, value, ...options })
       },
       remove(name: string, options: any) {
+        console.log(`[MiddlewareClient] REMOVE cookie "${name}"`)
         res.cookies.set({ name, value: '', ...options })
+      }
+    },
+    global: {
+      ...supabaseConfig.global,
+      headers: {
+        ...supabaseConfig.global.headers,
+        // Intentar recuperar sesión de cookies personalizadas
+        ...(req.cookies.get('sb-access-token')?.value ? {
+          'Authorization': `Bearer ${req.cookies.get('sb-access-token').value}`
+        } : {})
       }
     }
   })

@@ -1406,17 +1406,7 @@ export async function permanentDeleteCompany(companyUuid: string): Promise<Actio
       return { success: false, error: "Error al eliminar presupuestos" };
     }
 
-    // 5.3. Eliminar relaciones cliente-tarifa
-    const { error: clientTariffsError } = await supabaseAdmin
-      .from("client_tariffs")
-      .delete()
-      .eq("company_id", issuer.company_id);
-
-    if (clientTariffsError) {
-      log.warn("[permanentDeleteCompany] Error al eliminar client_tariffs:", clientTariffsError);
-    }
-
-    // 5.4. Eliminar tarifas
+    // 5.3. Eliminar tarifas
     const { error: tariffsError } = await supabaseAdmin
       .from("tariffs")
       .delete()
@@ -1425,6 +1415,17 @@ export async function permanentDeleteCompany(companyUuid: string): Promise<Actio
     if (tariffsError) {
       log.error("[permanentDeleteCompany] Error al eliminar tarifas:", tariffsError);
       return { success: false, error: "Error al eliminar tarifas" };
+    }
+
+    // 5.4. Eliminar suscripción de la empresa
+    const { error: subscriptionError } = await supabaseAdmin
+      .from("subscriptions")
+      .delete()
+      .eq("company_id", issuer.company_id);
+
+    if (subscriptionError) {
+      log.warn("[permanentDeleteCompany] Error al eliminar suscripción:", subscriptionError);
+      // No es crítico, continuar
     }
 
     // 5.5. Obtener usuarios para eliminar sus cuentas de auth
@@ -1531,7 +1532,19 @@ export async function permanentDeleteCompany(companyUuid: string): Promise<Actio
       }
     }
 
-    // 5.6. Eliminar emisor
+    // 5.6. Eliminar registro de auditoría que referencia al issuer
+    // (Necesario para poder eliminar el issuer por FK constraint)
+    const { error: deleteAuditError } = await supabaseAdmin
+      .from("company_deletion_log")
+      .delete()
+      .eq("issuer_id", companyUuid);
+
+    if (deleteAuditError) {
+      log.warn("[permanentDeleteCompany] Error al eliminar registro de auditoría:", deleteAuditError);
+      // No es crítico, continuar con la eliminación
+    }
+
+    // 5.7. Eliminar emisor
     const { error: deleteIssuerError } = await supabaseAdmin
       .from("issuers")
       .delete()
@@ -1542,7 +1555,7 @@ export async function permanentDeleteCompany(companyUuid: string): Promise<Actio
       return { success: false, error: "Error al eliminar emisor permanentemente" };
     }
 
-    // 5.7. Eliminar entrada en companies
+    // 5.8. Eliminar entrada en companies
     const { error: deleteCompanyError } = await supabaseAdmin
       .from("companies")
       .delete()

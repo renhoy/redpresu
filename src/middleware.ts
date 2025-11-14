@@ -31,6 +31,18 @@ export async function middleware(req: NextRequest) {
     // Crear cliente de Supabase pasando req y res para manejo correcto de cookies
     const supabase = createMiddlewareClient(req, res)
 
+    // CRÍTICO: Intentar restaurar sesión desde cookies manuales
+    const accessToken = req.cookies.get('sb-access-token')?.value
+    const refreshToken = req.cookies.get('sb-refresh-token')?.value
+
+    if (accessToken && refreshToken) {
+      console.log('[Middleware] Restaurando sesión desde cookies...')
+      await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken
+      })
+    }
+
     // Obtener usuario actual y validar token con el servidor
     // IMPORTANTE: getUser() valida el token con Supabase, getSession() solo lee cookies
     const { data: { user }, error } = await supabase.auth.getUser()
@@ -95,7 +107,7 @@ export async function middleware(req: NextRequest) {
     }
 
     // Definir rutas públicas que no requieren autenticación
-    const publicRoutes = ['/', '/login', '/forgot-password', '/reset-password', '/signup', '/register', '/pricing', '/accept-invitation', '/contact', '/legal']
+    const publicRoutes = ['/', '/login', '/forgot-password', '/reset-password', '/signup', '/register', '/pricing', '/accept-invitation', '/contact', '/legal', '/api/auth/login']
     const isPublicRoute = publicRoutes.some(path => {
       if (path === '/') {
         return pathname === '/'
@@ -252,7 +264,7 @@ export async function middleware(req: NextRequest) {
 
     // En caso de error, crear response limpia y redirect a login por seguridad
     const pathname = req.nextUrl.pathname
-    const publicRoutes = ['/', '/login', '/forgot-password', '/reset-password', '/signup', '/register', '/pricing', '/accept-invitation', '/contact', '/legal']
+    const publicRoutes = ['/', '/login', '/forgot-password', '/reset-password', '/signup', '/register', '/pricing', '/accept-invitation', '/contact', '/legal', '/api/auth/login']
     const isPublicRoute = publicRoutes.some(path => {
       if (path === '/') {
         return pathname === '/'

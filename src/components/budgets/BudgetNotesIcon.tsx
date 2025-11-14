@@ -36,6 +36,14 @@ export function BudgetNotesIcon({ budgetId, initialCount = 0, className = '', va
   const [popoverOpen, setPopoverOpen] = useState(false)
 
   const loadNotes = async () => {
+    // No intentar cargar si no hay budgetId válido
+    if (!budgetId || budgetId.trim() === '') {
+      console.warn('[BudgetNotesIcon] budgetId inválido, no se cargan notas')
+      setNotes([])
+      setNotesCount(0)
+      return
+    }
+
     console.log('[BudgetNotesIcon] Loading notes for budget:', budgetId)
     setLoading(true)
     const result = await getBudgetNotes(budgetId)
@@ -46,13 +54,17 @@ export function BudgetNotesIcon({ budgetId, initialCount = 0, className = '', va
       console.log('[BudgetNotesIcon] Notes loaded:', result.data.length)
     } else {
       console.error('[BudgetNotesIcon] Error loading notes:', result.error)
+      setNotes([])
+      setNotesCount(0)
     }
     setLoading(false)
   }
 
   // Cargar contador de notas al inicio
   useEffect(() => {
-    loadNotes()
+    if (budgetId && budgetId.trim() !== '') {
+      loadNotes()
+    }
   }, [budgetId])
 
   // Recargar notas cuando se abre el popover

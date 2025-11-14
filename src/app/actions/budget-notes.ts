@@ -29,6 +29,12 @@ export interface ActionResult {
  */
 export async function getBudgetNotes(budgetId: string): Promise<ActionResult> {
   try {
+    // Validar budgetId temprano
+    if (!budgetId || budgetId.trim() === '') {
+      log.warn('[getBudgetNotes] budgetId vacío o inválido')
+      return { success: true, data: [] } // Retornar array vacío en lugar de error
+    }
+
     log.info('[getBudgetNotes] Obteniendo notas para presupuesto:', budgetId)
 
     const user = await getServerUser()
@@ -55,16 +61,18 @@ export async function getBudgetNotes(budgetId: string): Promise<ActionResult> {
       .single()
 
     if (budgetError || !budgetData) {
-      log.error('[getBudgetNotes] Budget no encontrado:', budgetError)
-      return { success: false, error: 'Presupuesto no encontrado' }
+      // En lugar de error, retornar array vacío silenciosamente
+      // Esto es normal cuando el componente se renderiza antes que exista el presupuesto
+      log.warn('[getBudgetNotes] Budget no encontrado o no accesible:', budgetId)
+      return { success: true, data: [] }
     }
 
     if (budgetData.company_id !== empresaId) {
-      log.error('[getBudgetNotes] Intento de acceso a budget de otra empresa', {
+      log.warn('[getBudgetNotes] Budget de otra empresa, retornando vacío', {
         budgetCompanyId: budgetData.company_id,
         userCompanyId: empresaId
       })
-      return { success: false, error: 'No tienes acceso a este presupuesto' }
+      return { success: true, data: [] }
     }
 
     // Obtener notas
