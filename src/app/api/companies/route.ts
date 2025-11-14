@@ -30,7 +30,7 @@ export async function GET() {
     // El schema 'redpresu' ya está configurado globalmente en supabaseAdmin
     const { data: companies, error } = await supabaseAdmin
       .from('companies')
-      .select('id, name, type, nif')
+      .select('id, name')
       .order('name', { ascending: true });
 
     if (error) {

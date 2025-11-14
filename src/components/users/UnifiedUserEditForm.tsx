@@ -118,7 +118,7 @@ export default function UnifiedUserEditForm({
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
   const [showPasswordSection, setShowPasswordSection] = useState(false);
-  const [companies, setCompanies] = useState<Array<{ id: number; name: string; type: string; nif: string }>>([]);
+  const [companies, setCompanies] = useState<Array<{ id: number; name: string }>>([]);
   const [loadingCompanies, setLoadingCompanies] = useState(false);
   const [companySearch, setCompanySearch] = useState("");
 
@@ -529,7 +529,7 @@ export default function UnifiedUserEditForm({
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por nombre o NIF..."
+                  placeholder="Buscar por nombre..."
                   value={companySearch}
                   onChange={(e) => setCompanySearch(e.target.value)}
                   className="bg-white pl-10"
@@ -557,8 +557,6 @@ export default function UnifiedUserEditForm({
                     <TableRow className="hover:bg-transparent">
                       <TableHead className="w-12"></TableHead>
                       <TableHead>Empresa</TableHead>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>NIF/CIF</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -566,10 +564,7 @@ export default function UnifiedUserEditForm({
                       .filter((company) => {
                         if (!companySearch) return true;
                         const search = companySearch.toLowerCase();
-                        return (
-                          company.name.toLowerCase().includes(search) ||
-                          company.nif.toLowerCase().includes(search)
-                        );
+                        return company.name.toLowerCase().includes(search);
                       })
                       .map((company) => (
                         <TableRow
@@ -595,14 +590,6 @@ export default function UnifiedUserEditForm({
                           <TableCell className="font-medium">
                             {company.name}
                           </TableCell>
-                          <TableCell>
-                            <span className="text-xs px-2 py-1 rounded-full bg-lime-100 text-lime-800">
-                              {company.type === "empresa" ? "Empresa" : "Autónomo"}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {company.nif}
-                          </TableCell>
                         </TableRow>
                       ))}
                   </TableBody>
@@ -618,10 +605,7 @@ export default function UnifiedUserEditForm({
                   companies.filter((company) => {
                     if (!companySearch) return true;
                     const search = companySearch.toLowerCase();
-                    return (
-                      company.name.toLowerCase().includes(search) ||
-                      company.nif.toLowerCase().includes(search)
-                    );
+                    return company.name.toLowerCase().includes(search);
                   }).length
                 }{" "}
                 de {companies.length} empresas
