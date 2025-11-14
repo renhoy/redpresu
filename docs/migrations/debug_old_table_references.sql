@@ -46,10 +46,9 @@ SELECT
   tablename,
   policyname,
   permissive,
-  roles,
   cmd,
-  qual,
-  with_check
+  COALESCE(qual::text, '') as qual_expression,
+  COALESCE(with_check::text, '') as with_check_expression
 FROM pg_policies
-WHERE qual::text ILIKE '%redpresu_companies%'
-   OR with_check::text ILIKE '%redpresu_companies%';
+WHERE COALESCE(qual::text, '') ILIKE '%redpresu_companies%'
+   OR COALESCE(with_check::text, '') ILIKE '%redpresu_companies%';
