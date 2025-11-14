@@ -691,7 +691,7 @@ export default function UnifiedUserEditForm({
             {formData.company_id !== user.company_id && formData.company_id && (
               <Alert className="bg-yellow-50 border-yellow-200">
                 <AlertDescription className="text-sm text-yellow-800">
-                  <strong>⚠️ Importante:</strong> Al guardar, tu rol cambiará automáticamente de Superadmin a Administrador de la empresa seleccionada. Esto te permitirá realizar tareas de soporte y mantenimiento con permisos de admin.
+                  <strong>⚠️ Importante:</strong> Al cambiar de empresa pasarás a ver todo lo que ven los usuarios de dicha empresa pero en modo superadmin. Haz logout o cambia aquí para volver a tu empresa original. Cada vez que entras haciendo login entras con tu empresa Demo.
                 </AlertDescription>
               </Alert>
             )}
