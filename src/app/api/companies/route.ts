@@ -27,8 +27,8 @@ export async function GET() {
     }
 
     // Obtener todas las empresas con campos adicionales
+    // El schema 'redpresu' ya está configurado globalmente en supabaseAdmin
     const { data: companies, error } = await supabaseAdmin
-      .schema('redpresu')
       .from('companies')
       .select('id, name, type, nif')
       .order('name', { ascending: true });
