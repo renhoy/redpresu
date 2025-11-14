@@ -26,11 +26,23 @@ export async function GET() {
       );
     }
 
-    // Obtener todas las empresas con campos adicionales
+    // Obtener todas las empresas con sus datos fiscales (issuers)
     // El schema 'redpresu' ya está configurado globalmente en supabaseAdmin
     const { data: companies, error } = await supabaseAdmin
       .from('companies')
-      .select('id, name')
+      .select(`
+        id,
+        name,
+        issuers (
+          nif,
+          type,
+          address,
+          locality,
+          province,
+          phone,
+          email
+        )
+      `)
       .order('name', { ascending: true });
 
     if (error) {
@@ -41,8 +53,24 @@ export async function GET() {
       );
     }
 
-    console.log('[API /companies] Empresas encontradas:', companies?.length || 0, companies);
-    return NextResponse.json(companies || []);
+    // Transformar datos: aplanar issuers en el objeto company
+    const companiesWithIssuers = (companies || []).map((company: any) => {
+      const issuer = company.issuers?.[0]; // Tomar el primer issuer (cada empresa debería tener uno)
+      return {
+        id: company.id,
+        name: company.name,
+        nif: issuer?.nif || '',
+        type: issuer?.type || '',
+        address: issuer?.address || '',
+        locality: issuer?.locality || '',
+        province: issuer?.province || '',
+        phone: issuer?.phone || '',
+        email: issuer?.email || '',
+      };
+    });
+
+    console.log('[API /companies] Empresas encontradas:', companiesWithIssuers.length, companiesWithIssuers);
+    return NextResponse.json(companiesWithIssuers);
   } catch (error) {
     console.error('[API /companies] Error inesperado:', error);
     return NextResponse.json(

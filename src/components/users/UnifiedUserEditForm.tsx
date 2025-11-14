@@ -118,7 +118,17 @@ export default function UnifiedUserEditForm({
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
   const [showPasswordSection, setShowPasswordSection] = useState(false);
-  const [companies, setCompanies] = useState<Array<{ id: number; name: string }>>([]);
+  const [companies, setCompanies] = useState<Array<{
+    id: number;
+    name: string;
+    nif: string;
+    type: string;
+    address: string;
+    locality: string;
+    province: string;
+    phone: string;
+    email: string;
+  }>>([]);
   const [loadingCompanies, setLoadingCompanies] = useState(false);
   const [companySearch, setCompanySearch] = useState("");
 
@@ -529,7 +539,7 @@ export default function UnifiedUserEditForm({
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por nombre..."
+                  placeholder="Buscar por nombre, NIF, dirección..."
                   value={companySearch}
                   onChange={(e) => setCompanySearch(e.target.value)}
                   className="bg-white pl-10"
@@ -557,6 +567,9 @@ export default function UnifiedUserEditForm({
                     <TableRow className="hover:bg-transparent">
                       <TableHead className="w-12"></TableHead>
                       <TableHead>Empresa</TableHead>
+                      <TableHead>NIF/CIF</TableHead>
+                      <TableHead>Dirección</TableHead>
+                      <TableHead>Teléfono</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -564,7 +577,14 @@ export default function UnifiedUserEditForm({
                       .filter((company) => {
                         if (!companySearch) return true;
                         const search = companySearch.toLowerCase();
-                        return company.name.toLowerCase().includes(search);
+                        return (
+                          company.name.toLowerCase().includes(search) ||
+                          company.nif.toLowerCase().includes(search) ||
+                          company.address.toLowerCase().includes(search) ||
+                          company.locality.toLowerCase().includes(search) ||
+                          company.province.toLowerCase().includes(search) ||
+                          company.phone.toLowerCase().includes(search)
+                        );
                       })
                       .map((company) => (
                         <TableRow
@@ -592,6 +612,21 @@ export default function UnifiedUserEditForm({
                           <TableCell className="font-medium">
                             {company.name}
                           </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {company.nif || '-'}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {company.address ? (
+                              <div className="max-w-xs truncate">
+                                {company.address}
+                                {company.locality && `, ${company.locality}`}
+                                {company.province && ` (${company.province})`}
+                              </div>
+                            ) : '-'}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {company.phone || '-'}
+                          </TableCell>
                         </TableRow>
                       ))}
                   </TableBody>
@@ -607,7 +642,14 @@ export default function UnifiedUserEditForm({
                   companies.filter((company) => {
                     if (!companySearch) return true;
                     const search = companySearch.toLowerCase();
-                    return company.name.toLowerCase().includes(search);
+                    return (
+                      company.name.toLowerCase().includes(search) ||
+                      company.nif.toLowerCase().includes(search) ||
+                      company.address.toLowerCase().includes(search) ||
+                      company.locality.toLowerCase().includes(search) ||
+                      company.province.toLowerCase().includes(search) ||
+                      company.phone.toLowerCase().includes(search)
+                    );
                   }).length
                 }{" "}
                 de {companies.length} empresas
