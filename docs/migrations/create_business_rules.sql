@@ -8,7 +8,7 @@
 -- Tabla principal de reglas
 CREATE TABLE redpresu.business_rules (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  company_id UUID REFERENCES redpresu.companies(id) ON DELETE CASCADE,
+  company_id INTEGER REFERENCES redpresu.companies(id) ON DELETE CASCADE,
   version INTEGER NOT NULL DEFAULT 1,
   rules JSONB NOT NULL,
   is_active BOOLEAN DEFAULT true,
@@ -35,7 +35,7 @@ CREATE INDEX idx_business_rules_company
 CREATE TABLE redpresu.rules_audit_log (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   rule_id UUID REFERENCES redpresu.business_rules(id) ON DELETE CASCADE,
-  company_id UUID NOT NULL,
+  company_id INTEGER NOT NULL,
   action VARCHAR(50) NOT NULL, -- 'created', 'updated', 'rollback', 'activated', 'deactivated'
   changed_by UUID REFERENCES redpresu.users(id),
   changed_by_email VARCHAR(255),
