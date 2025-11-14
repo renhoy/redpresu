@@ -558,43 +558,45 @@ export default function CompanyTable({
             <AlertDialogTitle className="text-red-600">
               ⚠️ Marcar empresa como eliminada
             </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-3">
-              <p>
-                ¿Estás seguro de que quieres eliminar la empresa{" "}
-                <strong className="text-foreground">
-                  {selectedCompany?.name}
-                </strong>
-                ?
-              </p>
-
-              <div className="bg-red-50 border border-red-200 rounded-md p-3 space-y-2">
-                <p className="font-semibold text-red-800">
-                  Esta acción ocultará la empresa y su contenido:
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  ¿Estás seguro de que quieres eliminar la empresa{" "}
+                  <strong className="text-foreground">
+                    {selectedCompany?.name}
+                  </strong>
+                  ?
                 </p>
-                <ul className="text-sm text-red-700 space-y-1 list-disc list-inside">
-                  <li>
-                    <strong>{selectedCompany?.user_count || 0}</strong> usuarios
-                  </li>
-                  <li>
-                    <strong>{selectedCompany?.tariff_count || 0}</strong>{" "}
-                    tarifas
-                  </li>
-                  <li>
-                    <strong>{selectedCompany?.budget_count || 0}</strong>{" "}
-                    presupuestos
-                  </li>
-                  <li>Todos los PDFs generados</li>
-                  <li>Todas las versiones y notas</li>
-                </ul>
-              </div>
 
-              <div className="bg-lime-50 border border-blue-200 rounded-md p-3">
-                <p className="text-sm text-blue-800">
-                  ℹ️ <strong>Nota:</strong> Los datos se marcarán como
-                  eliminados pero podrán ser recuperados por un superadmin si
-                  fue un error. Para eliminar permanentemente, contacta con
-                  soporte técnico.
-                </p>
+                <div className="bg-red-50 border border-red-200 rounded-md p-3 space-y-2">
+                  <p className="font-semibold text-red-800">
+                    Esta acción ocultará la empresa y su contenido:
+                  </p>
+                  <ul className="text-sm text-red-700 space-y-1 list-disc list-inside">
+                    <li>
+                      <strong>{selectedCompany?.user_count || 0}</strong> usuarios
+                    </li>
+                    <li>
+                      <strong>{selectedCompany?.tariff_count || 0}</strong>{" "}
+                      tarifas
+                    </li>
+                    <li>
+                      <strong>{selectedCompany?.budget_count || 0}</strong>{" "}
+                      presupuestos
+                    </li>
+                    <li>Todos los PDFs generados</li>
+                    <li>Todas las versiones y notas</li>
+                  </ul>
+                </div>
+
+                <div className="bg-lime-50 border border-blue-200 rounded-md p-3">
+                  <p className="text-sm text-blue-800">
+                    ℹ️ <strong>Nota:</strong> Los datos se marcarán como
+                    eliminados pero podrán ser recuperados por un superadmin si
+                    fue un error. Para eliminar permanentemente, contacta con
+                    soporte técnico.
+                  </p>
+                </div>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -621,51 +623,53 @@ export default function CompanyTable({
             <AlertDialogTitle className="text-red-700">
               🚨 ELIMINAR DEFINITIVAMENTE
             </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-3">
-              <p className="text-base font-semibold">
-                ¿Estás COMPLETAMENTE seguro de eliminar definitivamente la
-                empresa{" "}
-                <strong className="text-foreground">
-                  {selectedCompany?.name}
-                </strong>
-                ?
-              </p>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p className="text-base font-semibold">
+                  ¿Estás COMPLETAMENTE seguro de eliminar definitivamente la
+                  empresa{" "}
+                  <strong className="text-foreground">
+                    {selectedCompany?.name}
+                  </strong>
+                  ?
+                </p>
 
-              <div className="bg-red-100 border-2 border-red-600 rounded-md p-4 space-y-2">
-                <p className="font-bold text-red-900 text-base">
-                  ⚠️ ESTA ACCIÓN ES IRREVERSIBLE
-                </p>
-                <p className="text-sm text-red-800">
-                  Se eliminarán PERMANENTEMENTE todos los datos:
-                </p>
-                <ul className="text-sm text-red-800 space-y-1 list-disc list-inside ml-2">
-                  <li>
-                    <strong>{selectedCompany?.user_count || 0}</strong> usuarios
-                    y sus accesos
-                  </li>
-                  <li>
-                    <strong>{selectedCompany?.tariff_count || 0}</strong>{" "}
-                    tarifas
-                  </li>
-                  <li>
-                    <strong>{selectedCompany?.budget_count || 0}</strong>{" "}
-                    presupuestos
-                  </li>
-                  <li>Todas las versiones de presupuestos</li>
-                  <li>Todas las notas</li>
-                  <li>Todos los PDFs generados</li>
-                  <li>Todos los archivos y configuraciones</li>
-                </ul>
-              </div>
+                <div className="bg-red-100 border-2 border-red-600 rounded-md p-4 space-y-2">
+                  <p className="font-bold text-red-900 text-base">
+                    ⚠️ ESTA ACCIÓN ES IRREVERSIBLE
+                  </p>
+                  <p className="text-sm text-red-800">
+                    Se eliminarán PERMANENTEMENTE todos los datos:
+                  </p>
+                  <ul className="text-sm text-red-800 space-y-1 list-disc list-inside ml-2">
+                    <li>
+                      <strong>{selectedCompany?.user_count || 0}</strong> usuarios
+                      y sus accesos
+                    </li>
+                    <li>
+                      <strong>{selectedCompany?.tariff_count || 0}</strong>{" "}
+                      tarifas
+                    </li>
+                    <li>
+                      <strong>{selectedCompany?.budget_count || 0}</strong>{" "}
+                      presupuestos
+                    </li>
+                    <li>Todas las versiones de presupuestos</li>
+                    <li>Todas las notas</li>
+                    <li>Todos los PDFs generados</li>
+                    <li>Todos los archivos y configuraciones</li>
+                  </ul>
+                </div>
 
-              <div className="bg-yellow-50 border-2 border-yellow-400 rounded-md p-3">
-                <p className="text-sm text-yellow-900 font-semibold">
-                  ⚡ NO PODRÁS RECUPERAR ESTOS DATOS
-                </p>
-                <p className="text-xs text-yellow-800 mt-1">
-                  El sistema quedará limpio como si esta empresa nunca se
-                  hubiera registrado.
-                </p>
+                <div className="bg-yellow-50 border-2 border-yellow-400 rounded-md p-3">
+                  <p className="text-sm text-yellow-900 font-semibold">
+                    ⚡ NO PODRÁS RECUPERAR ESTOS DATOS
+                  </p>
+                  <p className="text-xs text-yellow-800 mt-1">
+                    El sistema quedará limpio como si esta empresa nunca se
+                    hubiera registrado.
+                  </p>
+                </div>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
