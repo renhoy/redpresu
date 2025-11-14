@@ -561,77 +561,84 @@ export default function UnifiedUserEditForm({
                 No hay empresas disponibles
               </div>
             ) : (
-              <div className="rounded-md border bg-white max-h-96 overflow-y-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="hover:bg-transparent">
-                      <TableHead className="w-12"></TableHead>
-                      <TableHead>Empresa</TableHead>
-                      <TableHead>NIF/CIF</TableHead>
-                      <TableHead>Dirección</TableHead>
-                      <TableHead>Teléfono</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {companies
-                      .filter((company) => {
-                        if (!companySearch) return true;
-                        const search = companySearch.toLowerCase();
-                        return (
-                          company.name.toLowerCase().includes(search) ||
-                          company.nif.toLowerCase().includes(search) ||
-                          company.address.toLowerCase().includes(search) ||
-                          company.locality.toLowerCase().includes(search) ||
-                          company.province.toLowerCase().includes(search) ||
-                          company.phone.toLowerCase().includes(search)
-                        );
-                      })
-                      .map((company) => (
-                        <TableRow
-                          key={company.id}
-                          className={`cursor-pointer ${
-                            formData.company_id === company.id
-                              ? "bg-lime-200 hover:bg-lime-200"
-                              : "bg-white hover:bg-lime-100"
-                          }`}
-                          onClick={() => {
-                            setFormData((prev) => ({
-                              ...prev,
-                              company_id: company.id,
-                            }));
-                          }}
-                        >
-                          <TableCell>
-                            <RadioGroup value={formData.company_id?.toString() || ""}>
+              <RadioGroup
+                value={formData.company_id?.toString() || ""}
+                onValueChange={(value) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    company_id: parseInt(value, 10),
+                  }));
+                }}
+              >
+                <div className="rounded-md border bg-white max-h-96 overflow-y-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead className="w-12"></TableHead>
+                        <TableHead>Empresa</TableHead>
+                        <TableHead>NIF/CIF</TableHead>
+                        <TableHead>Dirección</TableHead>
+                        <TableHead>Teléfono</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {companies
+                        .filter((company) => {
+                          if (!companySearch) return true;
+                          const search = companySearch.toLowerCase();
+                          return (
+                            company.name.toLowerCase().includes(search) ||
+                            company.nif.toLowerCase().includes(search) ||
+                            company.address.toLowerCase().includes(search) ||
+                            company.locality.toLowerCase().includes(search) ||
+                            company.province.toLowerCase().includes(search) ||
+                            company.phone.toLowerCase().includes(search)
+                          );
+                        })
+                        .map((company) => (
+                          <TableRow
+                            key={company.id}
+                            className={`cursor-pointer ${
+                              formData.company_id === company.id
+                                ? "bg-lime-200 hover:bg-lime-200"
+                                : "bg-white hover:bg-lime-100"
+                            }`}
+                            onClick={() => {
+                              setFormData((prev) => ({
+                                ...prev,
+                                company_id: company.id,
+                              }));
+                            }}
+                          >
+                            <TableCell>
                               <RadioGroupItem
                                 value={company.id.toString()}
-                                checked={formData.company_id === company.id}
                               />
-                            </RadioGroup>
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {company.name}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {company.nif || '-'}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {company.address ? (
-                              <div className="max-w-xs truncate">
-                                {company.address}
-                                {company.locality && `, ${company.locality}`}
-                                {company.province && ` (${company.province})`}
-                              </div>
-                            ) : '-'}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {company.phone || '-'}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                  </TableBody>
-                </Table>
-              </div>
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {company.name}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {company.nif || '-'}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {company.address ? (
+                                <div className="max-w-xs truncate">
+                                  {company.address}
+                                  {company.locality && `, ${company.locality}`}
+                                  {company.province && ` (${company.province})`}
+                                </div>
+                              ) : '-'}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {company.phone || '-'}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </RadioGroup>
             )}
 
             {/* Contador de resultados */}
