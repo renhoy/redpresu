@@ -6,14 +6,14 @@
 import { NextResponse } from 'next/server';
 import { validateRules } from '@/lib/business-rules/evaluator';
 import { BusinessRulesConfigSchema } from '@/lib/types/business-rules';
-import { createServerClient } from '@/lib/supabase/server';
+import { supabaseAdmin } from '@/lib/supabase/server';
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ companyId: string }> }
 ) {
   // Verificar superadmin
-  const supabase = await createServerClient();
+  const supabase = supabaseAdmin;
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {

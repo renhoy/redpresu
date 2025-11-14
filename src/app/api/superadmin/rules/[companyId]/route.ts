@@ -4,7 +4,7 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
+import { supabaseAdmin } from '@/lib/supabase/server';
 import { BusinessRulesConfigSchema } from '@/lib/types/business-rules';
 import { invalidateRulesCache } from '@/lib/business-rules/evaluator';
 import { logger } from '@/lib/logger';
@@ -14,7 +14,7 @@ import { headers } from 'next/headers';
  * Verifica que el usuario es superadmin
  */
 async function verifySuperadmin() {
-  const supabase = await createServerClient();
+  const supabase = supabaseAdmin;
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
@@ -56,7 +56,7 @@ export async function GET(
   }
 
   const { companyId } = await params;
-  const supabase = await createServerClient();
+  const supabase = supabaseAdmin;
 
   const { data, error } = await supabase
     .from('business_rules')
@@ -106,7 +106,7 @@ export async function PUT(
       updated_by: user.email
     });
 
-    const supabase = await createServerClient();
+    const supabase = supabaseAdmin;
 
     // Obtener regla actual para backup
     const { data: current } = await supabase

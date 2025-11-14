@@ -4,7 +4,7 @@
 // ============================================================
 
 import * as jsonLogic from 'json-logic-js';
-import { createServerClient } from '@/lib/supabase/server';
+import { supabaseAdmin } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 import { getEmailService } from '@/lib/services/email';
 import type { Rule, Action } from '@/lib/types/business-rules';
@@ -132,7 +132,7 @@ async function sendRuleEmail(
   companyId: string,
   context: RuleContext
 ): Promise<void> {
-  const supabase = await createServerClient();
+  const supabase = supabaseAdmin;
 
   // Obtener datos de la empresa e issuer
   const { data: company } = await supabase
@@ -180,7 +180,7 @@ async function downgradePlan(
   companyId: string,
   targetPlan: 'FREE' | 'PRO' | 'ENTERPRISE'
 ): Promise<void> {
-  const supabase = await createServerClient();
+  const supabase = supabaseAdmin;
 
   const { error } = await supabase
     .from('companies')
@@ -201,7 +201,7 @@ async function downgradePlan(
  * Bloquear feature
  */
 async function blockFeature(companyId: string, feature: string): Promise<void> {
-  const supabase = await createServerClient();
+  const supabase = supabaseAdmin;
 
   // Crear tabla si no existe (migración futura)
   const { error } = await supabase
@@ -221,7 +221,7 @@ async function scheduleAction(
   action: string,
   days: number
 ): Promise<void> {
-  const supabase = await createServerClient();
+  const supabase = supabaseAdmin;
 
   const executeAt = new Date();
   executeAt.setDate(executeAt.getDate() + days);
@@ -251,7 +251,7 @@ async function getRulesForCompany(companyId: string): Promise<Rule[]> {
     return cached.rules;
   }
 
-  const supabase = await createServerClient();
+  const supabase = supabaseAdmin;
   const { data, error } = await supabase
     .from('business_rules')
     .select('rules')

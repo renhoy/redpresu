@@ -4,7 +4,7 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
+import { supabaseAdmin } from '@/lib/supabase/server';
 import { invalidateRulesCache } from '@/lib/business-rules/evaluator';
 import { logger } from '@/lib/logger';
 
@@ -12,7 +12,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ companyId: string }> }
 ) {
-  const supabase = await createServerClient();
+  const supabase = supabaseAdmin;
 
   // Verificar superadmin
   const { data: { user } } = await supabase.auth.getUser();
