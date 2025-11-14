@@ -569,8 +569,10 @@ export default function UnifiedUserEditForm({
                       .map((company) => (
                         <TableRow
                           key={company.id}
-                          className={`cursor-pointer hover:bg-lime-50 ${
-                            formData.company_id === company.id ? "bg-lime-100" : ""
+                          className={`cursor-pointer ${
+                            formData.company_id === company.id
+                              ? "bg-lime-200 hover:bg-lime-200"
+                              : "bg-white hover:bg-lime-100"
                           }`}
                           onClick={() => {
                             setFormData((prev) => ({
@@ -615,8 +617,7 @@ export default function UnifiedUserEditForm({
             {formData.company_id !== user.company_id && formData.company_id && (
               <Alert className="bg-yellow-50 border-yellow-200">
                 <AlertDescription className="text-sm text-yellow-800">
-                  <strong>⚠️ Importante:</strong> Al guardar, tu rol cambiará automáticamente de <strong>Superadmin</strong> a <strong>Administrador</strong> de la empresa seleccionada.
-                  Esto te permitirá realizar tareas de soporte y mantenimiento con permisos de admin.
+                  <strong>⚠️ Importante:</strong> Al guardar, tu rol cambiará automáticamente de Superadmin a Administrador de la empresa seleccionada. Esto te permitirá realizar tareas de soporte y mantenimiento con permisos de admin.
                 </AlertDescription>
               </Alert>
             )}
