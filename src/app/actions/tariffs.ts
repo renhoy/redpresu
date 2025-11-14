@@ -11,6 +11,7 @@ import { CSV2JSONConverter, detectIVAsPresentes } from '@/lib/validators'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 import { isValidNIF, getNIFErrorMessage } from '@/lib/helpers/nif-validator'
+import { evaluateRules, type RuleContext } from '@/lib/business-rules/evaluator'
 
 type Tariff = Database['public']['Tables']['tariffs']['Row']
 
@@ -423,6 +424,70 @@ export async function createTariff(data: TariffFormData): Promise<{
     } catch (error) {
       log.error('[createTariff] company_id inválido', { error })
       return { success: false, error: 'Usuario sin empresa asignada' }
+    }
+
+    // BUSINESS RULES: Evaluar reglas de negocio antes de crear tarifa
+    log.info('[createTariff] Evaluando reglas de negocio...')
+    try {
+      // Obtener datos de la empresa
+      const { data: companyData } = await supabaseAdmin
+        .from('companies')
+        .select('plan, status, created_at')
+        .eq('id', companyId)
+        .single()
+
+      // Contar tarifas actuales
+      const { count: tariffsCount } = await supabaseAdmin
+        .from('tariffs')
+        .select('*', { count: 'exact', head: true })
+        .eq('company_id', companyId)
+
+      // Contar usuarios actuales
+      const { count: usersCount } = await supabaseAdmin
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .eq('company_id', companyId)
+
+      // Contar presupuestos actuales
+      const { count: budgetsCount } = await supabaseAdmin
+        .from('budgets')
+        .select('*', { count: 'exact', head: true })
+        .eq('company_id', companyId)
+
+      // Construir contexto para evaluación
+      const ruleContext: RuleContext = {
+        plan: (companyData?.plan || 'FREE') as 'FREE' | 'PRO' | 'ENTERPRISE',
+        users_count: usersCount || 0,
+        tariffs_count: (tariffsCount || 0) + 1, // +1 porque estamos creando una nueva
+        budgets_count: budgetsCount || 0,
+        days_since_payment: 0, // Placeholder, calcular si es necesario
+        days_since_signup: companyData?.created_at
+          ? Math.floor((Date.now() - new Date(companyData.created_at).getTime()) / (1000 * 60 * 60 * 24))
+          : 0,
+        is_trial: companyData?.status === 'trial',
+        features_used: [],
+        action: 'create_tariff'
+      }
+
+      // Evaluar reglas
+      const evaluation = await evaluateRules(companyId.toString(), ruleContext)
+
+      // Bloquear si la regla no lo permite
+      if (!evaluation.allow) {
+        const message = evaluation.message ||
+          `No se puede crear la tarifa. ${evaluation.matchedRule?.name || 'Límite alcanzado'}`
+        log.info('[createTariff] Bloqueado por regla de negocio:', {
+          rule: evaluation.matchedRule?.name,
+          message
+        })
+        return { success: false, error: message }
+      }
+
+      log.info('[createTariff] Reglas de negocio OK, procediendo...')
+    } catch (rulesError) {
+      // En caso de error en evaluación, log y continuar (fail-open)
+      log.error('[createTariff] Error evaluando reglas de negocio:', rulesError)
+      // Continuar con la creación
     }
 
     // Detectar IVAs presentes en los datos de la tarifa
