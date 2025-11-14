@@ -920,6 +920,14 @@ export async function deleteUser(userId: string, reassignToUserId: string | null
       targetEmail: targetUser.email,
       targetRole: targetUser.role
     });
+
+    // PROTECCIÓN: No permitir eliminar superadmins de la empresa 1 (crítica) a menos que estén inactivos
+    if (targetUser.role === 'superadmin' && targetUser.company_id === 1 && targetUser.status !== 'inactive') {
+      return {
+        success: false,
+        error: 'PROTECCIÓN SISTEMA: No se puede eliminar usuarios superadmin activos de la empresa 1. Desactiva primero el usuario (status=inactive) antes de eliminarlo.',
+      };
+    }
   }
 
   // Si se va a reasignar, verificar que el usuario destino existe y es válido
