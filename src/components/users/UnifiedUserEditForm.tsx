@@ -136,6 +136,11 @@ export default function UnifiedUserEditForm({
 
   // Cargar lista de empresas si el usuario actual es superadmin
   useEffect(() => {
+    console.log("[useEffect companies] canEditCompany:", canEditCompany, {
+      currentUserRole,
+      userRole: user.role,
+      isOwnProfile,
+    });
     if (canEditCompany) {
       loadCompanies();
     }
@@ -144,14 +149,25 @@ export default function UnifiedUserEditForm({
   const loadCompanies = async () => {
     setLoadingCompanies(true);
     try {
+      console.log("[loadCompanies] Iniciando carga de empresas...");
       const response = await fetch("/api/companies");
+      console.log("[loadCompanies] Response status:", response.status, response.ok);
+
       if (response.ok) {
         const data = await response.json();
+        console.log("[loadCompanies] Empresas cargadas:", data.length, data);
         setCompanies(data);
+      } else {
+        // Si la respuesta no es OK, obtener el error
+        const errorData = await response.json();
+        console.error("[loadCompanies] Error del servidor:", response.status, errorData);
+        toast.error(errorData.error || "Error al cargar empresas");
+        setCompanies([]); // Establecer array vacío explícitamente
       }
     } catch (error) {
-      console.error("Error loading companies:", error);
+      console.error("[loadCompanies] Error de red o parsing:", error);
       toast.error("Error al cargar empresas");
+      setCompanies([]); // Establecer array vacío explícitamente
     } finally {
       setLoadingCompanies(false);
     }
