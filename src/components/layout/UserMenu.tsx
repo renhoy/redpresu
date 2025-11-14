@@ -175,8 +175,8 @@ export function UserMenu({
           <Link
             href={userRole === "superadmin" ? "/companies" : "/companies/edit"}
           >
-            <DropdownMenuItem className="cursor-pointer">
-              <Building2 className="mr-2 h-4 w-4" />
+            <DropdownMenuItem className={`cursor-pointer ${userRole === "superadmin" ? "text-lime-600 hover:text-lime-700 hover:bg-lime-50" : ""}`}>
+              <Building2 className={`mr-2 h-4 w-4 ${userRole === "superadmin" ? "text-lime-600" : ""}`} />
               <span>{userRole === "superadmin" ? "Empresas" : "Empresa"}</span>
             </DropdownMenuItem>
           </Link>
@@ -185,8 +185,8 @@ export function UserMenu({
         {/* Mensajes de Contacto - Solo superadmin */}
         {userRole === "superadmin" && (
           <Link href="/contact-messages">
-            <DropdownMenuItem className="cursor-pointer">
-              <Mail className="mr-2 h-4 w-4" />
+            <DropdownMenuItem className="cursor-pointer text-lime-600 hover:text-lime-700 hover:bg-lime-50">
+              <Mail className="mr-2 h-4 w-4 text-lime-600" />
               <span>Mensajes</span>
             </DropdownMenuItem>
           </Link>
@@ -197,17 +197,17 @@ export function UserMenu({
           <>
             <DropdownMenuSeparator />
             <div className="px-2 py-1">
-              <p className="text-xs text-muted-foreground font-semibold">Testing</p>
+              <p className="text-xs text-lime-600 font-semibold">Testing</p>
             </div>
             <Link href="/settings/subscriptions-testing">
-              <DropdownMenuItem className="cursor-pointer">
-                <FlaskConical className="mr-2 h-4 w-4" />
+              <DropdownMenuItem className="cursor-pointer text-lime-600 hover:text-lime-700 hover:bg-lime-50">
+                <FlaskConical className="mr-2 h-4 w-4 text-lime-600" />
                 <span>Suscripciones</span>
               </DropdownMenuItem>
             </Link>
             <Link href="/settings/mock-emails">
-              <DropdownMenuItem className="cursor-pointer">
-                <MailCheck className="mr-2 h-4 w-4" />
+              <DropdownMenuItem className="cursor-pointer text-lime-600 hover:text-lime-700 hover:bg-lime-50">
+                <MailCheck className="mr-2 h-4 w-4 text-lime-600" />
                 <span>Emails Mock</span>
               </DropdownMenuItem>
             </Link>
@@ -233,8 +233,8 @@ export function UserMenu({
 
         {showSettings && (
           <Link href="/settings">
-            <DropdownMenuItem className="cursor-pointer">
-              <Settings className="mr-2 h-4 w-4" />
+            <DropdownMenuItem className="cursor-pointer text-lime-600 hover:text-lime-700 hover:bg-lime-50">
+              <Settings className="mr-2 h-4 w-4 text-lime-600" />
               <span>Configuración</span>
             </DropdownMenuItem>
           </Link>
