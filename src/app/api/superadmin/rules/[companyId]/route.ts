@@ -1,0 +1,165 @@
+// ============================================================
+// API Route: GET/PUT Business Rules - Redpresu
+// Gestiona reglas de negocio por empresa (solo superadmin)
+// ============================================================
+
+import { NextResponse } from 'next/server';
+import { createServerClient } from '@/lib/supabase/server';
+import { BusinessRulesConfigSchema } from '@/lib/types/business-rules';
+import { invalidateRulesCache } from '@/lib/business-rules/evaluator';
+import { logger } from '@/lib/logger';
+import { headers } from 'next/headers';
+
+/**
+ * Verifica que el usuario es superadmin
+ */
+async function verifySuperadmin() {
+  const supabase = await createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { authorized: false, user: null };
+  }
+
+  const { data: userData } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  return {
+    authorized: userData?.role === 'superadmin',
+    user
+  };
+}
+
+/**
+ * Obtiene IP y User-Agent para auditoría
+ */
+async function getRequestMetadata() {
+  const headersList = await headers();
+  return {
+    ip: headersList.get('x-forwarded-for') || headersList.get('x-real-ip') || 'unknown',
+    userAgent: headersList.get('user-agent') || 'unknown'
+  };
+}
+
+// GET /api/superadmin/rules/[companyId]
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ companyId: string }> }
+) {
+  const { authorized, user } = await verifySuperadmin();
+
+  if (!authorized) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+  }
+
+  const { companyId } = await params;
+  const supabase = await createServerClient();
+
+  const { data, error } = await supabase
+    .from('business_rules')
+    .select('*')
+    .eq('company_id', companyId)
+    .eq('is_active', true)
+    .single();
+
+  if (error) {
+    // Si no existe, retornar config por defecto
+    if (error.code === 'PGRST116') {
+      return NextResponse.json({
+        company_id: companyId,
+        rules: {
+          version: 1,
+          updated_at: new Date().toISOString(),
+          updated_by: user!.email,
+          rules: []
+        }
+      });
+    }
+    return NextResponse.json({ error: error.message }, { status: 404 });
+  }
+
+  return NextResponse.json(data);
+}
+
+// PUT /api/superadmin/rules/[companyId]
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ companyId: string }> }
+) {
+  const { authorized, user } = await verifySuperadmin();
+
+  if (!authorized || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+  }
+
+  try {
+    const body = await request.json();
+    const { companyId } = await params;
+
+    // Validar con Zod
+    const validated = BusinessRulesConfigSchema.parse({
+      ...body,
+      updated_at: new Date().toISOString(),
+      updated_by: user.email
+    });
+
+    const supabase = await createServerClient();
+
+    // Obtener regla actual para backup
+    const { data: current } = await supabase
+      .from('business_rules')
+      .select('rules, version')
+      .eq('company_id', companyId)
+      .eq('is_active', true)
+      .single();
+
+    // Desactivar regla actual
+    if (current) {
+      await supabase
+        .from('business_rules')
+        .update({ is_active: false })
+        .eq('company_id', companyId)
+        .eq('is_active', true);
+    }
+
+    // Insertar nueva versión
+    const metadata = await getRequestMetadata();
+    const { data: newRule, error } = await supabase
+      .from('business_rules')
+      .insert({
+        company_id: companyId,
+        rules: validated,
+        version: (current?.version || 0) + 1,
+        is_active: true,
+        updated_by: user.id,
+        previous_version: current?.rules || null
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Log adicional en Pino
+    logger.info({
+      companyId,
+      version: newRule.version,
+      changedBy: user.email,
+      ip: metadata.ip
+    }, 'Business rules updated');
+
+    // Invalidar caché
+    invalidateRulesCache(companyId);
+
+    return NextResponse.json(newRule);
+
+  } catch (error) {
+    logger.error({ error, companyId: (await params).companyId }, 'Error updating business rules');
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Invalid rules' },
+      { status: 400 }
+    );
+  }
+}
