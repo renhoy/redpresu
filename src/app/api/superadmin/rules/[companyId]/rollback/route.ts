@@ -32,14 +32,21 @@ export async function POST(
   }
 
   const { companyId } = await params;
+  const isGlobal = companyId === 'global';
 
-  // Obtener versión actual
-  const { data: current } = await supabase
+  // Construir query para obtener versión actual
+  const currentQuery = supabase
     .from('business_rules')
     .select('previous_version, version')
-    .eq('company_id', companyId)
-    .eq('is_active', true)
-    .single();
+    .eq('is_active', true);
+
+  if (isGlobal) {
+    currentQuery.is('company_id', null);
+  } else {
+    currentQuery.eq('company_id', companyId);
+  }
+
+  const { data: current } = await currentQuery.single();
 
   if (!current?.previous_version) {
     return NextResponse.json(
@@ -49,17 +56,24 @@ export async function POST(
   }
 
   // Desactivar actual
-  await supabase
+  const deactivateQuery = supabase
     .from('business_rules')
     .update({ is_active: false })
-    .eq('company_id', companyId)
     .eq('is_active', true);
+
+  if (isGlobal) {
+    deactivateQuery.is('company_id', null);
+  } else {
+    deactivateQuery.eq('company_id', companyId);
+  }
+
+  await deactivateQuery;
 
   // Restaurar anterior
   const { data: restored, error } = await supabase
     .from('business_rules')
     .insert({
-      company_id: companyId,
+      company_id: isGlobal ? null : parseInt(companyId),
       rules: current.previous_version,
       version: current.version + 1,
       is_active: true,
@@ -73,12 +87,12 @@ export async function POST(
   }
 
   logger.info({
-    companyId,
+    companyId: isGlobal ? 'global' : companyId,
     version: restored.version,
     action: 'rollback'
   }, 'Business rules rolled back');
 
-  invalidateRulesCache(companyId);
+  invalidateRulesCache(isGlobal ? null : companyId);
 
   return NextResponse.json({ message: 'Rollback successful', data: restored });
 }

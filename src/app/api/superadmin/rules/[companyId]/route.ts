@@ -45,6 +45,7 @@ async function getRequestMetadata() {
 }
 
 // GET /api/superadmin/rules/[companyId]
+// companyId puede ser 'global' para reglas que aplican a todas las empresas
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ companyId: string }> }
@@ -58,18 +59,27 @@ export async function GET(
   const { companyId } = await params;
   const supabase = supabaseAdmin;
 
-  const { data, error } = await supabase
+  // Si es 'global', buscar reglas con company_id IS NULL
+  const isGlobal = companyId === 'global';
+
+  const query = supabase
     .from('business_rules')
     .select('*')
-    .eq('company_id', companyId)
-    .eq('is_active', true)
-    .single();
+    .eq('is_active', true);
+
+  if (isGlobal) {
+    query.is('company_id', null);
+  } else {
+    query.eq('company_id', companyId);
+  }
+
+  const { data, error } = await query.single();
 
   if (error) {
     // Si no existe, retornar config por defecto
     if (error.code === 'PGRST116') {
       return NextResponse.json({
-        company_id: companyId,
+        company_id: isGlobal ? null : companyId,
         rules: {
           version: 1,
           updated_at: new Date().toISOString(),
@@ -85,6 +95,7 @@ export async function GET(
 }
 
 // PUT /api/superadmin/rules/[companyId]
+// companyId puede ser 'global' para reglas que aplican a todas las empresas
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ companyId: string }> }
@@ -107,22 +118,36 @@ export async function PUT(
     });
 
     const supabase = supabaseAdmin;
+    const isGlobal = companyId === 'global';
 
-    // Obtener regla actual para backup
-    const { data: current } = await supabase
+    // Construir query para obtener regla actual
+    const currentQuery = supabase
       .from('business_rules')
       .select('rules, version')
-      .eq('company_id', companyId)
-      .eq('is_active', true)
-      .single();
+      .eq('is_active', true);
+
+    if (isGlobal) {
+      currentQuery.is('company_id', null);
+    } else {
+      currentQuery.eq('company_id', companyId);
+    }
+
+    const { data: current } = await currentQuery.single();
 
     // Desactivar regla actual
     if (current) {
-      await supabase
+      const deactivateQuery = supabase
         .from('business_rules')
         .update({ is_active: false })
-        .eq('company_id', companyId)
         .eq('is_active', true);
+
+      if (isGlobal) {
+        deactivateQuery.is('company_id', null);
+      } else {
+        deactivateQuery.eq('company_id', companyId);
+      }
+
+      await deactivateQuery;
     }
 
     // Insertar nueva versión
@@ -130,7 +155,7 @@ export async function PUT(
     const { data: newRule, error } = await supabase
       .from('business_rules')
       .insert({
-        company_id: companyId,
+        company_id: isGlobal ? null : parseInt(companyId),
         rules: validated,
         version: (current?.version || 0) + 1,
         is_active: true,
@@ -144,14 +169,14 @@ export async function PUT(
 
     // Log adicional en Pino
     logger.info({
-      companyId,
+      companyId: isGlobal ? 'global' : companyId,
       version: newRule.version,
       changedBy: user.email,
       ip: metadata.ip
     }, 'Business rules updated');
 
-    // Invalidar caché
-    invalidateRulesCache(companyId);
+    // Invalidar caché (si es global, invalida TODA la caché)
+    invalidateRulesCache(isGlobal ? null : companyId);
 
     return NextResponse.json(newRule);
 

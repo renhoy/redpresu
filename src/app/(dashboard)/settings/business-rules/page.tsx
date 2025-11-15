@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Shield, FileText, History, BookOpen } from 'lucide-react';
+import { Shield, FileText, History, BookOpen, Globe } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Card,
@@ -10,14 +10,28 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import { CompanySelector } from '@/components/settings/company-selector';
 import { RulesEditor } from '@/components/settings/rules-editor';
 import { AuditLog } from '@/components/settings/audit-log';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
+type ScopeType = 'global' | 'specific';
+
 export default function BusinessRulesPage() {
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
+  const [scope, setScope] = useState<ScopeType>('global'); // Por defecto: todas las empresas
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>('global');
+
+  const handleScopeChange = (newScope: ScopeType) => {
+    setScope(newScope);
+    if (newScope === 'global') {
+      setSelectedCompanyId('global');
+    } else {
+      setSelectedCompanyId(''); // Reset cuando cambia a específica
+    }
+  };
 
   return (
     <div className="min-h-screen bg-lime-50">
@@ -33,27 +47,72 @@ export default function BusinessRulesPage() {
           </p>
         </div>
 
-        {/* Card: Seleccionar Empresa */}
+        {/* Card: Seleccionar Alcance */}
         <Card className="mb-6 bg-lime-100">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-lime-600" />
-              1. Seleccionar Empresa
+              1. Seleccionar Alcance
             </CardTitle>
             <CardDescription>
-              Selecciona la empresa para gestionar sus reglas de negocio
+              Define si las reglas aplican a todas las empresas o a una específica
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <CompanySelector
-              selectedCompanyId={selectedCompanyId}
-              onCompanySelect={setSelectedCompanyId}
-            />
+          <CardContent className="space-y-6">
+            {/* Radio Group: Global vs Específica */}
+            <RadioGroup
+              value={scope}
+              onValueChange={(value) => handleScopeChange(value as ScopeType)}
+              className="space-y-3"
+            >
+              <div className="flex items-center space-x-3 p-4 border rounded-lg bg-white hover:bg-lime-50 transition-colors">
+                <RadioGroupItem value="global" id="scope-global" />
+                <Label htmlFor="scope-global" className="flex-1 cursor-pointer">
+                  <div className="flex items-center gap-2">
+                    <Globe className="h-5 w-5 text-lime-600" />
+                    <div>
+                      <p className="font-semibold">Todas las empresas</p>
+                      <p className="text-sm text-muted-foreground">
+                        Reglas globales que se aplican a todas las empresas del sistema
+                      </p>
+                    </div>
+                  </div>
+                </Label>
+              </div>
+
+              <div className="flex items-center space-x-3 p-4 border rounded-lg bg-white hover:bg-lime-50 transition-colors">
+                <RadioGroupItem value="specific" id="scope-specific" />
+                <Label htmlFor="scope-specific" className="flex-1 cursor-pointer">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-lime-600" />
+                    <div>
+                      <p className="font-semibold">Empresa específica</p>
+                      <p className="text-sm text-muted-foreground">
+                        Reglas personalizadas para una empresa en particular
+                      </p>
+                    </div>
+                  </div>
+                </Label>
+              </div>
+            </RadioGroup>
+
+            {/* Tabla de empresas - solo si scope es 'specific' */}
+            {scope === 'specific' && (
+              <div className="mt-6">
+                <Label className="mb-3 block text-base font-semibold">
+                  Selecciona la empresa:
+                </Label>
+                <CompanySelector
+                  selectedCompanyId={selectedCompanyId}
+                  onCompanySelect={setSelectedCompanyId}
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Mensaje si no hay empresa seleccionada */}
-        {!selectedCompanyId ? (
+        {/* Mensaje si scope es específica pero no hay empresa seleccionada */}
+        {scope === 'specific' && !selectedCompanyId ? (
           <Card className="border-dashed border-2">
             <CardContent className="py-12 text-center text-muted-foreground">
               <Shield className="h-12 w-12 mx-auto mb-4 opacity-30" />
@@ -71,9 +130,16 @@ export default function BusinessRulesPage() {
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5 text-lime-600" />
                   2. Gestionar Reglas
+                  {scope === 'global' && (
+                    <span className="ml-2 text-xs font-normal px-2 py-1 bg-lime-600 text-white rounded-full">
+                      Global
+                    </span>
+                  )}
                 </CardTitle>
                 <CardDescription>
-                  Edita las reglas o revisa el historial de cambios
+                  {scope === 'global'
+                    ? 'Editando reglas que se aplican a TODAS las empresas del sistema'
+                    : 'Editando reglas personalizadas para esta empresa específica'}
                 </CardDescription>
               </CardHeader>
               <CardContent>

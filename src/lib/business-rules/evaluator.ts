@@ -243,6 +243,8 @@ async function scheduleAction(
 
 /**
  * Obtiene reglas con caché
+ * Busca tanto reglas específicas de la empresa como reglas globales
+ * Prioridad: reglas específicas > reglas globales
  */
 async function getRulesForCompany(companyId: string): Promise<Rule[]> {
   // Check cache
@@ -252,32 +254,68 @@ async function getRulesForCompany(companyId: string): Promise<Rule[]> {
   }
 
   const supabase = supabaseAdmin;
+
+  // Buscar reglas específicas de la empresa Y reglas globales
   const { data, error } = await supabase
     .from('business_rules')
-    .select('rules')
-    .eq('company_id', companyId)
-    .eq('is_active', true)
-    .single();
+    .select('rules, company_id')
+    .or(`company_id.eq.${companyId},company_id.is.null`)
+    .eq('is_active', true);
 
-  if (error || !data) {
-    logger.warn({ error, companyId }, 'No rules found for company');
+  if (error) {
+    logger.error({ error, companyId }, 'Error fetching business rules');
     return [];
   }
 
-  const rules = data.rules.rules as Rule[];
+  if (!data || data.length === 0) {
+    logger.info({ companyId }, 'No rules found for company');
+    return [];
+  }
+
+  // Combinar reglas de todas las fuentes
+  // Prioridad: reglas específicas primero, luego globales
+  const allRules: Rule[] = [];
+
+  // Primero agregar reglas específicas (company_id = companyId)
+  const specificRules = data.find(r => r.company_id === parseInt(companyId));
+  if (specificRules?.rules?.rules) {
+    allRules.push(...(specificRules.rules.rules as Rule[]).map(r => ({
+      ...r,
+      priority: r.priority || 10 // Asegurar que tienen prioridad
+    })));
+  }
+
+  // Luego agregar reglas globales (company_id IS NULL)
+  const globalRules = data.find(r => r.company_id === null);
+  if (globalRules?.rules?.rules) {
+    allRules.push(...(globalRules.rules.rules as Rule[]).map(r => ({
+      ...r,
+      // Las reglas globales tienen prioridad más baja (+100)
+      priority: (r.priority || 10) + 100
+    })));
+  }
 
   // Cachear
-  rulesCache.set(companyId, { rules, timestamp: Date.now() });
+  rulesCache.set(companyId, { rules: allRules, timestamp: Date.now() });
 
-  return rules;
+  return allRules;
 }
 
 /**
  * Invalida caché cuando se actualizan reglas
+ * Si companyId es 'global' o null, invalida toda la caché
+ * porque las reglas globales afectan a todas las empresas
  */
-export function invalidateRulesCache(companyId: string): void {
-  rulesCache.delete(companyId);
-  logger.info({ companyId }, 'Business rules cache invalidated');
+export function invalidateRulesCache(companyId: string | null): void {
+  if (!companyId || companyId === 'global' || companyId === 'null') {
+    // Reglas globales cambiaron: invalidar TODA la caché
+    rulesCache.clear();
+    logger.info({}, 'All business rules cache invalidated (global rules changed)');
+  } else {
+    // Solo invalidar caché de esta empresa
+    rulesCache.delete(companyId);
+    logger.info({ companyId }, 'Business rules cache invalidated');
+  }
 }
 
 /**

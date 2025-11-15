@@ -34,12 +34,22 @@ export async function GET(
   const limit = parseInt(searchParams.get('limit') || '50');
   const offset = parseInt(searchParams.get('offset') || '0');
 
-  const { data, error, count } = await supabase
+  const isGlobal = companyId === 'global';
+
+  // Construir query con filtro apropiado
+  const query = supabase
     .from('rules_audit_log')
     .select('*', { count: 'exact' })
-    .eq('company_id', companyId)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
+
+  if (isGlobal) {
+    query.is('company_id', null);
+  } else {
+    query.eq('company_id', companyId);
+  }
+
+  const { data, error, count } = await query;
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
