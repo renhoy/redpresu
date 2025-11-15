@@ -137,7 +137,7 @@ export async function createServerComponentClient() {
 export async function createRouteHandlerClient() {
   const cookieStore = await cookies()
 
-  return createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  const client = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     ...supabaseConfig,
     cookies: {
       get(name: string) {
@@ -151,6 +151,19 @@ export async function createRouteHandlerClient() {
       }
     }
   })
+
+  // CRÍTICO: Restaurar sesión desde cookies manuales si existen
+  const accessToken = cookieStore.get('sb-access-token')?.value
+  const refreshToken = cookieStore.get('sb-refresh-token')?.value
+
+  if (accessToken && refreshToken) {
+    await client.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken
+    })
+  }
+
+  return client
 }
 
 /**
