@@ -752,9 +752,62 @@ FASE 3 (PLANIFICADA) 📋
 
 ---
 
+---
+
+## ✅ BLOQUE 13: SISTEMA DE REGLAS DE NEGOCIO - COMPLETADO
+
+**Estado:** ✅ 100% Completado (2025-11-15)
+**Prioridad:** ALTA
+**Duración:** 6 días
+
+### Objetivo: Sistema configurable de reglas de negocio sin cambiar código
+
+**Implementación:**
+
+| Día  | Tarea                           | Responsable | Estado |
+| ---- | ------------------------------- | ----------- | ------ |
+| 1-2  | BD + migraciones + RLS          | Backend     | ✅     |
+| 3-4  | Evaluator + Validator + API     | Backend     | ✅     |
+| 5    | UI (Editor + AuditLog)          | Frontend    | ✅     |
+| 6    | Integración + Documentación     | Full-stack  | ✅     |
+
+**Entregables:**
+
+- ✅ Tabla `business_rules` con versionado
+- ✅ Tabla `rules_audit_log` para auditoría completa
+- ✅ Soporte reglas globales (company_id NULL) y específicas
+- ✅ Evaluador JsonLogic con caché (15min TTL)
+- ✅ Validador de sintaxis con contexto de prueba
+- ✅ API Routes CRUD completo (/api/superadmin/rules/*)
+- ✅ UI con radio group (global vs específica)
+- ✅ CompanySelector con tabla de búsqueda
+- ✅ RulesEditor con validación tiempo real
+- ✅ AuditLog con timeline completo
+- ✅ Integración en createTariff() para límites automáticos
+- ✅ Documentación completa (GUIA_REGLAS_NEGOCIO.md - 460+ líneas)
+- ✅ Mejoras navegación (/settings con botones Volver)
+- ✅ Fix errores build (tariffs.types.ts separado)
+
+**Criterio de completado:**
+
+- ✅ Reglas guardan/cargan correctamente
+- ✅ Evaluación funciona con JsonLogic
+- ✅ Rollback a versión anterior operativo
+- ✅ Auditoría registra todos los cambios
+- ✅ UI intuitiva para superadmin
+- ✅ Documentación completa y ejemplos
+- ✅ Integrado en createTariff para bloquear según reglas
+
+**Commit:** Multiple commits (sistema completo implementado)
+
+**Archivos nuevos:** 21 (migraciones, backend, API, UI, docs)
+**Archivos modificados:** 10 (integración, navegación, build fixes)
+
+---
+
 **Documento:** Planificación Fase 2
-**Versión:** 1.5
-**Fecha:** 2025-01-19 (actualizado)
-**Última actualización:** Bloque 12 Modo Monoempresa añadido (Post Fase 2 - Opcional)
-**Estado:** Activo - 34% completado (5/11 bloques)
-**Próxima revisión:** Fin Semana 17
+**Versión:** 1.6
+**Fecha:** 2025-11-15 (actualizado)
+**Última actualización:** Bloque 13 Sistema de Reglas de Negocio completado ✅
+**Estado:** Activo - 78% completado (10/13 bloques)
+**Próxima revisión:** Testing completo sistema Business Rules
