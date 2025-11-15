@@ -5,12 +5,12 @@
 
 import type { Rule } from '@/lib/types/business-rules';
 
-// Dynamic import de json-logic-js para evitar problemas con Turbopack
+// Lazy load de json-logic-js usando require() para evitar build-time bundling
 let jsonLogic: any;
 
-async function getJsonLogic() {
+function getJsonLogic() {
   if (!jsonLogic) {
-    jsonLogic = await import('json-logic-js');
+    jsonLogic = require('json-logic-js');
   }
   return jsonLogic;
 }
@@ -31,12 +31,12 @@ export interface RuleContext {
 /**
  * Validar reglas en dry-run (sin aplicar)
  */
-export async function validateRules(
+export function validateRules(
   rules: Rule[],
   testContext: RuleContext
-): Promise<{ valid: boolean; matchedRule?: Rule; error?: string }> {
+): { valid: boolean; matchedRule?: Rule; error?: string } {
   try {
-    const logic = await getJsonLogic();
+    const logic = getJsonLogic();
 
     for (const rule of rules) {
       if (!rule.active) continue;

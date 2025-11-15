@@ -8,12 +8,12 @@ import { logger } from '@/lib/logger';
 import { getEmailService } from '@/lib/services/email';
 import type { Rule, Action } from '@/lib/types/business-rules';
 
-// Dynamic import de json-logic-js para evitar problemas con Turbopack
+// Lazy load de json-logic-js usando require() para evitar build-time bundling
 let jsonLogic: any;
 
-async function getJsonLogic() {
+function getJsonLogic() {
   if (!jsonLogic) {
-    jsonLogic = await import('json-logic-js');
+    jsonLogic = require('json-logic-js');
   }
   return jsonLogic;
 }
@@ -61,7 +61,7 @@ export async function evaluateRules(
       .filter(rule => rule.active)
       .sort((a, b) => a.priority - b.priority);
 
-    const logic = await getJsonLogic();
+    const logic = getJsonLogic();
 
     for (const rule of sortedRules) {
       const matches = logic.apply(rule.condition, context);

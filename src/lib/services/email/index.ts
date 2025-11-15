@@ -7,13 +7,13 @@ import { logger } from '@/lib/logger';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-// Dynamic import de Handlebars para evitar problemas con Turbopack
+// Lazy load de Handlebars usando require() para evitar build-time bundling
 type HandlebarsTemplateDelegate = (context: any) => string;
 let Handlebars: any;
 
-async function getHandlebars() {
+function getHandlebars() {
   if (!Handlebars) {
-    Handlebars = (await import('handlebars')).default;
+    Handlebars = require('handlebars');
   }
   return Handlebars;
 }
@@ -56,7 +56,7 @@ export class EmailService {
     data: Record<string, any>
   ): Promise<EmailResult> {
     try {
-      const template = await this.getTemplate(templateId);
+      const template = this.getTemplate(templateId);
       const html = template(data);
 
       // Generar texto plano simple desde HTML
@@ -81,7 +81,7 @@ export class EmailService {
   /**
    * Obtiene y cachea templates
    */
-  private async getTemplate(templateId: string): Promise<HandlebarsTemplateDelegate> {
+  private getTemplate(templateId: string): HandlebarsTemplateDelegate {
     if (this.templatesCache.has(templateId)) {
       return this.templatesCache.get(templateId)!;
     }
@@ -93,7 +93,7 @@ export class EmailService {
     );
 
     const templateSource = readFileSync(templatePath, 'utf-8');
-    const hbs = await getHandlebars();
+    const hbs = getHandlebars();
     const template = hbs.compile(templateSource);
 
     this.templatesCache.set(templateId, template);
