@@ -7,6 +7,12 @@ import type { NextConfig } from "next";
  */
 const nextConfig: NextConfig = {
   /**
+   * EXTERNAL PACKAGES
+   * Paquetes que deben ejecutarse solo en el servidor
+   */
+  serverComponentsExternalPackages: ['handlebars', 'json-logic-js'],
+
+  /**
    * SECURITY HEADERS
    * Configuración CSP adaptada para desarrollo con Supabase local
    */
