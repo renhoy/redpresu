@@ -5,7 +5,7 @@
 
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
-import { invalidateRulesCache } from '@/lib/business-rules/evaluator';
+import { invalidateRulesCache } from '@/lib/business-rules/evaluator.server';
 import { logger } from '@/lib/logger';
 
 export async function POST(

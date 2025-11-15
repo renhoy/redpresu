@@ -6,7 +6,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
 import { BusinessRulesConfigSchema } from '@/lib/types/business-rules';
-import { invalidateRulesCache } from '@/lib/business-rules/evaluator';
+import { invalidateRulesCache } from '@/lib/business-rules/evaluator.server';
 import { logger } from '@/lib/logger';
 import { headers } from 'next/headers';
 

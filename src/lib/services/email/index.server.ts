@@ -3,20 +3,10 @@
 // Abstracción para cambiar de proveedor sin modificar código
 // ============================================================
 
+import Handlebars from 'handlebars';
 import { logger } from '@/lib/logger';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-
-// Lazy load de Handlebars usando require() para evitar build-time bundling
-type HandlebarsTemplateDelegate = (context: any) => string;
-let Handlebars: any;
-
-function getHandlebars() {
-  if (!Handlebars) {
-    Handlebars = require('handlebars');
-  }
-  return Handlebars;
-}
 
 // Interfaz agnóstica
 export interface EmailProvider {
@@ -41,7 +31,7 @@ export interface EmailResult {
 // Factory para cambiar de proveedor fácilmente
 export class EmailService {
   private provider: EmailProvider;
-  private templatesCache: Map<string, HandlebarsTemplateDelegate> = new Map();
+  private templatesCache: Map<string, Handlebars.TemplateDelegate> = new Map();
 
   constructor(provider: EmailProvider) {
     this.provider = provider;
@@ -81,7 +71,7 @@ export class EmailService {
   /**
    * Obtiene y cachea templates
    */
-  private getTemplate(templateId: string): HandlebarsTemplateDelegate {
+  private getTemplate(templateId: string): Handlebars.TemplateDelegate {
     if (this.templatesCache.has(templateId)) {
       return this.templatesCache.get(templateId)!;
     }
@@ -93,8 +83,7 @@ export class EmailService {
     );
 
     const templateSource = readFileSync(templatePath, 'utf-8');
-    const hbs = getHandlebars();
-    const template = hbs.compile(templateSource);
+    const template = Handlebars.compile(templateSource);
 
     this.templatesCache.set(templateId, template);
     return template;
@@ -132,7 +121,7 @@ export function getEmailService(): EmailService {
 
     switch (provider) {
       case 'resend':
-        const { ResendProvider } = require('./providers/resend');
+        const { ResendProvider } = require('./providers/resend.server');
         emailServiceInstance = new EmailService(new ResendProvider());
         break;
       default:

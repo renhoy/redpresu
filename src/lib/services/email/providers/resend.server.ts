@@ -3,36 +3,24 @@
 // Implementación del EmailProvider para Resend
 // ============================================================
 
-import type { EmailProvider, EmailParams, EmailResult } from '../index';
-
-// Lazy load de Resend usando require() para evitar build-time bundling
-type ResendType = any;
+import { Resend } from 'resend';
+import type { EmailProvider, EmailParams, EmailResult } from '../index.server';
 
 export class ResendProvider implements EmailProvider {
-  private client: ResendType;
+  private client: Resend;
   private defaultFrom: string;
-  private initialized: boolean = false;
 
   constructor() {
-    this.defaultFrom = process.env.EMAIL_FROM || 'noreply@redpresu.com';
-  }
-
-  private initialize() {
-    if (this.initialized) return;
-
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
       throw new Error('RESEND_API_KEY is not set');
     }
 
-    const { Resend } = require('resend');
     this.client = new Resend(apiKey);
-    this.initialized = true;
+    this.defaultFrom = process.env.EMAIL_FROM || 'noreply@redpresu.com';
   }
 
   async send(params: EmailParams): Promise<EmailResult> {
-    this.initialize();
-
     try {
       const { data, error } = await this.client.emails.send({
         from: params.from || this.defaultFrom,

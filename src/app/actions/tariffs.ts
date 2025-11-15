@@ -11,7 +11,7 @@ import { CSV2JSONConverter, detectIVAsPresentes } from '@/lib/validators'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 import { isValidNIF, getNIFErrorMessage } from '@/lib/helpers/nif-validator'
-import { evaluateRules, type RuleContext } from '@/lib/business-rules/evaluator'
+import { evaluateRules, type RuleContext } from '@/lib/business-rules/evaluator.server'
 
 type Tariff = Database['public']['Tables']['tariffs']['Row']
 
