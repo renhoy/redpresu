@@ -157,9 +157,13 @@ export function RulesEditor({ selectedCompanyId, onCompanyChange }: RulesEditorP
         body: JSON.stringify(parsed),
       });
 
-      if (!res.ok) throw new Error('Error al guardar reglas');
-
       const data = await res.json();
+
+      if (!res.ok) {
+        // Mostrar el error específico del servidor
+        throw new Error(data.error || `Error ${res.status}: ${res.statusText}`);
+      }
+
       const rulesJson = JSON.stringify(data.rules, null, 2);
       setRules(rulesJson);
       setOriginalRules(rulesJson);
@@ -167,6 +171,7 @@ export function RulesEditor({ selectedCompanyId, onCompanyChange }: RulesEditorP
 
       toast.success(`✅ Reglas guardadas - Versión ${data.version}`);
     } catch (error) {
+      console.error('Save error:', error);
       toast.error(
         `Error al guardar: ${error instanceof Error ? error.message : 'Error desconocido'}`
       );

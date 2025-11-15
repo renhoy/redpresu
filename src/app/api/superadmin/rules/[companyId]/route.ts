@@ -182,9 +182,24 @@ export async function PUT(
     return NextResponse.json(newRule);
 
   } catch (error) {
-    logger.error({ error, companyId: (await params).companyId }, 'Error updating business rules');
+    const { companyId } = await params;
+    logger.error({
+      error: error instanceof Error ? {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      } : error,
+      companyId
+    }, 'Error updating business rules');
+
+    // Mensaje de error más descriptivo
+    let errorMessage = 'Error al guardar reglas';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Invalid rules' },
+      { error: errorMessage },
       { status: 400 }
     );
   }
