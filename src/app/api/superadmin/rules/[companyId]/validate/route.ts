@@ -4,7 +4,7 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
-import { validateRules } from '@/lib/business-rules/evaluator';
+import { validateRules } from '@/lib/business-rules/validator';
 import { BusinessRulesConfigSchema } from '@/lib/types/business-rules';
 import { supabaseAdmin } from '@/lib/supabase/server';
 

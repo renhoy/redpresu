@@ -35,9 +35,6 @@ export interface EvaluationResult {
   matchedRule?: Rule;
 }
 
-// Re-exportar validateRules desde validator.ts para compatibilidad
-export { validateRules } from './validator';
-
 /**
  * Evalúa todas las reglas de un company y retorna la acción resultante
  */
