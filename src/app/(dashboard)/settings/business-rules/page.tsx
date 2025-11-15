@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Shield, FileText, History, BookOpen, Globe, ArrowLeft } from 'lucide-react';
+import { Shield, FileText, History, BookOpen, Globe, ArrowLeft, List } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Card,
@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { CompanySelector } from '@/components/settings/company-selector';
 import { RulesEditor } from '@/components/settings/rules-editor';
 import { AuditLog } from '@/components/settings/audit-log';
+import { RulesList } from '@/components/settings/rules-list';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
@@ -152,10 +153,14 @@ export default function BusinessRulesPage() {
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="editor" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 max-w-md">
+                  <TabsList className="grid w-full grid-cols-3 max-w-2xl">
                     <TabsTrigger value="editor" className="flex items-center gap-2">
                       <FileText className="h-4 w-4" />
                       Editor
+                    </TabsTrigger>
+                    <TabsTrigger value="list" className="flex items-center gap-2">
+                      <List className="h-4 w-4" />
+                      Lista
                     </TabsTrigger>
                     <TabsTrigger value="audit" className="flex items-center gap-2">
                       <History className="h-4 w-4" />
@@ -167,6 +172,12 @@ export default function BusinessRulesPage() {
                     <RulesEditor
                       selectedCompanyId={selectedCompanyId}
                       onCompanyChange={setSelectedCompanyId}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="list" className="mt-6">
+                    <RulesList
+                      selectedCompanyId={selectedCompanyId}
                     />
                   </TabsContent>
 
