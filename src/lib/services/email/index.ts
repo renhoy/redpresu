@@ -1,5 +1,3 @@
-'use server';
-
 // ============================================================
 // EmailService Agnóstico - Redpresu
 // Abstracción para cambiar de proveedor sin modificar código
