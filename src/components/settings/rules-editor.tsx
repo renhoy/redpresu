@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Loader2, Save, Undo2, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Loader2, Save, Undo2, CheckCircle2, AlertTriangle, FileText } from 'lucide-react';
 
 interface RulesEditorProps {
   selectedCompanyId: string;
@@ -53,6 +53,38 @@ export function RulesEditor({ selectedCompanyId, onCompanyChange }: RulesEditorP
     setHasChanges(rules !== originalRules);
   }, [rules, originalRules]);
 
+  // Cargar ejemplo
+  const handleLoadExample = () => {
+    const example = {
+      version: 1,
+      updated_at: new Date().toISOString(),
+      updated_by: 'admin@example.com',
+      rules: [
+        {
+          id: 'limit-tariffs-pro-plan',
+          name: 'Limitar tarifas en plan PRO',
+          description: 'Plan PRO: máximo 50 tarifas',
+          active: true,
+          priority: 10,
+          condition: {
+            and: [
+              { '==': [{ var: 'plan' }, 'PRO'] },
+              { '>=': [{ var: 'tariffs_count' }, 50] }
+            ]
+          },
+          action: {
+            allow: false,
+            message: 'Has alcanzado el límite de 50 tarifas para tu plan PRO. Contacta con soporte para ampliar tu plan.'
+          }
+        }
+      ]
+    };
+
+    const exampleJson = JSON.stringify(example, null, 2);
+    setRules(exampleJson);
+    toast.info('📄 Ejemplo cargado. Puedes editarlo y guardarlo.');
+  };
+
   // Validar JSON en tiempo real
   const handleRulesChange = (value: string) => {
     setRules(value);
@@ -93,9 +125,14 @@ export function RulesEditor({ selectedCompanyId, onCompanyChange }: RulesEditorP
         setValidationStatus('invalid');
       }
     } catch (error) {
-      toast.error(
-        `Error de validación: ${error instanceof Error ? error.message : 'JSON inválido'}`
-      );
+      console.error('Validation error:', error);
+      const errorMessage = error instanceof SyntaxError
+        ? `Error de sintaxis JSON: ${error.message}`
+        : error instanceof Error
+          ? `Error: ${error.message}`
+          : 'JSON inválido';
+
+      toast.error(`❌ ${errorMessage}`);
       setValidationStatus('invalid');
     } finally {
       setLoading(false);
@@ -205,7 +242,16 @@ export function RulesEditor({ selectedCompanyId, onCompanyChange }: RulesEditorP
           </div>
 
           {/* Botones de acción */}
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
+            <Button
+              onClick={handleLoadExample}
+              variant="secondary"
+              disabled={loading}
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              Cargar Ejemplo
+            </Button>
+
             <Button
               onClick={handleValidate}
               variant="outline"
