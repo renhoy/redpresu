@@ -5,21 +5,21 @@
 
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
+import { createRouteHandlerClient } from '@/lib/supabase/helpers';
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ companyId: string }> }
 ) {
-  const supabase = supabaseAdmin;
-
-  // Verificar superadmin
-  const { data: { user } } = await supabase.auth.getUser();
+  // Verificar superadmin con cliente autenticado
+  const supabaseAuth = await createRouteHandlerClient();
+  const { data: { user } } = await supabaseAuth.auth.getUser();
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
 
-  const { data: userData } = await supabase
+  const { data: userData } = await supabaseAuth
     .from('users')
     .select('role')
     .eq('id', user.id)
@@ -35,6 +35,9 @@ export async function GET(
   const offset = parseInt(searchParams.get('offset') || '0');
 
   const isGlobal = companyId === 'global';
+
+  // Usar admin client para queries de solo lectura
+  const supabase = supabaseAdmin;
 
   // Construir query con filtro apropiado
   const query = supabase

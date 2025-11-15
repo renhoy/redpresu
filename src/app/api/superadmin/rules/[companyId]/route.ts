@@ -5,6 +5,7 @@
 
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
+import { createRouteHandlerClient } from '@/lib/supabase/helpers';
 import { BusinessRulesConfigSchema } from '@/lib/types/business-rules';
 import { invalidateRulesCache } from '@/lib/business-rules/evaluator.server';
 import { logger } from '@/lib/logger';
@@ -14,7 +15,7 @@ import { headers } from 'next/headers';
  * Verifica que el usuario es superadmin
  */
 async function verifySuperadmin() {
-  const supabase = supabaseAdmin;
+  const supabase = await createRouteHandlerClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
@@ -57,7 +58,7 @@ export async function GET(
   }
 
   const { companyId } = await params;
-  const supabase = supabaseAdmin;
+  const supabase = supabaseAdmin; // Usar admin para queries de solo lectura
 
   // Si es 'global', buscar reglas con company_id IS NULL
   const isGlobal = companyId === 'global';

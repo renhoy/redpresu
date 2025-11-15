@@ -5,6 +5,7 @@
 
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
+import { createRouteHandlerClient } from '@/lib/supabase/helpers';
 import { invalidateRulesCache } from '@/lib/business-rules/evaluator.server';
 import { logger } from '@/lib/logger';
 
@@ -12,16 +13,15 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ companyId: string }> }
 ) {
-  const supabase = supabaseAdmin;
-
-  // Verificar superadmin
-  const { data: { user } } = await supabase.auth.getUser();
+  // Verificar superadmin con cliente autenticado
+  const supabaseAuth = await createRouteHandlerClient();
+  const { data: { user } } = await supabaseAuth.auth.getUser();
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
 
-  const { data: userData } = await supabase
+  const { data: userData } = await supabaseAuth
     .from('users')
     .select('role')
     .eq('id', user.id)
@@ -33,6 +33,9 @@ export async function POST(
 
   const { companyId } = await params;
   const isGlobal = companyId === 'global';
+
+  // Usar admin client para operaciones de base de datos
+  const supabase = supabaseAdmin;
 
   // Construir query para obtener versión actual
   const currentQuery = supabase
