@@ -3,10 +3,20 @@
 // Abstracción para cambiar de proveedor sin modificar código
 // ============================================================
 
-import Handlebars from 'handlebars';
 import { logger } from '@/lib/logger';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+
+// Dynamic import de Handlebars para evitar problemas con Turbopack
+type HandlebarsTemplateDelegate = (context: any) => string;
+let Handlebars: any;
+
+async function getHandlebars() {
+  if (!Handlebars) {
+    Handlebars = (await import('handlebars')).default;
+  }
+  return Handlebars;
+}
 
 // Interfaz agnóstica
 export interface EmailProvider {
@@ -46,7 +56,7 @@ export class EmailService {
     data: Record<string, any>
   ): Promise<EmailResult> {
     try {
-      const template = this.getTemplate(templateId);
+      const template = await this.getTemplate(templateId);
       const html = template(data);
 
       // Generar texto plano simple desde HTML
@@ -71,7 +81,7 @@ export class EmailService {
   /**
    * Obtiene y cachea templates
    */
-  private getTemplate(templateId: string): HandlebarsTemplateDelegate {
+  private async getTemplate(templateId: string): Promise<HandlebarsTemplateDelegate> {
     if (this.templatesCache.has(templateId)) {
       return this.templatesCache.get(templateId)!;
     }
@@ -83,7 +93,8 @@ export class EmailService {
     );
 
     const templateSource = readFileSync(templatePath, 'utf-8');
-    const template = Handlebars.compile(templateSource);
+    const hbs = await getHandlebars();
+    const template = hbs.compile(templateSource);
 
     this.templatesCache.set(templateId, template);
     return template;

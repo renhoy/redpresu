@@ -48,7 +48,7 @@ export async function POST(
       features_used: ['reports']
     };
 
-    const result = validateRules(validated.rules, testContext);
+    const result = await validateRules(validated.rules, testContext);
 
     return NextResponse.json({
       valid: result.valid,

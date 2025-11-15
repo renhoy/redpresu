@@ -3,11 +3,20 @@
 // Evalúa reglas usando JsonLogic y ejecuta acciones automáticas
 // ============================================================
 
-import * as jsonLogic from 'json-logic-js';
 import { supabaseAdmin } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 import { getEmailService } from '@/lib/services/email';
 import type { Rule, Action } from '@/lib/types/business-rules';
+
+// Dynamic import de json-logic-js para evitar problemas con Turbopack
+let jsonLogic: any;
+
+async function getJsonLogic() {
+  if (!jsonLogic) {
+    jsonLogic = await import('json-logic-js');
+  }
+  return jsonLogic;
+}
 
 // Caché in-memory con TTL
 const rulesCache = new Map<string, { rules: Rule[]; timestamp: number }>();
@@ -52,8 +61,10 @@ export async function evaluateRules(
       .filter(rule => rule.active)
       .sort((a, b) => a.priority - b.priority);
 
+    const logic = await getJsonLogic();
+
     for (const rule of sortedRules) {
-      const matches = jsonLogic.apply(rule.condition, context);
+      const matches = logic.apply(rule.condition, context);
 
       if (matches) {
         logger.info({

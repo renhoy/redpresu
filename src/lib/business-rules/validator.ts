@@ -3,8 +3,17 @@
 // Funciones de validación que pueden ejecutarse en cliente o servidor
 // ============================================================
 
-import * as jsonLogic from 'json-logic-js';
 import type { Rule } from '@/lib/types/business-rules';
+
+// Dynamic import de json-logic-js para evitar problemas con Turbopack
+let jsonLogic: any;
+
+async function getJsonLogic() {
+  if (!jsonLogic) {
+    jsonLogic = await import('json-logic-js');
+  }
+  return jsonLogic;
+}
 
 export interface RuleContext {
   plan: 'FREE' | 'PRO' | 'ENTERPRISE';
@@ -22,15 +31,17 @@ export interface RuleContext {
 /**
  * Validar reglas en dry-run (sin aplicar)
  */
-export function validateRules(
+export async function validateRules(
   rules: Rule[],
   testContext: RuleContext
-): { valid: boolean; matchedRule?: Rule; error?: string } {
+): Promise<{ valid: boolean; matchedRule?: Rule; error?: string }> {
   try {
+    const logic = await getJsonLogic();
+
     for (const rule of rules) {
       if (!rule.active) continue;
 
-      const matches = jsonLogic.apply(rule.condition, testContext);
+      const matches = logic.apply(rule.condition, testContext);
       if (matches) {
         return { valid: true, matchedRule: rule };
       }

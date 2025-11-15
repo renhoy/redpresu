@@ -3,24 +3,36 @@
 // Implementación del EmailProvider para Resend
 // ============================================================
 
-import { Resend } from 'resend';
 import type { EmailProvider, EmailParams, EmailResult } from '../index';
 
+// Dynamic import de Resend para evitar problemas con Turbopack
+type ResendType = any;
+
 export class ResendProvider implements EmailProvider {
-  private client: Resend;
+  private client: ResendType;
   private defaultFrom: string;
+  private initialized: boolean = false;
 
   constructor() {
+    this.defaultFrom = process.env.EMAIL_FROM || 'noreply@redpresu.com';
+  }
+
+  private async initialize() {
+    if (this.initialized) return;
+
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
       throw new Error('RESEND_API_KEY is not set');
     }
 
+    const { Resend } = await import('resend');
     this.client = new Resend(apiKey);
-    this.defaultFrom = process.env.EMAIL_FROM || 'noreply@redpresu.com';
+    this.initialized = true;
   }
 
   async send(params: EmailParams): Promise<EmailResult> {
+    await this.initialize();
+
     try {
       const { data, error } = await this.client.emails.send({
         from: params.from || this.defaultFrom,
