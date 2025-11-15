@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
    * EXTERNAL PACKAGES
    * Paquetes que deben ejecutarse solo en el servidor
    */
-  serverComponentsExternalPackages: ['handlebars', 'json-logic-js'],
+  serverExternalPackages: ['handlebars', 'json-logic-js'],
 
   /**
    * SECURITY HEADERS
