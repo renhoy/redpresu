@@ -643,8 +643,9 @@ import type { TariffFormData } from '@/app/actions/tariffs.types'
 
 **Documentación agregada:**
 - ✅ TESTING_BUSINESS_RULES.md (guía completa de testing)
+- ✅ PROMPT_CREAR_REGLAS.md (prompt template para generar reglas con Claude)
 
-**Commits totales:** 5
+**Commits totales:** 6
 - `feat(business-rules): mejorar validación y UX del editor`
 - `fix(business-rules): corregir autenticación en API routes`
 - `fix(auth): restaurar sesión en createRouteHandlerClient`
@@ -652,8 +653,8 @@ import type { TariffFormData } from '@/app/actions/tariffs.types'
 - `fix(business-rules): agregar credentials y logs a validación`
 
 **Archivos modificados:** 7
-**Nuevos archivos:** 1 (TESTING_BUSINESS_RULES.md)
-**Líneas de código:** ~100 líneas modificadas, 350+ líneas de documentación
+**Nuevos archivos:** 2 (TESTING_BUSINESS_RULES.md, PROMPT_CREAR_REGLAS.md)
+**Líneas de código:** ~100 líneas modificadas, 1,030+ líneas de documentación
 
 ---
 
@@ -661,15 +662,16 @@ import type { TariffFormData } from '@/app/actions/tariffs.types'
 
 **Duración total:** ~6 días
 **Líneas de código:** ~3,600 líneas nuevas
-**Archivos nuevos:** 22
+**Archivos nuevos:** 23
 **Archivos modificados:** 17
 **Migraciones BD:** 2
 **API Endpoints:** 4
 **Componentes UI:** 4
-**Documentación:** 3 archivos (810+ líneas)
-  - GUIA_REGLAS_NEGOCIO.md (460 líneas)
-  - CHANGELOG_BUSINESS_RULES.md (690 líneas)
-  - TESTING_BUSINESS_RULES.md (350 líneas)
+**Documentación:** 4 archivos (1,490+ líneas)
+  - GUIA_REGLAS_NEGOCIO.md (460 líneas) - Guía de usuario
+  - TESTING_BUSINESS_RULES.md (350 líneas) - Guía de testing
+  - PROMPT_CREAR_REGLAS.md (680 líneas) - Prompt template para Claude
+  - CHANGELOG_BUSINESS_RULES.md (690 líneas) - Historial completo
 **Testing:** Manual completo con 10 casos documentados
 **Estado:** ✅ 100% Funcional, documentado y testeado
 **Integración:** ✅ Listo para producción
