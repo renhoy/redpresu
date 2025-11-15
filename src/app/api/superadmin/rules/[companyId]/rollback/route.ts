@@ -92,7 +92,7 @@ export async function POST(
     action: 'rollback'
   }, 'Business rules rolled back');
 
-  invalidateRulesCache(isGlobal ? null : companyId);
+  await invalidateRulesCache(isGlobal ? null : companyId);
 
   return NextResponse.json({ message: 'Rollback successful', data: restored });
 }

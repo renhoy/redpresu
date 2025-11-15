@@ -35,6 +35,9 @@ export interface EvaluationResult {
   matchedRule?: Rule;
 }
 
+// Re-exportar validateRules desde validator.ts para compatibilidad
+export { validateRules } from './validator';
+
 /**
  * Evalúa todas las reglas de un company y retorna la acción resultante
  */
@@ -308,7 +311,7 @@ async function getRulesForCompany(companyId: string): Promise<Rule[]> {
  * Si companyId es 'global' o null, invalida toda la caché
  * porque las reglas globales afectan a todas las empresas
  */
-export function invalidateRulesCache(companyId: string | null): void {
+export async function invalidateRulesCache(companyId: string | null): Promise<void> {
   if (!companyId || companyId === 'global' || companyId === 'null') {
     // Reglas globales cambiaron: invalidar TODA la caché
     rulesCache.clear();
@@ -323,36 +326,11 @@ export function invalidateRulesCache(companyId: string | null): void {
 /**
  * Limpia caché expirado (llamar en cron si es necesario)
  */
-export function cleanExpiredCache(): void {
+export async function cleanExpiredCache(): Promise<void> {
   const now = Date.now();
   for (const [companyId, cached] of rulesCache.entries()) {
     if (now - cached.timestamp > CACHE_TTL) {
       rulesCache.delete(companyId);
     }
-  }
-}
-
-/**
- * Validar reglas en dry-run (sin aplicar)
- */
-export function validateRules(
-  rules: Rule[],
-  testContext: RuleContext
-): { valid: boolean; matchedRule?: Rule; error?: string } {
-  try {
-    for (const rule of rules) {
-      if (!rule.active) continue;
-
-      const matches = jsonLogic.apply(rule.condition, testContext);
-      if (matches) {
-        return { valid: true, matchedRule: rule };
-      }
-    }
-    return { valid: true };
-  } catch (error) {
-    return {
-      valid: false,
-      error: error instanceof Error ? error.message : 'Invalid rule syntax'
-    };
   }
 }

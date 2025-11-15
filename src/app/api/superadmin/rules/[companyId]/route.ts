@@ -176,7 +176,7 @@ export async function PUT(
     }, 'Business rules updated');
 
     // Invalidar caché (si es global, invalida TODA la caché)
-    invalidateRulesCache(isGlobal ? null : companyId);
+    await invalidateRulesCache(isGlobal ? null : companyId);
 
     return NextResponse.json(newRule);
 
