@@ -7,17 +7,19 @@ import { NextResponse } from 'next/server';
 import { validateRules } from '@/lib/business-rules/validator.server';
 import { BusinessRulesConfigSchema } from '@/lib/types/business-rules';
 import { createRouteHandlerClient } from '@/lib/supabase/helpers';
+import { logger } from '@/lib/logger';
 
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ companyId: string }> }
-) {
-  // Verificar superadmin
+/**
+ * Verifica que el usuario es superadmin
+ */
+async function verifySuperadmin() {
   const supabase = await createRouteHandlerClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  logger.info({ user: user?.id }, 'Verificando superadmin en validate');
+
   if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    return { authorized: false, user: null };
   }
 
   const { data: userData } = await supabase
@@ -26,7 +28,23 @@ export async function POST(
     .eq('id', user.id)
     .single();
 
-  if (userData?.role !== 'superadmin') {
+  logger.info({ userId: user.id, role: userData?.role }, 'Usuario verificado en validate');
+
+  return {
+    authorized: userData?.role === 'superadmin',
+    user
+  };
+}
+
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ companyId: string }> }
+) {
+  // Verificar superadmin
+  const { authorized, user } = await verifySuperadmin();
+
+  if (!authorized) {
+    logger.warn({ user: user?.id }, 'Intento de validación sin autorización');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
 

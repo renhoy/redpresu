@@ -31,7 +31,9 @@ export function RulesEditor({ selectedCompanyId, onCompanyChange }: RulesEditorP
     async function loadRules() {
       setLoading(true);
       try {
-        const res = await fetch(`/api/superadmin/rules/${selectedCompanyId}`);
+        const res = await fetch(`/api/superadmin/rules/${selectedCompanyId}`, {
+          credentials: 'include'
+        });
         if (!res.ok) throw new Error('Error al cargar reglas');
         const data = await res.json();
         const rulesJson = JSON.stringify(data.rules || data, null, 2);
@@ -108,12 +110,13 @@ export function RulesEditor({ selectedCompanyId, onCompanyChange }: RulesEditorP
       const res = await fetch(`/api/superadmin/rules/${selectedCompanyId}/validate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Asegurar que se envíen las cookies
         body: JSON.stringify(parsed),
       });
 
       const result = await res.json();
 
-      if (result.valid) {
+      if (res.ok && result.valid) {
         toast.success(
           result.matchedRule
             ? `✅ Reglas válidas. Regla coincidente: ${result.matchedRule.name}`
@@ -150,6 +153,7 @@ export function RulesEditor({ selectedCompanyId, onCompanyChange }: RulesEditorP
       const res = await fetch(`/api/superadmin/rules/${selectedCompanyId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(parsed),
       });
 
@@ -183,6 +187,7 @@ export function RulesEditor({ selectedCompanyId, onCompanyChange }: RulesEditorP
       setLoading(true);
       const res = await fetch(`/api/superadmin/rules/${selectedCompanyId}/rollback`, {
         method: 'POST',
+        credentials: 'include',
       });
 
       if (!res.ok) {
