@@ -6,7 +6,6 @@
 import * as jsonLogic from 'json-logic-js';
 import { supabaseAdmin } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
-import { getEmailService } from '@/lib/services/email/index.server';
 import type { Rule, Action } from '@/lib/types/business-rules';
 
 // Caché in-memory con TTL
@@ -160,6 +159,8 @@ async function sendRuleEmail(
     return;
   }
 
+  // Dynamic import para evitar bundling de dependencias server-only (handlebars, fs, etc)
+  const { getEmailService } = await import('@/lib/services/email/index.server');
   const emailService = getEmailService();
 
   await emailService.sendTemplate(templateId, issuer.email, {

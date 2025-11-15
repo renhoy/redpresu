@@ -3,10 +3,7 @@
 // Abstracción para cambiar de proveedor sin modificar código
 // ============================================================
 
-import Handlebars from 'handlebars';
 import { logger } from '@/lib/logger';
-import { readFileSync } from 'fs';
-import { join } from 'path';
 
 // Interfaz agnóstica
 export interface EmailProvider {
@@ -31,7 +28,7 @@ export interface EmailResult {
 // Factory para cambiar de proveedor fácilmente
 export class EmailService {
   private provider: EmailProvider;
-  private templatesCache: Map<string, Handlebars.TemplateDelegate> = new Map();
+  private templatesCache: Map<string, any> = new Map();
 
   constructor(provider: EmailProvider) {
     this.provider = provider;
@@ -71,10 +68,18 @@ export class EmailService {
   /**
    * Obtiene y cachea templates
    */
-  private getTemplate(templateId: string): Handlebars.TemplateDelegate {
+  private getTemplate(templateId: string): any {
     if (this.templatesCache.has(templateId)) {
       return this.templatesCache.get(templateId)!;
     }
+
+    // Usar require dinámico para evitar bundling en build time
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const Handlebars = require('handlebars');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { readFileSync } = require('fs');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { join } = require('path');
 
     const templatePath = join(
       process.cwd(),
@@ -121,6 +126,7 @@ export function getEmailService(): EmailService {
 
     switch (provider) {
       case 'resend':
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const { ResendProvider } = require('./providers/resend.server');
         emailServiceInstance = new EmailService(new ResendProvider());
         break;

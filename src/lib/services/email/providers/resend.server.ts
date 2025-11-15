@@ -3,11 +3,10 @@
 // Implementación del EmailProvider para Resend
 // ============================================================
 
-import { Resend } from 'resend';
 import type { EmailProvider, EmailParams, EmailResult } from '../index.server';
 
 export class ResendProvider implements EmailProvider {
-  private client: Resend;
+  private client: any;
   private defaultFrom: string;
 
   constructor() {
@@ -16,6 +15,9 @@ export class ResendProvider implements EmailProvider {
       throw new Error('RESEND_API_KEY is not set');
     }
 
+    // Usar require dinámico para evitar bundling en build time
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { Resend } = require('resend');
     this.client = new Resend(apiKey);
     this.defaultFrom = process.env.EMAIL_FROM || 'noreply@redpresu.com';
   }
