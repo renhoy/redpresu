@@ -21,7 +21,7 @@ import { Info } from "lucide-react";
 import { LogoUploader } from "./LogoUploader";
 import { TemplateSelector } from "./TemplateSelector";
 import { RichTextEditorDialog } from "@/components/shared/RichTextEditorDialog";
-import { type TariffFormData } from "@/app/actions/tariffs";
+import type { TariffFormData } from "@/app/actions/tariffs.types";
 
 interface TariffFormFieldsProps {
   data: TariffFormData;

@@ -1,5 +1,6 @@
 // SECURITY: Este archivo solo puede importarse en server-side
-import "server-only";
+// TEMPORALMENTE COMENTADO PARA DEBUG BUILD
+// import "server-only";
 
 import { createClient } from "@supabase/supabase-js";
 

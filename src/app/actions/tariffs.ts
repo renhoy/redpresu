@@ -16,6 +16,30 @@ import { evaluateRules, type RuleContext } from '@/lib/business-rules/evaluator.
 type Tariff = Database['public']['Tables']['tariffs']['Row']
 
 /**
+ * Datos del formulario de tarifa
+ * NOTA: Este tipo también existe en tariffs.types.ts para uso en componentes cliente
+ * Si modificas esto, modifica también tariffs.types.ts
+ */
+export interface TariffFormData {
+  title: string
+  description?: string
+  validity: number
+  status: 'Borrador' | 'Activa' | 'Inactiva'
+  logo_url: string
+  name: string
+  nif: string
+  address: string
+  contact: string
+  template: string
+  primary_color: string
+  secondary_color: string
+  summary_note: string
+  conditions_note: string
+  legal_note: string
+  json_tariff_data?: unknown
+}
+
+/**
  * Restaura acentos perdidos durante la normalización del CSV
  */
 function restoreAccents(processedData: unknown[], originalCSV: string): unknown[] {
@@ -67,25 +91,6 @@ function restoreWordAccents(text: string, accentMap: Map<string, string>): strin
     const restored = accentMap.get(word.toLowerCase())
     return restored || word
   })
-}
-
-export interface TariffFormData {
-  title: string
-  description?: string
-  validity: number
-  status: 'Borrador' | 'Activa' | 'Inactiva'
-  logo_url: string
-  name: string
-  nif: string
-  address: string
-  contact: string
-  template: string
-  primary_color: string
-  secondary_color: string
-  summary_note: string
-  conditions_note: string
-  legal_note: string
-  json_tariff_data?: unknown
 }
 
 export async function getTariffs(
@@ -454,7 +459,7 @@ export async function createTariff(data: TariffFormData): Promise<{
         .select('*', { count: 'exact', head: true })
         .eq('company_id', companyId)
 
-      // Construir contexto para evaluación
+      // Construir contexto para evaluación de reglas de negocio
       const ruleContext: RuleContext = {
         plan: (companyData?.plan || 'FREE') as 'FREE' | 'PRO' | 'ENTERPRISE',
         users_count: usersCount || 0,

@@ -6,11 +6,8 @@ import { Button } from "@/components/ui/button";
 import { TariffFormFields } from "./TariffFormFields";
 import { CSVUploadPreview } from "./CSVUploadPreview";
 import { Layers, Play, X, Save } from "lucide-react";
-import {
-  createTariff,
-  updateTariff,
-  type TariffFormData,
-} from "@/app/actions/tariffs";
+import { createTariff, updateTariff } from "@/app/actions/tariffs";
+import type { TariffFormData } from "@/app/actions/tariffs.types";
 import { Tariff } from "@/lib/types/database";
 import { isValidNIF, getNIFErrorMessage } from "@/lib/helpers/nif-validator";
 import { driver } from "driver.js";
