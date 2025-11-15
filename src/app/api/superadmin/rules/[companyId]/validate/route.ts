@@ -7,6 +7,7 @@ import { NextResponse } from 'next/server';
 import { validateRules } from '@/lib/business-rules/validator.server';
 import { BusinessRulesConfigSchema } from '@/lib/types/business-rules';
 import { createRouteHandlerClient } from '@/lib/supabase/helpers';
+import { supabaseAdmin } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 
 /**
@@ -22,7 +23,8 @@ async function verifySuperadmin() {
     return { authorized: false, user: null };
   }
 
-  const { data: userData } = await supabase
+  // Usar supabaseAdmin para evitar problemas con RLS
+  const { data: userData } = await supabaseAdmin
     .from('users')
     .select('role')
     .eq('id', user.id)
