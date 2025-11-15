@@ -7,60 +7,31 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Loader2, Save, Undo2, CheckCircle2, AlertTriangle } from 'lucide-react';
-import type { BusinessRulesConfig } from '@/lib/types/business-rules';
 
-interface Company {
-  id: number;
-  name: string;
-  status: string;
+interface RulesEditorProps {
+  selectedCompanyId: string;
+  onCompanyChange: (companyId: string) => void;
 }
 
-export function RulesEditor() {
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [selectedCompany, setSelectedCompany] = useState<string>('');
+export function RulesEditor({ selectedCompanyId, onCompanyChange }: RulesEditorProps) {
   const [rules, setRules] = useState<string>('');
   const [originalRules, setOriginalRules] = useState<string>('');
   const [loading, setLoading] = useState(false);
-  const [loadingCompanies, setLoadingCompanies] = useState(true);
   const [validationStatus, setValidationStatus] = useState<'valid' | 'invalid' | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
 
-  // Cargar lista de empresas
-  useEffect(() => {
-    async function loadCompanies() {
-      try {
-        const res = await fetch('/api/superadmin/companies');
-        if (!res.ok) throw new Error('Error al cargar empresas');
-        const data = await res.json();
-        setCompanies(data);
-      } catch (error) {
-        toast.error('No se pudieron cargar las empresas');
-      } finally {
-        setLoadingCompanies(false);
-      }
-    }
-    loadCompanies();
-  }, [toast]);
-
   // Cargar reglas cuando se selecciona una empresa
   useEffect(() => {
-    if (!selectedCompany) return;
+    if (!selectedCompanyId) return;
 
     async function loadRules() {
       setLoading(true);
       try {
-        const res = await fetch(`/api/superadmin/rules/${selectedCompany}`);
+        const res = await fetch(`/api/superadmin/rules/${selectedCompanyId}`);
         if (!res.ok) throw new Error('Error al cargar reglas');
         const data = await res.json();
         const rulesJson = JSON.stringify(data.rules || data, null, 2);
@@ -75,7 +46,7 @@ export function RulesEditor() {
       }
     }
     loadRules();
-  }, [selectedCompany, toast]);
+  }, [selectedCompanyId]);
 
   // Detectar cambios
   useEffect(() => {
@@ -96,13 +67,13 @@ export function RulesEditor() {
 
   // Validar reglas en servidor
   const handleValidate = async () => {
-    if (!selectedCompany) return;
+    if (!selectedCompanyId) return;
 
     try {
       const parsed = JSON.parse(rules);
       setLoading(true);
 
-      const res = await fetch(`/api/superadmin/rules/${selectedCompany}/validate`, {
+      const res = await fetch(`/api/superadmin/rules/${selectedCompanyId}/validate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(parsed),
@@ -133,13 +104,13 @@ export function RulesEditor() {
 
   // Guardar reglas
   const handleSave = async () => {
-    if (!selectedCompany || validationStatus === 'invalid') return;
+    if (!selectedCompanyId || validationStatus === 'invalid') return;
 
     try {
       const parsed = JSON.parse(rules);
       setLoading(true);
 
-      const res = await fetch(`/api/superadmin/rules/${selectedCompany}`, {
+      const res = await fetch(`/api/superadmin/rules/${selectedCompanyId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(parsed),
@@ -165,7 +136,7 @@ export function RulesEditor() {
 
   // Rollback a versión anterior
   const handleRollback = async () => {
-    if (!selectedCompany) return;
+    if (!selectedCompanyId) return;
 
     if (!confirm('¿Estás seguro de revertir a la versión anterior? Esta acción creará una nueva versión.')) {
       return;
@@ -173,7 +144,7 @@ export function RulesEditor() {
 
     try {
       setLoading(true);
-      const res = await fetch(`/api/superadmin/rules/${selectedCompany}/rollback`, {
+      const res = await fetch(`/api/superadmin/rules/${selectedCompanyId}/rollback`, {
         method: 'POST',
       });
 
@@ -202,29 +173,8 @@ export function RulesEditor() {
 
   return (
     <div className="space-y-6">
-      {/* Selector de empresa */}
-      <div className="space-y-2">
-        <Label htmlFor="company-select">Empresa</Label>
-        <Select
-          value={selectedCompany}
-          onValueChange={setSelectedCompany}
-          disabled={loadingCompanies}
-        >
-          <SelectTrigger id="company-select">
-            <SelectValue placeholder="Selecciona una empresa" />
-          </SelectTrigger>
-          <SelectContent>
-            {companies.map((company) => (
-              <SelectItem key={company.id} value={company.id.toString()}>
-                {company.name} {company.status !== 'active' && `(${company.status})`}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
       {/* Editor JSON */}
-      {selectedCompany && (
+      {selectedCompanyId && (
         <>
           <div className="space-y-2">
             <div className="flex items-center justify-between">

@@ -7,13 +7,6 @@
 
 import { useState, useEffect } from 'react';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   Table,
   TableBody,
   TableCell,
@@ -22,15 +15,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { AuditLogEntry } from '@/lib/types/business-rules';
 
-interface Company {
-  id: number;
-  name: string;
-  status: string;
+interface AuditLogProps {
+  selectedCompanyId: string;
+  onCompanyChange: (companyId: string) => void;
 }
 
 interface AuditResponse {
@@ -43,43 +34,23 @@ interface AuditResponse {
   };
 }
 
-export function AuditLog() {
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [selectedCompany, setSelectedCompany] = useState<string>('');
+export function AuditLog({ selectedCompanyId, onCompanyChange }: AuditLogProps) {
   const [auditData, setAuditData] = useState<AuditResponse | null>(null);
   const [loading, setLoading] = useState(false);
-  const [loadingCompanies, setLoadingCompanies] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
 
   const LIMIT = 20;
 
-  // Cargar lista de empresas
-  useEffect(() => {
-    async function loadCompanies() {
-      try {
-        const res = await fetch('/api/superadmin/companies');
-        if (!res.ok) throw new Error('Error al cargar empresas');
-        const data = await res.json();
-        setCompanies(data);
-      } catch (error) {
-        toast.error('No se pudieron cargar las empresas');
-      } finally {
-        setLoadingCompanies(false);
-      }
-    }
-    loadCompanies();
-  }, [toast]);
-
   // Cargar audit log cuando cambia empresa o página
   useEffect(() => {
-    if (!selectedCompany) return;
+    if (!selectedCompanyId) return;
 
     async function loadAuditLog() {
       setLoading(true);
       try {
         const offset = currentPage * LIMIT;
         const res = await fetch(
-          `/api/superadmin/rules/${selectedCompany}/audit?limit=${LIMIT}&offset=${offset}`
+          `/api/superadmin/rules/${selectedCompanyId}/audit?limit=${LIMIT}&offset=${offset}`
         );
 
         if (!res.ok) throw new Error('Error al cargar historial');
@@ -92,12 +63,12 @@ export function AuditLog() {
       }
     }
     loadAuditLog();
-  }, [selectedCompany, currentPage, toast]);
+  }, [selectedCompanyId, currentPage]);
 
   // Resetear página al cambiar empresa
   useEffect(() => {
     setCurrentPage(0);
-  }, [selectedCompany]);
+  }, [selectedCompanyId]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('es-ES', {
@@ -135,29 +106,8 @@ export function AuditLog() {
 
   return (
     <div className="space-y-6">
-      {/* Selector de empresa */}
-      <div className="space-y-2">
-        <Label htmlFor="audit-company-select">Empresa</Label>
-        <Select
-          value={selectedCompany}
-          onValueChange={setSelectedCompany}
-          disabled={loadingCompanies}
-        >
-          <SelectTrigger id="audit-company-select">
-            <SelectValue placeholder="Selecciona una empresa" />
-          </SelectTrigger>
-          <SelectContent>
-            {companies.map((company) => (
-              <SelectItem key={company.id} value={company.id.toString()}>
-                {company.name} {company.status !== 'active' && `(${company.status})`}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
       {/* Tabla de audit log */}
-      {selectedCompany && (
+      {selectedCompanyId && (
         <>
           {loading ? (
             <div className="flex justify-center items-center py-12">
