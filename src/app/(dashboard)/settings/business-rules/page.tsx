@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Shield, FileText, History, BookOpen, Globe } from 'lucide-react';
+import { Shield, FileText, History, BookOpen, Globe, ArrowLeft } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Card,
@@ -36,8 +36,16 @@ export default function BusinessRulesPage() {
   return (
     <div className="min-h-screen bg-lime-50">
       <div className="container mx-auto px-4 py-6">
-        {/* Header */}
+        {/* Header con botón volver */}
         <div className="mb-6 text-center md:text-left">
+          <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
+            <Link href="/settings">
+              <Button variant="ghost" size="sm">
+                <ArrowLeft className="w-4 h-4 mr-1" />
+                Volver
+              </Button>
+            </Link>
+          </div>
           <h1 className="text-3xl font-bold flex items-center justify-center md:justify-start gap-2">
             <Shield className="h-7 w-7 text-lime-600" />
             Reglas de Negocio
@@ -260,6 +268,16 @@ export default function BusinessRulesPage() {
             </Card>
           </>
         )}
+
+        {/* Botón volver (inferior) */}
+        <div className="flex justify-center pt-8">
+          <Link href="/settings">
+            <Button variant="outline">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Volver
+            </Button>
+          </Link>
+        </div>
       </div>
     </div>
   );
