@@ -1,3 +1,5 @@
+'use server';
+
 // ============================================================
 // Resend Provider - Redpresu
 // Implementación del EmailProvider para Resend

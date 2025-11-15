@@ -1,3 +1,5 @@
+'use server';
+
 // ============================================================
 // Motor de Evaluación de Reglas de Negocio - Redpresu
 // Evalúa reglas usando JsonLogic y ejecuta acciones automáticas
