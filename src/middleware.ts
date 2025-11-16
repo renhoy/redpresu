@@ -25,6 +25,15 @@ function createRedirectWithCookies(
 
 export async function middleware(req: NextRequest) {
   try {
+    const pathname = req.nextUrl.pathname
+
+    // BYPASS: Las rutas API manejan su propia autenticación
+    // Excepto /api/auth/* que usa middleware para cookies
+    if (pathname.startsWith('/api/') && !pathname.startsWith('/api/auth/')) {
+      console.log(`[Middleware] Bypassing API route: ${pathname}`)
+      return NextResponse.next()
+    }
+
     // CRÍTICO: Crear response de Next.js ANTES de obtener la sesión
     const res = NextResponse.next()
 
@@ -46,8 +55,6 @@ export async function middleware(req: NextRequest) {
     // Obtener usuario actual y validar token con el servidor
     // IMPORTANTE: getUser() valida el token con Supabase, getSession() solo lee cookies
     const { data: { user }, error } = await supabase.auth.getUser()
-
-    const pathname = req.nextUrl.pathname
 
     // Verificar modo de operación
     const multiempresa = await isMultiEmpresa()
