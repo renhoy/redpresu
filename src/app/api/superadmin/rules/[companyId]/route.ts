@@ -16,20 +16,36 @@ import { headers } from 'next/headers';
  */
 async function verifySuperadmin() {
   const supabase = await createRouteHandlerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  console.log('[verifySuperadmin] auth.getUser() result:', {
+    hasUser: !!user,
+    userId: user?.id,
+    userEmail: user?.email,
+    authError: authError?.message
+  });
 
   if (!user) {
+    console.log('[verifySuperadmin] No user found - returning unauthorized');
     return { authorized: false, user: null };
   }
 
-  const { data: userData } = await supabase
+  const { data: userData, error: dbError } = await supabase
     .from('users')
     .select('role')
     .eq('id', user.id)
     .single();
 
+  console.log('[verifySuperadmin] DB query result:', {
+    role: userData?.role,
+    dbError: dbError?.message
+  });
+
+  const isAuthorized = userData?.role === 'superadmin';
+  console.log('[verifySuperadmin] Final authorization:', isAuthorized);
+
   return {
-    authorized: userData?.role === 'superadmin',
+    authorized: isAuthorized,
     user
   };
 }
