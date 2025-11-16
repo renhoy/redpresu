@@ -67,11 +67,18 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ companyId: string }> }
 ) {
+  console.log('[GET /api/superadmin/rules] Handler started');
+
   const { authorized, user } = await verifySuperadmin();
 
+  console.log('[GET /api/superadmin/rules] verifySuperadmin result:', { authorized, hasUser: !!user });
+
   if (!authorized) {
+    console.log('[GET /api/superadmin/rules] Returning 403 - not authorized');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
+
+  console.log('[GET /api/superadmin/rules] Authorization passed, proceeding...');
 
   const { companyId } = await params;
   const supabase = supabaseAdmin; // Usar admin para queries de solo lectura
@@ -117,11 +124,18 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ companyId: string }> }
 ) {
+  console.log('[PUT /api/superadmin/rules] Handler started');
+
   const { authorized, user } = await verifySuperadmin();
 
+  console.log('[PUT /api/superadmin/rules] verifySuperadmin result:', { authorized, hasUser: !!user });
+
   if (!authorized || !user) {
+    console.log('[PUT /api/superadmin/rules] Returning 403 - not authorized');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
+
+  console.log('[PUT /api/superadmin/rules] Authorization passed, proceeding...');
 
   try {
     const body = await request.json();
