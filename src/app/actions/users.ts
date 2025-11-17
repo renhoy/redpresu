@@ -278,6 +278,15 @@ export async function getUserById(userId: string) {
  * Crear nuevo usuario (admin invita)
  */
 export async function createUser(data: CreateUserData) {
+  // Verificar límites del plan (si suscripciones están habilitadas)
+  const { canCreateUser } = await import('@/lib/helpers/subscription-helpers')
+  const limitCheck = await canCreateUser()
+
+  if (!limitCheck.canCreate) {
+    log.info('[createUser] Límite alcanzado:', limitCheck.message)
+    return { success: false, error: limitCheck.message }
+  }
+
   // Validar permisos
   const { allowed, currentUser } = await checkAdminPermission();
 

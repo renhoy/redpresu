@@ -161,6 +161,22 @@ export async function updateConfigValue(
       revalidatePath('/', 'layout')
     }
 
+    // Si se modifica multiempresa o subscriptions_enabled, invalidar caches y revalidar layouts
+    if (key === 'multiempresa' || key === 'subscriptions_enabled') {
+      // Invalidar cache de app-mode
+      const { invalidateAppModeCache } = await import('@/lib/helpers/app-mode')
+      invalidateAppModeCache()
+
+      log.info(`[updateConfigValue] Cache invalidado para ${key}`)
+
+      // Revalidar layouts para que reflejen el cambio inmediatamente
+      revalidatePath('/', 'layout')
+      revalidatePath('/dashboard', 'layout')
+      revalidatePath('/login')
+      revalidatePath('/register')
+      revalidatePath('/subscriptions')
+    }
+
     return { success: true }
   } catch (error) {
     log.error('[updateConfigValue] Unexpected error:', error)
