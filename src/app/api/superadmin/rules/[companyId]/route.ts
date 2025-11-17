@@ -30,7 +30,8 @@ async function verifySuperadmin() {
     return { authorized: false, user: null };
   }
 
-  const { data: userData, error: dbError } = await supabase
+  // Usar supabaseAdmin para query (bypasea RLS, seguro porque filtramos por user.id autenticado)
+  const { data: userData, error: dbError } = await supabaseAdmin
     .from('users')
     .select('role')
     .eq('id', user.id)
@@ -141,12 +142,21 @@ export async function PUT(
     const body = await request.json();
     const { companyId } = await params;
 
+    console.log('[PUT] Body recibido:', JSON.stringify(body).substring(0, 200));
+
     // Validar con Zod
-    const validated = BusinessRulesConfigSchema.parse({
-      ...body,
-      updated_at: new Date().toISOString(),
-      updated_by: user.email
-    });
+    let validated;
+    try {
+      validated = BusinessRulesConfigSchema.parse({
+        ...body,
+        updated_at: new Date().toISOString(),
+        updated_by: user.email
+      });
+      console.log('[PUT] Validación Zod OK');
+    } catch (zodError) {
+      console.error('[PUT] Error en validación Zod:', zodError);
+      throw zodError;
+    }
 
     const supabase = supabaseAdmin;
     const isGlobal = companyId === 'global';
@@ -183,6 +193,18 @@ export async function PUT(
 
     // Insertar nueva versión
     const metadata = await getRequestMetadata();
+
+    console.log('[PUT] Insertando nueva regla:', {
+      companyId: isGlobal ? null : parseInt(companyId),
+      version: (current?.version || 0) + 1,
+      isGlobal,
+      hasValidated: !!validated,
+      userId: user.id,
+      validatedKeys: Object.keys(validated),
+      validatedRulesLength: validated.rules?.length,
+      validatedPreview: JSON.stringify(validated).substring(0, 300)
+    });
+
     const { data: newRule, error } = await supabase
       .from('business_rules')
       .insert({
@@ -196,7 +218,16 @@ export async function PUT(
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('[PUT] Error en INSERT:', {
+        error,
+        errorCode: error.code,
+        errorMessage: error.message,
+        errorDetails: error.details,
+        errorHint: error.hint
+      });
+      throw error;
+    }
 
     // Log adicional en Pino
     logger.info({
@@ -213,6 +244,7 @@ export async function PUT(
 
   } catch (error) {
     const { companyId } = await params;
+    console.error('[PUT] Error en catch:', error);
     logger.error({
       error: error instanceof Error ? {
         message: error.message,

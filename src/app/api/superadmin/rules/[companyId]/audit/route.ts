@@ -19,7 +19,8 @@ export async function GET(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
 
-  const { data: userData } = await supabaseAuth
+  // Usar supabaseAdmin para query (bypasea RLS)
+  const { data: userData } = await supabaseAdmin
     .from('users')
     .select('role')
     .eq('id', user.id)

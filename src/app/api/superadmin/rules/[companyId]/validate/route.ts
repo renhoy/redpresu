@@ -15,20 +15,34 @@ import { logger } from '@/lib/logger';
  */
 async function verifySuperadmin() {
   const supabase = await createRouteHandlerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-  logger.info({ user: user?.id }, 'Verificando superadmin en validate');
+  console.log('[verifySuperadmin/validate] Auth check:', {
+    hasUser: !!user,
+    userId: user?.id,
+    email: user?.email,
+    authError: authError?.message
+  });
+
+  logger.info({ user: user?.id, authError: authError?.message }, 'Verificando superadmin en validate');
 
   if (!user) {
+    console.log('[verifySuperadmin/validate] No user found, unauthorized');
     return { authorized: false, user: null };
   }
 
   // Usar supabaseAdmin para evitar problemas con RLS
-  const { data: userData } = await supabaseAdmin
+  const { data: userData, error: dbError } = await supabaseAdmin
     .from('users')
     .select('role')
     .eq('id', user.id)
     .single();
+
+  console.log('[verifySuperadmin/validate] User data:', {
+    userId: user.id,
+    role: userData?.role,
+    dbError: dbError?.message
+  });
 
   logger.info({ userId: user.id, role: userData?.role }, 'Usuario verificado en validate');
 

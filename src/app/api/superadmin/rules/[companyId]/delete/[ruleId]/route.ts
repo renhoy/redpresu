@@ -13,7 +13,7 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ companyId: string; ruleId: string }> }
 ) {
-  // Verificar superadmin
+  // Verificar superadmin con cliente autenticado
   const supabaseAuth = await createRouteHandlerClient();
   const { data: { user } } = await supabaseAuth.auth.getUser();
 
@@ -21,7 +21,8 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
 
-  const { data: userData } = await supabaseAuth
+  // Usar supabaseAdmin para query (bypasea RLS)
+  const { data: userData } = await supabaseAdmin
     .from('users')
     .select('role')
     .eq('id', user.id)

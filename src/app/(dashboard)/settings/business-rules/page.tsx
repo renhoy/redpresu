@@ -21,9 +21,18 @@ import { Button } from '@/components/ui/button';
 
 type ScopeType = 'global' | 'specific';
 
+interface BusinessRuleToEdit {
+  id: string;
+  version: number;
+  rules: unknown;
+  [key: string]: unknown;
+}
+
 export default function BusinessRulesPage() {
   const [scope, setScope] = useState<ScopeType>('global'); // Por defecto: todas las empresas
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('global');
+  const [activeTab, setActiveTab] = useState('editor');
+  const [ruleToEdit, setRuleToEdit] = useState<BusinessRuleToEdit | null>(null);
 
   const handleScopeChange = (newScope: ScopeType) => {
     setScope(newScope);
@@ -32,6 +41,11 @@ export default function BusinessRulesPage() {
     } else {
       setSelectedCompanyId(''); // Reset cuando cambia a específica
     }
+  };
+
+  const handleEditRule = (rule: BusinessRuleToEdit) => {
+    setRuleToEdit(rule);
+    setActiveTab('editor');
   };
 
   return (
@@ -152,7 +166,7 @@ export default function BusinessRulesPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Tabs defaultValue="editor" className="w-full">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList className="grid w-full grid-cols-3 max-w-2xl">
                     <TabsTrigger value="editor" className="flex items-center gap-2">
                       <FileText className="h-4 w-4" />
@@ -172,12 +186,15 @@ export default function BusinessRulesPage() {
                     <RulesEditor
                       selectedCompanyId={selectedCompanyId}
                       onCompanyChange={setSelectedCompanyId}
+                      ruleToEdit={ruleToEdit}
+                      onEditComplete={() => setRuleToEdit(null)}
                     />
                   </TabsContent>
 
                   <TabsContent value="list" className="mt-6">
                     <RulesList
                       selectedCompanyId={selectedCompanyId}
+                      onEditRule={handleEditRule}
                     />
                   </TabsContent>
 
@@ -254,7 +271,7 @@ export default function BusinessRulesPage() {
                 <div className="space-y-2">
                   <p className="font-semibold">✅ Validación:</p>
                   <p className="text-muted-foreground">
-                    Usa el botón "Validar" para probar las reglas antes de guardarlas. Esto verifica
+                    Usa el botón &quot;Validar&quot; para probar las reglas antes de guardarlas. Esto verifica
                     sintaxis y prueba con datos de ejemplo.
                   </p>
                 </div>

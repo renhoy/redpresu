@@ -12,12 +12,21 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Loader2, Save, Undo2, CheckCircle2, AlertTriangle, FileText } from 'lucide-react';
 
+interface BusinessRuleToEdit {
+  id: string;
+  version: number;
+  rules: unknown;
+  [key: string]: unknown;
+}
+
 interface RulesEditorProps {
   selectedCompanyId: string;
   onCompanyChange: (companyId: string) => void;
+  ruleToEdit?: BusinessRuleToEdit | null;
+  onEditComplete?: () => void;
 }
 
-export function RulesEditor({ selectedCompanyId, onCompanyChange }: RulesEditorProps) {
+export function RulesEditor({ selectedCompanyId, onCompanyChange, ruleToEdit, onEditComplete }: RulesEditorProps) {
   const [rules, setRules] = useState<string>('');
   const [originalRules, setOriginalRules] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -54,6 +63,23 @@ export function RulesEditor({ selectedCompanyId, onCompanyChange }: RulesEditorP
   useEffect(() => {
     setHasChanges(rules !== originalRules);
   }, [rules, originalRules]);
+
+  // Cargar regla para editar
+  useEffect(() => {
+    if (ruleToEdit) {
+      const rulesJson = JSON.stringify(ruleToEdit.rules || ruleToEdit, null, 2);
+      setRules(rulesJson);
+      setOriginalRules(rulesJson);
+      setHasChanges(false);
+      setValidationStatus('valid'); // Asumimos que la regla cargada es válida
+      toast.info(`📝 Regla v${ruleToEdit.version} cargada en el editor`);
+
+      // Llamar onEditComplete para limpiar el estado
+      if (onEditComplete) {
+        onEditComplete();
+      }
+    }
+  }, [ruleToEdit, onEditComplete]);
 
   // Cargar ejemplo
   const handleLoadExample = () => {

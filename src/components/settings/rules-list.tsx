@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Loader2, Trash2, Eye, CheckCircle2, XCircle, Search } from 'lucide-react';
+import { Loader2, Trash2, Eye, CheckCircle2, XCircle, Search, Pencil } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,6 +37,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 interface BusinessRule {
   id: string;
@@ -61,15 +69,17 @@ interface BusinessRule {
 
 interface RulesListProps {
   selectedCompanyId: string;
+  onEditRule?: (rule: BusinessRule) => void;
 }
 
-export function RulesList({ selectedCompanyId }: RulesListProps) {
+export function RulesList({ selectedCompanyId, onEditRule }: RulesListProps) {
   const [rules, setRules] = useState<BusinessRule[]>([]);
   const [filteredRules, setFilteredRules] = useState<BusinessRule[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [viewingRule, setViewingRule] = useState<BusinessRule | null>(null);
 
   // Cargar todas las reglas
   useEffect(() => {
@@ -224,9 +234,18 @@ export function RulesList({ selectedCompanyId }: RulesListProps) {
                     )}
                   </TableCell>
                   <TableCell>
-                    <span className="text-sm text-muted-foreground">
-                      {getActiveRulesCount(rule)}/{getRulesCount(rule)} activas
-                    </span>
+                    <div className="space-y-1">
+                      <div className="text-sm text-muted-foreground mb-2">
+                        {getActiveRulesCount(rule)}/{getRulesCount(rule)} activas
+                      </div>
+                      {rule.rules?.rules?.map((r) => (
+                        <div key={r.id} className="text-sm">
+                          <span className={r.active ? 'text-foreground font-medium' : 'text-muted-foreground line-through'}>
+                            • {r.name}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </TableCell>
                   <TableCell className="font-mono text-sm">
                     {formatDate(rule.created_at)}
@@ -240,12 +259,98 @@ export function RulesList({ selectedCompanyId }: RulesListProps) {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          // Mostrar detalles de la regla
-                          toast.info('Ver detalles: ' + rule.id);
+                          if (onEditRule) {
+                            onEditRule(rule);
+                            toast.success('Cargando regla en el editor...');
+                          }
                         }}
+                        title="Editar esta regla"
                       >
-                        <Eye className="h-4 w-4" />
+                        <Pencil className="h-4 w-4" />
                       </Button>
+                      <Dialog open={viewingRule?.id === rule.id} onOpenChange={(open) => !open && setViewingRule(null)}>
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setViewingRule(rule)}
+                            title="Ver detalles"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>Regla v{rule.version} - Detalles</DialogTitle>
+                            <DialogDescription>
+                              Información completa de esta versión de reglas
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4 mt-4">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <p className="text-sm font-semibold text-muted-foreground">Estado</p>
+                                <p className="text-sm">
+                                  {rule.is_active ? (
+                                    <span className="text-green-600">✓ Activa</span>
+                                  ) : (
+                                    <span className="text-gray-400">✗ Inactiva</span>
+                                  )}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-sm font-semibold text-muted-foreground">Versión</p>
+                                <p className="text-sm font-mono">v{rule.version}</p>
+                              </div>
+                              <div>
+                                <p className="text-sm font-semibold text-muted-foreground">Fecha Creación</p>
+                                <p className="text-sm font-mono">{formatDate(rule.created_at)}</p>
+                              </div>
+                              <div>
+                                <p className="text-sm font-semibold text-muted-foreground">Última Actualización</p>
+                                <p className="text-sm font-mono">{formatDate(rule.updated_at)}</p>
+                              </div>
+                            </div>
+
+                            <div className="border-t pt-4">
+                              <p className="text-sm font-semibold text-muted-foreground mb-2">
+                                Reglas ({getRulesCount(rule)})
+                              </p>
+                              {rule.rules?.rules?.map((r, idx) => (
+                                <div key={r.id} className="mb-4 p-4 border rounded-lg bg-muted/30">
+                                  <div className="flex items-start justify-between mb-2">
+                                    <h4 className="font-semibold">{r.name}</h4>
+                                    <span className={`text-xs px-2 py-1 rounded ${r.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                                      {r.active ? 'Activa' : 'Inactiva'}
+                                    </span>
+                                  </div>
+                                  {r.description && (
+                                    <p className="text-sm text-muted-foreground mb-2">{r.description}</p>
+                                  )}
+                                  <div className="text-xs space-y-1">
+                                    <p><span className="font-semibold">Prioridad:</span> {r.priority}</p>
+                                    <p><span className="font-semibold">Condición:</span></p>
+                                    <pre className="bg-background p-2 rounded text-xs overflow-x-auto">
+                                      {JSON.stringify(r.condition, null, 2)}
+                                    </pre>
+                                    <p><span className="font-semibold">Acción:</span></p>
+                                    <pre className="bg-background p-2 rounded text-xs overflow-x-auto">
+                                      {JSON.stringify(r.action, null, 2)}
+                                    </pre>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className="border-t pt-4">
+                              <p className="text-sm font-semibold text-muted-foreground mb-2">JSON Completo</p>
+                              <pre className="bg-muted p-4 rounded text-xs overflow-x-auto max-h-64">
+                                {JSON.stringify(rule.rules, null, 2)}
+                              </pre>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
