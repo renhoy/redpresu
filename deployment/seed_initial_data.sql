@@ -42,7 +42,7 @@ END $$;
 INSERT INTO public.redpresu_companies (id, name, status, created_at, updated_at)
 VALUES (
   1,
-  'Empresa Principal',
+  'Empresa Demo',
   'active',
   NOW(),
   NOW()
@@ -325,7 +325,7 @@ BEGIN
   RAISE NOTICE '  - Suscripciones: % registros', subscriptions_count;
   RAISE NOTICE '';
   RAISE NOTICE 'Datos creados:';
-  RAISE NOTICE '  ✅ Empresa por defecto (ID=1): "Empresa Principal"';
+  RAISE NOTICE '  ✅ Empresa por defecto (ID=1): "Empresa Demo"';
   RAISE NOTICE '  ✅ Suscripción FREE para empresa ID=1';
   RAISE NOTICE '  ✅ Config: multiempresa = true';
   RAISE NOTICE '  ✅ Config: subscriptions_enabled = false';
