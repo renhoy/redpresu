@@ -209,8 +209,8 @@ export function RulesList({ selectedCompanyId, onEditRule }: RulesListProps) {
                 <TableHead>Versión</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead>Reglas</TableHead>
-                <TableHead>Fecha Creación</TableHead>
-                <TableHead>Última Actualización</TableHead>
+                <TableHead>Descripción</TableHead>
+                <TableHead>Fechas</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -221,17 +221,60 @@ export function RulesList({ selectedCompanyId, onEditRule }: RulesListProps) {
                     v{rule.version}
                   </TableCell>
                   <TableCell>
-                    {rule.is_active ? (
-                      <span className="flex items-center gap-1 text-green-600">
-                        <CheckCircle2 className="h-4 w-4" />
-                        Activa
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1 text-gray-400">
-                        <XCircle className="h-4 w-4" />
-                        Inactiva
-                      </span>
-                    )}
+                    <Select
+                      value={rule.is_active ? 'active' : 'inactive'}
+                      onValueChange={async (value) => {
+                        const newStatus = value === 'active';
+                        try {
+                          const res = await fetch(`/api/superadmin/rules/${selectedCompanyId}/status/${rule.id}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ is_active: newStatus }),
+                          });
+
+                          if (!res.ok) throw new Error('Error al cambiar estado');
+
+                          toast.success(`Estado actualizado a ${newStatus ? 'Activa' : 'Inactiva'}`);
+
+                          // Recargar lista
+                          setRules((prev) =>
+                            prev.map((r) => (r.id === rule.id ? { ...r, is_active: newStatus } : r))
+                          );
+                        } catch (error) {
+                          toast.error('No se pudo cambiar el estado');
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-[130px] bg-white">
+                        <SelectValue>
+                          {rule.is_active ? (
+                            <span className="flex items-center gap-1 text-green-600">
+                              <CheckCircle2 className="h-4 w-4" />
+                              Activa
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-gray-400">
+                              <XCircle className="h-4 w-4" />
+                              Inactiva
+                            </span>
+                          )}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        <SelectItem value="active">
+                          <span className="flex items-center gap-1 text-green-600">
+                            <CheckCircle2 className="h-4 w-4" />
+                            Activa
+                          </span>
+                        </SelectItem>
+                        <SelectItem value="inactive">
+                          <span className="flex items-center gap-1 text-gray-400">
+                            <XCircle className="h-4 w-4" />
+                            Inactiva
+                          </span>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                   <TableCell>
                     <div className="space-y-1">
@@ -247,11 +290,31 @@ export function RulesList({ selectedCompanyId, onEditRule }: RulesListProps) {
                       ))}
                     </div>
                   </TableCell>
-                  <TableCell className="font-mono text-sm">
-                    {formatDate(rule.created_at)}
+                  <TableCell className="text-sm max-w-xs">
+                    {rule.rules?.rules?.length > 0 ? (
+                      <div className="space-y-1">
+                        {rule.rules.rules.map((r) => (
+                          r.description && (
+                            <div key={r.id} className="text-muted-foreground truncate">
+                              • {r.description}
+                            </div>
+                          )
+                        ))}
+                        {!rule.rules.rules.some(r => r.description) && (
+                          <span className="text-muted-foreground">Sin descripción</span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
                   </TableCell>
                   <TableCell className="font-mono text-sm">
-                    {formatDate(rule.updated_at)}
+                    <div className="space-y-1">
+                      <div className="text-xs text-muted-foreground">Creación:</div>
+                      <div>{formatDate(rule.created_at)}</div>
+                      <div className="text-xs text-muted-foreground mt-2">Actualización:</div>
+                      <div>{formatDate(rule.updated_at)}</div>
+                    </div>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">

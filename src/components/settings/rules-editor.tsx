@@ -33,30 +33,22 @@ export function RulesEditor({ selectedCompanyId, onCompanyChange, ruleToEdit, on
   const [validationStatus, setValidationStatus] = useState<'valid' | 'invalid' | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
 
-  // Cargar reglas cuando se selecciona una empresa
+  // Limpiar editor cuando se selecciona una empresa
   useEffect(() => {
     if (!selectedCompanyId) return;
 
-    async function loadRules() {
-      setLoading(true);
-      try {
-        const res = await fetch(`/api/superadmin/rules/${selectedCompanyId}`, {
-          credentials: 'include'
-        });
-        if (!res.ok) throw new Error('Error al cargar reglas');
-        const data = await res.json();
-        const rulesJson = JSON.stringify(data.rules || data, null, 2);
-        setRules(rulesJson);
-        setOriginalRules(rulesJson);
-        setHasChanges(false);
-        setValidationStatus(null);
-      } catch (error) {
-        toast.error('No se pudieron cargar las reglas');
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadRules();
+    // Iniciar con editor vacío o regla vacía
+    const emptyRule = {
+      version: 1,
+      updated_at: new Date().toISOString(),
+      updated_by: '',
+      rules: []
+    };
+    const emptyJson = JSON.stringify(emptyRule, null, 2);
+    setRules(emptyJson);
+    setOriginalRules(emptyJson);
+    setHasChanges(false);
+    setValidationStatus(null);
   }, [selectedCompanyId]);
 
   // Detectar cambios
