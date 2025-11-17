@@ -42,31 +42,51 @@ export default async function SettingsPage() {
   // Definir categorías personalizadas con orden específico
   const categoryDefinitions = [
     {
-      name: "General",
+      name: "Aplicación",
+      description: "Configuración general de la aplicación",
       keys: [
-        "app_mode",
         "app_name",
-        "contact_notification_emails",
-        "default_empresa_id",
-        "forms_legal_notice",
-        "invitation_email_template",
-        "invitation_token_expiration_days",
-        "legal_page_content",
+        "app_mode",
         "multiempresa",
         "public_registration_enabled",
       ],
     },
     {
+      name: "Suscripciones y Pagos",
+      description: "Configuración de Stripe y planes de suscripción",
+      keys: [
+        "subscriptions_enabled",
+        "subscription_plans",
+        "subscription_grace_period_days",
+      ],
+    },
+    {
+      name: "Usuarios e Invitaciones",
+      description: "Gestión de usuarios y sistema de invitaciones",
+      keys: [
+        "default_empresa_id",
+        "invitation_email_template",
+        "invitation_token_expiration_days",
+      ],
+    },
+    {
+      name: "Tarifas y Presupuestos",
+      description: "Configuración de tarifas, IVA y RE",
+      keys: ["default_tariff", "iva_re_equivalences"],
+    },
+    {
       name: "PDF",
+      description: "Plantillas y generación de PDFs",
       keys: ["pdf_templates", "rapid_pdf_mode"],
     },
     {
-      name: "Suscripciones",
-      keys: ["subscription_plans", "subscriptions_enabled"],
-    },
-    {
-      name: "Tarifas",
-      keys: ["default_tariff", "iva_re_equivalences"],
+      name: "Contacto y Legal",
+      description: "Formularios de contacto y contenidos legales",
+      keys: [
+        "contact_notification_emails",
+        "forms_legal_notice",
+        "legal_page_content",
+      ],
     },
   ];
 
@@ -87,6 +107,7 @@ export default async function SettingsPage() {
 
       return {
         name: category.name,
+        description: category.description,
         items,
       };
     })
@@ -110,7 +131,14 @@ export default async function SettingsPage() {
         <div className="space-y-8">
           {organizedCategories.map((category) => (
             <div key={category.name} className="space-y-4">
-              <h2 className="text-2xl font-semibold">{category.name}</h2>
+              <div>
+                <h2 className="text-2xl font-semibold">{category.name}</h2>
+                {category.description && (
+                  <p className="text-sm text-gray-600 mt-1">
+                    {category.description}
+                  </p>
+                )}
+              </div>
               <ConfigTable config={category.items} />
             </div>
           ))}

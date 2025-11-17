@@ -4,6 +4,26 @@
 
 ---
 
+## 🎛️ Panel de Configuración UI
+
+**IMPORTANTE:** El modo multiempresa se puede cambiar desde la interfaz web en `/settings` (solo superadmin).
+
+### Acceso al Panel:
+1. Login como **superadmin**
+2. Ir a `/settings`
+3. Buscar la sección **"Aplicación"**
+4. Activar/desactivar el switch **"multiempresa"**
+
+**Ventajas del Panel UI:**
+- ✅ Cambio con un click (sin SQL manual)
+- ✅ Invalidación automática de cache
+- ✅ Revalidación automática de layouts
+- ✅ Cambios reflejados inmediatamente
+
+> **Nota:** Al cambiar `multiempresa` desde `/settings`, el cache se invalida automáticamente y los cambios se reflejan de forma inmediata (sin necesidad de reiniciar servidor ni esperar 60 segundos).
+
+---
+
 ## Objetivo
 
 Permitir que la aplicación funcione en dos modos distintos:

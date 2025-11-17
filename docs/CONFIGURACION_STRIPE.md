@@ -8,6 +8,35 @@
 
 ---
 
+## 🎛️ Panel de Configuración UI
+
+**IMPORTANTE:** Todas las configuraciones de Stripe y modo multiempresa se pueden gestionar desde la interfaz web en `/settings` (solo superadmin).
+
+### Acceso al Panel:
+1. Login como **superadmin**
+2. Ir a `/settings`
+3. Buscar la sección **"Suscripciones y Pagos"**
+
+### Configuraciones Disponibles:
+
+| Configuración | Tipo | Descripción |
+|--------------|------|-------------|
+| `subscriptions_enabled` | Switch | Habilitar/deshabilitar sistema de suscripciones |
+| `subscription_plans` | JSON | Configuración de planes (Free, Pro, Enterprise) |
+| `subscription_grace_period_days` | Número | Días de gracia después de expiración |
+| `multiempresa` | Switch | Modo multiempresa (SaaS) vs monoempresa (On-premise) |
+
+**Ventajas del Panel UI:**
+- ✅ Cambios sin SQL manual
+- ✅ Invalidación automática de cache
+- ✅ Validación de valores
+- ✅ Revalidación automática de páginas
+- ✅ Historial de cambios en logs
+
+> **Nota:** Los cambios en `multiempresa` o `subscriptions_enabled` invalidan automáticamente el cache y revalidan los layouts. Los cambios se reflejan de forma inmediata (sin esperar el TTL de 60 segundos).
+
+---
+
 ## 🎯 Componentes Implementados
 
 ### ✅ Backend (100%)
