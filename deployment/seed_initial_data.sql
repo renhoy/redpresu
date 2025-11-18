@@ -54,7 +54,9 @@ SET
   updated_at = NOW();
 
 -- Asegurar que la secuencia empiece desde 2 (para futuras empresas)
-SELECT setval('redpresu.companies_id_seq', GREATEST(2, (SELECT MAX(id) FROM redpresu.companies)), false);
+-- NOTA: Comentado porque el nombre de la secuencia puede variar según la migración
+-- Si necesitas ajustar la secuencia, ejecuta manualmente:
+-- SELECT setval(pg_get_serial_sequence('redpresu.companies', 'id'), GREATEST(2, (SELECT MAX(id) FROM redpresu.companies)), false);
 
 -- ============================================
 -- 3. SUSCRIPCIÓN FREE PARA EMPRESA POR DEFECTO
