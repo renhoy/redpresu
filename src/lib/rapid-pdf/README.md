@@ -1,6 +1,6 @@
 # 📦 Módulo Rapid-PDF
 
-Motor de generación de PDFs empresariales integrado en jeyca-presu.
+Motor de generación de PDFs empresariales integrado en redpresu.
 
 ## 🚀 Estado de la Migración
 
@@ -9,7 +9,7 @@ Motor de generación de PDFs empresariales integrado en jeyca-presu.
 ### Fases Completadas
 
 - ✅ **FASE 1**: Análisis del código de Rapid-PDF
-- ✅ **FASE 2**: Setup del módulo en jeyca-presu
+- ✅ **FASE 2**: Setup del módulo en redpresu
 - ✅ **FASE 3**: Migración del core (RenderEngine, ElementProcessor, PageManager)
 - ✅ **FASE 4**: Migración de templates
 - ✅ **FASE 5**: Integración con Server Action

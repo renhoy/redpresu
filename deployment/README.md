@@ -1,6 +1,6 @@
-# Deployment - jeyca-presu
+# Deployment - redpresu
 
-Este directorio contiene todos los archivos necesarios para el deployment de **jeyca-presu** en un servidor Ubuntu Linux.
+Este directorio contiene todos los archivos necesarios para el deployment de **redpresu** en un servidor Ubuntu Linux.
 
 ## 📁 Contenido del Directorio
 
@@ -185,7 +185,7 @@ Imagen multi-stage para Next.js con Puppeteer/Chromium.
 
 **Build:**
 ```bash
-docker build -t jeyca-presu:latest -f deployment/Dockerfile .
+docker build -t redpresu:latest -f deployment/Dockerfile .
 ```
 
 ### docker-compose.full.yml
@@ -237,7 +237,7 @@ docker ps
 pm2 status
 
 # Ver logs aplicación
-pm2 logs jeyca-presu
+pm2 logs redpresu
 
 # Ver logs Supabase
 cd /opt/supabase/supabase/docker
@@ -254,7 +254,7 @@ curl http://localhost:3000
 rm -rf node_modules .next
 npm install
 npm run build
-pm2 restart jeyca-presu
+pm2 restart redpresu
 ```
 
 ### Problema: Puppeteer no funciona
@@ -264,7 +264,7 @@ sudo apt-get install -y chromium-browser fonts-liberation \
   libdbus-1-3 libdrm2 libgbm1 libgtk-3-0 libnspr4 \
   libnss3 libx11-xcb1 libxcomposite1 libxdamage1 \
   libxrandr2 xdg-utils
-pm2 restart jeyca-presu
+pm2 restart redpresu
 ```
 
 ### Problema: No conecta a Supabase

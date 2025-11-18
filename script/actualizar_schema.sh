@@ -28,7 +28,7 @@ fi
 PREFIX_UPPER=$(echo "$PREFIX" | tr '[:lower:]' '[:upper:]')
 
 REMOTE_FILE="$REMOTE_DIR/SCHEMA_${PREFIX_UPPER}.sql"
-LOCAL_FILE="/Users/josius/Documents/proy/jeyca-presu/docs/migrations/SCHEMA_${PREFIX_UPPER}.sql"
+LOCAL_FILE="/Users/josius/Documents/proy/redpresu/docs/migrations/SCHEMA_${PREFIX_UPPER}.sql"
 
 echo ""
 echo -e "${BLUE}=== Actualizando schema ${PREFIX}_* desde Supabase ===${NC}\n"

@@ -1,6 +1,6 @@
 ###############################################################################
 # Docker Compose - Deployment Completo (Supabase + Next.js)
-# jeyca-presu
+# redpresu
 #
 # Este archivo define todos los servicios necesarios para ejecutar la aplicación
 # completa en contenedores Docker:
@@ -256,7 +256,7 @@ services:
       - postgres
 
   # ===========================================================================
-  # NEXT.JS APPLICATION (jeyca-presu)
+  # NEXT.JS APPLICATION (redpresu)
   # ===========================================================================
   nextjs-app:
     build:
@@ -364,7 +364,7 @@ volumes:
 #
 # 6. BACKUP:
 #    - DB: docker exec jeyca-postgres pg_dump -U postgres postgres > backup.sql
-#    - Volumes: docker run --rm -v jeyca-presu_postgres-data:/data -v $(pwd):/backup alpine tar czf /backup/postgres-backup.tar.gz /data
+#    - Volumes: docker run --rm -v redpresu_postgres-data:/data -v $(pwd):/backup alpine tar czf /backup/postgres-backup.tar.gz /data
 #
 # 7. RESTORE:
 #    - DB: docker exec -i jeyca-postgres psql -U postgres postgres < backup.sql

@@ -2,7 +2,7 @@
 
 ###############################################################################
 # Script de Verificación Post-Deployment
-# jeyca-presu
+# redpresu
 #
 # Este script verifica que todos los componentes del deployment estén
 # funcionando correctamente:
@@ -70,7 +70,7 @@ clear
 echo ""
 echo -e "${CYAN}╔═══════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${CYAN}║                                                               ║${NC}"
-echo -e "${CYAN}║         VERIFICACIÓN POST-DEPLOYMENT - jeyca-presu            ║${NC}"
+echo -e "${CYAN}║         VERIFICACIÓN POST-DEPLOYMENT - redpresu            ║${NC}"
 echo -e "${CYAN}║                                                               ║${NC}"
 echo -e "${CYAN}╚═══════════════════════════════════════════════════════════════╝${NC}"
 echo ""
@@ -136,30 +136,30 @@ log_section "2. Verificando Next.js (PM2 Process)"
 if command -v pm2 &> /dev/null; then
     log_success "PM2 instalado: $(pm2 -v)"
 
-    # Verificar proceso jeyca-presu
-    if pm2 list | grep -q "jeyca-presu"; then
-        STATUS=$(pm2 jlist | jq -r '.[] | select(.name=="jeyca-presu") | .pm2_env.status' 2>/dev/null || echo "unknown")
+    # Verificar proceso redpresu
+    if pm2 list | grep -q "redpresu"; then
+        STATUS=$(pm2 jlist | jq -r '.[] | select(.name=="redpresu") | .pm2_env.status' 2>/dev/null || echo "unknown")
 
         if [ "$STATUS" == "online" ]; then
-            log_success "Proceso 'jeyca-presu' está corriendo (status: online)"
+            log_success "Proceso 'redpresu' está corriendo (status: online)"
 
             # Obtener más detalles
-            UPTIME=$(pm2 jlist | jq -r '.[] | select(.name=="jeyca-presu") | .pm2_env.pm_uptime' 2>/dev/null || echo "0")
-            MEMORY=$(pm2 jlist | jq -r '.[] | select(.name=="jeyca-presu") | .monit.memory' 2>/dev/null || echo "0")
+            UPTIME=$(pm2 jlist | jq -r '.[] | select(.name=="redpresu") | .pm2_env.pm_uptime' 2>/dev/null || echo "0")
+            MEMORY=$(pm2 jlist | jq -r '.[] | select(.name=="redpresu") | .monit.memory' 2>/dev/null || echo "0")
             MEMORY_MB=$((MEMORY / 1024 / 1024))
 
             log_info "  Uptime: $(date -d @$((UPTIME/1000)) -u +%H:%M:%S 2>/dev/null || echo 'N/A')"
             log_info "  Memoria: ${MEMORY_MB}MB"
 
         elif [ "$STATUS" == "errored" ]; then
-            log_fail "Proceso 'jeyca-presu' tiene errores"
+            log_fail "Proceso 'redpresu' tiene errores"
         elif [ "$STATUS" == "stopped" ]; then
-            log_fail "Proceso 'jeyca-presu' está detenido"
+            log_fail "Proceso 'redpresu' está detenido"
         else
-            log_warn "Proceso 'jeyca-presu' estado desconocido: $STATUS"
+            log_warn "Proceso 'redpresu' estado desconocido: $STATUS"
         fi
     else
-        log_fail "Proceso 'jeyca-presu' NO encontrado en PM2"
+        log_fail "Proceso 'redpresu' NO encontrado en PM2"
     fi
 
     # Verificar puerto 3000
@@ -267,41 +267,41 @@ fi
 log_section "5. Verificando Archivos y Directorios"
 
 # Verificar directorio de la app
-if [ -d "/opt/jeyca-presu" ]; then
-    log_success "Directorio de la aplicación existe: /opt/jeyca-presu"
+if [ -d "/opt/redpresu" ]; then
+    log_success "Directorio de la aplicación existe: /opt/redpresu"
 
     # Verificar archivo .env.local
-    if [ -f "/opt/jeyca-presu/.env.local" ]; then
+    if [ -f "/opt/redpresu/.env.local" ]; then
         log_success "Archivo de configuración .env.local existe"
     else
         log_fail "Archivo .env.local NO existe"
     fi
 
     # Verificar directorio .next (build)
-    if [ -d "/opt/jeyca-presu/.next" ]; then
+    if [ -d "/opt/redpresu/.next" ]; then
         log_success "Build de Next.js existe: .next/"
     else
         log_fail "Build de Next.js NO existe (.next/)"
     fi
 
     # Verificar directorio public/pdfs
-    if [ -d "/opt/jeyca-presu/public/pdfs" ]; then
+    if [ -d "/opt/redpresu/public/pdfs" ]; then
         log_success "Directorio de PDFs existe: public/pdfs/"
-        PDF_COUNT=$(find /opt/jeyca-presu/public/pdfs -name "*.pdf" 2>/dev/null | wc -l)
+        PDF_COUNT=$(find /opt/redpresu/public/pdfs -name "*.pdf" 2>/dev/null | wc -l)
         log_info "  PDFs generados: $PDF_COUNT"
     else
         log_warn "Directorio public/pdfs NO existe"
     fi
 
     # Verificar directorio public/logos
-    if [ -d "/opt/jeyca-presu/public/logos" ]; then
+    if [ -d "/opt/redpresu/public/logos" ]; then
         log_success "Directorio de logos existe: public/logos/"
     else
         log_warn "Directorio public/logos NO existe"
     fi
 
 else
-    log_fail "Directorio de la aplicación NO existe: /opt/jeyca-presu"
+    log_fail "Directorio de la aplicación NO existe: /opt/redpresu"
 fi
 
 ###############################################################################
@@ -420,9 +420,9 @@ else
     echo -e "${RED}╚═══════════════════════════════════════════════════════════════╝${NC}"
     echo ""
     log_info "Comandos útiles para debugging:"
-    log_info "  - Ver logs PM2:       pm2 logs jeyca-presu"
+    log_info "  - Ver logs PM2:       pm2 logs redpresu"
     log_info "  - Ver logs Docker:    docker-compose logs -f"
-    log_info "  - Restart PM2:        pm2 restart jeyca-presu"
+    log_info "  - Restart PM2:        pm2 restart redpresu"
     log_info "  - Restart Supabase:   docker-compose restart"
     echo ""
     exit 1

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ###############################################################################
-# Script de Preparación del Servidor Ubuntu para jeyca-presu
+# Script de Preparación del Servidor Ubuntu para redpresu
 #
 # Este script instala y configura todas las dependencias necesarias:
 # - Docker y Docker Compose
@@ -221,19 +221,19 @@ echo ""
 log_info "Paso 9/9: Creando directorios de trabajo..."
 
 # Crear directorios principales
-sudo mkdir -p /opt/jeyca-presu
+sudo mkdir -p /opt/redpresu
 sudo mkdir -p /opt/supabase
-sudo mkdir -p /opt/backups/jeyca-presu
+sudo mkdir -p /opt/backups/redpresu
 
 # Cambiar propietario al usuario actual
-sudo chown -R $USER:$USER /opt/jeyca-presu
+sudo chown -R $USER:$USER /opt/redpresu
 sudo chown -R $USER:$USER /opt/supabase
 sudo chown -R $USER:$USER /opt/backups
 
 log_info "✓ Directorios creados:"
-log_info "  - /opt/jeyca-presu (aplicación)"
+log_info "  - /opt/redpresu (aplicación)"
 log_info "  - /opt/supabase (Supabase self-hosted)"
-log_info "  - /opt/backups/jeyca-presu (backups)"
+log_info "  - /opt/backups/redpresu (backups)"
 echo ""
 
 ###############################################################################
@@ -270,7 +270,7 @@ echo ""
 log_info "Siguientes pasos:"
 log_info "1. Configurar Supabase Self-Hosted (ver DEPLOYMENT.md - Fase 2)"
 log_info "2. Ejecutar migraciones SQL"
-log_info "3. Clonar repositorio jeyca-presu en /opt/jeyca-presu"
+log_info "3. Clonar repositorio redpresu en /opt/redpresu"
 log_info "4. Configurar variables de entorno (.env.local)"
 log_info "5. Build y deploy con PM2"
 echo ""

@@ -1,11 +1,11 @@
 # ============================================================================
-# Dockerfile para jeyca-presu (Next.js 15 con Puppeteer)
+# Dockerfile para redpresu (Next.js 15 con Puppeteer)
 #
 # Multi-stage build para optimizar tamaño de imagen
 #
 # Uso:
-#   docker build -t jeyca-presu:latest -f deployment/Dockerfile .
-#   docker run -p 3000:3000 --env-file .env.local jeyca-presu:latest
+#   docker build -t redpresu:latest -f deployment/Dockerfile .
+#   docker run -p 3000:3000 --env-file .env.local redpresu:latest
 #
 # O con docker-compose:
 #   docker-compose -f deployment/docker-compose.full.yml up --build

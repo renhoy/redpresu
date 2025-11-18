@@ -1,13 +1,13 @@
 /**
  * PM2 Ecosystem Configuration
  *
- * Configuración de PM2 para deployment en producción de jeyca-presu
+ * Configuración de PM2 para deployment en producción de redpresu
  *
  * Uso:
  *   pm2 start ecosystem.config.js
- *   pm2 restart jeyca-presu
- *   pm2 stop jeyca-presu
- *   pm2 logs jeyca-presu
+ *   pm2 restart redpresu
+ *   pm2 stop redpresu
+ *   pm2 logs redpresu
  *   pm2 monit
  *
  * Documentación: https://pm2.keymetrics.io/docs/usage/application-declaration/
@@ -17,14 +17,14 @@ module.exports = {
   apps: [
     {
       // Nombre de la aplicación
-      name: 'jeyca-presu',
+      name: 'redpresu',
 
       // Script a ejecutar (npm start ejecuta next start)
       script: 'npm',
       args: 'start',
 
       // Directorio de trabajo (cambiar si es necesario)
-      cwd: '/opt/jeyca-presu',
+      cwd: '/opt/redpresu',
 
       // Número de instancias
       // 1 = single instance
@@ -132,10 +132,10 @@ module.exports = {
       ref: 'origin/main',
 
       // Repositorio git
-      repo: 'git@github.com:tu-usuario/jeyca-presu.git',
+      repo: 'git@github.com:tu-usuario/redpresu.git',
 
       // Path en el servidor donde se clonará el repo
-      path: '/opt/jeyca-presu',
+      path: '/opt/redpresu',
 
       // Comandos SSH pre-deploy (antes de git pull)
       'pre-deploy-local': '',
@@ -157,8 +157,8 @@ module.exports = {
       user: 'ubuntu',
       host: ['192.168.1.101'],
       ref: 'origin/develop',
-      repo: 'git@github.com:tu-usuario/jeyca-presu.git',
-      path: '/opt/jeyca-presu-staging',
+      repo: 'git@github.com:tu-usuario/redpresu.git',
+      path: '/opt/redpresu-staging',
       'post-deploy':
         'npm install && npm run build && pm2 reload ecosystem.config.js --env staging',
       env: {

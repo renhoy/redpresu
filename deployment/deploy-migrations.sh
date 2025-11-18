@@ -2,10 +2,10 @@
 
 ###############################################################################
 # Script para Ejecutar Migraciones SQL en Producción
-# jeyca-presu
+# redpresu
 #
 # Este script ejecuta las migraciones SQL necesarias para configurar
-# la base de datos de jeyca-presu en Supabase (self-hosted o cloud).
+# la base de datos de redpresu en Supabase (self-hosted o cloud).
 #
 # Uso:
 #   chmod +x deploy-migrations.sh
@@ -70,7 +70,7 @@ PGDATABASE="${PGDATABASE:-postgres}"
 ###############################################################################
 
 log_info "==================================================================="
-log_info "SCRIPT DE MIGRACIONES SQL - jeyca-presu"
+log_info "SCRIPT DE MIGRACIONES SQL - redpresu"
 log_info "==================================================================="
 echo ""
 
@@ -144,7 +144,7 @@ log_step "¿Deseas crear un backup antes de ejecutar las migraciones? [Y/n]"
 read -r response
 
 if [[ "$response" =~ ^([yY][eE][sS]|[yY]| )$ ]] || [ -z "$response" ]; then
-    BACKUP_DIR="/opt/backups/jeyca-presu"
+    BACKUP_DIR="/opt/backups/redpresu"
     BACKUP_FILE="$BACKUP_DIR/backup_pre_migration_$(date +%Y%m%d_%H%M%S).sql"
 
     mkdir -p "$BACKUP_DIR"

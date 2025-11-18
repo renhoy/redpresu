@@ -1,6 +1,6 @@
 /**
  * Rapid-PDF Module
- * Motor de generación de PDFs empresariales integrado en jeyca-presu
+ * Motor de generación de PDFs empresariales integrado en redpresu
  * Migrado desde Rapid-PDF API externa
  */
 

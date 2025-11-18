@@ -2,7 +2,7 @@
 
 ###############################################################################
 # Script Rápido para Insertar Datos Iniciales
-# jeyca-presu
+# redpresu
 #
 # Este script ejecuta seed_initial_data.sql para insertar:
 # - Empresa por defecto
@@ -25,7 +25,7 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
-echo -e "${GREEN}  INSERCIÓN DE DATOS INICIALES - jeyca-presu${NC}"
+echo -e "${GREEN}  INSERCIÓN DE DATOS INICIALES - redpresu${NC}"
 echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
 echo ""
 
