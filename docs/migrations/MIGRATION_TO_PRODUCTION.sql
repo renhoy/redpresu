@@ -2975,7 +2975,7 @@ CREATE POLICY redpresu_subscriptions_delete_superadmin ON redpresu.subscriptions
 -- Name: subscriptions redpresu_subscriptions_insert_own_company; Type: POLICY; Schema: redpresu; Owner: -
 --
 
-CREATE POLICY redpresu_subscriptions_insert_own_company ON redpresu.subscriptions FOR INSERT WITH CHECK (((company_id = auth.user_company_id()) AND (EXISTS ( SELECT 1
+CREATE POLICY redpresu_subscriptions_insert_own_company ON redpresu.subscriptions FOR INSERT WITH CHECK (((company_id = user_company_id()) AND (EXISTS ( SELECT 1
    FROM redpresu.users
   WHERE ((users.id = auth.uid()) AND (users.role = ANY (ARRAY['admin'::text, 'superadmin'::text])))))));
 
@@ -2984,7 +2984,7 @@ CREATE POLICY redpresu_subscriptions_insert_own_company ON redpresu.subscription
 -- Name: subscriptions redpresu_subscriptions_select_own_company; Type: POLICY; Schema: redpresu; Owner: -
 --
 
-CREATE POLICY redpresu_subscriptions_select_own_company ON redpresu.subscriptions FOR SELECT USING (((company_id = auth.user_company_id()) OR (EXISTS ( SELECT 1
+CREATE POLICY redpresu_subscriptions_select_own_company ON redpresu.subscriptions FOR SELECT USING (((company_id = user_company_id()) OR (EXISTS ( SELECT 1
    FROM redpresu.users
   WHERE ((users.id = auth.uid()) AND (users.role = 'superadmin'::text))))));
 
@@ -2993,7 +2993,7 @@ CREATE POLICY redpresu_subscriptions_select_own_company ON redpresu.subscription
 -- Name: subscriptions redpresu_subscriptions_update_own_company; Type: POLICY; Schema: redpresu; Owner: -
 --
 
-CREATE POLICY redpresu_subscriptions_update_own_company ON redpresu.subscriptions FOR UPDATE USING ((((company_id = auth.user_company_id()) AND (EXISTS ( SELECT 1
+CREATE POLICY redpresu_subscriptions_update_own_company ON redpresu.subscriptions FOR UPDATE USING ((((company_id = user_company_id()) AND (EXISTS ( SELECT 1
    FROM redpresu.users
   WHERE ((users.id = auth.uid()) AND (users.role = ANY (ARRAY['admin'::text, 'superadmin'::text])))))) OR (EXISTS ( SELECT 1
    FROM redpresu.users
