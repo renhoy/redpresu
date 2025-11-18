@@ -51,13 +51,9 @@ ENUMS_FILE="\$REMOTE_DIR/ENUMS_\${PREFIX_UPPER}_temp.sql"
 echo "  → Exportando tipos ENUM del schema public..."
 docker exec -i supabase-db psql -U postgres -d postgres -t > "\$ENUMS_FILE" <<'SQLEOF'
 SELECT
-  'DO \$body\$ BEGIN' || E'\n' ||
-  '    CREATE TYPE public.' || t.typname || ' AS ENUM (' ||
+  'DO \$body\$ BEGIN CREATE TYPE public.' || t.typname || ' AS ENUM (' ||
   string_agg('''' || e.enumlabel || '''', ', ' ORDER BY e.enumsortorder) ||
-  ');' || E'\n' ||
-  'EXCEPTION' || E'\n' ||
-  '    WHEN duplicate_object THEN null;' || E'\n' ||
-  'END \$body\$;'
+  '); EXCEPTION WHEN duplicate_object THEN null; END \$body\$;'
 FROM pg_type t
 JOIN pg_enum e ON t.oid = e.enumtypid
 WHERE t.typtype = 'e'
