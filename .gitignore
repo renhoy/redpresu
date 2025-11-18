@@ -49,6 +49,8 @@ public/help/.obsidian/
 # NOTA: prd.md, planificacion.md, tareas.md, claude.md son archivos base del proyecto
 # Se mantienen en repo pero se excluyen en deployment con .dockerignore
 /docs/
+# Excepción: mantener documentación de producción
+!/docs/PRODUCCION.md
 arquitectura.md
 mvp-completado.md
 CHANGELOG_*.md
