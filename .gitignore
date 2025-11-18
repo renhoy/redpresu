@@ -51,6 +51,8 @@ public/help/.obsidian/
 /docs/
 # Excepción: mantener documentación de producción
 !/docs/PRODUCCION.md
+!/docs/migrations/
+!/docs/migrations/MIGRATION_TO_PRODUCTION.sql
 arquitectura.md
 mvp-completado.md
 CHANGELOG_*.md
