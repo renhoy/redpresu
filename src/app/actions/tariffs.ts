@@ -8,8 +8,6 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 import { Database } from '@/lib/types/database.types'
 import { revalidatePath } from 'next/cache'
 import { CSV2JSONConverter, detectIVAsPresentes } from '@/lib/validators'
-import { writeFile, mkdir } from 'fs/promises'
-import { join } from 'path'
 import { isValidNIF, getNIFErrorMessage } from '@/lib/helpers/nif-validator'
 import { evaluateRules, type RuleContext } from '@/lib/business-rules/evaluator.server'
 
@@ -839,23 +837,36 @@ export async function uploadLogo(formData: FormData): Promise<{
 
     // Generar nombre único
     const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '')}`
-    const publicPath = join(process.cwd(), 'public', 'logos')
-    const filePath = join(publicPath, fileName)
+    const bucketName = 'tariff-logos'
 
-    // Crear directorio si no existe
-    await mkdir(publicPath, { recursive: true })
-
-    // Guardar archivo
+    // Convertir File a ArrayBuffer para Supabase
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
-    await writeFile(filePath, buffer)
 
-    const publicUrl = `/logos/${fileName}`
-    return { success: true, url: publicUrl }
+    // Subir a Supabase Storage
+    const { data, error } = await supabaseAdmin.storage
+      .from(bucketName)
+      .upload(fileName, buffer, {
+        contentType: file.type,
+        cacheControl: '3600',
+        upsert: false
+      })
+
+    if (error) {
+      log.error('[uploadLogo] Supabase Storage error:', error)
+      return { success: false, error: `Error al subir el archivo: ${error.message}` }
+    }
+
+    // Obtener URL pública del archivo
+    const { data: urlData } = supabaseAdmin.storage
+      .from(bucketName)
+      .getPublicUrl(data.path)
+
+    return { success: true, url: urlData.publicUrl }
 
   } catch (error) {
-    log.error('Error uploading logo:', error)
-    return { success: false, error: 'Error al subir el archivo' }
+    log.error('[uploadLogo] Critical error:', error)
+    return { success: false, error: 'Error inesperado al subir el archivo' }
   }
 }
 
