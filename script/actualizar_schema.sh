@@ -102,7 +102,12 @@ if [ \$? -eq 0 ]; then
     echo ""
 
     # Agregar contenido del schema limpio
+    # Eliminar líneas problemáticas:
+    # - CREATE SCHEMA public;
+    # - CREATE SCHEMA <schema_name>;
+    # - COMMENT ON SCHEMA public IS...
     grep -v "^CREATE SCHEMA public;" "\$OUTPUT_FILE_TEMP" | \
+      grep -v "^CREATE SCHEMA \${PREFIX};" | \
       grep -v "^COMMENT ON SCHEMA public IS"
   } > "\$OUTPUT_FILE"
 
