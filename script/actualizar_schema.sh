@@ -45,7 +45,24 @@ BACKUP_FILE="\$REMOTE_DIR/SCHEMA_\${PREFIX_UPPER}_\$TIMESTAMP.sql"
 
 mkdir -p "\$REMOTE_DIR"
 
-# Exporta el schema completo (sin prefijos, ahora usamos schema dedicado)
+# Paso 1: Exportar tipos ENUM del schema public que son referenciados
+ENUMS_FILE="\$REMOTE_DIR/ENUMS_\${PREFIX_UPPER}_temp.sql"
+
+echo "  → Exportando tipos ENUM del schema public..."
+docker exec supabase-db psql -U postgres -d postgres -t -c "
+SELECT 'CREATE TYPE public.' || t.typname || ' AS ENUM (' ||
+       string_agg('''' || e.enumlabel || '''', ', ' ORDER BY e.enumsortorder) ||
+       ');'
+FROM pg_type t
+JOIN pg_enum e ON t.oid = e.enumtypid
+WHERE t.typtype = 'e'
+  AND t.typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
+GROUP BY t.typname
+ORDER BY t.typname;
+" > "\$ENUMS_FILE"
+
+# Paso 2: Exportar el schema completo (sin prefijos, ahora usamos schema dedicado)
+echo "  → Exportando schema \${PREFIX}..."
 docker exec supabase-db pg_dump \
   -U postgres \
   -d postgres \
@@ -56,20 +73,47 @@ docker exec supabase-db pg_dump \
   > "\$OUTPUT_FILE_TEMP"
 
 if [ \$? -eq 0 ]; then
-  # Limpiar el dump: eliminar líneas problemáticas
-  # 1. Eliminar "CREATE SCHEMA public;" si existe
-  # 2. Eliminar "COMMENT ON SCHEMA public IS..." si existe
-  # 3. Mantener todo lo demás
-  grep -v "^CREATE SCHEMA public;" "\$OUTPUT_FILE_TEMP" | \
-    grep -v "^COMMENT ON SCHEMA public IS" > "\$OUTPUT_FILE"
+  # Paso 3: Combinar ENUMs + Schema en un solo archivo
+  {
+    echo "-- ============================================"
+    echo "-- Schema Export: \${PREFIX}"
+    echo "-- Generated: \$(date)"
+    echo "-- ============================================"
+    echo ""
+    echo "-- NOTA: Comentar la siguiente línea si el schema ya existe"
+    echo "-- CREATE SCHEMA IF NOT EXISTS \${PREFIX};"
+    echo ""
+    echo "-- ============================================"
+    echo "-- Tipos ENUM del schema public"
+    echo "-- ============================================"
+    echo ""
+
+    # Agregar ENUMs si existen
+    if [ -s "\$ENUMS_FILE" ]; then
+      # Limpiar espacios en blanco y agregar CREATE TYPE si no existe
+      grep -v "^$" "\$ENUMS_FILE" | sed 's/^[[:space:]]*//' | \
+        sed 's/CREATE TYPE/CREATE TYPE IF NOT EXISTS/g'
+    fi
+
+    echo ""
+    echo "-- ============================================"
+    echo "-- Schema: \${PREFIX}"
+    echo "-- ============================================"
+    echo ""
+
+    # Agregar contenido del schema limpio
+    grep -v "^CREATE SCHEMA public;" "\$OUTPUT_FILE_TEMP" | \
+      grep -v "^COMMENT ON SCHEMA public IS"
+  } > "\$OUTPUT_FILE"
 
   # Crear backup
   cp "\$OUTPUT_FILE" "\$BACKUP_FILE"
 
-  # Eliminar archivo temporal
-  rm -f "\$OUTPUT_FILE_TEMP"
+  # Eliminar archivos temporales
+  rm -f "\$OUTPUT_FILE_TEMP" "\$ENUMS_FILE"
 
   echo "✓ Exportado: \$OUTPUT_FILE"
+  echo "  Tipos ENUM: \$(grep -c "CREATE TYPE" "\$OUTPUT_FILE")"
   echo "  Tablas: \$(grep -c "CREATE TABLE" "\$OUTPUT_FILE")"
   echo "  Funciones: \$(grep -c "CREATE FUNCTION" "\$OUTPUT_FILE")"
   echo "  Políticas RLS: \$(grep -c "CREATE POLICY" "\$OUTPUT_FILE")"
@@ -77,7 +121,7 @@ if [ \$? -eq 0 ]; then
   echo "  Triggers: \$(grep -c "CREATE TRIGGER" "\$OUTPUT_FILE")"
 else
   echo "✗ Error al exportar"
-  rm -f "\$OUTPUT_FILE_TEMP"
+  rm -f "\$OUTPUT_FILE_TEMP" "\$ENUMS_FILE"
   exit 1
 fi
 ENDSSH
