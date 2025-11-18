@@ -36,7 +36,7 @@ BEGIN
   -- Contar usuarios en redpresu.users con rol superadmin
   SELECT COUNT(*), MAX(email) INTO superadmin_count, superadmin_email
   FROM redpresu.users
-  WHERE role = 'superadmin' AND company_id = 1 AND deleted_at IS NULL;
+  WHERE role = 'superadmin' AND company_id = 1 AND status = 'active';
 
   IF superadmin_count = 0 THEN
     RAISE EXCEPTION '❌ No existe un usuario superadmin para Empresa Demo.
@@ -93,7 +93,7 @@ INSERT INTO redpresu.issuers (
 )
 VALUES (
   'adc5b25e-7874-46bf-98a0-d2db9ba842cc'::uuid,  -- ID del issuer
-  (SELECT id FROM redpresu.users WHERE role = 'superadmin' AND company_id = 1 AND deleted_at IS NULL LIMIT 1), -- user_id del superadmin (detectado automáticamente)
+  (SELECT id FROM redpresu.users WHERE role = 'superadmin' AND company_id = 1 AND status = 'active' LIMIT 1), -- user_id del superadmin (detectado automáticamente)
   1,                                               -- company_id: Empresa Demo
   'autonomo',                                      -- type
   'Demo',                                          -- name
@@ -144,12 +144,12 @@ BEGIN
   -- Contar issuers de Empresa Demo
   SELECT COUNT(*) INTO issuer_count
   FROM redpresu.issuers
-  WHERE company_id = 1 AND deleted_at IS NULL;
+  WHERE company_id = 1;
 
   -- Obtener detalles del issuer
   SELECT user_id, name INTO issuer_user_id, issuer_name
   FROM redpresu.issuers
-  WHERE company_id = 1 AND deleted_at IS NULL
+  WHERE company_id = 1
   LIMIT 1;
 
   RAISE NOTICE '';
@@ -194,7 +194,7 @@ SELECT
   address,
   created_at
 FROM redpresu.issuers
-WHERE company_id = 1 AND deleted_at IS NULL;
+WHERE company_id = 1;
 
 -- Ver qué usuario está asociado
 SELECT
