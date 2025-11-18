@@ -14,6 +14,10 @@
 
 BEGIN;
 
+-- Desactivar validación de cuerpos de funciones durante la creación
+-- Esto permite crear funciones que referencian tablas que aún no existen
+SET check_function_bodies = false;
+
 -- ============================================
 -- SECCIÓN 1: Tipos ENUM del schema public
 -- ============================================
