@@ -39,25 +39,33 @@ BEGIN
   WHERE role = 'superadmin' AND company_id = 1 AND status = 'active';
 
   IF superadmin_count = 0 THEN
-    RAISE EXCEPTION '❌ No existe un usuario superadmin para Empresa Demo.
-
-Por favor, ejecuta los siguientes pasos:
-
-1. Crear usuario en Supabase Dashboard:
-   - Ve a: Authentication > Users
-   - Clic en "Add user"
-   - Email: superadmin@demo.com
-   - Password: (elige una contraseña segura)
-   - Auto Confirm User: YES
-   - Copia el UUID generado
-
-2. Insertar en redpresu.users:
-   INSERT INTO redpresu.users (id, company_id, email, name, last_name, role, status, created_at, updated_at)
-   VALUES (''TU-UUID-DE-AUTH-USERS''::uuid, 1, ''superadmin@demo.com'', ''Super'', ''Admin'', ''superadmin'', ''active'', NOW(), NOW());
-
-3. Volver a ejecutar este script (seed_demo_issuer.sql)
-
-Consulta: deployment/seed_superadmin_user.sql para más detalles.';
+    RAISE NOTICE '';
+    RAISE NOTICE '══════════════════════════════════════════════════════════════════════════════';
+    RAISE NOTICE '❌ ERROR: No existe un usuario superadmin para Empresa Demo';
+    RAISE NOTICE '══════════════════════════════════════════════════════════════════════════════';
+    RAISE NOTICE '';
+    RAISE NOTICE 'PASO 1: Crear usuario en Supabase Dashboard';
+    RAISE NOTICE '  1. Ve a: Authentication > Users';
+    RAISE NOTICE '  2. Clic en "Add user"';
+    RAISE NOTICE '  3. Email: superadmin@demo.com';
+    RAISE NOTICE '  4. Password: (elige una contraseña segura)';
+    RAISE NOTICE '  5. Auto Confirm User: YES';
+    RAISE NOTICE '  6. Copia el UUID generado';
+    RAISE NOTICE '';
+    RAISE NOTICE 'PASO 2: Insertar en redpresu.users';
+    RAISE NOTICE '  INSERT INTO redpresu.users (';
+    RAISE NOTICE '    id, company_id, email, name, last_name, role, status, created_at, updated_at';
+    RAISE NOTICE '  ) VALUES (';
+    RAISE NOTICE '    ''TU-UUID-AQUI''::uuid, 1, ''superadmin@demo.com'',';
+    RAISE NOTICE '    ''Super'', ''Admin'', ''superadmin'', ''active'', NOW(), NOW()';
+    RAISE NOTICE '  );';
+    RAISE NOTICE '';
+    RAISE NOTICE 'PASO 3: Volver a ejecutar este script (seed_demo_issuer.sql)';
+    RAISE NOTICE '';
+    RAISE NOTICE 'Consulta: deployment/seed_superadmin_user.sql para más detalles';
+    RAISE NOTICE '══════════════════════════════════════════════════════════════════════════════';
+    RAISE NOTICE '';
+    RAISE EXCEPTION 'No existe usuario superadmin. Ver instrucciones arriba.';
   END IF;
 
   RAISE NOTICE '✅ Usuario superadmin encontrado: %', superadmin_email;
