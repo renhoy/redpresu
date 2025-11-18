@@ -25,12 +25,50 @@ BEGIN
 END $$;
 
 -- ============================================
--- 2. INSERTAR ISSUER PARA EMPRESA DEMO
+-- 2. VERIFICAR QUE EXISTE UN USUARIO SUPERADMIN
+-- ============================================
+
+DO $$
+DECLARE
+  superadmin_count INTEGER;
+  superadmin_email TEXT;
+BEGIN
+  -- Contar usuarios en redpresu.users con rol superadmin
+  SELECT COUNT(*), MAX(email) INTO superadmin_count, superadmin_email
+  FROM redpresu.users
+  WHERE role = 'superadmin' AND company_id = 1 AND deleted_at IS NULL;
+
+  IF superadmin_count = 0 THEN
+    RAISE EXCEPTION '❌ No existe un usuario superadmin para Empresa Demo.
+
+Por favor, ejecuta los siguientes pasos:
+
+1. Crear usuario en Supabase Dashboard:
+   - Ve a: Authentication > Users
+   - Clic en "Add user"
+   - Email: superadmin@demo.com
+   - Password: (elige una contraseña segura)
+   - Auto Confirm User: YES
+   - Copia el UUID generado
+
+2. Insertar en redpresu.users:
+   INSERT INTO redpresu.users (id, company_id, email, name, last_name, role, status, created_at, updated_at)
+   VALUES (''TU-UUID-DE-AUTH-USERS''::uuid, 1, ''superadmin@demo.com'', ''Super'', ''Admin'', ''superadmin'', ''active'', NOW(), NOW());
+
+3. Volver a ejecutar este script (seed_demo_issuer.sql)
+
+Consulta: deployment/seed_superadmin_user.sql para más detalles.';
+  END IF;
+
+  RAISE NOTICE '✅ Usuario superadmin encontrado: %', superadmin_email;
+END $$;
+
+-- ============================================
+-- 3. INSERTAR ISSUER PARA EMPRESA DEMO
 -- ============================================
 -- NOTA: Este issuer está asociado al usuario superadmin
--- Ajustar el user_id según el UUID del superadmin de tu sistema
+-- Se detecta automáticamente el primer usuario con rol superadmin
 
--- Opción A: Si conoces el UUID del superadmin, úsalo directamente
 INSERT INTO redpresu.issuers (
   id,
   user_id,
@@ -55,7 +93,7 @@ INSERT INTO redpresu.issuers (
 )
 VALUES (
   'adc5b25e-7874-46bf-98a0-d2db9ba842cc'::uuid,  -- ID del issuer
-  (SELECT id FROM auth.users WHERE email LIKE '%super%' LIMIT 1), -- user_id del superadmin (detectado automáticamente)
+  (SELECT id FROM redpresu.users WHERE role = 'superadmin' AND company_id = 1 AND deleted_at IS NULL LIMIT 1), -- user_id del superadmin (detectado automáticamente)
   1,                                               -- company_id: Empresa Demo
   'autonomo',                                      -- type
   'Demo',                                          -- name
