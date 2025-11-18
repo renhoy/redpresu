@@ -105,7 +105,10 @@ if [ \$? -eq 0 ]; then
     # Agregar ENUMs si existen
     if [ -s "\$ENUMS_FILE" ]; then
       # Limpiar espacios en blanco
-      grep -v "^$" "\$ENUMS_FILE" | sed 's/^[[:space:]]*//'
+      TEMP_ENUMS_1="\$REMOTE_DIR/temp_enums_1.sql"
+      grep -v "^$" "\$ENUMS_FILE" > "\$TEMP_ENUMS_1"
+      sed 's/^[[:space:]]*//' "\$TEMP_ENUMS_1"
+      rm -f "\$TEMP_ENUMS_1"
     fi
 
     echo ""
@@ -117,10 +120,19 @@ if [ \$? -eq 0 ]; then
     # Agregar schema public completo si existe, limpiando líneas problemáticas
     # Filtrar: CREATE SCHEMA, COMMENT ON SCHEMA, y bloques CREATE TYPE completos (ya incluidos arriba)
     if [ -s "\$PUBLIC_SCHEMA_FILE" ]; then
-      # Eliminar bloques CREATE TYPE completos (incluyendo comentarios y líneas multi-línea)
-      sed '/^-- Name:.*Type: TYPE/,/);$/d' "\$PUBLIC_SCHEMA_FILE" | \
-        grep -v "^CREATE SCHEMA public;" | \
-        grep -v "^COMMENT ON SCHEMA public IS"
+      # Paso 1: Eliminar bloques CREATE TYPE completos (incluyendo comentarios y líneas multi-línea)
+      TEMP_PUBLIC_1="\$REMOTE_DIR/temp_public_1.sql"
+      sed '/^-- Name:.*Type: TYPE/,/);$/d' "\$PUBLIC_SCHEMA_FILE" > "\$TEMP_PUBLIC_1"
+
+      # Paso 2: Eliminar CREATE SCHEMA public
+      TEMP_PUBLIC_2="\$REMOTE_DIR/temp_public_2.sql"
+      grep -v "^CREATE SCHEMA public;" "\$TEMP_PUBLIC_1" > "\$TEMP_PUBLIC_2"
+
+      # Paso 3: Eliminar COMMENT ON SCHEMA
+      grep -v "^COMMENT ON SCHEMA public IS" "\$TEMP_PUBLIC_2"
+
+      # Limpiar archivos temporales
+      rm -f "\$TEMP_PUBLIC_1" "\$TEMP_PUBLIC_2"
     fi
 
     echo ""
@@ -134,9 +146,15 @@ if [ \$? -eq 0 ]; then
     # - CREATE SCHEMA public;
     # - CREATE SCHEMA <schema_name>;
     # - COMMENT ON SCHEMA public IS...
-    grep -v "^CREATE SCHEMA public;" "\$OUTPUT_FILE_TEMP" | \
-      grep -v "^CREATE SCHEMA \${PREFIX};" | \
-      grep -v "^COMMENT ON SCHEMA public IS"
+    TEMP_SCHEMA_1="\$REMOTE_DIR/temp_schema_1.sql"
+    TEMP_SCHEMA_2="\$REMOTE_DIR/temp_schema_2.sql"
+
+    grep -v "^CREATE SCHEMA public;" "\$OUTPUT_FILE_TEMP" > "\$TEMP_SCHEMA_1"
+    grep -v "^CREATE SCHEMA \${PREFIX};" "\$TEMP_SCHEMA_1" > "\$TEMP_SCHEMA_2"
+    grep -v "^COMMENT ON SCHEMA public IS" "\$TEMP_SCHEMA_2"
+
+    # Limpiar archivos temporales
+    rm -f "\$TEMP_SCHEMA_1" "\$TEMP_SCHEMA_2"
   } > "\$OUTPUT_FILE"
 
   # Crear backup
@@ -144,6 +162,7 @@ if [ \$? -eq 0 ]; then
 
   # Eliminar archivos temporales
   rm -f "\$OUTPUT_FILE_TEMP" "\$ENUMS_FILE" "\$PUBLIC_SCHEMA_FILE"
+  rm -f "\$REMOTE_DIR/temp_"*.sql
 
   echo "✓ Exportado: \$OUTPUT_FILE"
   echo ""
@@ -159,6 +178,7 @@ if [ \$? -eq 0 ]; then
 else
   echo "✗ Error al exportar"
   rm -f "\$OUTPUT_FILE_TEMP" "\$ENUMS_FILE" "\$PUBLIC_SCHEMA_FILE"
+  rm -f "\$REMOTE_DIR/temp_"*.sql
   exit 1
 fi
 ENDSSH
