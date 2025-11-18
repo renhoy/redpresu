@@ -49,7 +49,7 @@ mkdir -p "\$REMOTE_DIR"
 ENUMS_FILE="\$REMOTE_DIR/ENUMS_\${PREFIX_UPPER}_temp.sql"
 
 echo "  → Exportando tipos ENUM del schema public..."
-docker exec supabase-db psql -U postgres -d postgres -t -c "
+docker exec -i supabase-db psql -U postgres -d postgres -t > "\$ENUMS_FILE" <<'SQLEOF'
 SELECT
   'DO \$body\$ BEGIN' || E'\n' ||
   '    CREATE TYPE public.' || t.typname || ' AS ENUM (' ||
@@ -64,7 +64,7 @@ WHERE t.typtype = 'e'
   AND t.typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
 GROUP BY t.typname
 ORDER BY t.typname;
-" > "\$ENUMS_FILE"
+SQLEOF
 
 # Paso 2: Exportar el schema completo (sin prefijos, ahora usamos schema dedicado)
 echo "  → Exportando schema \${PREFIX}..."
