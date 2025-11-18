@@ -62,10 +62,11 @@ GROUP BY t.typname
 ORDER BY t.typname;
 SQLEOF
 
-# Paso 2: Exportar schema public completo (funciones, tablas, etc.)
+# Paso 2: Exportar solo funciones y tablas del schema public que son usadas por el schema objetivo
 PUBLIC_SCHEMA_FILE="\$REMOTE_DIR/PUBLIC_\${PREFIX_UPPER}_temp.sql"
 
-echo "  → Exportando schema public completo..."
+echo "  → Exportando funciones y tablas del schema public..."
+# Exportar schema public pero luego filtrar solo lo necesario
 docker exec supabase-db pg_dump \
   -U postgres \
   -d postgres \
@@ -74,6 +75,43 @@ docker exec supabase-db pg_dump \
   --no-acl \
   --schema-only \
   > "\$PUBLIC_SCHEMA_FILE"
+
+# Filtrar vistas y funciones que referencian schemas externos (mdg, imanclip, etc.)
+PUBLIC_FILTERED="\$REMOTE_DIR/PUBLIC_\${PREFIX_UPPER}_filtered.sql"
+
+# Usar awk para eliminar bloques completos de CREATE VIEW/FUNCTION que contengan referencias a otros schemas
+awk '
+  /^-- Name:.*VIEW/ { in_view=1; view_buffer=""; }
+  /^-- Name:.*FUNCTION/ { in_function=1; func_buffer=""; }
+
+  in_view {
+    view_buffer = view_buffer "\n" \$0;
+    if (/^;$/) {
+      # Fin de vista, verificar si contiene referencias a otros schemas
+      if (view_buffer !~ /mdg\./ && view_buffer !~ /imanclip\./ && view_buffer !~ /renexweb\./) {
+        print view_buffer;
+      }
+      in_view=0;
+    }
+    next;
+  }
+
+  in_function {
+    func_buffer = func_buffer "\n" \$0;
+    if (/^;$/ || /^\$\$;$/ || /^\$body\$;$/) {
+      # Fin de función, verificar si contiene referencias a otros schemas
+      if (func_buffer !~ /mdg\./ && func_buffer !~ /imanclip\./ && func_buffer !~ /renexweb\./) {
+        print func_buffer;
+      }
+      in_function=0;
+    }
+    next;
+  }
+
+  { print; }
+' "\$PUBLIC_SCHEMA_FILE" > "\$PUBLIC_FILTERED"
+
+mv "\$PUBLIC_FILTERED" "\$PUBLIC_SCHEMA_FILE"
 
 # Paso 3: Exportar el schema completo (sin prefijos, ahora usamos schema dedicado)
 echo "  → Exportando schema \${PREFIX}..."
