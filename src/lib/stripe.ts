@@ -14,6 +14,9 @@ let stripeInstance: Stripe | null = null;
 
 /**
  * Obtiene instancia de Stripe (singleton)
+ * Vercel maneja automáticamente las keys correctas según el entorno:
+ * - Development/Preview → usa valores de test configurados en Vercel
+ * - Production → usa valores de live configurados en Vercel
  */
 export function getStripeClient(): Stripe | null {
   if (!isSubscriptionsEnabled()) {
@@ -108,7 +111,7 @@ export interface StripePlan {
   name: string;
   description: string;
   price: number; // Precio mensual en EUR
-  priceId: string; // Stripe Price ID
+  priceId: string; // Stripe Price ID (Vercel maneja test/live según entorno)
   limits: {
     tariffs: number;
     budgets: number;
@@ -120,7 +123,10 @@ export interface StripePlan {
 
 /**
  * Configuración de planes
- * IMPORTANTE: priceId debe actualizarse con IDs reales de Stripe Dashboard
+ * IMPORTANTE: Actualizar priceId con IDs reales de Stripe Dashboard
+ * Los Price IDs se configuran en Vercel según el entorno:
+ * - Development/Preview → Price ID de TEST mode
+ * - Production → Price ID de LIVE mode (o TEST hasta que estés listo)
  */
 export const STRIPE_PLANS: Record<PlanType, StripePlan> = {
   free: {
@@ -149,7 +155,7 @@ export const STRIPE_PLANS: Record<PlanType, StripePlan> = {
     name: "Pro",
     description: "Plan profesional para negocios",
     price: 29,
-    priceId: "price_REPLACE_WITH_REAL_PRICE_ID", // TODO: Actualizar con ID real
+    priceId: "price_REPLACE_WITH_REAL_PRICE_ID", // TODO: Actualizar con Price ID real
     limits: {
       tariffs: 50,
       budgets: 500,
@@ -172,7 +178,7 @@ export const STRIPE_PLANS: Record<PlanType, StripePlan> = {
     name: "Enterprise",
     description: "Plan empresarial sin límites",
     price: 99,
-    priceId: "price_REPLACE_WITH_REAL_PRICE_ID", // TODO: Actualizar con ID real
+    priceId: "price_REPLACE_WITH_REAL_PRICE_ID", // TODO: Actualizar con Price ID real
     limits: {
       tariffs: 9999,
       budgets: 9999,

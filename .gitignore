@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -51,6 +52,9 @@ public/help/.obsidian/
 /docs/
 # Excepción: mantener documentación de producción
 !/docs/PRODUCCION.md
+!/docs/VERCEL_SETUP.md
+!/docs/migrations/
+!/docs/migrations/MIGRATION_TO_PRODUCTION.sql
 arquitectura.md
 mvp-completado.md
 CHANGELOG_*.md

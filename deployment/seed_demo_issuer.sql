@@ -16,22 +16,60 @@ BEGIN;
 DO $$
 BEGIN
   IF NOT EXISTS (
-    SELECT FROM public.redpresu_companies WHERE id = 1 AND name = 'Empresa Demo'
+    SELECT FROM redpresu.companies WHERE id = 1 AND name = 'Empresa Demo'
   ) THEN
     RAISE EXCEPTION 'Empresa Demo (ID=1) no existe. Ejecutar seed_initial_data.sql primero.';
   END IF;
 
-  RAISE NOTICE '✅ Empresa Demo existe';
+  RAISE NOTICE 'OK - Empresa Demo existe';
 END $$;
 
 -- ============================================
--- 2. INSERTAR ISSUER PARA EMPRESA DEMO
+-- 2. VERIFICAR QUE EXISTE UN USUARIO SUPERADMIN
+-- ============================================
+
+DO $$
+DECLARE
+  superadmin_count INTEGER;
+  superadmin_email TEXT;
+BEGIN
+  -- Contar usuarios en redpresu.users con rol superadmin
+  SELECT COUNT(*), MAX(email) INTO superadmin_count, superadmin_email
+  FROM redpresu.users
+  WHERE role = 'superadmin' AND company_id = 1 AND status = 'active';
+
+  IF superadmin_count = 0 THEN
+    RAISE NOTICE '';
+    RAISE NOTICE '========================================================================';
+    RAISE NOTICE 'ERROR: No existe un usuario superadmin para Empresa Demo';
+    RAISE NOTICE '========================================================================';
+    RAISE NOTICE '';
+    RAISE NOTICE 'Debes crear el usuario superadmin primero:';
+    RAISE NOTICE '';
+    RAISE NOTICE '1. Ve a Supabase Dashboard > Authentication > Users';
+    RAISE NOTICE '2. Crea un usuario con email: superadmin@demo.com';
+    RAISE NOTICE '3. Auto Confirm User: YES';
+    RAISE NOTICE '4. Copia el UUID del usuario creado';
+    RAISE NOTICE '';
+    RAISE NOTICE '5. Inserta el usuario en redpresu.users con ese UUID';
+    RAISE NOTICE '   Consulta: deployment/seed_superadmin_user.sql';
+    RAISE NOTICE '';
+    RAISE NOTICE '6. Vuelve a ejecutar este script';
+    RAISE NOTICE '';
+    RAISE NOTICE '========================================================================';
+    RAISE EXCEPTION 'Falta usuario superadmin';
+  END IF;
+
+  RAISE NOTICE 'OK - Usuario superadmin encontrado';
+END $$;
+
+-- ============================================
+-- 3. INSERTAR ISSUER PARA EMPRESA DEMO
 -- ============================================
 -- NOTA: Este issuer está asociado al usuario superadmin
--- Ajustar el user_id según el UUID del superadmin de tu sistema
+-- Se detecta automáticamente el primer usuario con rol superadmin
 
--- Opción A: Si conoces el UUID del superadmin, úsalo directamente
-INSERT INTO public.issuers (
+INSERT INTO redpresu.issuers (
   id,
   user_id,
   company_id,
@@ -55,7 +93,7 @@ INSERT INTO public.issuers (
 )
 VALUES (
   'adc5b25e-7874-46bf-98a0-d2db9ba842cc'::uuid,  -- ID del issuer
-  (SELECT id FROM auth.users WHERE email LIKE '%super%' LIMIT 1), -- user_id del superadmin (detectado automáticamente)
+  (SELECT id FROM redpresu.users WHERE role = 'superadmin' AND company_id = 1 AND status = 'active' LIMIT 1), -- user_id del superadmin (detectado automáticamente)
   1,                                               -- company_id: Empresa Demo
   'autonomo',                                      -- type
   'Demo',                                          -- name
@@ -105,35 +143,30 @@ DECLARE
 BEGIN
   -- Contar issuers de Empresa Demo
   SELECT COUNT(*) INTO issuer_count
-  FROM public.issuers
-  WHERE company_id = 1 AND deleted_at IS NULL;
+  FROM redpresu.issuers
+  WHERE company_id = 1;
 
   -- Obtener detalles del issuer
   SELECT user_id, name INTO issuer_user_id, issuer_name
-  FROM public.issuers
-  WHERE company_id = 1 AND deleted_at IS NULL
+  FROM redpresu.issuers
+  WHERE company_id = 1
   LIMIT 1;
 
   RAISE NOTICE '';
-  RAISE NOTICE '═══════════════════════════════════════════════════════════════';
-  RAISE NOTICE '✅ ISSUER DE EMPRESA DEMO CREADO EXITOSAMENTE';
-  RAISE NOTICE '═══════════════════════════════════════════════════════════════';
+  RAISE NOTICE '===================================================================';
+  RAISE NOTICE 'OK - ISSUER DE EMPRESA DEMO CREADO EXITOSAMENTE';
+  RAISE NOTICE '===================================================================';
   RAISE NOTICE '';
-  RAISE NOTICE 'Resumen:';
-  RAISE NOTICE '  - Issuers para Empresa Demo: % registro(s)', issuer_count;
-  RAISE NOTICE '  - Nombre del issuer: %', issuer_name;
-  RAISE NOTICE '  - User ID asociado: %', issuer_user_id;
+  RAISE NOTICE 'Datos del Issuer creado:';
+  RAISE NOTICE '  - Nombre: Demo';
+  RAISE NOTICE '  - NIF: B36936926';
+  RAISE NOTICE '  - Tipo: Autonomo';
+  RAISE NOTICE '  - Email: demo@demo.com';
+  RAISE NOTICE '  - Telefono: 963 369 369';
+  RAISE NOTICE '  - Direccion: Calle Demo, 369, 36900 Localidad Demo';
+  RAISE NOTICE '  - IRPF: 15 porciento';
   RAISE NOTICE '';
-  RAISE NOTICE 'Datos del Issuer:';
-  RAISE NOTICE '  ✅ Nombre: Demo';
-  RAISE NOTICE '  ✅ NIF: B36936926';
-  RAISE NOTICE '  ✅ Tipo: Autónomo';
-  RAISE NOTICE '  ✅ Email: demo@demo.com';
-  RAISE NOTICE '  ✅ Teléfono: 963 369 369';
-  RAISE NOTICE '  ✅ Dirección: Calle Demo, 369, 36900 Localidad Demo';
-  RAISE NOTICE '  ✅ IRPF: 15%';
-  RAISE NOTICE '';
-  RAISE NOTICE '═══════════════════════════════════════════════════════════════';
+  RAISE NOTICE '===================================================================';
 END $$;
 
 COMMIT;
@@ -155,8 +188,8 @@ SELECT
   phone,
   address,
   created_at
-FROM public.issuers
-WHERE company_id = 1 AND deleted_at IS NULL;
+FROM redpresu.issuers
+WHERE company_id = 1;
 
 -- Ver qué usuario está asociado
 SELECT
@@ -165,8 +198,8 @@ SELECT
   u.last_name,
   u.role
 FROM auth.users au
-JOIN public.users u ON u.id = au.id
-WHERE u.id = (SELECT user_id FROM public.issuers WHERE company_id = 1 LIMIT 1);
+JOIN redpresu.users u ON u.id = au.id
+WHERE u.id = (SELECT user_id FROM redpresu.issuers WHERE company_id = 1 LIMIT 1);
 */
 
 -- ============================================
@@ -177,7 +210,7 @@ WHERE u.id = (SELECT user_id FROM public.issuers WHERE company_id = 1 LIMIT 1);
 BEGIN;
 
 -- Eliminar issuer de Empresa Demo
-DELETE FROM public.issuers
+DELETE FROM redpresu.issuers
 WHERE company_id = 1 AND id = 'adc5b25e-7874-46bf-98a0-d2db9ba842cc'::uuid;
 
 COMMIT;

@@ -45,7 +45,76 @@ BACKUP_FILE="\$REMOTE_DIR/SCHEMA_\${PREFIX_UPPER}_\$TIMESTAMP.sql"
 
 mkdir -p "\$REMOTE_DIR"
 
-# Exporta el schema completo (sin prefijos, ahora usamos schema dedicado)
+# Paso 1: Exportar tipos ENUM del schema public que son referenciados
+ENUMS_FILE="\$REMOTE_DIR/ENUMS_\${PREFIX_UPPER}_temp.sql"
+
+echo "  → Exportando tipos ENUM del schema public..."
+docker exec -i supabase-db psql -U postgres -d postgres -t > "\$ENUMS_FILE" <<'SQLEOF'
+SELECT
+  'DO \$body\$ BEGIN CREATE TYPE public.' || t.typname || ' AS ENUM (' ||
+  string_agg('''' || e.enumlabel || '''', ', ' ORDER BY e.enumsortorder) ||
+  '); EXCEPTION WHEN duplicate_object THEN null; END \$body\$;'
+FROM pg_type t
+JOIN pg_enum e ON t.oid = e.enumtypid
+WHERE t.typtype = 'e'
+  AND t.typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
+GROUP BY t.typname
+ORDER BY t.typname;
+SQLEOF
+
+# Paso 2: Exportar solo funciones y tablas del schema public que son usadas por el schema objetivo
+PUBLIC_SCHEMA_FILE="\$REMOTE_DIR/PUBLIC_\${PREFIX_UPPER}_temp.sql"
+
+echo "  → Exportando funciones y tablas del schema public..."
+# Exportar schema public pero luego filtrar solo lo necesario
+docker exec supabase-db pg_dump \
+  -U postgres \
+  -d postgres \
+  --schema=public \
+  --no-owner \
+  --no-acl \
+  --schema-only \
+  > "\$PUBLIC_SCHEMA_FILE"
+
+# Filtrar vistas y funciones que referencian schemas externos (mdg, imanclip, etc.)
+PUBLIC_FILTERED="\$REMOTE_DIR/PUBLIC_\${PREFIX_UPPER}_filtered.sql"
+
+# Usar awk para eliminar bloques completos de CREATE VIEW/FUNCTION que contengan referencias a otros schemas
+awk '
+  /^-- Name:.*VIEW/ { in_view=1; view_buffer=""; }
+  /^-- Name:.*FUNCTION/ { in_function=1; func_buffer=""; }
+
+  in_view {
+    view_buffer = view_buffer "\n" \$0;
+    if (/^;$/) {
+      # Fin de vista, verificar si contiene referencias a otros schemas
+      if (view_buffer !~ /mdg\./ && view_buffer !~ /imanclip\./ && view_buffer !~ /renexweb\./) {
+        print view_buffer;
+      }
+      in_view=0;
+    }
+    next;
+  }
+
+  in_function {
+    func_buffer = func_buffer "\n" \$0;
+    if (/^;$/ || /^\$\$;$/ || /^\$body\$;$/) {
+      # Fin de función, verificar si contiene referencias a otros schemas
+      if (func_buffer !~ /mdg\./ && func_buffer !~ /imanclip\./ && func_buffer !~ /renexweb\./) {
+        print func_buffer;
+      }
+      in_function=0;
+    }
+    next;
+  }
+
+  { print; }
+' "\$PUBLIC_SCHEMA_FILE" > "\$PUBLIC_FILTERED"
+
+mv "\$PUBLIC_FILTERED" "\$PUBLIC_SCHEMA_FILE"
+
+# Paso 3: Exportar el schema completo (sin prefijos, ahora usamos schema dedicado)
+echo "  → Exportando schema \${PREFIX}..."
 docker exec supabase-db pg_dump \
   -U postgres \
   -d postgres \
@@ -56,28 +125,98 @@ docker exec supabase-db pg_dump \
   > "\$OUTPUT_FILE_TEMP"
 
 if [ \$? -eq 0 ]; then
-  # Limpiar el dump: eliminar líneas problemáticas
-  # 1. Eliminar "CREATE SCHEMA public;" si existe
-  # 2. Eliminar "COMMENT ON SCHEMA public IS..." si existe
-  # 3. Mantener todo lo demás
-  grep -v "^CREATE SCHEMA public;" "\$OUTPUT_FILE_TEMP" | \
-    grep -v "^COMMENT ON SCHEMA public IS" > "\$OUTPUT_FILE"
+  # Paso 4: Combinar ENUMs + Schema Public + Schema Específico en un solo archivo
+  {
+    echo "-- ============================================"
+    echo "-- Schema Export: \${PREFIX}"
+    echo "-- Generated: \$(date)"
+    echo "-- ============================================"
+    echo ""
+    echo "-- NOTA: El schema debe existir antes de ejecutar este SQL"
+    echo "-- CREATE SCHEMA IF NOT EXISTS \${PREFIX};"
+    echo ""
+    echo "-- ============================================"
+    echo "-- Tipos ENUM del schema public"
+    echo "-- ============================================"
+    echo ""
+
+    # Agregar ENUMs si existen
+    if [ -s "\$ENUMS_FILE" ]; then
+      # Limpiar espacios en blanco
+      TEMP_ENUMS_1="\$REMOTE_DIR/temp_enums_1.sql"
+      grep -v "^$" "\$ENUMS_FILE" > "\$TEMP_ENUMS_1"
+      sed 's/^[[:space:]]*//' "\$TEMP_ENUMS_1"
+      rm -f "\$TEMP_ENUMS_1"
+    fi
+
+    echo ""
+    echo "-- ============================================"
+    echo "-- Schema public (tablas, funciones, etc.)"
+    echo "-- ============================================"
+    echo ""
+
+    # Agregar schema public completo si existe, limpiando líneas problemáticas
+    # Filtrar: CREATE SCHEMA, COMMENT ON SCHEMA, y bloques CREATE TYPE completos (ya incluidos arriba)
+    if [ -s "\$PUBLIC_SCHEMA_FILE" ]; then
+      # Paso 1: Eliminar bloques CREATE TYPE completos (incluyendo comentarios y líneas multi-línea)
+      TEMP_PUBLIC_1="\$REMOTE_DIR/temp_public_1.sql"
+      sed '/^-- Name:.*Type: TYPE/,/);$/d' "\$PUBLIC_SCHEMA_FILE" > "\$TEMP_PUBLIC_1"
+
+      # Paso 2: Eliminar CREATE SCHEMA public
+      TEMP_PUBLIC_2="\$REMOTE_DIR/temp_public_2.sql"
+      grep -v "^CREATE SCHEMA public;" "\$TEMP_PUBLIC_1" > "\$TEMP_PUBLIC_2"
+
+      # Paso 3: Eliminar COMMENT ON SCHEMA
+      grep -v "^COMMENT ON SCHEMA public IS" "\$TEMP_PUBLIC_2"
+
+      # Limpiar archivos temporales
+      rm -f "\$TEMP_PUBLIC_1" "\$TEMP_PUBLIC_2"
+    fi
+
+    echo ""
+    echo "-- ============================================"
+    echo "-- Schema: \${PREFIX}"
+    echo "-- ============================================"
+    echo ""
+
+    # Agregar contenido del schema limpio
+    # Eliminar líneas problemáticas:
+    # - CREATE SCHEMA public;
+    # - CREATE SCHEMA <schema_name>;
+    # - COMMENT ON SCHEMA public IS...
+    TEMP_SCHEMA_1="\$REMOTE_DIR/temp_schema_1.sql"
+    TEMP_SCHEMA_2="\$REMOTE_DIR/temp_schema_2.sql"
+
+    grep -v "^CREATE SCHEMA public;" "\$OUTPUT_FILE_TEMP" > "\$TEMP_SCHEMA_1"
+    grep -v "^CREATE SCHEMA \${PREFIX};" "\$TEMP_SCHEMA_1" > "\$TEMP_SCHEMA_2"
+    grep -v "^COMMENT ON SCHEMA public IS" "\$TEMP_SCHEMA_2"
+
+    # Limpiar archivos temporales
+    rm -f "\$TEMP_SCHEMA_1" "\$TEMP_SCHEMA_2"
+  } > "\$OUTPUT_FILE"
 
   # Crear backup
   cp "\$OUTPUT_FILE" "\$BACKUP_FILE"
 
-  # Eliminar archivo temporal
-  rm -f "\$OUTPUT_FILE_TEMP"
+  # Eliminar archivos temporales
+  rm -f "\$OUTPUT_FILE_TEMP" "\$ENUMS_FILE" "\$PUBLIC_SCHEMA_FILE"
+  rm -f "\$REMOTE_DIR/temp_"*.sql
 
   echo "✓ Exportado: \$OUTPUT_FILE"
-  echo "  Tablas: \$(grep -c "CREATE TABLE" "\$OUTPUT_FILE")"
-  echo "  Funciones: \$(grep -c "CREATE FUNCTION" "\$OUTPUT_FILE")"
-  echo "  Políticas RLS: \$(grep -c "CREATE POLICY" "\$OUTPUT_FILE")"
-  echo "  Views: \$(grep -c "CREATE VIEW" "\$OUTPUT_FILE")"
-  echo "  Triggers: \$(grep -c "CREATE TRIGGER" "\$OUTPUT_FILE")"
+  echo ""
+  echo "Estadísticas del export:"
+  echo "  Tipos ENUM: \$(grep -c "CREATE TYPE" "\$OUTPUT_FILE" || echo 0)"
+  echo "  Tablas public: \$(grep -c "CREATE TABLE public\." "\$OUTPUT_FILE" || echo 0)"
+  echo "  Funciones public: \$(grep -c "CREATE.*FUNCTION public\." "\$OUTPUT_FILE" || echo 0)"
+  echo "  Tablas \${PREFIX}: \$(grep -c "CREATE TABLE \${PREFIX}\." "\$OUTPUT_FILE" || echo 0)"
+  echo "  Funciones \${PREFIX}: \$(grep -c "CREATE.*FUNCTION \${PREFIX}\." "\$OUTPUT_FILE" || echo 0)"
+  echo "  Políticas RLS: \$(grep -c "CREATE POLICY" "\$OUTPUT_FILE" || echo 0)"
+  echo "  Views: \$(grep -c "CREATE VIEW" "\$OUTPUT_FILE" || echo 0)"
+  echo "  Triggers: \$(grep -c "CREATE TRIGGER" "\$OUTPUT_FILE" || echo 0)"
 else
   echo "✗ Error al exportar"
-  rm -f "\$OUTPUT_FILE_TEMP"
+  rm -f "\$OUTPUT_FILE_TEMP" "\$ENUMS_FILE" "\$PUBLIC_SCHEMA_FILE"
+  rm -f "\$REMOTE_DIR/temp_"*.sql
   exit 1
 fi
 ENDSSH
