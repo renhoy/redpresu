@@ -62,7 +62,20 @@ GROUP BY t.typname
 ORDER BY t.typname;
 SQLEOF
 
-# Paso 2: Exportar el schema completo (sin prefijos, ahora usamos schema dedicado)
+# Paso 2: Exportar funciones del schema public
+FUNCTIONS_FILE="\$REMOTE_DIR/FUNCTIONS_\${PREFIX_UPPER}_temp.sql"
+
+echo "  → Exportando funciones del schema public..."
+docker exec supabase-db pg_dump \
+  -U postgres \
+  -d postgres \
+  --schema=public \
+  --no-owner \
+  --no-acl \
+  --schema-only \
+  | grep -A 999999 "CREATE.*FUNCTION public\." > "\$FUNCTIONS_FILE"
+
+# Paso 3: Exportar el schema completo (sin prefijos, ahora usamos schema dedicado)
 echo "  → Exportando schema \${PREFIX}..."
 docker exec supabase-db pg_dump \
   -U postgres \
@@ -74,7 +87,7 @@ docker exec supabase-db pg_dump \
   > "\$OUTPUT_FILE_TEMP"
 
 if [ \$? -eq 0 ]; then
-  # Paso 3: Combinar ENUMs + Schema en un solo archivo
+  # Paso 4: Combinar ENUMs + Funciones + Schema en un solo archivo
   {
     echo "-- ============================================"
     echo "-- Schema Export: \${PREFIX}"
@@ -97,6 +110,17 @@ if [ \$? -eq 0 ]; then
 
     echo ""
     echo "-- ============================================"
+    echo "-- Funciones del schema public"
+    echo "-- ============================================"
+    echo ""
+
+    # Agregar funciones si existen
+    if [ -s "\$FUNCTIONS_FILE" ]; then
+      cat "\$FUNCTIONS_FILE"
+    fi
+
+    echo ""
+    echo "-- ============================================"
     echo "-- Schema: \${PREFIX}"
     echo "-- ============================================"
     echo ""
@@ -115,18 +139,19 @@ if [ \$? -eq 0 ]; then
   cp "\$OUTPUT_FILE" "\$BACKUP_FILE"
 
   # Eliminar archivos temporales
-  rm -f "\$OUTPUT_FILE_TEMP" "\$ENUMS_FILE"
+  rm -f "\$OUTPUT_FILE_TEMP" "\$ENUMS_FILE" "\$FUNCTIONS_FILE"
 
   echo "✓ Exportado: \$OUTPUT_FILE"
   echo "  Tipos ENUM: \$(grep -c "CREATE TYPE" "\$OUTPUT_FILE")"
+  echo "  Funciones public: \$(grep -c "CREATE.*FUNCTION public\." "\$OUTPUT_FILE" || echo 0)"
   echo "  Tablas: \$(grep -c "CREATE TABLE" "\$OUTPUT_FILE")"
-  echo "  Funciones: \$(grep -c "CREATE FUNCTION" "\$OUTPUT_FILE")"
+  echo "  Funciones schema: \$(grep -c "CREATE.*FUNCTION \${PREFIX}\." "\$OUTPUT_FILE" || echo 0)"
   echo "  Políticas RLS: \$(grep -c "CREATE POLICY" "\$OUTPUT_FILE")"
   echo "  Views: \$(grep -c "CREATE VIEW" "\$OUTPUT_FILE")"
   echo "  Triggers: \$(grep -c "CREATE TRIGGER" "\$OUTPUT_FILE")"
 else
   echo "✗ Error al exportar"
-  rm -f "\$OUTPUT_FILE_TEMP" "\$ENUMS_FILE"
+  rm -f "\$OUTPUT_FILE_TEMP" "\$ENUMS_FILE" "\$FUNCTIONS_FILE"
   exit 1
 fi
 ENDSSH
