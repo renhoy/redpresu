@@ -50,9 +50,14 @@ ENUMS_FILE="\$REMOTE_DIR/ENUMS_\${PREFIX_UPPER}_temp.sql"
 
 echo "  → Exportando tipos ENUM del schema public..."
 docker exec supabase-db psql -U postgres -d postgres -t -c "
-SELECT 'CREATE TYPE public.' || t.typname || ' AS ENUM (' ||
-       string_agg('''' || e.enumlabel || '''', ', ' ORDER BY e.enumsortorder) ||
-       ');'
+SELECT
+  'DO \$\$ BEGIN' || E'\n' ||
+  '    CREATE TYPE public.' || t.typname || ' AS ENUM (' ||
+  string_agg('''' || e.enumlabel || '''', ', ' ORDER BY e.enumsortorder) ||
+  ');' || E'\n' ||
+  'EXCEPTION' || E'\n' ||
+  '    WHEN duplicate_object THEN null;' || E'\n' ||
+  'END \$\$;'
 FROM pg_type t
 JOIN pg_enum e ON t.oid = e.enumtypid
 WHERE t.typtype = 'e'
@@ -90,9 +95,8 @@ if [ \$? -eq 0 ]; then
 
     # Agregar ENUMs si existen
     if [ -s "\$ENUMS_FILE" ]; then
-      # Limpiar espacios en blanco y agregar CREATE TYPE si no existe
-      grep -v "^$" "\$ENUMS_FILE" | sed 's/^[[:space:]]*//' | \
-        sed 's/CREATE TYPE/CREATE TYPE IF NOT EXISTS/g'
+      # Limpiar espacios en blanco
+      grep -v "^$" "\$ENUMS_FILE" | sed 's/^[[:space:]]*//'
     fi
 
     echo ""
