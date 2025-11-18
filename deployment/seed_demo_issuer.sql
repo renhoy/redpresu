@@ -16,7 +16,7 @@ BEGIN;
 DO $$
 BEGIN
   IF NOT EXISTS (
-    SELECT FROM public.redpresu_companies WHERE id = 1 AND name = 'Empresa Demo'
+    SELECT FROM redpresu.companies WHERE id = 1 AND name = 'Empresa Demo'
   ) THEN
     RAISE EXCEPTION 'Empresa Demo (ID=1) no existe. Ejecutar seed_initial_data.sql primero.';
   END IF;
@@ -31,7 +31,7 @@ END $$;
 -- Ajustar el user_id según el UUID del superadmin de tu sistema
 
 -- Opción A: Si conoces el UUID del superadmin, úsalo directamente
-INSERT INTO public.issuers (
+INSERT INTO redpresu.issuers (
   id,
   user_id,
   company_id,
@@ -105,12 +105,12 @@ DECLARE
 BEGIN
   -- Contar issuers de Empresa Demo
   SELECT COUNT(*) INTO issuer_count
-  FROM public.issuers
+  FROM redpresu.issuers
   WHERE company_id = 1 AND deleted_at IS NULL;
 
   -- Obtener detalles del issuer
   SELECT user_id, name INTO issuer_user_id, issuer_name
-  FROM public.issuers
+  FROM redpresu.issuers
   WHERE company_id = 1 AND deleted_at IS NULL
   LIMIT 1;
 
@@ -155,7 +155,7 @@ SELECT
   phone,
   address,
   created_at
-FROM public.issuers
+FROM redpresu.issuers
 WHERE company_id = 1 AND deleted_at IS NULL;
 
 -- Ver qué usuario está asociado
@@ -165,8 +165,8 @@ SELECT
   u.last_name,
   u.role
 FROM auth.users au
-JOIN public.users u ON u.id = au.id
-WHERE u.id = (SELECT user_id FROM public.issuers WHERE company_id = 1 LIMIT 1);
+JOIN redpresu.users u ON u.id = au.id
+WHERE u.id = (SELECT user_id FROM redpresu.issuers WHERE company_id = 1 LIMIT 1);
 */
 
 -- ============================================
@@ -177,7 +177,7 @@ WHERE u.id = (SELECT user_id FROM public.issuers WHERE company_id = 1 LIMIT 1);
 BEGIN;
 
 -- Eliminar issuer de Empresa Demo
-DELETE FROM public.issuers
+DELETE FROM redpresu.issuers
 WHERE company_id = 1 AND id = 'adc5b25e-7874-46bf-98a0-d2db9ba842cc'::uuid;
 
 COMMIT;
