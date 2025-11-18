@@ -25,7 +25,7 @@ if (!supabaseAnonKey) {
 
 // Configuración compartida
 const supabaseConfig = {
-  db: { schema: 'redpresu' },
+  db: { schema: process.env.SUPABASE_SCHEMA || 'redpresu' },
   auth: {
     autoRefreshToken: true,
     persistSession: true,
