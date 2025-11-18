@@ -28,9 +28,8 @@ END $body$;
 
 
 -- ============================================
--- SECCIÓN 2: Funciones auxiliares del schema public
+-- SECCIÓN 2: Funciones auxiliares simples (sin referencias a tablas redpresu)
 -- ============================================
--- Funciones usadas por triggers y políticas RLS del schema redpresu
 
 -- Función: update_budget_notes_updated_at
 CREATE OR REPLACE FUNCTION public.update_budget_notes_updated_at()
@@ -87,49 +86,6 @@ BEGIN
 END;
 $function$;
 
--- Función: log_business_rules_changes
-CREATE OR REPLACE FUNCTION public.log_business_rules_changes()
- RETURNS trigger
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public', 'redpresu', 'auth'
-AS $function$
-  BEGIN
-    IF TG_OP = 'INSERT' THEN
-      INSERT INTO redpresu.rules_audit_log (
-        rule_id, company_id, action, changed_by, changed_by_email,
-        version_after, changes
-      ) VALUES (
-        NEW.id, NEW.company_id, 'created', NEW.updated_by,
-        (SELECT email FROM auth.users WHERE id = NEW.updated_by),
-        NEW.version,
-        jsonb_build_object('rules', NEW.rules)
-      );
-    ELSIF TG_OP = 'UPDATE' THEN
-      INSERT INTO redpresu.rules_audit_log (
-        rule_id, company_id, action, changed_by, changed_by_email,
-        version_before, version_after, changes
-      ) VALUES (
-        NEW.id, NEW.company_id,
-        CASE
-          WHEN OLD.is_active = true AND NEW.is_active = false THEN 'deactivated'
-          WHEN OLD.is_active = false AND NEW.is_active = true THEN 'activated'
-          ELSE 'updated'
-        END,
-        NEW.updated_by,
-        (SELECT email FROM auth.users WHERE id = NEW.updated_by),
-        OLD.version, NEW.version,
-        jsonb_build_object(
-          'old_rules', OLD.rules,
-          'new_rules', NEW.rules,
-          'is_active_changed', OLD.is_active != NEW.is_active
-        )
-      );
-    END IF;
-    RETURN NEW;
-  END;
-$function$;
-
 -- Función: prevent_delete_company_1
 CREATE OR REPLACE FUNCTION public.prevent_delete_company_1()
  RETURNS trigger
@@ -145,112 +101,11 @@ BEGIN
 END;
 $function$;
 
--- Función: protect_superadmin_company
-CREATE OR REPLACE FUNCTION public.protect_superadmin_company()
- RETURNS trigger
- LANGUAGE plpgsql
- SECURITY DEFINER
-AS $function$
-BEGIN
-  IF OLD.email = 'josivela+super@gmail.com' THEN
-    IF NEW.company_id IS NULL THEN
-      RAISE EXCEPTION 'PROTECCIÓN SISTEMA: No se puede asignar company_id=NULL al superadmin principal (%)', OLD.email
-        USING HINT = 'El superadmin debe estar siempre asociado a una empresa válida';
-    END IF;
-
-    IF NEW.company_id != OLD.company_id THEN
-      IF NOT EXISTS (SELECT 1 FROM redpresu.companies WHERE id = NEW.company_id) THEN
-        RAISE EXCEPTION 'PROTECCIÓN SISTEMA: No se puede asignar el superadmin a empresa inexistente (company_id=%)', NEW.company_id;
-      END IF;
-
-      RAISE NOTICE 'PROTECCIÓN SISTEMA: Superadmin % cambió de empresa % a empresa %',
-        OLD.email, OLD.company_id, NEW.company_id;
-    END IF;
-  END IF;
-  RETURN NEW;
-END;
-$function$;
-
--- Función: ensure_single_template (CORREGIDA: redpresu_tariffs → redpresu.tariffs)
-CREATE OR REPLACE FUNCTION public.ensure_single_template()
- RETURNS trigger
- LANGUAGE plpgsql
-AS $function$
-BEGIN
-  IF NEW.is_template = true THEN
-    UPDATE redpresu.tariffs
-    SET is_template = false
-    WHERE company_id = NEW.company_id
-      AND id != NEW.id
-      AND is_template = true;
-
-    RAISE NOTICE 'Plantilla establecida: tariff_id=%, company_id=%', NEW.id, NEW.company_id;
-  END IF;
-  RETURN NEW;
-END;
-$function$;
-
--- Función: get_user_empresa_id (CORREGIDA: public.redpresu_users → redpresu.users)
-CREATE OR REPLACE FUNCTION public.get_user_empresa_id(p_user_id uuid)
- RETURNS integer
- LANGUAGE plpgsql
- SECURITY DEFINER
-AS $function$
-DECLARE
-  v_company_id integer;
-BEGIN
-  SELECT company_id
-  INTO v_company_id
-  FROM redpresu.users
-  WHERE id = p_user_id;
-
-  RETURN v_company_id;
-END;
-$function$;
-
--- Función: get_user_role_by_id (CORREGIDA: public.redpresu_users → redpresu.users)
-CREATE OR REPLACE FUNCTION public.get_user_role_by_id(p_user_id uuid)
- RETURNS text
- LANGUAGE plpgsql
- STABLE SECURITY DEFINER
-AS $function$
-DECLARE
-  v_role text;
-BEGIN
-  SELECT role
-  INTO v_role
-  FROM redpresu.users
-  WHERE id = p_user_id;
-
-  RETURN v_role;
-END;
-$function$;
-
 
 -- ============================================
--- SECCIÓN 3: Función user_company_id en schema public
--- ============================================
--- NOTA: Esta función se crea en public en lugar de auth por permisos
--- Las políticas RLS la encontrarán correctamente
-
--- Función: user_company_id (CORREGIDA: redpresu_users → redpresu.users)
-CREATE OR REPLACE FUNCTION public.user_company_id()
- RETURNS integer
- LANGUAGE sql
- SECURITY DEFINER
-AS $function$
-  SELECT company_id
-  FROM redpresu.users
-  WHERE id = auth.uid()
-  LIMIT 1;
-$function$;
-
-
--- ============================================
--- SECCIÓN 4: Schema redpresu - DDL completo
+-- SECCIÓN 3: Schema redpresu - Tablas, funciones, triggers, políticas
 -- ============================================
 -- A continuación se incluye el dump completo del schema redpresu
--- Este incluye: tablas, funciones, triggers, políticas RLS, etc.
 
 --
 -- PostgreSQL database dump
@@ -2987,7 +2842,7 @@ CREATE POLICY redpresu_subscriptions_delete_superadmin ON redpresu.subscriptions
 -- Name: subscriptions redpresu_subscriptions_insert_own_company; Type: POLICY; Schema: redpresu; Owner: -
 --
 
-CREATE POLICY redpresu_subscriptions_insert_own_company ON redpresu.subscriptions FOR INSERT WITH CHECK (((company_id = user_company_id()) AND (EXISTS ( SELECT 1
+CREATE POLICY redpresu_subscriptions_insert_own_company ON redpresu.subscriptions FOR INSERT WITH CHECK (((company_id = auth.user_company_id()) AND (EXISTS ( SELECT 1
    FROM redpresu.users
   WHERE ((users.id = auth.uid()) AND (users.role = ANY (ARRAY['admin'::text, 'superadmin'::text])))))));
 
@@ -2996,7 +2851,7 @@ CREATE POLICY redpresu_subscriptions_insert_own_company ON redpresu.subscription
 -- Name: subscriptions redpresu_subscriptions_select_own_company; Type: POLICY; Schema: redpresu; Owner: -
 --
 
-CREATE POLICY redpresu_subscriptions_select_own_company ON redpresu.subscriptions FOR SELECT USING (((company_id = user_company_id()) OR (EXISTS ( SELECT 1
+CREATE POLICY redpresu_subscriptions_select_own_company ON redpresu.subscriptions FOR SELECT USING (((company_id = auth.user_company_id()) OR (EXISTS ( SELECT 1
    FROM redpresu.users
   WHERE ((users.id = auth.uid()) AND (users.role = 'superadmin'::text))))));
 
@@ -3005,7 +2860,7 @@ CREATE POLICY redpresu_subscriptions_select_own_company ON redpresu.subscription
 -- Name: subscriptions redpresu_subscriptions_update_own_company; Type: POLICY; Schema: redpresu; Owner: -
 --
 
-CREATE POLICY redpresu_subscriptions_update_own_company ON redpresu.subscriptions FOR UPDATE USING ((((company_id = user_company_id()) AND (EXISTS ( SELECT 1
+CREATE POLICY redpresu_subscriptions_update_own_company ON redpresu.subscriptions FOR UPDATE USING ((((company_id = auth.user_company_id()) AND (EXISTS ( SELECT 1
    FROM redpresu.users
   WHERE ((users.id = auth.uid()) AND (users.role = ANY (ARRAY['admin'::text, 'superadmin'::text])))))) OR (EXISTS ( SELECT 1
    FROM redpresu.users
@@ -3119,6 +2974,148 @@ CREATE POLICY users_update_policy ON redpresu.users FOR UPDATE USING (((id = aut
 
 
 -- ============================================
+-- SECCIÓN 4: Funciones que referencian tablas de redpresu
+-- ============================================
+-- Estas funciones se crean DESPUÉS de las tablas porque las referencian
+
+-- Función: log_business_rules_changes
+CREATE OR REPLACE FUNCTION public.log_business_rules_changes()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'redpresu', 'auth'
+AS $function$
+  BEGIN
+    IF TG_OP = 'INSERT' THEN
+      INSERT INTO redpresu.rules_audit_log (
+        rule_id, company_id, action, changed_by, changed_by_email,
+        version_after, changes
+      ) VALUES (
+        NEW.id, NEW.company_id, 'created', NEW.updated_by,
+        (SELECT email FROM auth.users WHERE id = NEW.updated_by),
+        NEW.version,
+        jsonb_build_object('rules', NEW.rules)
+      );
+    ELSIF TG_OP = 'UPDATE' THEN
+      INSERT INTO redpresu.rules_audit_log (
+        rule_id, company_id, action, changed_by, changed_by_email,
+        version_before, version_after, changes
+      ) VALUES (
+        NEW.id, NEW.company_id,
+        CASE
+          WHEN OLD.is_active = true AND NEW.is_active = false THEN 'deactivated'
+          WHEN OLD.is_active = false AND NEW.is_active = true THEN 'activated'
+          ELSE 'updated'
+        END,
+        NEW.updated_by,
+        (SELECT email FROM auth.users WHERE id = NEW.updated_by),
+        OLD.version, NEW.version,
+        jsonb_build_object(
+          'old_rules', OLD.rules,
+          'new_rules', NEW.rules,
+          'is_active_changed', OLD.is_active != NEW.is_active
+        )
+      );
+    END IF;
+    RETURN NEW;
+  END;
+$function$;
+
+-- Función: protect_superadmin_company
+CREATE OR REPLACE FUNCTION public.protect_superadmin_company()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+BEGIN
+  IF OLD.email = 'josivela+super@gmail.com' THEN
+    IF NEW.company_id IS NULL THEN
+      RAISE EXCEPTION 'PROTECCIÓN SISTEMA: No se puede asignar company_id=NULL al superadmin principal (%)', OLD.email
+        USING HINT = 'El superadmin debe estar siempre asociado a una empresa válida';
+    END IF;
+
+    IF NEW.company_id != OLD.company_id THEN
+      IF NOT EXISTS (SELECT 1 FROM redpresu.companies WHERE id = NEW.company_id) THEN
+        RAISE EXCEPTION 'PROTECCIÓN SISTEMA: No se puede asignar el superadmin a empresa inexistente (company_id=%)', NEW.company_id;
+      END IF;
+
+      RAISE NOTICE 'PROTECCIÓN SISTEMA: Superadmin % cambió de empresa % a empresa %',
+        OLD.email, OLD.company_id, NEW.company_id;
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$function$;
+
+-- Función: ensure_single_template
+CREATE OR REPLACE FUNCTION public.ensure_single_template()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+  IF NEW.is_template = true THEN
+    UPDATE redpresu.tariffs
+    SET is_template = false
+    WHERE company_id = NEW.company_id
+      AND id != NEW.id
+      AND is_template = true;
+
+    RAISE NOTICE 'Plantilla establecida: tariff_id=%, company_id=%', NEW.id, NEW.company_id;
+  END IF;
+  RETURN NEW;
+END;
+$function$;
+
+-- Función: get_user_empresa_id
+CREATE OR REPLACE FUNCTION public.get_user_empresa_id(p_user_id uuid)
+ RETURNS integer
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+DECLARE
+  v_company_id integer;
+BEGIN
+  SELECT company_id
+  INTO v_company_id
+  FROM redpresu.users
+  WHERE id = p_user_id;
+
+  RETURN v_company_id;
+END;
+$function$;
+
+-- Función: get_user_role_by_id
+CREATE OR REPLACE FUNCTION public.get_user_role_by_id(p_user_id uuid)
+ RETURNS text
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+AS $function$
+DECLARE
+  v_role text;
+BEGIN
+  SELECT role
+  INTO v_role
+  FROM redpresu.users
+  WHERE id = p_user_id;
+
+  RETURN v_role;
+END;
+$function$;
+
+-- Función: user_company_id
+CREATE OR REPLACE FUNCTION public.user_company_id()
+ RETURNS integer
+ LANGUAGE sql
+ SECURITY DEFINER
+AS $function$
+  SELECT company_id
+  FROM redpresu.users
+  WHERE id = auth.uid()
+  LIMIT 1;
+$function$;
+
+
+-- ============================================
 -- FIN DE LA MIGRACIÓN
 -- ============================================
 
@@ -3149,8 +3146,7 @@ COMMIT;
 -- SELECT proname FROM pg_proc p
 -- JOIN pg_namespace n ON p.pronamespace = n.oid
 -- WHERE n.nspname = 'public'
---   AND proname IN ('update_updated_at_column', 'log_business_rules_changes', 'get_user_empresa_id', 'get_user_role_by_id');
+--   AND proname IN ('update_updated_at_column', 'log_business_rules_changes', 'get_user_empresa_id', 'get_user_role_by_id', 'user_company_id');
 
 -- 5. Verificar tipos ENUM:
 -- SELECT typname FROM pg_type WHERE typname = 'contact_message_status';
-
