@@ -6,167 +6,144 @@ Esta guía explica cómo configurar las variables de entorno en Vercel para tene
 
 - **Development** (local): Modo TEST
 - **Preview** (ramas): Modo TEST
-- **Production** (main): Modo TEST por defecto, activar LIVE cuando estés listo
+- **Production** (main): Modo LIVE (o TEST hasta que estés listo)
 
-## 📋 Paso 1: Configurar variables en Vercel
+## 📋 Configuración en Vercel
 
-Ve a tu proyecto en Vercel → Settings → Environment Variables
+Ve a tu proyecto en Vercel → **Settings** → **Environment Variables**
 
-### Variables que aplican a TODOS los entornos
-
-Marca: ☑️ Development, ☑️ Preview, ☑️ Production
-
-```
-NEXTAUTH_SECRET=vcNT1XTil91INuWZgAfJH81j4DkgMR/F39JrOL2YFdg=
-```
-
-### Variables de Supabase
-
-**Opción A: Misma base de datos para todos** (recomendado al inicio)
+### 1. Variables comunes (TODOS los entornos)
 
 Marca: ☑️ Development, ☑️ Preview, ☑️ Production
 
-```
-NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key-aqui
-SUPABASE_SERVICE_ROLE_KEY=tu-service-role-key-aqui
-DATABASE_URL=postgresql://postgres:password@db.proyecto.supabase.co:5432/postgres
-```
+| Variable | Valor | Notas |
+|----------|-------|-------|
+| `NEXTAUTH_SECRET` | `vcNT1XTil91INuWZgAfJH81j4DkgMR/F39JrOL2YFdg=` | Mismo en todos |
+| `NEXT_PUBLIC_STRIPE_ENABLED` | `true` | Mismo en todos |
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://proyecto.supabase.co` | Mismo en todos* |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `tu-anon-key` | Mismo en todos* |
+| `SUPABASE_SERVICE_ROLE_KEY` | `tu-service-role-key` | Mismo en todos* |
+| `DATABASE_URL` | `postgresql://...` | Mismo en todos* |
 
-**Opción B: Diferentes bases de datos**
+\* O usa proyectos separados de Supabase si prefieres.
 
-Para Development (local):
-```
-NEXT_PUBLIC_SUPABASE_URL=https://proyecto-dev.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=key-de-dev
-```
+### 2. Stripe para Development + Preview (SOLO modo TEST)
 
-Para Preview y Production:
-```
-NEXT_PUBLIC_SUPABASE_URL=https://proyecto-prod.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=key-de-prod
-```
+Marca: ☑️ Development, ☑️ Preview, ☐ Production
 
-### Variables de Stripe - MODO TEST
+| Variable | Valor | Dónde encontrarlo |
+|----------|-------|-------------------|
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | `pk_test_51J...abc123` | Stripe Dashboard (Test mode) → Developers → API keys |
+| `STRIPE_SECRET_KEY` | `sk_test_51J...xyz789` | Stripe Dashboard (Test mode) → Developers → API keys |
+| `STRIPE_WEBHOOK_SECRET` | `whsec_test_abc123...` | Stripe Dashboard (Test mode) → Developers → Webhooks |
 
-Marca: ☑️ Development, ☑️ Preview, ☑️ Production
+### 3. Stripe para Production (modo LIVE)
 
-```
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY_TEST=pk_test_xxxxx
-STRIPE_SECRET_KEY_TEST=sk_test_xxxxx
-STRIPE_WEBHOOK_SECRET_TEST=whsec_xxxxx
-```
+Marca: ☐ Development, ☐ Preview, ☑️ Production
 
-> ⚠️ **Importante**: Usa las keys de TEST de Stripe. Las encuentras en:
-> Dashboard de Stripe → Developers → API keys → (modo Test activado)
+| Variable | Valor | Dónde encontrarlo |
+|----------|-------|-------------------|
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | `pk_live_51M...real567` | Stripe Dashboard (Live mode) → Developers → API keys |
+| `STRIPE_SECRET_KEY` | `sk_live_51M...real890` | Stripe Dashboard (Live mode) → Developers → API keys |
+| `STRIPE_WEBHOOK_SECRET` | `whsec_live_ghi789...` | Stripe Dashboard (Live mode) → Developers → Webhooks |
 
-### Variables de Stripe - MODO LIVE
+> ⚠️ **Importante:** Puedes configurar Production con valores de **TEST** al principio y cambiarlos a **LIVE** cuando estés listo para cobrar de verdad.
 
-Marca: ☑️ Production solamente
+## 📊 Resumen visual
 
 ```
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY_LIVE=pk_live_xxxxx
-STRIPE_SECRET_KEY_LIVE=sk_live_xxxxx
-STRIPE_WEBHOOK_SECRET_LIVE=whsec_xxxxx
+┌─────────────────┬──────────────┬─────────┬────────────┐
+│ Variable        │ Development  │ Preview │ Production │
+├─────────────────┼──────────────┼─────────┼────────────┤
+│ NEXTAUTH_SECRET │ mismo        │ mismo   │ mismo      │
+│ SUPABASE_*      │ mismo        │ mismo   │ mismo      │
+│ STRIPE_*        │ pk_test_...  │ pk_test │ pk_live... │
+│                 │ sk_test_...  │ sk_test │ sk_live... │
+└─────────────────┴──────────────┴─────────┴────────────┘
 ```
 
-> 🔐 **Solo añade estas cuando estés listo para pagos reales**
+## 🚀 Despliegue
 
-### Variable de Control
-
-Marca: ☑️ Production solamente
-
-```
-ENABLE_LIVE_MODE=false
-```
-
-> 🎚️ **Cambia a `true` cuando quieras activar pagos reales en producción**
-
-### URL de la aplicación
-
-Vercel configura esto automáticamente, pero si necesitas un override:
-
-Para Production:
-```
-NEXT_PUBLIC_APP_URL=https://tu-dominio.com
-```
-
-Para Preview y Development puedes omitirla (Vercel usa VERCEL_URL)
-
-## 📊 Resumen de configuración
-
-| Variable | Development | Preview | Production (Test) | Production (Live) |
-|----------|-------------|---------|-------------------|-------------------|
-| NEXTAUTH_SECRET | ✅ | ✅ | ✅ | ✅ |
-| SUPABASE_* | ✅ | ✅ | ✅ | ✅ |
-| STRIPE_*_TEST | ✅ | ✅ | ✅ | ✅ |
-| STRIPE_*_LIVE | ❌ | ❌ | ✅ | ✅ |
-| ENABLE_LIVE_MODE | ❌ | ❌ | `false` | `true` |
-
-## 🚀 Paso 2: Desplegar
-
-### Para Development (local)
+### Development (local)
 ```bash
 vercel dev
 ```
-→ Usa Stripe TEST, Supabase según configuración
+→ Usa Stripe TEST automáticamente
 
-### Para Preview (ramas)
+### Preview (ramas)
 ```bash
 git push origin tu-rama
 ```
 → Vercel despliega automáticamente
 → URL: `proyecto-git-tu-rama.vercel.app`
-→ Usa Stripe TEST
+→ Usa Stripe TEST automáticamente
 
-### Para Production (main)
+### Production (main)
 ```bash
 git push origin main
 ```
 → Vercel despliega automáticamente
 → URL: tu dominio principal
-→ Usa Stripe TEST (hasta que cambies ENABLE_LIVE_MODE)
+→ Usa Stripe LIVE (o TEST si configuraste test)
 
-## 🎚️ Paso 3: Activar modo LIVE (cuando estés listo)
+## 🔄 Cambiar de TEST a LIVE en Production
 
-1. **Asegúrate de tener configuradas las keys de Stripe LIVE** en Production
+Cuando estés listo para pagos reales:
+
+1. **Ve a Stripe Dashboard (LIVE mode)**
+   - Copia tus keys de LIVE: `pk_live_...`, `sk_live_...`
+
 2. **Ve a Vercel** → Settings → Environment Variables
-3. **Busca** `ENABLE_LIVE_MODE`
-4. **Cambia el valor** de `false` a `true` (solo en Production)
-5. **Redespliega** el proyecto:
+
+3. **Actualiza las 3 variables de Stripe** (solo en Production):
+   - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` → cambia a `pk_live_...`
+   - `STRIPE_SECRET_KEY` → cambia a `sk_live_...`
+   - `STRIPE_WEBHOOK_SECRET` → cambia a `whsec_live_...`
+
+4. **Redespliega**:
    ```bash
-   git commit --allow-empty -m "chore: enable live mode"
+   git commit --allow-empty -m "chore: enable stripe live mode"
    git push origin main
    ```
 
-¡Listo! Ahora Production usa pagos reales de Stripe.
+¡Listo! Ahora Production usa pagos reales.
 
-## 🔍 Verificar el modo actual
+## 🎨 Alternativa con CLI de Vercel
 
-Puedes verificar qué modo está activo mirando los logs del servidor o añadiendo esto temporalmente en una página:
+Si prefieres terminal:
 
-```typescript
-import { getEnvironment, getMode } from '@/lib/env-config'
+```bash
+# Variables de test (Development + Preview)
+vercel env add NEXT_PUBLIC_STRIPE_ENABLED --env=development,preview,production
+vercel env add NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY --env=development,preview
+vercel env add STRIPE_SECRET_KEY --env=development,preview
+vercel env add STRIPE_WEBHOOK_SECRET --env=development,preview
 
-export default function StatusPage() {
-  const env = getEnvironment()
-  const mode = getMode()
-
-  return (
-    <div>
-      <p>Environment: {env}</p>
-      <p>Mode: {mode}</p>
-    </div>
-  )
-}
+# Variables live (solo Production)
+vercel env add NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY --env=production
+vercel env add STRIPE_SECRET_KEY --env=production
+vercel env add STRIPE_WEBHOOK_SECRET --env=production
 ```
+
+## 🧪 Probar pagos en modo TEST
+
+Usa estas tarjetas de prueba de Stripe:
+
+- **Pago exitoso:** `4242 4242 4242 4242`
+- **Pago rechazado:** `4000 0000 0000 0002`
+- **Requiere autenticación:** `4000 0025 0000 3155`
+
+**Cualquier CVV** (ej: 123)
+**Cualquier fecha futura** (ej: 12/25)
+**Cualquier código postal**
 
 ## 🔐 Seguridad
 
-- ✅ Nunca subas archivos `.env` al repositorio
+- ✅ Las keys `NEXT_PUBLIC_*` son seguras para el navegador (están diseñadas para ello)
+- ✅ Las keys sin `NEXT_PUBLIC_` son secretas (nunca se exponen al cliente)
 - ✅ Usa diferentes secrets para Development/Production
 - ✅ Rota el NEXTAUTH_SECRET si se filtra
-- ✅ No compartas las keys LIVE de Stripe públicamente
+- ✅ Nunca subas archivos `.env` al repositorio
 - ✅ Revisa los logs de Stripe regularmente
 
 ## 📚 Referencias
@@ -174,3 +151,4 @@ export default function StatusPage() {
 - [Vercel Environment Variables](https://vercel.com/docs/concepts/projects/environment-variables)
 - [Stripe Test Mode](https://stripe.com/docs/testing)
 - [NextAuth Configuration](https://next-auth.js.org/configuration/options)
+- [Supabase Environment Variables](https://supabase.com/docs/guides/getting-started/local-development#environment-variables)

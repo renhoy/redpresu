@@ -5,7 +5,6 @@
  */
 
 import Stripe from "stripe";
-import { getStripeConfig, isLiveMode } from "@/lib/env-config";
 
 // ============================================
 // Stripe Client
@@ -15,7 +14,9 @@ let stripeInstance: Stripe | null = null;
 
 /**
  * Obtiene instancia de Stripe (singleton)
- * Usa automáticamente las keys correctas según el entorno (test/live)
+ * Vercel maneja automáticamente las keys correctas según el entorno:
+ * - Development/Preview → usa valores de test configurados en Vercel
+ * - Production → usa valores de live configurados en Vercel
  */
 export function getStripeClient(): Stripe | null {
   if (!isSubscriptionsEnabled()) {
@@ -24,43 +25,22 @@ export function getStripeClient(): Stripe | null {
   }
 
   if (!stripeInstance) {
-    const config = getStripeConfig();
+    const secretKey = process.env.STRIPE_SECRET_KEY;
 
-    if (!config.secretKey) {
-      console.error(
-        `[Stripe] ${config.mode.toUpperCase()} secret key no configurada`
-      );
+    if (!secretKey) {
+      console.error("[Stripe] STRIPE_SECRET_KEY no configurada");
       return null;
     }
 
-    stripeInstance = new Stripe(config.secretKey, {
+    stripeInstance = new Stripe(secretKey, {
       apiVersion: "2024-12-18.acacia",
       typescript: true,
     });
 
-    console.log(
-      `[Stripe] Cliente inicializado en modo ${config.mode.toUpperCase()}`
-    );
+    console.log("[Stripe] Cliente inicializado");
   }
 
   return stripeInstance;
-}
-
-/**
- * Obtiene la publishable key de Stripe según el entorno
- * Úsala en componentes de cliente para inicializar Stripe Elements
- */
-export function getStripePublishableKey(): string | null {
-  const config = getStripeConfig();
-  return config.publishableKey || null;
-}
-
-/**
- * Obtiene el webhook secret según el entorno
- */
-export function getStripeWebhookSecret(): string | null {
-  const config = getStripeConfig();
-  return config.webhookSecret || null;
 }
 
 // ============================================
@@ -131,11 +111,7 @@ export interface StripePlan {
   name: string;
   description: string;
   price: number; // Precio mensual en EUR
-  priceId: string; // Stripe Price ID (deprecated, usar priceIds)
-  priceIds: {
-    test: string; // Price ID para modo TEST
-    live: string; // Price ID para modo LIVE
-  };
+  priceId: string; // Stripe Price ID (Vercel maneja test/live según entorno)
   limits: {
     tariffs: number;
     budgets: number;
@@ -147,9 +123,10 @@ export interface StripePlan {
 
 /**
  * Configuración de planes
- * IMPORTANTE: Actualizar priceIds con IDs reales de Stripe Dashboard
- * - Modo TEST: Stripe Dashboard (Test mode) → Products → Price ID
- * - Modo LIVE: Stripe Dashboard (Live mode) → Products → Price ID
+ * IMPORTANTE: Actualizar priceId con IDs reales de Stripe Dashboard
+ * Los Price IDs se configuran en Vercel según el entorno:
+ * - Development/Preview → Price ID de TEST mode
+ * - Production → Price ID de LIVE mode (o TEST hasta que estés listo)
  */
 export const STRIPE_PLANS: Record<PlanType, StripePlan> = {
   free: {
@@ -157,11 +134,7 @@ export const STRIPE_PLANS: Record<PlanType, StripePlan> = {
     name: "Free",
     description: "Plan gratuito para comenzar",
     price: 0,
-    priceId: "", // Deprecated
-    priceIds: {
-      test: "", // No tiene Price ID en Stripe
-      live: "",
-    },
+    priceId: "", // No tiene Price ID en Stripe
     limits: {
       tariffs: 3,
       budgets: 10,
@@ -182,11 +155,7 @@ export const STRIPE_PLANS: Record<PlanType, StripePlan> = {
     name: "Pro",
     description: "Plan profesional para negocios",
     price: 29,
-    priceId: "price_REPLACE_WITH_REAL_PRICE_ID", // Deprecated
-    priceIds: {
-      test: "price_REPLACE_WITH_TEST_PRICE_ID", // TODO: Actualizar con ID de TEST mode
-      live: "price_REPLACE_WITH_LIVE_PRICE_ID", // TODO: Actualizar con ID de LIVE mode
-    },
+    priceId: "price_REPLACE_WITH_REAL_PRICE_ID", // TODO: Actualizar con Price ID real
     limits: {
       tariffs: 50,
       budgets: 500,
@@ -209,11 +178,7 @@ export const STRIPE_PLANS: Record<PlanType, StripePlan> = {
     name: "Enterprise",
     description: "Plan empresarial sin límites",
     price: 99,
-    priceId: "price_REPLACE_WITH_REAL_PRICE_ID", // Deprecated
-    priceIds: {
-      test: "price_REPLACE_WITH_TEST_PRICE_ID", // TODO: Actualizar con ID de TEST mode
-      live: "price_REPLACE_WITH_LIVE_PRICE_ID", // TODO: Actualizar con ID de LIVE mode
-    },
+    priceId: "price_REPLACE_WITH_REAL_PRICE_ID", // TODO: Actualizar con Price ID real
     limits: {
       tariffs: 9999,
       budgets: 9999,
@@ -239,15 +204,6 @@ export const STRIPE_PLANS: Record<PlanType, StripePlan> = {
  */
 export function getStripePlan(planId: PlanType): StripePlan {
   return STRIPE_PLANS[planId];
-}
-
-/**
- * Obtiene el Price ID correcto según el entorno actual (test/live)
- */
-export function getStripePriceId(planId: PlanType): string {
-  const plan = getStripePlan(planId);
-  const mode = isLiveMode() ? "live" : "test";
-  return plan.priceIds[mode];
 }
 
 /**
