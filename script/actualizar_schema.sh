@@ -115,9 +115,11 @@ if [ \$? -eq 0 ]; then
     echo ""
 
     # Agregar schema public completo si existe, limpiando líneas problemáticas
+    # Filtrar: CREATE SCHEMA, COMMENT ON SCHEMA, y CREATE TYPE (ya incluidos arriba)
     if [ -s "\$PUBLIC_SCHEMA_FILE" ]; then
       grep -v "^CREATE SCHEMA public;" "\$PUBLIC_SCHEMA_FILE" | \
-        grep -v "^COMMENT ON SCHEMA public IS"
+        grep -v "^COMMENT ON SCHEMA public IS" | \
+        grep -v "^CREATE TYPE public\."
     fi
 
     echo ""
