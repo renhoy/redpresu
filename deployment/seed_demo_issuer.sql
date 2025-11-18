@@ -21,7 +21,7 @@ BEGIN
     RAISE EXCEPTION 'Empresa Demo (ID=1) no existe. Ejecutar seed_initial_data.sql primero.';
   END IF;
 
-  RAISE NOTICE '✅ Empresa Demo existe';
+  RAISE NOTICE 'OK - Empresa Demo existe';
 END $$;
 
 -- ============================================
@@ -60,7 +60,7 @@ BEGIN
     RAISE EXCEPTION 'Falta usuario superadmin';
   END IF;
 
-  RAISE NOTICE '✅ Usuario superadmin encontrado: %', superadmin_email;
+  RAISE NOTICE 'OK - Usuario superadmin encontrado';
 END $$;
 
 -- ============================================
@@ -153,25 +153,20 @@ BEGIN
   LIMIT 1;
 
   RAISE NOTICE '';
-  RAISE NOTICE '═══════════════════════════════════════════════════════════════';
-  RAISE NOTICE '✅ ISSUER DE EMPRESA DEMO CREADO EXITOSAMENTE';
-  RAISE NOTICE '═══════════════════════════════════════════════════════════════';
+  RAISE NOTICE '===================================================================';
+  RAISE NOTICE 'OK - ISSUER DE EMPRESA DEMO CREADO EXITOSAMENTE';
+  RAISE NOTICE '===================================================================';
   RAISE NOTICE '';
-  RAISE NOTICE 'Resumen:';
-  RAISE NOTICE '  - Issuers para Empresa Demo: % registro(s)', issuer_count;
-  RAISE NOTICE '  - Nombre del issuer: %', issuer_name;
-  RAISE NOTICE '  - User ID asociado: %', issuer_user_id;
+  RAISE NOTICE 'Datos del Issuer creado:';
+  RAISE NOTICE '  - Nombre: Demo';
+  RAISE NOTICE '  - NIF: B36936926';
+  RAISE NOTICE '  - Tipo: Autonomo';
+  RAISE NOTICE '  - Email: demo@demo.com';
+  RAISE NOTICE '  - Telefono: 963 369 369';
+  RAISE NOTICE '  - Direccion: Calle Demo, 369, 36900 Localidad Demo';
+  RAISE NOTICE '  - IRPF: 15 porciento';
   RAISE NOTICE '';
-  RAISE NOTICE 'Datos del Issuer:';
-  RAISE NOTICE '  ✅ Nombre: Demo';
-  RAISE NOTICE '  ✅ NIF: B36936926';
-  RAISE NOTICE '  ✅ Tipo: Autónomo';
-  RAISE NOTICE '  ✅ Email: demo@demo.com';
-  RAISE NOTICE '  ✅ Teléfono: 963 369 369';
-  RAISE NOTICE '  ✅ Dirección: Calle Demo, 369, 36900 Localidad Demo';
-  RAISE NOTICE '  ✅ IRPF: 15%';
-  RAISE NOTICE '';
-  RAISE NOTICE '═══════════════════════════════════════════════════════════════';
+  RAISE NOTICE '===================================================================';
 END $$;
 
 COMMIT;
