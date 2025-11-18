@@ -75,6 +75,7 @@ migrations/DIAGNOSTICO_*.sql
 migrations/VERIFICAR_*.sql
 migrations/README_*.md
 migrations/delete_*.sql
+!/docs/migrations/SCHEMA_REDPRESU.sql
 
 # Scripts de desarrollo y refactoring
 fix_*.sh
