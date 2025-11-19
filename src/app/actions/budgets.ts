@@ -2,6 +2,7 @@
 import { log } from '@/lib/logger'
 import { requireValidCompanyId } from '@/lib/helpers/company-validation'
 import { sanitizeError } from '@/lib/helpers/error-helpers'
+import { getAuthenticatedUser } from '@/lib/helpers/auth-helpers'
 
 import { createServerActionClient } from "@/lib/supabase/helpers"
 import { supabaseAdmin } from '@/lib/supabase/server'
@@ -68,35 +69,13 @@ export async function getActiveTariffs(): Promise<Tariff[]> {
   try {
     log.info('[getActiveTariffs] Obteniendo tarifas activas...')
 
-        const supabase = await createServerActionClient()
-
-    // Obtener usuario actual
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      log.error('[getActiveTariffs] Error de autenticación:', authError)
+    // Obtener usuario autenticado con helper centralizado
+    const { success, user } = await getAuthenticatedUser('[getActiveTariffs]')
+    if (!success || !user) {
       return []
     }
 
-    // Obtener company_id del usuario
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('company_id, role')
-      .eq('id', user.id)
-      .single()
-
-    if (userError) {
-      log.error('[getActiveTariffs] Error obteniendo usuario:', userError)
-      return []
-    }
-
-    // SECURITY: Validar company_id obligatorio
-    let empresaId: number
-    try {
-      empresaId = requireValidCompanyId(userData, '[getActiveTariffs]')
-    } catch (error) {
-      log.error('[getActiveTariffs] company_id inválido', { error })
-      return []
-    }
+    const empresaId = user.companyId
 
     log.info('[getActiveTariffs] Empresa ID validado:', empresaId)
 
@@ -175,30 +154,13 @@ export async function checkBudgetNumberExists(
       return { exists: false }
     }
 
-        const supabase = await createServerActionClient()
-
-    // Obtener usuario y empresa
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return { exists: false, error: 'No autenticado' }
+    // Obtener usuario autenticado con helper centralizado
+    const { success, user, error: authError } = await getAuthenticatedUser('[checkBudgetNumberExists]')
+    if (!success || !user) {
+      return { exists: false, error: authError || 'No autenticado' }
     }
 
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('company_id')
-      .eq('id', user.id)
-      .single()
-
-    if (userError) {
-      return { exists: false, error: 'Error obteniendo usuario' }
-    }
-
-    let empresaId: number
-    try {
-      empresaId = requireValidCompanyId(userData, '[checkBudgetNumberExists]')
-    } catch (error) {
-      return { exists: false, error: 'Usuario sin empresa asignada' }
-    }
+    const empresaId = user.companyId
 
     // Verificar unicidad
     let query = supabaseAdmin
@@ -250,35 +212,13 @@ export async function createDraftBudget(data: {
       return { success: false, error: limitCheck.message }
     }
 
-        const supabase = await createServerActionClient()
-
-    // Obtener usuario actual
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      log.error('[createDraftBudget] Error de autenticación:', authError)
-      return { success: false, error: 'No autenticado' }
+    // Obtener usuario autenticado con helper centralizado
+    const { success: authSuccess, user, error: authError } = await getAuthenticatedUser('[createDraftBudget]')
+    if (!authSuccess || !user) {
+      return { success: false, error: authError || 'No autenticado' }
     }
 
-    // Obtener company_id del usuario
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('company_id, role')
-      .eq('id', user.id)
-      .single()
-
-    if (userError) {
-      log.error('[createDraftBudget] Error obteniendo usuario:', userError)
-      return { success: false, error: 'Error obteniendo datos del usuario' }
-    }
-
-    // SECURITY: Validar company_id obligatorio
-    let empresaId: number
-    try {
-      empresaId = requireValidCompanyId(userData, '[createDraftBudget]')
-    } catch (error) {
-      log.error('[createDraftBudget] company_id inválido', { error })
-      return { success: false, error: 'Usuario sin empresa asignada' }
-    }
+    const empresaId = user.companyId
 
     // Generar budget_number único si no se proporcionó
     let finalBudgetNumber: string
