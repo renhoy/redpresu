@@ -699,3 +699,60 @@ ${await getAppUrl()}
 
   return sendEmail(email, subject, html, text)
 }
+
+/**
+ * Función auxiliar para enviar emails
+ * En desarrollo: guarda en mock_emails
+ * En producción: debe integrarse con servicio de email real
+ */
+export async function sendEmail(
+  to: string,
+  subject: string,
+  html: string,
+  text: string
+): Promise<boolean> {
+  try {
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    if (isProduction) {
+      // TODO: Implementar envío real con servicio de email
+      console.warn('[sendEmail] Email no enviado (servicio no configurado):', {
+        to,
+        subject,
+      });
+      return false;
+    }
+
+    // Modo desarrollo/testing: Guardar en BD
+    const now = await getCurrentTime();
+
+    const { error } = await supabaseAdmin
+      .from('mock_emails')
+      .insert({
+        type: 'user_notification',
+        to_email: to,
+        subject: subject,
+        body: html,
+        data: { text_version: text },
+        company_id: null,
+        created_at: now.toISOString(),
+      });
+
+    if (error) {
+      console.error('[sendEmail] Error guardando mock email:', error);
+      return false;
+    }
+
+    // Loguear en consola para debugging
+    console.log('📧 [MOCK EMAIL] =========================================');
+    console.log(`Para: ${to}`);
+    console.log(`Asunto: ${subject}`);
+    console.log('Cuerpo (primeros 200 chars):', html.substring(0, 200) + '...');
+    console.log('=========================================================');
+
+    return true;
+  } catch (error) {
+    console.error('[sendEmail] Error inesperado:', error);
+    return false;
+  }
+}
