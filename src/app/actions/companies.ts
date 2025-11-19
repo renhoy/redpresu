@@ -4,6 +4,15 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { log } from "@/lib/logger";
 import { requireValidCompanyId } from "@/lib/helpers/company-validation";
+import { withAuthenticatedAction, actionError } from "@/lib/helpers/action-wrapper";
+import { requireSuperAdmin } from "@/lib/helpers/permission-helpers";
+import {
+  validateEmailField,
+  validateNIFField,
+  validateRequiredString,
+  validatePostalCodeField,
+  getFirstValidationError
+} from "@/lib/helpers/validation-helpers";
 
 export interface Company {
   id: number; // company_id (número, ej: 1, 2, 3...)
@@ -92,64 +101,92 @@ export async function getCompanies(): Promise<ActionResult> {
       return { success: false, error: "Sin permisos" };
     }
 
-    // Obtener TODAS las empresas (incluyendo eliminadas) para que superadmin pueda gestionarlas
-    const { data: issuers, error } = await supabaseAdmin
-      .from("issuers")
-      .select("*")
-      .order("created_at", { ascending: false });
+    // OPTIMIZACIÓN: Obtener issuers con counts agregados en una sola query
+    // Antes: N*5 queries (500 queries para 100 empresas)
+    // Ahora: 1 query usando RPC con agregaciones SQL
+    const { data: companiesWithCounts, error } = await supabaseAdmin.rpc(
+      'get_companies_with_counts'
+    );
 
     if (error) {
       log.error("[getCompanies] Error DB:", error);
-      return { success: false, error: error.message };
-    }
 
-    // Para cada emisor, contar usuarios, tarifas y presupuestos de su company_id
-    const formattedCompanies = await Promise.all(
-      (issuers || []).map(async (issuer) => {
-        // Contar usuarios de esta empresa
-        const { count: userCount } = await supabaseAdmin
-          .from("users")
-          .select("*", { count: "exact", head: true })
-          .eq("company_id", issuer.company_id);
+      // Fallback a método anterior si RPC falla
+      log.warn("[getCompanies] RPC falló, usando método de fallback");
+      const { data: issuers, error: issuerError } = await supabaseAdmin
+        .from("issuers")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-        // Contar usuarios admin de esta empresa
-        const { count: adminCount } = await supabaseAdmin
-          .from("users")
-          .select("*", { count: "exact", head: true })
-          .eq("company_id", issuer.company_id)
-          .eq("role", "admin");
+      if (issuerError) {
+        return { success: false, error: issuerError.message };
+      }
 
-        // Contar usuarios comercial de esta empresa
-        const { count: comercialCount } = await supabaseAdmin
-          .from("users")
-          .select("*", { count: "exact", head: true })
-          .eq("company_id", issuer.company_id)
-          .eq("role", "comercial");
+      // Método de fallback más eficiente: obtener todos los counts de una vez
+      const companyIds = (issuers || []).map(i => i.company_id);
 
-        // Contar tarifas de esta empresa
-        const { count: tariffCount } = await supabaseAdmin
-          .from("tariffs")
-          .select("*", { count: "exact", head: true })
-          .eq("company_id", issuer.company_id);
+      // Query 1: Obtener counts de usuarios agrupados
+      const { data: userCounts } = await supabaseAdmin
+        .from("users")
+        .select("company_id, role")
+        .in("company_id", companyIds);
 
-        // Contar presupuestos de esta empresa
-        const { count: budgetCount } = await supabaseAdmin
-          .from("budgets")
-          .select("*", { count: "exact", head: true })
-          .eq("company_id", issuer.company_id);
+      // Query 2: Obtener counts de tarifas agrupados
+      const { data: tariffCounts } = await supabaseAdmin
+        .from("tariffs")
+        .select("company_id")
+        .in("company_id", companyIds);
 
+      // Query 3: Obtener counts de presupuestos agrupados
+      const { data: budgetCounts } = await supabaseAdmin
+        .from("budgets")
+        .select("company_id")
+        .in("company_id", companyIds);
+
+      // Procesar counts en memoria (más eficiente que N queries)
+      const userCountsMap = new Map<number, { total: number; admin: number; comercial: number }>();
+      (userCounts || []).forEach(u => {
+        const current = userCountsMap.get(u.company_id) || { total: 0, admin: 0, comercial: 0 };
+        current.total++;
+        if (u.role === 'admin') current.admin++;
+        if (u.role === 'comercial') current.comercial++;
+        userCountsMap.set(u.company_id, current);
+      });
+
+      const tariffCountsMap = new Map<number, number>();
+      (tariffCounts || []).forEach(t => {
+        tariffCountsMap.set(t.company_id, (tariffCountsMap.get(t.company_id) || 0) + 1);
+      });
+
+      const budgetCountsMap = new Map<number, number>();
+      (budgetCounts || []).forEach(b => {
+        budgetCountsMap.set(b.company_id, (budgetCountsMap.get(b.company_id) || 0) + 1);
+      });
+
+      const formattedCompanies = (issuers || []).map(issuer => {
+        const userStats = userCountsMap.get(issuer.company_id) || { total: 0, admin: 0, comercial: 0 };
         return {
           ...issuer,
-          id: issuer.company_id, // Usar company_id como id principal
-          uuid: issuer.id, // Guardar UUID del emisor
-          user_count: userCount || 0,
-          admin_count: adminCount || 0,
-          comercial_count: comercialCount || 0,
-          tariff_count: tariffCount || 0,
-          budget_count: budgetCount || 0,
+          id: issuer.company_id,
+          uuid: issuer.id,
+          user_count: userStats.total,
+          admin_count: userStats.admin,
+          comercial_count: userStats.comercial,
+          tariff_count: tariffCountsMap.get(issuer.company_id) || 0,
+          budget_count: budgetCountsMap.get(issuer.company_id) || 0,
         };
-      })
-    );
+      });
+
+      log.info("[getCompanies] Éxito (fallback):", formattedCompanies.length, "empresas");
+      return { success: true, data: formattedCompanies };
+    }
+
+    // Formatear resultado de RPC
+    const formattedCompanies = (companiesWithCounts || []).map((company: any) => ({
+      ...company,
+      id: company.company_id,
+      uuid: company.id,
+    }));
 
     log.info("[getCompanies] Éxito:", formattedCompanies.length, "empresas");
 
@@ -238,53 +275,31 @@ export async function getCompanyById(companyId: string): Promise<ActionResult> {
  * Crea registro en companies y issuers
  */
 export async function createCompany(data: CreateCompanyData): Promise<ActionResult> {
-  try {
-    log.info("[createCompany] Iniciando...", data);
-
-    // Obtener usuario actual
-    const { getServerUser } = await import("@/lib/auth/server");
-    const user = await getServerUser();
-
-    if (!user) {
-      return { success: false, error: "No autenticado" };
+  return withAuthenticatedAction('createCompany', async (user) => {
+    // Verificar permisos de superadmin
+    const permissionCheck = requireSuperAdmin(user);
+    if (!permissionCheck.allowed) {
+      return { error: permissionCheck.reason };
     }
 
-    // Solo superadmin puede crear empresas
-    if (user.role !== "superadmin") {
-      return { success: false, error: "Solo superadmin puede crear empresas" };
+    // Validaciones usando helpers
+    const validationErrors = getFirstValidationError([
+      validateRequiredString(data.name, "nombre", 1),
+      validateNIFField(data.nif),
+      validateRequiredString(data.address, "dirección", 1),
+      validatePostalCodeField(data.postal_code),
+      validateRequiredString(data.locality, "localidad", 1),
+      validateRequiredString(data.province, "provincia", 1),
+      data.email ? validateEmailField(data.email) : { valid: true },
+    ]);
+
+    if (validationErrors) {
+      return { error: validationErrors };
     }
 
-    // Validaciones
-    if (!data.name || !data.name.trim()) {
-      return { success: false, error: "El nombre es obligatorio" };
-    }
-
-    if (!data.nif || data.nif.trim().length < 9) {
-      return { success: false, error: "CIF/NIF debe tener al menos 9 caracteres" };
-    }
-
-    if (!data.address || !data.address.trim()) {
-      return { success: false, error: "La dirección es obligatoria" };
-    }
-
-    if (!data.postal_code || !data.postal_code.trim()) {
-      return { success: false, error: "El código postal es obligatorio" };
-    }
-
-    if (!data.locality || !data.locality.trim()) {
-      return { success: false, error: "La localidad es obligatoria" };
-    }
-
-    if (!data.province || !data.province.trim()) {
-      return { success: false, error: "La provincia es obligatoria" };
-    }
-
-    if (data.email && !data.email.includes("@")) {
-      return { success: false, error: "Email inválido" };
-    }
-
+    // Validación específica para autónomos
     if (data.type === "autonomo" && !data.irpf_percentage) {
-      return { success: false, error: "El % IRPF es obligatorio para autónomos" };
+      return { error: "El % IRPF es obligatorio para autónomos" };
     }
 
     // 1. Crear registro en companies
@@ -299,7 +314,7 @@ export async function createCompany(data: CreateCompanyData): Promise<ActionResu
 
     if (companyError || !newCompany) {
       log.error("[createCompany] Error creando company:", companyError);
-      return { success: false, error: "Error al crear la empresa" };
+      return { error: "Error al crear la empresa" };
     }
 
     const companyId = newCompany.id;
@@ -336,7 +351,7 @@ export async function createCompany(data: CreateCompanyData): Promise<ActionResu
         .delete()
         .eq("id", companyId);
 
-      return { success: false, error: "Error al crear los datos fiscales de la empresa" };
+      return { error: "Error al crear los datos fiscales de la empresa" };
     }
 
     log.info("[createCompany] Issuer creado con ID:", newIssuer.id);
@@ -362,7 +377,6 @@ export async function createCompany(data: CreateCompanyData): Promise<ActionResu
     revalidatePath("/companies");
 
     return {
-      success: true,
       data: {
         ...newIssuer,
         id: companyId,
@@ -372,10 +386,7 @@ export async function createCompany(data: CreateCompanyData): Promise<ActionResu
         budget_count: 0,
       },
     };
-  } catch (error) {
-    log.error("[createCompany] Error inesperado:", error);
-    return { success: false, error: "Error inesperado al crear la empresa" };
-  }
+  });
 }
 
 /**
@@ -385,31 +396,14 @@ export async function updateCompany(
   companyId: string,
   data: UpdateCompanyData
 ): Promise<ActionResult> {
-  try {
-    log.info("[updateCompany] Iniciando...", companyId, data);
-
-    // Obtener usuario actual
-    const { getServerUser } = await import("@/lib/auth/server");
-    const user = await getServerUser();
-
-    if (!user) {
-      return { success: false, error: "No autenticado" };
+  return withAuthenticatedAction('updateCompany', async (user) => {
+    // Verificar company_id del usuario
+    const companyCheck = requireCompany(user, user.companyId);
+    if (!companyCheck.allowed) {
+      return { error: companyCheck.reason };
     }
 
-    // SECURITY: Validar company_id obligatorio
-    let userCompanyId: number;
-    try {
-      userCompanyId = requireValidCompanyId(user, '[updateCompany]');
-    } catch (error) {
-      log.error('[updateCompany] company_id inválido', { error });
-      return { success: false, error: "Usuario sin empresa asignada" };
-    }
-
-    // Verificar permisos:
-    // - Superadmin puede editar cualquier emisor
-    // - Admin puede editar emisor de su empresa
-
-    // Primero obtener el emisor para verificar permisos
+    // Obtener el emisor para verificar permisos
     const { data: existingCompany, error: fetchError } = await supabaseAdmin
       .from("issuers")
       .select("company_id")
@@ -419,26 +413,28 @@ export async function updateCompany(
 
     if (fetchError || !existingCompany) {
       log.error("[updateCompany] Empresa no encontrada:", fetchError);
-      return { success: false, error: "Empresa no encontrada" };
+      return { error: "Empresa no encontrada" };
     }
 
-    // Admin solo puede editar su propia empresa
-    if (user.role !== "superadmin" && existingCompany.company_id !== userCompanyId) {
+    // Verificar permisos: Admin solo puede editar su propia empresa
+    const deletePermission = canDeleteFromCompany(user, existingCompany.company_id);
+    if (!deletePermission.allowed) {
       log.error("[updateCompany] Intento de edición cross-company", {
         userId: user.id,
-        userCompanyId,
+        userCompanyId: user.companyId,
         targetCompanyId: existingCompany.company_id
       });
-      return { success: false, error: "Sin permisos para editar esta empresa" };
+      return { error: deletePermission.reason };
     }
 
-    // Validaciones
-    if (data.email && !data.email.includes("@")) {
-      return { success: false, error: "Email inválido" };
-    }
+    // Validaciones usando helpers
+    const validationErrors = getFirstValidationError([
+      data.email ? validateEmailField(data.email) : { valid: true },
+      data.nif ? validateNIFField(data.nif) : { valid: true },
+    ]);
 
-    if (data.nif && data.nif.trim().length < 9) {
-      return { success: false, error: "CIF/NIF debe tener al menos 9 caracteres" };
+    if (validationErrors) {
+      return { error: validationErrors };
     }
 
     // Actualizar empresa
@@ -454,7 +450,7 @@ export async function updateCompany(
 
     if (error) {
       log.error("[updateCompany] Error DB:", error);
-      return { success: false, error: error.message };
+      return { error: error.message };
     }
 
     log.info("[updateCompany] Éxito:", updatedCompany.id);
@@ -464,11 +460,8 @@ export async function updateCompany(
     revalidatePath(`/companies/${companyId}/edit`);
     revalidatePath("/companies/edit");
 
-    return { success: true, data: updatedCompany };
-  } catch (error) {
-    log.error("[updateCompany] Error inesperado:", error);
-    return { success: false, error: "Error inesperado" };
-  }
+    return { data: updatedCompany };
+  });
 }
 
 /**

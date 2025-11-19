@@ -33,7 +33,7 @@ export default async function TariffsPage({ searchParams }: PageProps) {
   if (['admin', 'superadmin'].includes(user.role)) {
     const { data } = await supabaseAdmin
       .from('users')
-      .select('id, nombre, apellidos')
+      .select('id, name, last_name')
       .eq('company_id', user.company_id)
       .eq('status', 'active')
       .order('name')

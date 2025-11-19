@@ -13,9 +13,9 @@ import { notFound, redirect } from "next/navigation";
 import { getServerUser } from "@/lib/auth/server";
 
 interface HelpArticlePageProps {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 // Generar rutas estáticas para todos los artículos
@@ -28,7 +28,8 @@ export async function generateStaticParams() {
 
 // Generar metadata dinámica
 export async function generateMetadata({ params }: HelpArticlePageProps) {
-  const article = await getHelpArticle(params.slug);
+  const { slug } = await params;
+  const article = await getHelpArticle(slug);
 
   if (!article) {
     return {
@@ -52,7 +53,8 @@ export default async function HelpArticlePage({
     redirect("/login");
   }
 
-  const article = await getHelpArticle(params.slug);
+  const { slug } = await params;
+  const article = await getHelpArticle(slug);
 
   if (!article) {
     notFound();
