@@ -4,6 +4,15 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { log } from "@/lib/logger";
 import { requireValidCompanyId } from "@/lib/helpers/company-validation";
+import { withAuthenticatedAction, actionError } from "@/lib/helpers/action-wrapper";
+import { requireSuperAdmin } from "@/lib/helpers/permission-helpers";
+import {
+  validateEmailField,
+  validateNIFField,
+  validateRequiredString,
+  validatePostalCodeField,
+  getFirstValidationError
+} from "@/lib/helpers/validation-helpers";
 
 export interface Company {
   id: number; // company_id (número, ej: 1, 2, 3...)
@@ -266,53 +275,31 @@ export async function getCompanyById(companyId: string): Promise<ActionResult> {
  * Crea registro en companies y issuers
  */
 export async function createCompany(data: CreateCompanyData): Promise<ActionResult> {
-  try {
-    log.info("[createCompany] Iniciando...", data);
-
-    // Obtener usuario actual
-    const { getServerUser } = await import("@/lib/auth/server");
-    const user = await getServerUser();
-
-    if (!user) {
-      return { success: false, error: "No autenticado" };
+  return withAuthenticatedAction('createCompany', async (user) => {
+    // Verificar permisos de superadmin
+    const permissionCheck = requireSuperAdmin(user);
+    if (!permissionCheck.allowed) {
+      return { error: permissionCheck.reason };
     }
 
-    // Solo superadmin puede crear empresas
-    if (user.role !== "superadmin") {
-      return { success: false, error: "Solo superadmin puede crear empresas" };
+    // Validaciones usando helpers
+    const validationErrors = getFirstValidationError([
+      validateRequiredString(data.name, "nombre", 1),
+      validateNIFField(data.nif),
+      validateRequiredString(data.address, "dirección", 1),
+      validatePostalCodeField(data.postal_code),
+      validateRequiredString(data.locality, "localidad", 1),
+      validateRequiredString(data.province, "provincia", 1),
+      data.email ? validateEmailField(data.email) : { valid: true },
+    ]);
+
+    if (validationErrors) {
+      return { error: validationErrors };
     }
 
-    // Validaciones
-    if (!data.name || !data.name.trim()) {
-      return { success: false, error: "El nombre es obligatorio" };
-    }
-
-    if (!data.nif || data.nif.trim().length < 9) {
-      return { success: false, error: "CIF/NIF debe tener al menos 9 caracteres" };
-    }
-
-    if (!data.address || !data.address.trim()) {
-      return { success: false, error: "La dirección es obligatoria" };
-    }
-
-    if (!data.postal_code || !data.postal_code.trim()) {
-      return { success: false, error: "El código postal es obligatorio" };
-    }
-
-    if (!data.locality || !data.locality.trim()) {
-      return { success: false, error: "La localidad es obligatoria" };
-    }
-
-    if (!data.province || !data.province.trim()) {
-      return { success: false, error: "La provincia es obligatoria" };
-    }
-
-    if (data.email && !data.email.includes("@")) {
-      return { success: false, error: "Email inválido" };
-    }
-
+    // Validación específica para autónomos
     if (data.type === "autonomo" && !data.irpf_percentage) {
-      return { success: false, error: "El % IRPF es obligatorio para autónomos" };
+      return { error: "El % IRPF es obligatorio para autónomos" };
     }
 
     // 1. Crear registro en companies
@@ -327,7 +314,7 @@ export async function createCompany(data: CreateCompanyData): Promise<ActionResu
 
     if (companyError || !newCompany) {
       log.error("[createCompany] Error creando company:", companyError);
-      return { success: false, error: "Error al crear la empresa" };
+      return { error: "Error al crear la empresa" };
     }
 
     const companyId = newCompany.id;
@@ -364,7 +351,7 @@ export async function createCompany(data: CreateCompanyData): Promise<ActionResu
         .delete()
         .eq("id", companyId);
 
-      return { success: false, error: "Error al crear los datos fiscales de la empresa" };
+      return { error: "Error al crear los datos fiscales de la empresa" };
     }
 
     log.info("[createCompany] Issuer creado con ID:", newIssuer.id);
@@ -390,7 +377,6 @@ export async function createCompany(data: CreateCompanyData): Promise<ActionResu
     revalidatePath("/companies");
 
     return {
-      success: true,
       data: {
         ...newIssuer,
         id: companyId,
@@ -400,10 +386,7 @@ export async function createCompany(data: CreateCompanyData): Promise<ActionResu
         budget_count: 0,
       },
     };
-  } catch (error) {
-    log.error("[createCompany] Error inesperado:", error);
-    return { success: false, error: "Error inesperado al crear la empresa" };
-  }
+  });
 }
 
 /**
@@ -413,31 +396,14 @@ export async function updateCompany(
   companyId: string,
   data: UpdateCompanyData
 ): Promise<ActionResult> {
-  try {
-    log.info("[updateCompany] Iniciando...", companyId, data);
-
-    // Obtener usuario actual
-    const { getServerUser } = await import("@/lib/auth/server");
-    const user = await getServerUser();
-
-    if (!user) {
-      return { success: false, error: "No autenticado" };
+  return withAuthenticatedAction('updateCompany', async (user) => {
+    // Verificar company_id del usuario
+    const companyCheck = requireCompany(user, user.companyId);
+    if (!companyCheck.allowed) {
+      return { error: companyCheck.reason };
     }
 
-    // SECURITY: Validar company_id obligatorio
-    let userCompanyId: number;
-    try {
-      userCompanyId = requireValidCompanyId(user, '[updateCompany]');
-    } catch (error) {
-      log.error('[updateCompany] company_id inválido', { error });
-      return { success: false, error: "Usuario sin empresa asignada" };
-    }
-
-    // Verificar permisos:
-    // - Superadmin puede editar cualquier emisor
-    // - Admin puede editar emisor de su empresa
-
-    // Primero obtener el emisor para verificar permisos
+    // Obtener el emisor para verificar permisos
     const { data: existingCompany, error: fetchError } = await supabaseAdmin
       .from("issuers")
       .select("company_id")
@@ -447,26 +413,28 @@ export async function updateCompany(
 
     if (fetchError || !existingCompany) {
       log.error("[updateCompany] Empresa no encontrada:", fetchError);
-      return { success: false, error: "Empresa no encontrada" };
+      return { error: "Empresa no encontrada" };
     }
 
-    // Admin solo puede editar su propia empresa
-    if (user.role !== "superadmin" && existingCompany.company_id !== userCompanyId) {
+    // Verificar permisos: Admin solo puede editar su propia empresa
+    const deletePermission = canDeleteFromCompany(user, existingCompany.company_id);
+    if (!deletePermission.allowed) {
       log.error("[updateCompany] Intento de edición cross-company", {
         userId: user.id,
-        userCompanyId,
+        userCompanyId: user.companyId,
         targetCompanyId: existingCompany.company_id
       });
-      return { success: false, error: "Sin permisos para editar esta empresa" };
+      return { error: deletePermission.reason };
     }
 
-    // Validaciones
-    if (data.email && !data.email.includes("@")) {
-      return { success: false, error: "Email inválido" };
-    }
+    // Validaciones usando helpers
+    const validationErrors = getFirstValidationError([
+      data.email ? validateEmailField(data.email) : { valid: true },
+      data.nif ? validateNIFField(data.nif) : { valid: true },
+    ]);
 
-    if (data.nif && data.nif.trim().length < 9) {
-      return { success: false, error: "CIF/NIF debe tener al menos 9 caracteres" };
+    if (validationErrors) {
+      return { error: validationErrors };
     }
 
     // Actualizar empresa
@@ -482,7 +450,7 @@ export async function updateCompany(
 
     if (error) {
       log.error("[updateCompany] Error DB:", error);
-      return { success: false, error: error.message };
+      return { error: error.message };
     }
 
     log.info("[updateCompany] Éxito:", updatedCompany.id);
@@ -492,11 +460,8 @@ export async function updateCompany(
     revalidatePath(`/companies/${companyId}/edit`);
     revalidatePath("/companies/edit");
 
-    return { success: true, data: updatedCompany };
-  } catch (error) {
-    log.error("[updateCompany] Error inesperado:", error);
-    return { success: false, error: "Error inesperado" };
-  }
+    return { data: updatedCompany };
+  });
 }
 
 /**
