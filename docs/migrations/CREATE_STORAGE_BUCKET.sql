@@ -21,22 +21,29 @@ ON CONFLICT (id) DO NOTHING;
 -- PASO 2: Configurar políticas de acceso
 -- ============================================
 
+-- Eliminar políticas existentes si existen (para hacer el script idempotente)
+DROP POLICY IF EXISTS "Public Access" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can upload" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can update" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can delete" ON storage.objects;
+DROP POLICY IF EXISTS "Service role has full access" ON storage.objects;
+
 -- Política 1: Permitir lectura pública (GET)
 -- Cualquiera puede ver las imágenes
-CREATE POLICY IF NOT EXISTS "Public Access"
+CREATE POLICY "Public Access"
 ON storage.objects FOR SELECT
 USING (bucket_id = 'tariff-logos');
 
 -- Política 2: Permitir subida a usuarios autenticados (INSERT)
 -- Solo usuarios autenticados pueden subir archivos
-CREATE POLICY IF NOT EXISTS "Authenticated users can upload"
+CREATE POLICY "Authenticated users can upload"
 ON storage.objects FOR INSERT
 TO authenticated
 WITH CHECK (bucket_id = 'tariff-logos');
 
 -- Política 3: Permitir actualización a usuarios autenticados (UPDATE)
 -- Solo usuarios autenticados pueden actualizar archivos
-CREATE POLICY IF NOT EXISTS "Authenticated users can update"
+CREATE POLICY "Authenticated users can update"
 ON storage.objects FOR UPDATE
 TO authenticated
 USING (bucket_id = 'tariff-logos')
@@ -44,14 +51,14 @@ WITH CHECK (bucket_id = 'tariff-logos');
 
 -- Política 4: Permitir eliminación a usuarios autenticados (DELETE)
 -- Solo usuarios autenticados pueden eliminar archivos
-CREATE POLICY IF NOT EXISTS "Authenticated users can delete"
+CREATE POLICY "Authenticated users can delete"
 ON storage.objects FOR DELETE
 TO authenticated
 USING (bucket_id = 'tariff-logos');
 
 -- Política 5: Service role tiene acceso completo
 -- El service_role (usado por supabaseAdmin) tiene acceso total
-CREATE POLICY IF NOT EXISTS "Service role has full access"
+CREATE POLICY "Service role has full access"
 ON storage.objects FOR ALL
 TO service_role
 USING (bucket_id = 'tariff-logos')
