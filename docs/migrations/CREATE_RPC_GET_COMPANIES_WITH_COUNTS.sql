@@ -15,9 +15,9 @@ DROP FUNCTION IF EXISTS get_companies_with_counts();
 -- Crear función que retorna empresas con todos los counts agregados
 CREATE OR REPLACE FUNCTION get_companies_with_counts()
 RETURNS TABLE (
-  -- Campos de issuers
+  -- Campos de issuers (usar tipos dinámicos basados en la tabla real)
   id uuid,
-  company_id bigint,
+  company_id integer,
   user_id uuid,
   type text,
   name text,
@@ -43,56 +43,77 @@ RETURNS TABLE (
   tariff_count bigint,
   budget_count bigint
 )
-LANGUAGE SQL
+LANGUAGE plpgsql
 STABLE
 AS $$
+BEGIN
+  RETURN QUERY
   SELECT
-    i.*,
+    i.id,
+    i.company_id,
+    i.user_id,
+    i.type,
+    i.name,
+    i.nif,
+    i.address,
+    i.postal_code,
+    i.locality,
+    i.province,
+    i.country,
+    i.phone,
+    i.email,
+    i.web,
+    i.irpf_percentage,
+    i.logo_url,
+    i.created_at,
+    i.updated_at,
+    i.deleted_at,
 
     -- Count total de usuarios
     COALESCE(
-      (SELECT COUNT(*)
+      (SELECT COUNT(*)::bigint
        FROM public.users u
        WHERE u.company_id = i.company_id),
-      0
+      0::bigint
     ) AS user_count,
 
     -- Count de admins
     COALESCE(
-      (SELECT COUNT(*)
+      (SELECT COUNT(*)::bigint
        FROM public.users u
        WHERE u.company_id = i.company_id
        AND u.role = 'admin'),
-      0
+      0::bigint
     ) AS admin_count,
 
     -- Count de comerciales
     COALESCE(
-      (SELECT COUNT(*)
+      (SELECT COUNT(*)::bigint
        FROM public.users u
        WHERE u.company_id = i.company_id
        AND u.role = 'comercial'),
-      0
+      0::bigint
     ) AS comercial_count,
 
     -- Count de tarifas
     COALESCE(
-      (SELECT COUNT(*)
+      (SELECT COUNT(*)::bigint
        FROM public.tariffs t
        WHERE t.company_id = i.company_id),
-      0
+      0::bigint
     ) AS tariff_count,
 
     -- Count de presupuestos
     COALESCE(
-      (SELECT COUNT(*)
+      (SELECT COUNT(*)::bigint
        FROM public.budgets b
        WHERE b.company_id = i.company_id),
-      0
+      0::bigint
     ) AS budget_count
 
   FROM public.issuers i
   ORDER BY i.created_at DESC;
+END;
 $$;
 
 -- Dar permisos a service_role
