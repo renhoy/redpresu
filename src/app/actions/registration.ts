@@ -374,7 +374,14 @@ export async function completeRegistration(
     const requiresApproval = await getRegistrationRequiresApproval();
     const userStatus = requiresApproval ? 'awaiting_approval' : 'active';
 
-    console.log("[completeRegistration] Creando registro de usuario con estado:", userStatus);
+    console.log('\n');
+    console.log('═══════════════════════════════════════════════════════════════');
+    console.log('[completeRegistration] ESTADO DEL REGISTRO');
+    console.log('═══════════════════════════════════════════════════════════════');
+    console.log(`📋 Requires Approval: ${requiresApproval}`);
+    console.log(`🔐 User Status: ${userStatus}`);
+    console.log(`👤 Usuario: ${tokenData.name} (${tokenData.email})`);
+    console.log('───────────────────────────────────────────────────────────────');
 
     const { error: userError } = await supabaseAdmin
       .from("users")
@@ -390,7 +397,8 @@ export async function completeRegistration(
       });
 
     if (userError) {
-      console.error("[completeRegistration] Error creando usuario:", userError);
+      console.error("❌ Error creando usuario en BD:", userError);
+      console.log('═══════════════════════════════════════════════════════════════\n');
 
       // Rollback completo
       await supabaseAdmin.auth.admin.deleteUser(userId);
@@ -403,6 +411,9 @@ export async function completeRegistration(
       };
     }
 
+    console.log('✅ Usuario creado exitosamente en BD');
+    console.log('═══════════════════════════════════════════════════════════════\n');
+
     // 7. Marcar token como usado
     console.log("[completeRegistration] Marcando token como usado...");
 
@@ -413,16 +424,18 @@ export async function completeRegistration(
 
     // 8. Notificar al superadmin si requiere aprobación
     if (requiresApproval) {
-      console.log("[completeRegistration] Notificando al superadmin sobre nuevo registro pendiente");
+      console.log('\n🔔 Usuario requiere aprobación - iniciando notificación...\n');
       // No esperar la notificación - ejecutar en background
       notifySuperadminNewRegistration(
         tokenData.name,
         "", // last_name no disponible en este flujo
         tokenData.email
       ).catch(error => {
-        console.error("[completeRegistration] Error al notificar superadmin:", error);
+        console.error("[completeRegistration] ❌ Error al notificar superadmin:", error);
         // No afectar el flujo de registro si falla la notificación
       });
+    } else {
+      console.log('\n✅ Usuario NO requiere aprobación - activación inmediata\n');
     }
 
     // 9. Crear sesión para auto-login SOLO si no requiere aprobación

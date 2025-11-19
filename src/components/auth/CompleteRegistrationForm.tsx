@@ -8,6 +8,8 @@ import {
 } from "@/app/actions/registration";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Card,
   CardContent,
@@ -72,6 +74,7 @@ export default function CompleteRegistrationForm({
     telefono: "",
     email_contacto: "",
     web: "",
+    privacyAccepted: false,
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -178,6 +181,11 @@ export default function CompleteRegistrationForm({
       } else if (formData.irpf_percentage < 0 || formData.irpf_percentage > 100) {
         newErrors.irpf_percentage = "El IRPF debe estar entre 0 y 100";
       }
+    }
+
+    // Validar aceptación de privacidad
+    if (!formData.privacyAccepted) {
+      newErrors.general = "Debes aceptar la política de privacidad para continuar";
     }
 
     setErrors(newErrors);
@@ -708,6 +716,34 @@ export default function CompleteRegistrationForm({
                   )}
                 </div>
               </div>
+            </div>
+
+            {/* Checkbox política de privacidad */}
+            <div className="flex items-start space-x-2 pt-4">
+              <Checkbox
+                id="privacyAccepted"
+                checked={formData.privacyAccepted}
+                onCheckedChange={(checked) =>
+                  setFormData((prev) => ({ ...prev, privacyAccepted: checked as boolean }))
+                }
+                disabled={isLoading}
+              />
+              <Label
+                htmlFor="privacyAccepted"
+                className="text-sm font-normal leading-relaxed cursor-pointer"
+              >
+                Acepto la{" "}
+                <a
+                  href="/legal"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-lime-600 underline hover:text-lime-700"
+                >
+                  política de privacidad
+                </a>{" "}
+                y el tratamiento de mis datos personales{" "}
+                <span className="text-red-500">*</span>
+              </Label>
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
