@@ -385,3 +385,114 @@ function parseNumericValue(value: string | number): number {
 
   return 0;
 }
+
+/**
+ * FORMATEO DE FECHAS PARA NÚMEROS ÚNICOS
+ */
+
+export type DateNumberFormat =
+  | 'YYYYMMDD'           // 20251119
+  | 'YYYYMMDD-HHMMSS'    // 20251119-143025
+  | 'YYYYMMDD_HHMMSS'    // 20251119_143025
+  | 'timestamp-ms'       // 1700401825789
+
+/**
+ * Formatea una fecha como número para IDs únicos, nombres de archivo, etc.
+ *
+ * @param date - Fecha a formatear (default: ahora)
+ * @param format - Formato deseado
+ * @returns String formateado
+ *
+ * @example
+ * formatDateToNumber() // "20251119-143025"
+ * formatDateToNumber(new Date(), 'YYYYMMDD') // "20251119"
+ * formatDateToNumber(new Date(), 'timestamp-ms') // "1700401825789"
+ */
+export function formatDateToNumber(
+  date: Date = new Date(),
+  format: DateNumberFormat = 'YYYYMMDD-HHMMSS'
+): string {
+  switch (format) {
+    case 'YYYYMMDD': {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${year}${month}${day}`
+    }
+
+    case 'YYYYMMDD-HHMMSS': {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const hour = String(date.getHours()).padStart(2, '0')
+      const minute = String(date.getMinutes()).padStart(2, '0')
+      const second = String(date.getSeconds()).padStart(2, '0')
+      return `${year}${month}${day}-${hour}${minute}${second}`
+    }
+
+    case 'YYYYMMDD_HHMMSS': {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const hour = String(date.getHours()).padStart(2, '0')
+      const minute = String(date.getMinutes()).padStart(2, '0')
+      const second = String(date.getSeconds()).padStart(2, '0')
+      return `${year}${month}${day}_${hour}${minute}${second}`
+    }
+
+    case 'timestamp-ms':
+      return String(date.getTime())
+
+    default:
+      throw new Error(`Formato de fecha no soportado: ${format}`)
+  }
+}
+
+/**
+ * Parsea un número de fecha en formato YYYYMMDD-HHMMSS a Date
+ *
+ * @param dateNumber - String con fecha en formato numérico
+ * @returns Date o null si el formato es inválido
+ *
+ * @example
+ * parseDateNumber('20251119-143025') // Date(2025-11-19 14:30:25)
+ * parseDateNumber('20251119') // Date(2025-11-19 00:00:00)
+ * parseDateNumber('invalid') // null
+ */
+export function parseDateNumber(dateNumber: string): Date | null {
+  if (!dateNumber || typeof dateNumber !== 'string') {
+    return null
+  }
+
+  // Formato YYYYMMDD-HHMMSS o YYYYMMDD_HHMMSS
+  const matchFull = dateNumber.match(/^(\d{4})(\d{2})(\d{2})[-_](\d{2})(\d{2})(\d{2})$/)
+  if (matchFull) {
+    const [, year, month, day, hour, minute, second] = matchFull
+    const date = new Date(
+      parseInt(year),
+      parseInt(month) - 1,
+      parseInt(day),
+      parseInt(hour),
+      parseInt(minute),
+      parseInt(second)
+    )
+    return isNaN(date.getTime()) ? null : date
+  }
+
+  // Formato YYYYMMDD
+  const matchShort = dateNumber.match(/^(\d{4})(\d{2})(\d{2})$/)
+  if (matchShort) {
+    const [, year, month, day] = matchShort
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+    return isNaN(date.getTime()) ? null : date
+  }
+
+  // Formato timestamp-ms
+  if (/^\d+$/.test(dateNumber)) {
+    const timestamp = parseInt(dateNumber)
+    const date = new Date(timestamp)
+    return isNaN(date.getTime()) ? null : date
+  }
+
+  return null
+}

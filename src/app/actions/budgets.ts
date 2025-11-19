@@ -5,6 +5,9 @@ import { sanitizeError } from '@/lib/helpers/error-helpers'
 import { getAuthenticatedUser } from '@/lib/helpers/auth-helpers'
 import { withAuthenticatedAction } from '@/lib/helpers/action-wrapper'
 import { validateEmailField, validateRequiredString, getFirstValidationError } from '@/lib/helpers/validation-helpers'
+import { generateUniqueNumber } from '@/lib/helpers/unique-numbers'
+import { retryInsertOnDuplicate } from '@/lib/helpers/database-helpers'
+import { formatDateToNumber } from '@/lib/helpers/format'
 
 import { createServerActionClient } from "@/lib/supabase/helpers"
 import { supabaseAdmin } from '@/lib/supabase/server'
@@ -223,91 +226,37 @@ export async function createDraftBudget(data: {
     const empresaId = user.companyId
 
     // Generar budget_number único si no se proporcionó
-    let finalBudgetNumber: string
+    let finalBudgetNumber: string | null = null
 
-    if (data.budgetNumber && data.budgetNumber.trim() !== '') {
-      // Usuario proporcionó un número personalizado, verificar unicidad
-      const trimmedNumber = data.budgetNumber.trim()
+    if (!data.budgetNumber || data.budgetNumber.trim() === '') {
+      // Generar automáticamente
+      const numberResult = await generateUniqueNumber({
+        table: 'budgets',
+        column: 'budget_number',
+        companyId: empresaId,
+        format: 'YYYYMMDD-HHMMSS',
+        maxAttempts: 100
+      })
 
-      const { data: existingBudget, error: checkError } = await supabaseAdmin
+      if (!numberResult.success) {
+        return { success: false, error: numberResult.error || 'No se pudo generar número único' }
+      }
+
+      finalBudgetNumber = numberResult.number!
+    } else {
+      // Usuario proporcionó número personalizado, verificar unicidad
+      const { data: existingBudget } = await supabaseAdmin
         .from('budgets')
         .select('id')
-        .eq('budget_number', trimmedNumber)
+        .eq('budget_number', data.budgetNumber.trim())
         .eq('company_id', empresaId)
         .maybeSingle()
 
-      if (checkError) {
-        log.error('[createDraftBudget] Error verificando unicidad:', checkError)
-        return { success: false, error: 'Error al verificar número de presupuesto' }
-      }
-
       if (existingBudget) {
-        return { success: false, error: `El número de presupuesto "${trimmedNumber}" ya existe. Por favor, usa otro número.` }
+        return { success: false, error: `El número "${data.budgetNumber.trim()}" ya existe` }
       }
 
-      finalBudgetNumber = trimmedNumber
-      log.info('[createDraftBudget] Usando budget_number proporcionado:', finalBudgetNumber)
-    } else {
-      // Generar automáticamente un budget_number único
-      const now = new Date()
-      let secondsToAdd = 0
-      const maxAttempts = 100
-      let found = false
-
-      for (let attempt = 0; attempt < maxAttempts && !found; attempt++) {
-        const candidateDate = new Date(now)
-        candidateDate.setSeconds(candidateDate.getSeconds() + secondsToAdd)
-
-        // Formatear: YYYYMMDD-HHMMSS
-        const year = candidateDate.getFullYear()
-        const month = String(candidateDate.getMonth() + 1).padStart(2, '0')
-        const day = String(candidateDate.getDate()).padStart(2, '0')
-        const hour = String(candidateDate.getHours()).padStart(2, '0')
-        const minute = String(candidateDate.getMinutes()).padStart(2, '0')
-        const second = String(candidateDate.getSeconds()).padStart(2, '0')
-
-        const candidateNumber = `${year}${month}${day}-${hour}${minute}${second}`
-
-        // Verificar si existe en BD
-        const { data: existingBudget, error: checkError } = await supabaseAdmin
-          .from('budgets')
-          .select('id')
-          .eq('budget_number', candidateNumber)
-          .eq('company_id', empresaId)
-          .maybeSingle()
-
-        if (checkError) {
-          log.error('[createDraftBudget] Error verificando budget_number:', checkError)
-          // Continuar con el intento actual
-        }
-
-        if (!existingBudget) {
-          // Número disponible
-          finalBudgetNumber = candidateNumber
-          found = true
-          log.info('[createDraftBudget] Budget_number único generado:', {
-            numero: finalBudgetNumber,
-            intentos: attempt + 1,
-            segundos_sumados: secondsToAdd
-          })
-        } else {
-          // Ya existe, probar siguiente
-          secondsToAdd++
-        }
-      }
-
-      if (!found) {
-        // Fallback: usar timestamp con milisegundos
-        log.warn('[createDraftBudget] No se encontró número único tras ' + maxAttempts + ' intentos, usando milisegundos')
-        const year = now.getFullYear()
-        const month = String(now.getMonth() + 1).padStart(2, '0')
-        const day = String(now.getDate()).padStart(2, '0')
-        const hour = String(now.getHours()).padStart(2, '0')
-        const minute = String(now.getMinutes()).padStart(2, '0')
-        const second = String(now.getSeconds()).padStart(2, '0')
-        const millisecond = String(now.getMilliseconds()).padStart(3, '0')
-        finalBudgetNumber = `${year}${month}${day}-${hour}${minute}${second}${millisecond.substring(0, 1)}`
-      }
+      finalBudgetNumber = data.budgetNumber.trim()
     }
 
     // Calcular IVA
@@ -347,102 +296,69 @@ export async function createDraftBudget(data: {
       client_acceptance: data.clientData.client_acceptance
     }
 
-    // Crear borrador con retry en caso de race condition
-    let budget: any = null
-    let insertSuccess = false
-    const maxInsertRetries = 10
-    let currentBudgetNumber = finalBudgetNumber
-    const baseTimestamp = new Date()
-
-    for (let retryCount = 0; retryCount < maxInsertRetries && !insertSuccess; retryCount++) {
-      const { data: insertedBudget, error: insertError } = await supabaseAdmin
-        .from('budgets')
-        .insert({
-          company_id: empresaId,
-          tariff_id: data.tariffId,
-          user_id: user.id,
-          budget_number: currentBudgetNumber,
-          json_tariff_data: data.tariffData,
-          json_budget_data: initialBudgetData,
-          json_client_data: jsonClientData,
-          parent_budget_id: null,
-          version_number: 1,
-          client_type: data.clientData.client_type,
-          client_name: data.clientData.client_name,
-          client_nif_nie: data.clientData.client_nif_nie,
-          client_phone: data.clientData.client_phone,
-          client_email: data.clientData.client_email,
-          client_web: data.clientData.client_web || null,
-          client_address: data.clientData.client_address,
-          client_postal_code: data.clientData.client_postal_code,
-          client_locality: data.clientData.client_locality,
-          client_province: data.clientData.client_province,
-          client_acceptance: data.clientData.client_acceptance,
-          status: BudgetStatus.BORRADOR,
-          total: data.totals.total,
-          iva: iva,
-          base: data.totals.base,
-          irpf: 0,
-          irpf_percentage: 0,
-          re_apply: false,
-          re_total: 0,
-          total_pay: data.totals.total,
-          validity_days: data.validity,
-          start_date: null,
-          end_date: null
+    // Usar retry helper para el insert
+    const insertResult = await retryInsertOnDuplicate<Budget>({
+      insertFn: async () => {
+        return await supabaseAdmin
+          .from('budgets')
+          .insert({
+            company_id: empresaId,
+            tariff_id: data.tariffId,
+            user_id: user.id,
+            budget_number: finalBudgetNumber!,
+            json_tariff_data: data.tariffData,
+            json_budget_data: initialBudgetData,
+            json_client_data: jsonClientData,
+            parent_budget_id: null,
+            version_number: 1,
+            client_type: data.clientData.client_type,
+            client_name: data.clientData.client_name,
+            client_nif_nie: data.clientData.client_nif_nie,
+            client_phone: data.clientData.client_phone,
+            client_email: data.clientData.client_email,
+            client_web: data.clientData.client_web || null,
+            client_address: data.clientData.client_address,
+            client_postal_code: data.clientData.client_postal_code,
+            client_locality: data.clientData.client_locality,
+            client_province: data.clientData.client_province,
+            client_acceptance: data.clientData.client_acceptance,
+            status: BudgetStatus.BORRADOR,
+            total: data.totals.total,
+            iva: iva,
+            base: data.totals.base,
+            irpf: 0,
+            irpf_percentage: 0,
+            re_apply: false,
+            re_total: 0,
+            total_pay: data.totals.total,
+            validity_days: data.validity,
+            start_date: null,
+            end_date: null
+          })
+          .select()
+          .single()
+      },
+      onDuplicate: async () => {
+        // Regenerar número si hay duplicado (race condition)
+        const numberResult = await generateUniqueNumber({
+          table: 'budgets',
+          column: 'budget_number',
+          companyId: empresaId,
+          format: 'YYYYMMDD-HHMMSS'
         })
-        .select()
-        .single()
-
-      if (insertedBudget && !insertError) {
-        // Éxito
-        budget = insertedBudget
-        insertSuccess = true
-        if (retryCount > 0) {
-          log.info('[createDraftBudget] INSERT exitoso tras race condition:', {
-            budget_number: currentBudgetNumber,
-            intentos: retryCount + 1
-          })
+        if (numberResult.success) {
+          finalBudgetNumber = numberResult.number!
         }
-      } else if (insertError) {
-        // Verificar si el error es por duplicate key (race condition)
-        const isDuplicateError = insertError.code === '23505' ||
-                                insertError.message?.includes('duplicate') ||
-                                insertError.message?.includes('unique')
+      },
+      maxRetries: 10,
+      logContext: 'createDraftBudget'
+    })
 
-        if (isDuplicateError && retryCount < maxInsertRetries - 1) {
-          // Race condition detectada, generar nuevo número y reintentar
-          const newDate = new Date(baseTimestamp)
-          newDate.setSeconds(newDate.getSeconds() + retryCount + 1)
-
-          const year = newDate.getFullYear()
-          const month = String(newDate.getMonth() + 1).padStart(2, '0')
-          const day = String(newDate.getDate()).padStart(2, '0')
-          const hour = String(newDate.getHours()).padStart(2, '0')
-          const minute = String(newDate.getMinutes()).padStart(2, '0')
-          const second = String(newDate.getSeconds()).padStart(2, '0')
-
-          currentBudgetNumber = `${year}${month}${day}-${hour}${minute}${second}`
-
-          log.warn('[createDraftBudget] Race condition detectada, reintentando:', {
-            intento: retryCount + 1,
-            nuevo_numero: currentBudgetNumber,
-            error: insertError.message
-          })
-        } else {
-          // Error diferente o se agotaron los reintentos
-          log.error('[createDraftBudget] Error creando borrador:', insertError)
-          return { success: false, error: isDuplicateError
-            ? 'No se pudo generar un número único después de ' + maxInsertRetries + ' intentos'
-            : 'Error al crear borrador' }
-        }
-      }
+    if (!insertResult.success || !insertResult.data) {
+      return { success: false, error: insertResult.error || 'Error al crear presupuesto' }
     }
 
-    if (!insertSuccess || !budget) {
-      log.error('[createDraftBudget] Falló INSERT tras ' + maxInsertRetries + ' intentos')
-      return { success: false, error: 'Error al crear presupuesto después de múltiples intentos' }
-    }
+    const budget = insertResult.data
 
     log.info('[createDraftBudget] Borrador creado:', budget.id)
     revalidatePath('/budgets')
@@ -1250,11 +1166,8 @@ export async function generateBudgetPDF(budgetId: string): Promise<{
       }
 
       // 5. Subir PDF a Supabase Storage (privado)
-      // Formato: {company_id}/presupuesto_nombre_nif_nie_YYYY-MM-DD_HH-MM-SS.pdf
-      const now = new Date()
-      const datePart = now.toISOString().split('T')[0] // YYYY-MM-DD
-      const timePart = now.toTimeString().split(' ')[0].replace(/:/g, '-') // HH-MM-SS
-      const timestamp = `${datePart}_${timePart}`
+      // Formato: {company_id}/presupuesto_nombre_nif_nie_YYYYMMDD_HHMMSS.pdf
+      const timestamp = formatDateToNumber(new Date(), 'YYYYMMDD_HHMMSS')
 
       const clientName = sanitizeFilename(budgetTyped.client_name)
       const clientNif = sanitizeFilename(budgetTyped.client_nif_nie || 'sin_nif')
@@ -1698,92 +1611,21 @@ export async function duplicateBudgetCopy(budgetId: string): Promise<{
       return { error: 'No tienes permisos para duplicar este presupuesto' }
     }
 
-    // Generar nuevo budget_number único sumando segundos hasta encontrar uno disponible
-    let newBudgetNumber: string
-    let secondsToAdd = 1
-    const maxAttempts = 100 // Máximo 100 intentos para evitar bucles infinitos
+    // Generar nuevo budget_number único
+    let newBudgetNumber: string | null = null
+    const numberResult = await generateUniqueNumber({
+      table: 'budgets',
+      column: 'budget_number',
+      companyId: user.companyId,
+      format: 'YYYYMMDD-HHMMSS',
+      maxAttempts: 100
+    })
 
-    try {
-      // Parsear el budget_number original (formato: YYYYMMDD-HHMMSS)
-      const originalNumber = originalBudget.budget_number
-      const datePart = originalNumber.substring(0, 8) // YYYYMMDD
-      const timePart = originalNumber.substring(9, 15) // HHMMSS
-
-      // Crear fecha a partir del número original
-      const year = parseInt(datePart.substring(0, 4))
-      const month = parseInt(datePart.substring(4, 6)) - 1 // 0-indexed
-      const day = parseInt(datePart.substring(6, 8))
-      const hour = parseInt(timePart.substring(0, 2))
-      const minute = parseInt(timePart.substring(2, 4))
-      const second = parseInt(timePart.substring(4, 6))
-
-      const originalDate = new Date(year, month, day, hour, minute, second)
-
-      // Intentar generar un budget_number único sumando segundos
-      let found = false
-      for (let attempt = 0; attempt < maxAttempts && !found; attempt++) {
-        // Sumar segundos incrementales
-        const newDate = new Date(originalDate)
-        newDate.setSeconds(newDate.getSeconds() + secondsToAdd)
-
-        // Formatear nuevo número: YYYYMMDD-HHMMSS
-        const newYear = newDate.getFullYear()
-        const newMonth = String(newDate.getMonth() + 1).padStart(2, '0')
-        const newDay = String(newDate.getDate()).padStart(2, '0')
-        const newHour = String(newDate.getHours()).padStart(2, '0')
-        const newMinute = String(newDate.getMinutes()).padStart(2, '0')
-        const newSecond = String(newDate.getSeconds()).padStart(2, '0')
-
-        const candidateNumber = `${newYear}${newMonth}${newDay}-${newHour}${newMinute}${newSecond}`
-
-        // Verificar si el budget_number ya existe en la BD (filtrar por empresa)
-        const { data: existingBudget, error: checkError } = await supabaseAdmin
-          .from('budgets')
-          .select('id')
-          .eq('budget_number', candidateNumber)
-          .eq('company_id', originalBudget.company_id)
-          .maybeSingle()
-
-        if (checkError) {
-          log.error('[duplicateBudgetCopy] Error verificando budget_number:', checkError)
-          // En caso de error, continuar con el intento actual (puede ser seguro)
-        }
-
-        if (!existingBudget) {
-          // Budget number disponible, usar este
-          newBudgetNumber = candidateNumber
-          found = true
-          log.info('[duplicateBudgetCopy] Budget_number único encontrado:', {
-            original: originalNumber,
-            nuevo: newBudgetNumber,
-            intentos: attempt + 1,
-            segundos_sumados: secondsToAdd
-          })
-        } else {
-          // Ya existe, probar con +1 segundo más
-          secondsToAdd++
-          log.debug('[duplicateBudgetCopy] Budget_number ocupado, intentando +' + secondsToAdd + ' segundos')
-        }
-      }
-
-      if (!found) {
-        // Si no se encontró después de maxAttempts, usar timestamp actual como fallback
-        throw new Error('No se pudo generar budget_number único después de ' + maxAttempts + ' intentos')
-      }
-
-    } catch (error) {
-      // Fallback: usar timestamp actual si falla el parsing o no se encuentra número único
-      log.warn('[duplicateBudgetCopy] Error generando budget_number, usando timestamp actual:', error)
-      const now = new Date()
-      const year = now.getFullYear()
-      const month = String(now.getMonth() + 1).padStart(2, '0')
-      const day = String(now.getDate()).padStart(2, '0')
-      const hour = String(now.getHours()).padStart(2, '0')
-      const minute = String(now.getMinutes()).padStart(2, '0')
-      const second = String(now.getSeconds()).padStart(2, '0')
-      const millisecond = String(now.getMilliseconds()).padStart(3, '0')
-      newBudgetNumber = `${year}${month}${day}-${hour}${minute}${second}${millisecond.substring(0, 1)}`
+    if (!numberResult.success) {
+      return { error: numberResult.error || 'No se pudo generar número único' }
     }
+
+    newBudgetNumber = numberResult.number!
 
     // Actualizar json_client_data con nombre modificado
     let updatedJsonClientData = originalBudget.json_client_data
@@ -1801,134 +1643,86 @@ export async function duplicateBudgetCopy(budgetId: string): Promise<{
       }
     }
 
-    // Crear copia con retry en caso de race condition
-    let newBudget: any = null
-    let insertSuccess = false
-    const maxInsertRetries = 10
-    let currentBudgetNumber = newBudgetNumber
+    // Usar retry helper para el insert
+    const insertResult = await retryInsertOnDuplicate<Budget>({
+      insertFn: async () => {
+        return await supabaseAdmin
+          .from('budgets')
+          .insert({
+            company_id: originalBudget.company_id,
+            user_id: user.id, // Usuario que crea la copia
+            tariff_id: originalBudget.tariff_id,
 
-    for (let retryCount = 0; retryCount < maxInsertRetries && !insertSuccess; retryCount++) {
-      const { data: insertedBudget, error: insertError } = await supabaseAdmin
-        .from('budgets')
-        .insert({
-          company_id: originalBudget.company_id,
-          user_id: user.id, // Usuario que crea la copia
-          tariff_id: originalBudget.tariff_id,
+            // Nueva copia independiente (no versión)
+            parent_budget_id: null,
+            version_number: 1,
 
-          // Nueva copia independiente (no versión)
-          parent_budget_id: null,
-          version_number: 1,
+            // Nuevo número de presupuesto único
+            budget_number: newBudgetNumber!,
 
-          // Nuevo número de presupuesto único
-          budget_number: currentBudgetNumber,
+            // Estado borrador sin PDF
+            status: BudgetStatus.BORRADOR,
+            pdf_url: null,
 
-          // Estado borrador sin PDF
-          status: BudgetStatus.BORRADOR,
-          pdf_url: null,
+            // Copiar datos del cliente (añadir "Copia" al nombre)
+            client_type: originalBudget.client_type,
+            client_name: `${originalBudget.client_name} (Copia)`,
+            client_nif_nie: originalBudget.client_nif_nie,
+            client_phone: originalBudget.client_phone,
+            client_email: originalBudget.client_email,
+            client_web: originalBudget.client_web,
+            client_address: originalBudget.client_address,
+            client_postal_code: originalBudget.client_postal_code,
+            client_locality: originalBudget.client_locality,
+            client_province: originalBudget.client_province,
+            client_acceptance: originalBudget.client_acceptance,
 
-          // Copiar datos del cliente (añadir "Copia" al nombre)
-          client_type: originalBudget.client_type,
-          client_name: `${originalBudget.client_name} (Copia)`,
-          client_nif_nie: originalBudget.client_nif_nie,
-          client_phone: originalBudget.client_phone,
-          client_email: originalBudget.client_email,
-          client_web: originalBudget.client_web,
-          client_address: originalBudget.client_address,
-          client_postal_code: originalBudget.client_postal_code,
-          client_locality: originalBudget.client_locality,
-          client_province: originalBudget.client_province,
-          client_acceptance: originalBudget.client_acceptance,
+            // Copiar snapshots JSON (con client_name actualizado)
+            json_tariff_data: originalBudget.json_tariff_data,
+            json_budget_data: originalBudget.json_budget_data,
+            json_client_data: updatedJsonClientData,
 
-          // Copiar snapshots JSON (con client_name actualizado)
-          json_tariff_data: originalBudget.json_tariff_data,
-          json_budget_data: originalBudget.json_budget_data,
-          json_client_data: updatedJsonClientData,
+            // Copiar totales y cálculos
+            total: originalBudget.total,
+            iva: originalBudget.iva,
+            base: originalBudget.base,
+            irpf: originalBudget.irpf,
+            irpf_percentage: originalBudget.irpf_percentage,
+            re_apply: originalBudget.re_apply,
+            re_total: originalBudget.re_total,
+            total_pay: originalBudget.total_pay,
 
-          // Copiar totales y cálculos
-          total: originalBudget.total,
-          iva: originalBudget.iva,
-          base: originalBudget.base,
-          irpf: originalBudget.irpf,
-          irpf_percentage: originalBudget.irpf_percentage,
-          re_apply: originalBudget.re_apply,
-          re_total: originalBudget.re_total,
-          total_pay: originalBudget.total_pay,
+            // Copiar validez
+            validity_days: originalBudget.validity_days,
+            start_date: originalBudget.start_date,
+            end_date: originalBudget.end_date
 
-          // Copiar validez
-          validity_days: originalBudget.validity_days,
-          start_date: originalBudget.start_date,
-          end_date: originalBudget.end_date
-
-          // created_at se establece automáticamente con la fecha actual
-        })
-        .select()
-        .single()
-
-      if (insertedBudget && !insertError) {
-        // Éxito
-        newBudget = insertedBudget
-        insertSuccess = true
-        if (retryCount > 0) {
-          log.info('[duplicateBudgetCopy] INSERT exitoso tras race condition:', {
-            budget_number: currentBudgetNumber,
-            intentos: retryCount + 1
+            // created_at se establece automáticamente con la fecha actual
           })
+          .select()
+          .single()
+      },
+      onDuplicate: async () => {
+        // Regenerar número si hay duplicado (race condition)
+        const retryNumberResult = await generateUniqueNumber({
+          table: 'budgets',
+          column: 'budget_number',
+          companyId: user.companyId,
+          format: 'YYYYMMDD-HHMMSS'
+        })
+        if (retryNumberResult.success) {
+          newBudgetNumber = retryNumberResult.number!
         }
-      } else if (insertError) {
-        // Verificar si el error es por duplicate key (race condition)
-        const isDuplicateError = insertError.code === '23505' ||
-                                insertError.message?.includes('duplicate') ||
-                                insertError.message?.includes('unique')
+      },
+      maxRetries: 10,
+      logContext: 'duplicateBudgetCopy'
+    })
 
-        if (isDuplicateError && retryCount < maxInsertRetries - 1) {
-          // Race condition detectada, generar nuevo número y reintentar
-          // Parsear el número actual para sumar 1 segundo
-          try {
-            const datePart = currentBudgetNumber.substring(0, 8)
-            const timePart = currentBudgetNumber.substring(9, 15)
-
-            const year = parseInt(datePart.substring(0, 4))
-            const month = parseInt(datePart.substring(4, 6)) - 1
-            const day = parseInt(datePart.substring(6, 8))
-            const hour = parseInt(timePart.substring(0, 2))
-            const minute = parseInt(timePart.substring(2, 4))
-            const second = parseInt(timePart.substring(4, 6))
-
-            const currentDate = new Date(year, month, day, hour, minute, second)
-            currentDate.setSeconds(currentDate.getSeconds() + 1)
-
-            const newYear = currentDate.getFullYear()
-            const newMonth = String(currentDate.getMonth() + 1).padStart(2, '0')
-            const newDay = String(currentDate.getDate()).padStart(2, '0')
-            const newHour = String(currentDate.getHours()).padStart(2, '0')
-            const newMinute = String(currentDate.getMinutes()).padStart(2, '0')
-            const newSecond = String(currentDate.getSeconds()).padStart(2, '0')
-
-            currentBudgetNumber = `${newYear}${newMonth}${newDay}-${newHour}${newMinute}${newSecond}`
-
-            log.warn('[duplicateBudgetCopy] Race condition detectada, reintentando:', {
-              intento: retryCount + 1,
-              nuevo_numero: currentBudgetNumber,
-              error: insertError.message
-            })
-          } catch (parseError) {
-            log.error('[duplicateBudgetCopy] Error parseando número para retry:', parseError)
-            return { error: 'Error al generar número único' }
-          }
-        } else {
-          // Error diferente o se agotaron los reintentos
-          log.error('[duplicateBudgetCopy] Error creando copia:', insertError)
-          return { error: isDuplicateError
-            ? 'No se pudo generar un número único después de ' + maxInsertRetries + ' intentos'
-            : 'Error al duplicar presupuesto' }
-        }
-      }
+    if (!insertResult.success || !insertResult.data) {
+      return { error: insertResult.error || 'Error al duplicar presupuesto' }
     }
 
-    if (!insertSuccess || !newBudget) {
-      log.error('[duplicateBudgetCopy] Falló INSERT tras ' + maxInsertRetries + ' intentos')
-      return { error: 'Error al duplicar presupuesto después de múltiples intentos' }
-    }
+    const newBudget = insertResult.data
 
     log.info('[duplicateBudgetCopy] Presupuesto duplicado exitosamente:', newBudget.id)
     revalidatePath('/budgets')
