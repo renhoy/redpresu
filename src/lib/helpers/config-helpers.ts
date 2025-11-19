@@ -443,6 +443,177 @@ export async function getLegalPageContent(): Promise<string> {
     return content
   }
 
-  // Fallback por defecto (página legal básica)
-  return '<h1>Aviso Legal</h1><p>En cumplimiento de la Ley 34/2002, de 11 de julio, de Servicios de la Sociedad de la Información y de Comercio Electrónico (LSSI-CE), REDPRESU informa que es titular del sitio web.</p><p>Para más información, contacte con el administrador del sitio.</p>'
+  // Fallback por defecto (página legal completa)
+  return `
+<h1>Aviso Legal y Política de Privacidad</h1>
+
+<p class="text-gray-600 text-lg mb-8">Última actualización: ${new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+
+<h2>1. Información General</h2>
+
+<p>En cumplimiento de la Ley 34/2002, de 11 de julio, de Servicios de la Sociedad de la Información y de Comercio Electrónico (LSSI-CE), se informa de los siguientes datos:</p>
+
+<ul>
+  <li><strong>Titular del sitio web:</strong> REDPRESU</li>
+  <li><strong>Sitio web:</strong> <a href="https://redpresu.com">https://redpresu.com</a></li>
+  <li><strong>Email de contacto:</strong> <a href="mailto:legal@redpresu.com">legal@redpresu.com</a></li>
+</ul>
+
+<p>Para ejercer tus derechos o solicitar información adicional sobre el responsable del tratamiento de datos, puedes contactar a través del email indicado.</p>
+
+<h2>2. Política de Privacidad y Protección de Datos</h2>
+
+<h3>2.1. Responsable del tratamiento</h3>
+
+<p>El responsable del tratamiento de los datos personales recogidos en <a href="https://redpresu.com">redpresu.com</a> es REDPRESU. Para cualquier consulta relacionada con el tratamiento de tus datos personales, puedes dirigirte a <a href="mailto:legal@redpresu.com">legal@redpresu.com</a>.</p>
+
+<h3>2.2. Finalidad del tratamiento</h3>
+
+<p>Los datos personales que se recogen a través de este sitio web se utilizan para las siguientes finalidades:</p>
+
+<ul>
+  <li><strong>Registro de usuarios:</strong> Creación y gestión de cuentas de usuario para acceder a los servicios de la plataforma.</li>
+  <li><strong>Gestión de presupuestos:</strong> Creación, edición y envío de presupuestos a clientes.</li>
+  <li><strong>Comunicaciones:</strong> Envío de notificaciones relacionadas con el servicio, respuesta a consultas a través del formulario de contacto.</li>
+  <li><strong>Gestión de suscripciones:</strong> Procesamiento de pagos y gestión de planes de suscripción (si aplica).</li>
+  <li><strong>Mejora del servicio:</strong> Análisis de uso para mejorar la funcionalidad y experiencia del usuario.</li>
+</ul>
+
+<h3>2.3. Base legal</h3>
+
+<p>El tratamiento de tus datos personales se basa en:</p>
+
+<ul>
+  <li><strong>Ejecución de un contrato:</strong> El registro y uso de la plataforma implica la aceptación de un contrato de prestación de servicios.</li>
+  <li><strong>Consentimiento:</strong> Para el envío de comunicaciones comerciales (si las hubiera), se solicita el consentimiento expreso del usuario.</li>
+  <li><strong>Interés legítimo:</strong> Para la mejora del servicio y prevención de fraudes.</li>
+  <li><strong>Cumplimiento de obligaciones legales:</strong> Conservación de datos fiscales y contables según la normativa vigente.</li>
+</ul>
+
+<h3>2.4. Destinatarios de los datos</h3>
+
+<p>Tus datos personales podrán ser comunicados a:</p>
+
+<ul>
+  <li><strong>Proveedores de servicios tecnológicos:</strong> Empresas que prestan servicios de hosting, almacenamiento en la nube y procesamiento de pagos (Vercel, Supabase, Stripe).</li>
+  <li><strong>Autoridades públicas:</strong> Cuando sea requerido por ley o para el cumplimiento de obligaciones legales.</li>
+</ul>
+
+<p>Todos los proveedores de servicios cumplen con la normativa de protección de datos aplicable y han suscrito acuerdos de confidencialidad.</p>
+
+<h3>2.5. Transferencias internacionales</h3>
+
+<p>Algunos de nuestros proveedores de servicios pueden estar ubicados fuera del Espacio Económico Europeo (EEE). En estos casos, nos aseguramos de que existan garantías adecuadas, como cláusulas contractuales tipo aprobadas por la Comisión Europea o certificaciones de adecuación.</p>
+
+<h3>2.6. Conservación de datos</h3>
+
+<p>Tus datos personales serán conservados durante el tiempo necesario para cumplir con las finalidades para las que fueron recogidos:</p>
+
+<ul>
+  <li><strong>Datos de usuario:</strong> Mientras la cuenta esté activa y hasta 5 años después de su cancelación para cumplir con obligaciones legales.</li>
+  <li><strong>Datos de contacto:</strong> Hasta que se atienda la consulta y durante el plazo de prescripción de posibles responsabilidades.</li>
+  <li><strong>Datos de facturación:</strong> Durante el plazo legalmente establecido (actualmente 6 años según la normativa fiscal).</li>
+</ul>
+
+<h3>2.7. Derechos de los usuarios</h3>
+
+<p>En cualquier momento puedes ejercer los siguientes derechos:</p>
+
+<ul>
+  <li><strong>Acceso:</strong> Conocer qué datos personales tenemos sobre ti.</li>
+  <li><strong>Rectificación:</strong> Solicitar la corrección de datos inexactos o incompletos.</li>
+  <li><strong>Supresión:</strong> Solicitar la eliminación de tus datos personales cuando ya no sean necesarios.</li>
+  <li><strong>Oposición:</strong> Oponerte al tratamiento de tus datos para determinadas finalidades.</li>
+  <li><strong>Limitación:</strong> Solicitar la limitación del tratamiento en determinadas circunstancias.</li>
+  <li><strong>Portabilidad:</strong> Recibir tus datos en un formato estructurado y de uso común.</li>
+  <li><strong>Revocación del consentimiento:</strong> Retirar el consentimiento otorgado en cualquier momento.</li>
+</ul>
+
+<p>Para ejercer estos derechos, envía un email a <a href="mailto:legal@redpresu.com">legal@redpresu.com</a> indicando el derecho que deseas ejercer y adjuntando copia de tu DNI o documento equivalente.</p>
+
+<p>También tienes derecho a presentar una reclamación ante la <strong>Agencia Española de Protección de Datos (AEPD)</strong> si consideras que el tratamiento de tus datos personales no cumple con la normativa vigente.</p>
+
+<h2>3. Política de Cookies</h2>
+
+<h3>3.1. ¿Qué son las cookies?</h3>
+
+<p>Las cookies son pequeños archivos de texto que se almacenan en tu dispositivo cuando visitas un sitio web. Se utilizan para mejorar la experiencia del usuario, recordar preferencias y analizar el uso del sitio.</p>
+
+<h3>3.2. Tipos de cookies que utilizamos</h3>
+
+<ul>
+  <li><strong>Cookies técnicas:</strong> Necesarias para el funcionamiento básico del sitio web (gestión de sesiones, autenticación).</li>
+  <li><strong>Cookies de preferencias:</strong> Permiten recordar tus configuraciones y preferencias.</li>
+  <li><strong>Cookies analíticas:</strong> Utilizadas para analizar el uso del sitio y mejorar la experiencia (si están habilitadas).</li>
+</ul>
+
+<h3>3.3. Gestión de cookies</h3>
+
+<p>Puedes configurar tu navegador para rechazar las cookies o para que te avise cuando se envíe una cookie. Sin embargo, algunas funcionalidades del sitio pueden no funcionar correctamente si desactivas las cookies técnicas.</p>
+
+<p>Para más información sobre cómo gestionar las cookies en los navegadores más comunes:</p>
+
+<ul>
+  <li><a href="https://support.google.com/chrome/answer/95647" target="_blank" rel="noopener noreferrer">Google Chrome</a></li>
+  <li><a href="https://support.mozilla.org/es/kb/habilitar-y-deshabilitar-cookies-sitios-web-rastrear-preferencias" target="_blank" rel="noopener noreferrer">Mozilla Firefox</a></li>
+  <li><a href="https://support.apple.com/es-es/guide/safari/sfri11471/mac" target="_blank" rel="noopener noreferrer">Safari</a></li>
+  <li><a href="https://support.microsoft.com/es-es/microsoft-edge/eliminar-las-cookies-en-microsoft-edge-63947406-40ac-c3b8-57b9-2a946a29ae09" target="_blank" rel="noopener noreferrer">Microsoft Edge</a></li>
+</ul>
+
+<h2>4. Condiciones de Uso</h2>
+
+<h3>4.1. Aceptación de las condiciones</h3>
+
+<p>El acceso y uso de este sitio web implica la aceptación de las presentes condiciones de uso. Si no estás de acuerdo con estas condiciones, te rogamos que no utilices este sitio web.</p>
+
+<h3>4.2. Uso del servicio</h3>
+
+<p>El usuario se compromete a:</p>
+
+<ul>
+  <li>Utilizar el servicio de forma lícita y conforme a la legislación vigente.</li>
+  <li>No utilizar el servicio para fines fraudulentos o que puedan causar daños a terceros.</li>
+  <li>Proporcionar información veraz y actualizada en el registro.</li>
+  <li>Mantener la confidencialidad de sus credenciales de acceso.</li>
+  <li>No intentar acceder a áreas restringidas del sitio web o realizar actividades que puedan dañar el sistema.</li>
+</ul>
+
+<h3>4.3. Propiedad intelectual</h3>
+
+<p>Todos los contenidos de este sitio web, incluyendo textos, gráficos, logotipos, iconos, imágenes, archivos de audio y vídeo, software y cualquier otro material, están protegidos por derechos de propiedad intelectual e industrial.</p>
+
+<p>Queda prohibida la reproducción, distribución, modificación o comunicación pública de los contenidos sin la autorización expresa del titular.</p>
+
+<h3>4.4. Responsabilidad</h3>
+
+<p>REDPRESU no se hace responsable de:</p>
+
+<ul>
+  <li>Interrupciones o errores en el acceso al sitio web.</li>
+  <li>Contenidos introducidos por los usuarios en la plataforma.</li>
+  <li>Daños derivados del uso indebido del servicio por parte de los usuarios.</li>
+  <li>Virus u otros elementos dañinos que puedan afectar al dispositivo del usuario.</li>
+</ul>
+
+<h3>4.5. Modificaciones</h3>
+
+<p>REDPRESU se reserva el derecho de modificar estas condiciones de uso y la política de privacidad en cualquier momento. Las modificaciones serán comunicadas a través del sitio web y entrarán en vigor desde su publicación.</p>
+
+<h3>4.6. Legislación aplicable y jurisdicción</h3>
+
+<p>Estas condiciones se rigen por la legislación española. Para la resolución de cualquier controversia, las partes se someten a los Juzgados y Tribunales del domicilio del usuario.</p>
+
+<h2>5. Contacto</h2>
+
+<p>Para cualquier consulta, duda o sugerencia relacionada con este Aviso Legal, la Política de Privacidad o las Condiciones de Uso, puedes contactar con nosotros a través de:</p>
+
+<ul>
+  <li><strong>Email:</strong> <a href="mailto:legal@redpresu.com">legal@redpresu.com</a></li>
+  <li><strong>Formulario de contacto:</strong> <a href="https://redpresu.com/contact">https://redpresu.com/contact</a></li>
+</ul>
+
+<hr class="my-8 border-gray-300">
+
+<p class="text-sm text-gray-500 text-center">Este documento ha sido actualizado por última vez el ${new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })} y puede estar sujeto a modificaciones.</p>
+`.trim()
 }
