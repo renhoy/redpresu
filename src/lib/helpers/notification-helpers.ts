@@ -17,7 +17,16 @@ export async function notifySuperadminNewRegistration(
   userEmail: string
 ): Promise<void> {
   try {
-    log.info('[notifySuperadminNewRegistration] Notificando nueva solicitud:', userEmail)
+    const isLocalhost = process.env.NODE_ENV !== 'production'
+
+    console.log('\n')
+    console.log('🔔════════════════════════════════════════════════════════════════')
+    console.log('   NOTIFICACIÓN: NUEVA SOLICITUD DE REGISTRO')
+    console.log('═════════════════════════════════════════════════════════════════')
+    console.log(`👤 Usuario:  ${userName} ${userLastName}`)
+    console.log(`📧 Email:    ${userEmail}`)
+    console.log(`⏰ Momento:  ${new Date().toISOString()}`)
+    console.log('─────────────────────────────────────────────────────────────────')
 
     // 1. Crear mensaje en contact_messages
     const { error: messageError } = await supabaseAdmin
@@ -34,14 +43,16 @@ export async function notifySuperadminNewRegistration(
       })
 
     if (messageError) {
-      log.error('[notifySuperadminNewRegistration] Error creando mensaje:', messageError)
+      console.error('❌ Error creando mensaje en contact_messages:', messageError)
       // No lanzar error - no queremos que falle el registro por esto
     } else {
-      log.info('[notifySuperadminNewRegistration] Mensaje creado en contact_messages')
+      console.log('✅ Mensaje creado en contact_messages exitosamente')
     }
 
     // 2. Enviar email al superadmin si está habilitado
     const emailEnabled = await getEmailNotificationsEnabled()
+    console.log(`📬 Email notifications enabled: ${emailEnabled}`)
+
     if (emailEnabled) {
       try {
         // Obtener emails de superadmins desde config
@@ -58,6 +69,7 @@ export async function notifySuperadminNewRegistration(
           superadminEmails = Array.isArray(configData.value)
             ? configData.value
             : [configData.value as string]
+          console.log(`📋 Emails de config: ${superadminEmails.join(', ')}`)
         } else {
           // Si no hay configuración, obtener emails de todos los superadmins
           const { data: superadmins } = await supabaseAdmin
@@ -68,13 +80,16 @@ export async function notifySuperadminNewRegistration(
 
           if (superadmins && superadmins.length > 0) {
             superadminEmails = superadmins.map(u => u.email)
+            console.log(`👥 Emails de superadmins activos: ${superadminEmails.join(', ')}`)
           }
         }
 
         // Enviar email a cada superadmin
         if (superadminEmails.length > 0) {
           const appUrl = await getAppUrl()
-          const dashboardUrl = `${appUrl}/superadmin/pending-registrations`
+          const dashboardUrl = `${appUrl}/users/pending-registrations`
+
+          console.log(`📤 Enviando notificación a ${superadminEmails.length} superadmin(s)...`)
 
           for (const adminEmail of superadminEmails) {
             await sendSuperadminNotificationEmail(
@@ -86,17 +101,22 @@ export async function notifySuperadminNewRegistration(
             )
           }
 
-          log.info('[notifySuperadminNewRegistration] Emails enviados a:', superadminEmails.length)
+          console.log(`✅ Notificaciones enviadas exitosamente`)
         } else {
-          log.warn('[notifySuperadminNewRegistration] No se encontraron emails de superadmin')
+          console.log('⚠️  No se encontraron emails de superadmin configurados')
         }
       } catch (emailError) {
-        log.error('[notifySuperadminNewRegistration] Error al enviar emails:', emailError)
+        console.error('❌ Error al enviar emails:', emailError)
         // No lanzar error - no queremos que falle el registro por esto
       }
+    } else {
+      console.log('ℹ️  Notificaciones por email deshabilitadas')
     }
+
+    console.log('═════════════════════════════════════════════════════════════════')
+    console.log('\n')
   } catch (error) {
-    log.error('[notifySuperadminNewRegistration] Error crítico:', error)
+    console.error('[notifySuperadminNewRegistration] ❌ Error crítico:', error)
     // No lanzar error - no queremos que falle el registro por esto
   }
 }
