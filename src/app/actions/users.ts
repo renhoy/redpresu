@@ -6,6 +6,7 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { createServerActionClient } from "@/lib/supabase/helpers";
 import { z } from "zod";
 import { log } from "@/lib/logger";
 import { requireValidCompanyId } from "@/lib/helpers/company-validation";
@@ -645,9 +646,6 @@ export async function updateUserComplete(params: {
         }
 
         // Verificar contraseña actual usando supabase client
-        const { createServerActionClient } = require("@supabase/auth-helpers-nextjs");
-        const { cookies } = require("next/headers");
-        const cookieStore = await cookies();
         const supabase = await createServerActionClient();
 
         const { error: signInError } = await supabase.auth.signInWithPassword({
