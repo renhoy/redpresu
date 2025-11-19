@@ -4,6 +4,7 @@ import { getServerUser } from "@/lib/auth/server";
 import { isDevelopmentMode, getAppName } from "@/lib/helpers/config-helpers";
 import LoginForm from "@/components/auth/LoginForm";
 import { InactiveUserDialog } from "@/components/auth/InactiveUserDialog";
+import { AwaitingApprovalDialog } from "@/components/auth/AwaitingApprovalDialog";
 import { FileText } from "lucide-react";
 
 interface LoginPageProps {
@@ -60,6 +61,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
         {/* Diálogo de usuario inactivo */}
         <InactiveUserDialog showDialog={reason === 'inactive'} />
+
+        {/* Diálogo de usuario pendiente de aprobación */}
+        <AwaitingApprovalDialog showDialog={reason === 'awaiting_approval'} />
       </div>
     </div>
   );

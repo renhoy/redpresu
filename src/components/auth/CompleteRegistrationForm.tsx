@@ -22,7 +22,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Loader2, CheckCircle2, Info } from "lucide-react";
+import { Loader2, CheckCircle2, Info, Clock } from "lucide-react";
 import { LegalNotice } from "@/components/shared/LegalNotice";
 
 interface CompleteRegistrationFormProps {
@@ -77,6 +77,7 @@ export default function CompleteRegistrationForm({
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
   const [registrationComplete, setRegistrationComplete] = useState(false);
+  const [requiresApproval, setRequiresApproval] = useState(false);
 
   // Validar token al montar el componente
   useEffect(() => {
@@ -216,13 +217,21 @@ export default function CompleteRegistrationForm({
       }
 
       // Registro completado exitosamente
-      console.log("[CompleteRegistration] Registro completado, redirigiendo...");
-      setRegistrationComplete(true);
+      console.log("[CompleteRegistration] Registro completado");
+      console.log("[CompleteRegistration] Requires approval:", result.data?.requiresApproval);
 
-      // Esperar 2 segundos y redirigir al dashboard
-      setTimeout(() => {
-        router.push("/dashboard");
-      }, 2000);
+      setRegistrationComplete(true);
+      setRequiresApproval(result.data?.requiresApproval || false);
+
+      // Si NO requiere aprobación, redirigir al dashboard después de 2 segundos
+      // Si requiere aprobación, mostrar mensaje y no redirigir (usuario debe esperar aprobación)
+      if (!result.data?.requiresApproval) {
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 2000);
+      } else {
+        console.log("[CompleteRegistration] Usuario requiere aprobación, no se redirige");
+      }
     } catch (error) {
       console.error("[CompleteRegistration] Error inesperado:", error);
       setErrors({
@@ -308,6 +317,48 @@ export default function CompleteRegistrationForm({
 
   // Si el registro se completó exitosamente
   if (registrationComplete) {
+    // Si requiere aprobación, mostrar mensaje diferente
+    if (requiresApproval) {
+      return (
+        <Card className="w-full max-w-2xl mx-auto">
+          <CardContent className="flex flex-col items-center justify-center py-12 space-y-6 px-6">
+            <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center">
+              <Clock className="h-10 w-10 text-amber-600" />
+            </div>
+            <div className="space-y-2 text-center">
+              <h2 className="text-2xl font-semibold text-amber-700">
+                ¡Cuenta Creada!
+              </h2>
+              <p className="text-lg font-medium text-gray-700">
+                Pendiente de Aprobación
+              </p>
+            </div>
+            <div className="space-y-3 text-center max-w-md">
+              <p className="text-gray-600">
+                Tu cuenta ha sido creada exitosamente y está pendiente de aprobación por el equipo de Redpresu.
+              </p>
+              <p className="text-gray-700 font-medium">
+                Recibirás un email cuando tu cuenta sea activada y puedas acceder a la plataforma.
+              </p>
+              <p className="text-sm text-gray-500">
+                Si tienes alguna pregunta, puedes contactarnos en{" "}
+                <a href="mailto:legal@redpresu.com" className="text-lime-600 hover:text-lime-700 underline">
+                  legal@redpresu.com
+                </a>
+              </p>
+            </div>
+            <Button
+              onClick={() => router.push("/")}
+              className="bg-lime-500 hover:bg-lime-600 mt-4"
+            >
+              Ir a la Página Principal
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    // Si NO requiere aprobación, mostrar mensaje de redireccionamiento
     return (
       <Card className="w-full max-w-2xl mx-auto">
         <CardContent className="flex flex-col items-center justify-center py-12 space-y-4">
