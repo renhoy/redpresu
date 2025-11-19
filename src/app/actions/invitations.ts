@@ -6,6 +6,10 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import crypto from 'crypto'
 import { getAppUrl } from '@/lib/helpers/url-helpers-server'
+import { getAuthenticatedUser } from '@/lib/helpers/auth-helpers'
+import { withAuthenticatedAction } from '@/lib/helpers/action-wrapper'
+import { requireAdmin } from '@/lib/helpers/permission-helpers'
+import { validateEmailField } from '@/lib/helpers/validation-helpers'
 
 /**
  * Interfaz para datos de invitación
@@ -51,8 +55,20 @@ export async function createUserInvitation(
   email: string,
   expirationDays?: number
 ): Promise<InvitationResult> {
-  try {
-        const supabase = await createServerActionClient()
+  return withAuthenticatedAction('createUserInvitation', async (user) => {
+    // Validar email
+    const emailValidation = validateEmailField(email)
+    if (!emailValidation.valid) {
+      return { error: emailValidation.error }
+    }
+
+    // Verificar permisos (solo admin y superadmin pueden invitar)
+    const permCheck = requireAdmin(user)
+    if (!permCheck.allowed) {
+      return { error: permCheck.error || 'Solo administradores pueden invitar usuarios' }
+    }
+
+    const supabase = await createServerActionClient()
 
     // Obtener días de expiración desde configuración si no se proporciona
     if (!expirationDays) {
@@ -65,79 +81,22 @@ export async function createUserInvitation(
       expirationDays = configData?.value ? Number(configData.value) : 7
     }
 
-    log.info('[createUserInvitation] Iniciando...', { email, expirationDays })
-
-    // Validar email
-    if (!email || !email.trim()) {
-      return {
-        success: false,
-        error: 'El email es requerido'
-      }
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email.trim())) {
-      return {
-        success: false,
-        error: 'Email inválido'
-      }
-    }
-
-    // Obtener usuario autenticado
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      log.error('[createUserInvitation] No autenticado:', authError)
-      return {
-        success: false,
-        error: 'No estás autenticado'
-      }
-    }
-
-    // Verificar rol (solo admin y superadmin pueden invitar)
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('role, name, email, company_id')
-      .eq('id', user.id)
-      .single()
-
-    if (userError || !userData) {
-      log.error('[createUserInvitation] Error obteniendo usuario:', userError)
-      return {
-        success: false,
-        error: 'Error al obtener datos del usuario'
-      }
-    }
-
-    if (!['admin', 'superadmin'].includes(userData.role)) {
-      return {
-        success: false,
-        error: 'Solo administradores pueden invitar usuarios'
-      }
-    }
-
     // Verificar el estado del usuario si ya está registrado
     const { data: existingUser, error: checkError } = await supabaseAdmin
       .from('users')
       .select('id, email, status')
-      .eq('email', email.trim().toLowerCase())
+      .eq('email', emailValidation.value)
       .maybeSingle()
 
     if (existingUser) {
       // Si el usuario ya está activo (tiene contraseña), no permitir invitación
       if (existingUser.status === 'active' || existingUser.status === 'inactive') {
-        return {
-          success: false,
-          error: 'Este usuario ya ha configurado su contraseña'
-        }
+        return { error: 'Este usuario ya ha configurado su contraseña' }
       }
 
       // Si está en pending, puede recibir invitación (no tiene contraseña aún)
       if (existingUser.status !== 'pending') {
-        return {
-          success: false,
-          error: 'Este email ya está registrado en el sistema'
-        }
+        return { error: 'Este email ya está registrado en el sistema' }
       }
 
       // Usuario está en pending: OK, continuar con invitación
@@ -147,7 +106,7 @@ export async function createUserInvitation(
     const { data: existingInvitation, error: invError } = await supabase
       .from('user_invitations')
       .select('id, status, expires_at')
-      .eq('email', email.trim().toLowerCase())
+      .eq('email', emailValidation.value)
       .eq('status', 'pending')
       .maybeSingle()
 
@@ -155,10 +114,7 @@ export async function createUserInvitation(
       // Verificar si está expirada
       const expiresAt = new Date(existingInvitation.expires_at)
       if (expiresAt > new Date()) {
-        return {
-          success: false,
-          error: 'Ya existe una invitación pendiente para este email'
-        }
+        return { error: 'Ya existe una invitación pendiente para este email' }
       } else {
         // Marcar como expirada
         await supabase
@@ -180,7 +136,7 @@ export async function createUserInvitation(
       .from('user_invitations')
       .insert({
         inviter_id: user.id,
-        email: email.trim().toLowerCase(),
+        email: emailValidation.value,
         token,
         expires_at: expiresAt.toISOString(),
         status: 'pending'
@@ -190,10 +146,7 @@ export async function createUserInvitation(
 
     if (createError || !invitationData) {
       log.error('[createUserInvitation] Error creando invitación:', createError)
-      return {
-        success: false,
-        error: 'Error al crear la invitación'
-      }
+      return { error: 'Error al crear la invitación' }
     }
 
     log.info('[createUserInvitation] Invitación creada:', invitationData.id)
@@ -223,7 +176,7 @@ export async function createUserInvitation(
       // Fallback: plantilla por defecto si no existe en config
       emailMessage = `Hola,
 
-${userData.name} (${userData.email}) te ha invitado a unirte al sistema de presupuestos.
+${user.name} (${user.email}) te ha invitado a unirte al sistema de presupuestos.
 
 Para aceptar la invitación y configurar tu contraseña, haz clic en el siguiente enlace:
 
@@ -244,7 +197,6 @@ El equipo de ${process.env.NEXT_PUBLIC_APP_NAME || 'Presupuestos'}`
     }
 
     return {
-      success: true,
       data: {
         invitationId: invitationData.id,
         token,
@@ -252,15 +204,7 @@ El equipo de ${process.env.NEXT_PUBLIC_APP_NAME || 'Presupuestos'}`
         emailMessage
       }
     }
-
-  } catch (error) {
-    log.error('[createUserInvitation] Error crítico:', error)
-
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Error inesperado al crear invitación'
-    }
-  }
+  })
 }
 
 /**
@@ -644,20 +588,8 @@ export async function acceptInvitation(
  * @returns InvitationResult indicando éxito o error
  */
 export async function cancelInvitation(invitationId: string): Promise<InvitationResult> {
-  try {
-    log.info('[cancelInvitation] Cancelando invitación:', invitationId)
-
-        const supabase = await createServerActionClient()
-
-    // Obtener usuario autenticado
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return {
-        success: false,
-        error: 'No estás autenticado'
-      }
-    }
+  return withAuthenticatedAction('cancelInvitation', async (user) => {
+    const supabase = await createServerActionClient()
 
     // Actualizar invitación a cancelled
     const { error: updateError } = await supabase
@@ -671,26 +603,13 @@ export async function cancelInvitation(invitationId: string): Promise<Invitation
 
     if (updateError) {
       log.error('[cancelInvitation] Error cancelando invitación:', updateError)
-      return {
-        success: false,
-        error: 'Error al cancelar la invitación'
-      }
+      return { error: 'Error al cancelar la invitación' }
     }
 
     log.info('[cancelInvitation] Invitación cancelada exitosamente')
 
-    return {
-      success: true
-    }
-
-  } catch (error) {
-    log.error('[cancelInvitation] Error crítico:', error)
-
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Error inesperado al cancelar invitación'
-    }
-  }
+    return { data: {} }
+  })
 }
 
 /**
@@ -703,20 +622,8 @@ export async function getMyInvitations(): Promise<{
   data?: InvitationData[]
   error?: string
 }> {
-  try {
-    log.info('[getMyInvitations] Obteniendo invitaciones...')
-
-        const supabase = await createServerActionClient()
-
-    // Obtener usuario autenticado
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return {
-        success: false,
-        error: 'No estás autenticado'
-      }
-    }
+  return withAuthenticatedAction('getMyInvitations', async (user) => {
+    const supabase = await createServerActionClient()
 
     // Obtener invitaciones del usuario con datos del invitador
     const { data: invitations, error: invError } = await supabase
@@ -739,10 +646,7 @@ export async function getMyInvitations(): Promise<{
 
     if (invError) {
       log.error('[getMyInvitations] Error obteniendo invitaciones:', invError)
-      return {
-        success: false,
-        error: 'Error al obtener invitaciones'
-      }
+      return { error: 'Error al obtener invitaciones' }
     }
 
     // Transformar datos
@@ -758,17 +662,6 @@ export async function getMyInvitations(): Promise<{
       created_at: inv.created_at
     }))
 
-    return {
-      success: true,
-      data: transformedInvitations
-    }
-
-  } catch (error) {
-    log.error('[getMyInvitations] Error crítico:', error)
-
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Error inesperado al obtener invitaciones'
-    }
-  }
+    return { data: transformedInvitations }
+  })
 }
