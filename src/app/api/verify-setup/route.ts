@@ -143,7 +143,7 @@ export async function GET() {
       const { data: authData, error: authError } = await supabaseAdmin
         .from('users')
         .select('id, email, role, name')
-        .eq('email', 'admin@jeyca.net')
+        .eq('email', 'admin@redpresu.com')
         .single()
 
       if (authError) throw authError

@@ -23,9 +23,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Loader2, CheckCircle2, Info } from "lucide-react";
+import { LegalNotice } from "@/components/shared/LegalNotice";
 
 interface CompleteRegistrationFormProps {
   token: string;
+  legalNotice: string;
 }
 
 interface TokenData {
@@ -51,6 +53,7 @@ interface FormErrors {
 
 export default function CompleteRegistrationForm({
   token,
+  legalNotice,
 }: CompleteRegistrationFormProps) {
   const router = useRouter();
 
@@ -668,6 +671,13 @@ export default function CompleteRegistrationForm({
             </Button>
           </CardContent>
         </form>
+
+        {/* Información Legal */}
+        <div className="px-6 pb-6">
+          <div className="mt-6">
+            <LegalNotice legalNotice={legalNotice} />
+          </div>
+        </div>
       </Card>
     </TooltipProvider>
   );

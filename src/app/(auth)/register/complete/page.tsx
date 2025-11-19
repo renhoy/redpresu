@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import CompleteRegistrationForm from "@/components/auth/CompleteRegistrationForm";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import { getFormsLegalNotice } from "@/lib/helpers/config-helpers";
 
 // Componente wrapper para manejar searchParams
 async function CompleteRegistrationContent({
@@ -18,7 +19,9 @@ async function CompleteRegistrationContent({
     redirect("/register");
   }
 
-  return <CompleteRegistrationForm token={token} />;
+  const legalNotice = await getFormsLegalNotice();
+
+  return <CompleteRegistrationForm token={token} legalNotice={legalNotice} />;
 }
 
 // Loading fallback

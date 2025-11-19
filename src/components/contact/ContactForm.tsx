@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { sendContactMessage } from "@/app/actions/contact";
+import { LegalNotice } from "@/components/shared/LegalNotice";
 
 interface ContactFormProps {
   legalNotice: string;
@@ -239,11 +240,8 @@ export function ContactForm({ legalNotice }: ContactFormProps) {
       </Card>
 
       {/* Información Legal */}
-      <div className="mt-8 p-6 bg-white rounded-lg border">
-        <div
-          className="prose prose-sm max-w-none text-gray-600"
-          dangerouslySetInnerHTML={{ __html: legalNotice }}
-        />
+      <div className="mt-8">
+        <LegalNotice legalNotice={legalNotice} />
       </div>
     </>
   );

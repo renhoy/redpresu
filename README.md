@@ -1,4 +1,4 @@
-# JEYCA Presupuestos
+# Redpresu - Sistema de Presupuestos
 
 Sistema de gestión de presupuestos empresariales con generación automática de PDFs.
 
@@ -61,7 +61,7 @@ NODE_ENV=production
 
 ## 📝 Licencia
 
-Propiedad de JEYCA Sistemas
+Propiedad de Redpresu
 
 ---
 

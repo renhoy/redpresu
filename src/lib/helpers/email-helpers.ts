@@ -306,7 +306,7 @@ ${baseUrl}/subscriptions
 Si crees que esto es un error, por favor contacta con soporte.
 
 Saludos,
-El equipo de JEYCA Presupuestos`,
+El equipo de Redpresu`,
     metadata: {
       plan: params.plan,
     },
@@ -353,7 +353,7 @@ ${baseUrl}/subscriptions
 Gracias por confiar en nosotros.
 
 Saludos,
-El equipo de JEYCA Presupuestos`,
+El equipo de Redpresu`,
     metadata: {
       plan: params.plan,
       days_until_expiration: daysUntilExpiration,
@@ -393,7 +393,7 @@ ${baseUrl}/subscriptions
 Si no renuevas antes de que termine el período de gracia, tu cuenta será bloqueada (solo lectura).
 
 Saludos,
-El equipo de JEYCA Presupuestos`,
+El equipo de Redpresu`,
     metadata: {
       plan: params.plan,
       expiration_date: params.expirationDate,
@@ -437,7 +437,7 @@ ${baseUrl}/subscriptions
 ¿Necesitas ayuda? Contacta con soporte.
 
 Saludos,
-El equipo de JEYCA Presupuestos`,
+El equipo de Redpresu`,
     metadata: {
       plan: params.plan,
       days_remaining: params.daysRemaining,
@@ -476,7 +476,7 @@ ${baseUrl}/subscriptions
 Gracias por tu confianza.
 
 Saludos,
-El equipo de JEYCA Presupuestos`,
+El equipo de Redpresu`,
     metadata: {
       new_plan: params.newPlan,
     },
@@ -515,7 +515,7 @@ ${baseUrl}/pricing
 Lamentamos verte partir. Si tienes algún comentario sobre el servicio, nos encantaría escucharlo.
 
 Saludos,
-El equipo de JEYCA Presupuestos`,
+El equipo de Redpresu`,
     metadata: {
       old_plan: params.oldPlan,
     },
