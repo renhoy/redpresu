@@ -175,6 +175,16 @@ export async function middleware(req: NextRequest) {
         return NextResponse.redirect(redirectUrl)
       }
 
+      // Verificar si el usuario está esperando aprobación
+      if (userStatus === 'awaiting_approval') {
+        console.warn(`[Middleware] Usuario pendiente de aprobación detectado: ${session.user.email}`)
+        // Redirigir al login con mensaje de aprobación pendiente
+        const redirectUrl = req.nextUrl.clone()
+        redirectUrl.pathname = '/login'
+        redirectUrl.searchParams.set('reason', 'awaiting_approval')
+        return NextResponse.redirect(redirectUrl)
+      }
+
       // Verificar si la suscripción está INACTIVE (cuenta sancionada)
       // Solo verificar si suscripciones están habilitadas y es modo multiempresa
       if (multiempresa && subscriptionsEnabled) {

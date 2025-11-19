@@ -2,6 +2,8 @@
 
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { createServerActionClient } from "@/lib/supabase/helpers";
+import { getRegistrationRequiresApproval } from "@/lib/helpers/config-helpers";
+import { notifySuperadminNewRegistration } from "@/lib/helpers/notification-helpers";
 import crypto from "crypto";
 
 /**
@@ -368,8 +370,11 @@ export async function completeRegistration(
 
     console.log("[completeRegistration] Emisor creado:", emisor.id);
 
-    // 6. Crear registro de usuario en users
-    console.log("[completeRegistration] Creando registro de usuario...");
+    // 6. Determinar el estado del usuario según configuración
+    const requiresApproval = await getRegistrationRequiresApproval();
+    const userStatus = requiresApproval ? 'awaiting_approval' : 'active';
+
+    console.log("[completeRegistration] Creando registro de usuario con estado:", userStatus);
 
     const { error: userError } = await supabaseAdmin
       .from("users")
@@ -379,7 +384,7 @@ export async function completeRegistration(
         last_name: "", // No se recopila en PASO 1, se puede completar después
         email: tokenData.email,
         role: "admin", // El usuario que se registra es admin de su empresa
-        status: "active",
+        status: userStatus, // 'awaiting_approval' si requiere aprobación, 'active' si no
         company_id: companyId,
         issuer_id: emisor.id,
       });
@@ -406,27 +411,49 @@ export async function completeRegistration(
       .update({ used: true })
       .eq("token", token);
 
-    // 8. Crear sesión para auto-login
-    console.log("[completeRegistration] Creando sesión para auto-login...");
-
-    const supabase = await createServerActionClient();
-
-    const { data: sessionData, error: sessionError } =
-      await supabase.auth.signInWithPassword({
-        email: tokenData.email,
-        password: tokenData.password,
+    // 8. Notificar al superadmin si requiere aprobación
+    if (requiresApproval) {
+      console.log("[completeRegistration] Notificando al superadmin sobre nuevo registro pendiente");
+      // No esperar la notificación - ejecutar en background
+      notifySuperadminNewRegistration(
+        tokenData.name,
+        "", // last_name no disponible en este flujo
+        tokenData.email
+      ).catch(error => {
+        console.error("[completeRegistration] Error al notificar superadmin:", error);
+        // No afectar el flujo de registro si falla la notificación
       });
+    }
 
-    if (sessionError) {
-      console.error("[completeRegistration] Error creando sesión:", sessionError);
-      // No hacer rollback aquí, el usuario puede hacer login manualmente
+    // 9. Crear sesión para auto-login SOLO si no requiere aprobación
+    let sessionCreated = false;
+    if (!requiresApproval) {
+      console.log("[completeRegistration] Creando sesión para auto-login...");
+
+      const supabase = await createServerActionClient();
+
+      const { data: sessionData, error: sessionError } =
+        await supabase.auth.signInWithPassword({
+          email: tokenData.email,
+          password: tokenData.password,
+        });
+
+      if (sessionError) {
+        console.error("[completeRegistration] Error creando sesión:", sessionError);
+        // No hacer rollback aquí, el usuario puede hacer login manualmente
+      } else {
+        sessionCreated = true;
+      }
+    } else {
+      console.log("[completeRegistration] Auto-login omitido - usuario requiere aprobación");
     }
 
     console.log("[completeRegistration] Registro completado exitosamente:", {
       userId,
       companyId,
       emisorId: emisor.id,
-      sessionCreated: !sessionError,
+      requiresApproval,
+      sessionCreated,
     });
 
     return {
@@ -446,6 +473,7 @@ export async function completeRegistration(
           id: emisor.id,
           tipo: emisor.tipo,
         },
+        requiresApproval, // Para que el frontend sepa si debe mostrar mensaje de aprobación
       },
     };
   } catch (error) {

@@ -6,6 +6,14 @@ export enum UserRole {
   COMERCIAL = 'comercial'
 }
 
+export enum UserStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  PENDING = 'pending',
+  AWAITING_APPROVAL = 'awaiting_approval',
+  REJECTED = 'rejected'
+}
+
 export enum TariffStatus {
   ACTIVA = 'Activa',
   INACTIVA = 'Inactiva'
@@ -53,6 +61,7 @@ export interface User {
   company_id: number
   name: string
   email: string
+  status: string
   created_at: string
   updated_at: string
 }

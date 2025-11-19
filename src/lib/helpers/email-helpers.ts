@@ -551,3 +551,151 @@ function getPlanFeatures(plan: string): string {
 
   return features[plan.toLowerCase()] || 'Funcionalidades completas';
 }
+
+/**
+ * Envía email cuando un usuario es aprobado por el superadmin
+ */
+export async function sendUserApprovedEmail(
+  email: string,
+  name: string
+): Promise<boolean> {
+  const loginUrl = `${await getAppUrl()}/login`
+
+  const subject = '¡Tu cuenta en Redpresu ha sido aprobada!'
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h1 style="color: #84cc16;">¡Bienvenido/a a Redpresu!</h1>
+
+      <p>Hola ${name},</p>
+
+      <p>¡Buenas noticias! Tu cuenta en Redpresu ha sido aprobada por nuestro equipo.</p>
+
+      <p>Ya puedes acceder a la plataforma con tus credenciales:</p>
+
+      <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="margin: 0;"><strong>Email:</strong> ${email}</p>
+        <p style="margin: 10px 0 0 0;"><strong>Contraseña:</strong> La que estableciste al registrarte</p>
+      </div>
+
+      <a href="${loginUrl}"
+         style="display: inline-block;
+                background-color: #84cc16;
+                color: white;
+                padding: 12px 24px;
+                text-decoration: none;
+                border-radius: 6px;
+                margin: 20px 0;">
+        Iniciar Sesión
+      </a>
+
+      <p style="margin-top: 30px; color: #6b7280; font-size: 14px;">
+        Si tienes alguna pregunta, no dudes en contactarnos respondiendo a este email.
+      </p>
+
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+
+      <p style="color: #6b7280; font-size: 12px;">
+        El equipo de Redpresu<br>
+        <a href="${await getAppUrl()}" style="color: #84cc16;">redpresu.com</a>
+      </p>
+    </div>
+  `
+
+  const text = `
+¡Bienvenido/a a Redpresu!
+
+Hola ${name},
+
+¡Buenas noticias! Tu cuenta en Redpresu ha sido aprobada por nuestro equipo.
+
+Ya puedes acceder a la plataforma con tus credenciales:
+
+Email: ${email}
+Contraseña: La que estableciste al registrarte
+
+Iniciar sesión: ${loginUrl}
+
+Si tienes alguna pregunta, no dudes en contactarnos respondiendo a este email.
+
+El equipo de Redpresu
+${await getAppUrl()}
+  `
+
+  return sendEmail(email, subject, html, text)
+}
+
+/**
+ * Envía email cuando un usuario es rechazado por el superadmin
+ */
+export async function sendUserRejectedEmail(
+  email: string,
+  name: string,
+  reason?: string
+): Promise<boolean> {
+  const contactUrl = `${await getAppUrl()}/contact`
+
+  const subject = 'Actualización sobre tu solicitud de registro en Redpresu'
+
+  const reasonText = reason
+    ? `<p style="background-color: #fef3c7; padding: 15px; border-left: 4px solid #f59e0b; margin: 20px 0;">
+         <strong>Motivo:</strong> ${reason}
+       </p>`
+    : ''
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h1 style="color: #374151;">Actualización sobre tu solicitud</h1>
+
+      <p>Hola ${name},</p>
+
+      <p>Gracias por tu interés en Redpresu. Lamentablemente, no hemos podido aprobar tu solicitud de registro en este momento.</p>
+
+      ${reasonText}
+
+      <p>Si crees que esto es un error o deseas más información, por favor contáctanos:</p>
+
+      <a href="${contactUrl}"
+         style="display: inline-block;
+                background-color: #84cc16;
+                color: white;
+                padding: 12px 24px;
+                text-decoration: none;
+                border-radius: 6px;
+                margin: 20px 0;">
+        Contactar Soporte
+      </a>
+
+      <p style="margin-top: 30px; color: #6b7280; font-size: 14px;">
+        Estamos aquí para ayudarte y responder cualquier pregunta que puedas tener.
+      </p>
+
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+
+      <p style="color: #6b7280; font-size: 12px;">
+        El equipo de Redpresu<br>
+        <a href="${await getAppUrl()}" style="color: #84cc16;">redpresu.com</a>
+      </p>
+    </div>
+  `
+
+  const text = `
+Actualización sobre tu solicitud
+
+Hola ${name},
+
+Gracias por tu interés en Redpresu. Lamentablemente, no hemos podido aprobar tu solicitud de registro en este momento.
+
+${reason ? `Motivo: ${reason}\n` : ''}
+
+Si crees que esto es un error o deseas más información, por favor contáctanos en:
+${contactUrl}
+
+Estamos aquí para ayudarte y responder cualquier pregunta que puedas tener.
+
+El equipo de Redpresu
+${await getAppUrl()}
+  `
+
+  return sendEmail(email, subject, html, text)
+}

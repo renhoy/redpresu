@@ -446,3 +446,21 @@ export async function getLegalPageContent(): Promise<string> {
   // Fallback por defecto (página legal básica)
   return '<h1>Aviso Legal</h1><p>En cumplimiento de la Ley 34/2002, de 11 de julio, de Servicios de la Sociedad de la Información y de Comercio Electrónico (LSSI-CE), REDPRESU informa que es titular del sitio web.</p><p>Para más información, contacte con el administrador del sitio.</p>'
 }
+
+/**
+ * Verifica si el registro requiere aprobación de superadmin
+ * @returns true si el registro requiere aprobación
+ */
+export async function getRegistrationRequiresApproval(): Promise<boolean> {
+  const requiresApproval = await getConfigValue<boolean>('registration_requires_approval')
+  return requiresApproval === true
+}
+
+/**
+ * Verifica si las notificaciones por email están habilitadas
+ * @returns true si las notificaciones por email están habilitadas
+ */
+export async function getEmailNotificationsEnabled(): Promise<boolean> {
+  const enabled = await getConfigValue<boolean>('email_notifications_enabled')
+  return enabled === true
+}

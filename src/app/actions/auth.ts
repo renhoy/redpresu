@@ -2,6 +2,8 @@
 import { log } from '@/lib/logger'
 import { sanitizeError } from '@/lib/helpers/error-helpers'
 import { getAppUrl } from '@/lib/helpers/url-helpers-server'
+import { getRegistrationRequiresApproval } from '@/lib/helpers/config-helpers'
+import { notifySuperadminNewRegistration } from '@/lib/helpers/notification-helpers'
 
 import { createServerActionClient } from "@/lib/supabase/helpers"
 import { redirect } from 'next/navigation'
@@ -100,6 +102,20 @@ export async function signInAction(email: string, password: string): Promise<Sig
       return {
         success: false,
         error: 'INACTIVE_USER' // Flag especial para mostrar diálogo
+      }
+    }
+
+    // CRÍTICO: Verificar si el usuario está esperando aprobación
+    if (userData.status === 'awaiting_approval') {
+      log.warn(`[Server Action] Intento de login con usuario pendiente de aprobación: ${data.user.email}`)
+
+      // Cerrar sesión inmediatamente
+      await supabase.auth.signOut()
+
+      // Retornar error específico para mostrar mensaje de aprobación pendiente
+      return {
+        success: false,
+        error: 'AWAITING_APPROVAL' // Flag especial para mostrar mensaje de aprobación
       }
     }
 
@@ -283,6 +299,8 @@ export interface RegisterResult {
   data?: {
     userId: string
     emisorId: string | null
+    isDevelopment?: boolean
+    requiresApproval?: boolean
   }
 }
 
@@ -491,6 +509,12 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
     // - Si no, y es usuario asignado a emisor existente: comercial por defecto
     const userRole = data.role || (data.issuer_id ? 'comercial' : 'admin')
 
+    // Determinar el estado del usuario según configuración
+    // - Si registration_requires_approval está activado: awaiting_approval
+    // - Si no: pending (comportamiento actual)
+    const requiresApproval = await getRegistrationRequiresApproval()
+    const userStatus = requiresApproval ? 'awaiting_approval' : 'pending'
+
     // 5. Crear registro en public.users
     // REGLA: Todos los superadmins deben tener company_id = 1
     const finalCompanyId = userRole === 'superadmin' ? 1 : empresaId
@@ -503,7 +527,8 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
       finalCompanyId,
       isSuperadmin: userRole === 'superadmin',
       email: data.email.trim().toLowerCase(),
-      status: 'pending'
+      status: userStatus,
+      requiresApproval
     })
 
     const { data: insertedUser, error: userError } = await supabaseAdmin
@@ -515,7 +540,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
         email: data.email.trim().toLowerCase(),
         role: userRole,
         company_id: finalCompanyId,
-        status: 'pending', // Usuario debe configurar contraseña vía invitación
+        status: userStatus, // 'awaiting_approval' si requiere aprobación, 'pending' si no
         invited_by: null // Se asignará cuando acepte la invitación
       })
       .select()
@@ -551,6 +576,20 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
     }
 
     log.info('[registerUser] Registro en users creado con rol:', userRole)
+
+    // Notificar al superadmin si el registro requiere aprobación
+    if (userStatus === 'awaiting_approval') {
+      log.info('[registerUser] Notificando al superadmin sobre nuevo registro pendiente')
+      // No esperar la notificación - ejecutar en background
+      notifySuperadminNewRegistration(
+        data.name.trim(),
+        data.last_name.trim(),
+        data.email.trim().toLowerCase()
+      ).catch(error => {
+        log.error('[registerUser] Error al notificar superadmin:', error)
+        // No afectar el flujo de registro si falla la notificación
+      })
+    }
 
     // 6. Crear registro en public.issuers SOLO si:
     //    - No se proporcionó issuer_id Y
@@ -634,6 +673,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
         userId,
         emisorId,
         isDevelopment, // Para que el cliente sepa si mostrar timer de 3s
+        requiresApproval, // Para que el cliente sepa si mostrar mensaje de aprobación pendiente
       }
     }
 
