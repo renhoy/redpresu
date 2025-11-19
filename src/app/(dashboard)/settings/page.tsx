@@ -51,6 +51,7 @@ export default async function SettingsPage() {
         "app_mode",
         "multiempresa",
         "public_registration_enabled",
+        "registration_requires_approval",
       ],
     },
     {
@@ -98,11 +99,28 @@ export default async function SettingsPage() {
     return acc;
   }, {} as Record<string, (typeof config)[0]>);
 
+  // Verificar si el registro público está habilitado
+  const registrationEnabled = configMap['public_registration_enabled']?.value === true;
+
   // Organizar configuraciones según categorías definidas
   const organizedCategories = categoryDefinitions
     .map((category) => {
+      // Filtrar claves según dependencias
+      let filteredKeys = category.keys;
+
+      // Si es la categoría Aplicación, filtrar registration_requires_approval según dependencia
+      if (category.name === "Aplicación") {
+        filteredKeys = category.keys.filter((key) => {
+          // Mostrar registration_requires_approval solo si el registro está habilitado
+          if (key === "registration_requires_approval") {
+            return registrationEnabled;
+          }
+          return true;
+        });
+      }
+
       // Filtrar y ordenar alfabéticamente las claves que existen
-      const items = category.keys
+      const items = filteredKeys
         .filter((key) => configMap[key]) // Solo claves que existen en BD
         .sort() // Orden alfabético
         .map((key) => configMap[key]);
