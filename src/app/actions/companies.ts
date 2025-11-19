@@ -92,64 +92,92 @@ export async function getCompanies(): Promise<ActionResult> {
       return { success: false, error: "Sin permisos" };
     }
 
-    // Obtener TODAS las empresas (incluyendo eliminadas) para que superadmin pueda gestionarlas
-    const { data: issuers, error } = await supabaseAdmin
-      .from("issuers")
-      .select("*")
-      .order("created_at", { ascending: false });
+    // OPTIMIZACIÓN: Obtener issuers con counts agregados en una sola query
+    // Antes: N*5 queries (500 queries para 100 empresas)
+    // Ahora: 1 query usando RPC con agregaciones SQL
+    const { data: companiesWithCounts, error } = await supabaseAdmin.rpc(
+      'get_companies_with_counts'
+    );
 
     if (error) {
       log.error("[getCompanies] Error DB:", error);
-      return { success: false, error: error.message };
-    }
 
-    // Para cada emisor, contar usuarios, tarifas y presupuestos de su company_id
-    const formattedCompanies = await Promise.all(
-      (issuers || []).map(async (issuer) => {
-        // Contar usuarios de esta empresa
-        const { count: userCount } = await supabaseAdmin
-          .from("users")
-          .select("*", { count: "exact", head: true })
-          .eq("company_id", issuer.company_id);
+      // Fallback a método anterior si RPC falla
+      log.warn("[getCompanies] RPC falló, usando método de fallback");
+      const { data: issuers, error: issuerError } = await supabaseAdmin
+        .from("issuers")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-        // Contar usuarios admin de esta empresa
-        const { count: adminCount } = await supabaseAdmin
-          .from("users")
-          .select("*", { count: "exact", head: true })
-          .eq("company_id", issuer.company_id)
-          .eq("role", "admin");
+      if (issuerError) {
+        return { success: false, error: issuerError.message };
+      }
 
-        // Contar usuarios comercial de esta empresa
-        const { count: comercialCount } = await supabaseAdmin
-          .from("users")
-          .select("*", { count: "exact", head: true })
-          .eq("company_id", issuer.company_id)
-          .eq("role", "comercial");
+      // Método de fallback más eficiente: obtener todos los counts de una vez
+      const companyIds = (issuers || []).map(i => i.company_id);
 
-        // Contar tarifas de esta empresa
-        const { count: tariffCount } = await supabaseAdmin
-          .from("tariffs")
-          .select("*", { count: "exact", head: true })
-          .eq("company_id", issuer.company_id);
+      // Query 1: Obtener counts de usuarios agrupados
+      const { data: userCounts } = await supabaseAdmin
+        .from("users")
+        .select("company_id, role")
+        .in("company_id", companyIds);
 
-        // Contar presupuestos de esta empresa
-        const { count: budgetCount } = await supabaseAdmin
-          .from("budgets")
-          .select("*", { count: "exact", head: true })
-          .eq("company_id", issuer.company_id);
+      // Query 2: Obtener counts de tarifas agrupados
+      const { data: tariffCounts } = await supabaseAdmin
+        .from("tariffs")
+        .select("company_id")
+        .in("company_id", companyIds);
 
+      // Query 3: Obtener counts de presupuestos agrupados
+      const { data: budgetCounts } = await supabaseAdmin
+        .from("budgets")
+        .select("company_id")
+        .in("company_id", companyIds);
+
+      // Procesar counts en memoria (más eficiente que N queries)
+      const userCountsMap = new Map<number, { total: number; admin: number; comercial: number }>();
+      (userCounts || []).forEach(u => {
+        const current = userCountsMap.get(u.company_id) || { total: 0, admin: 0, comercial: 0 };
+        current.total++;
+        if (u.role === 'admin') current.admin++;
+        if (u.role === 'comercial') current.comercial++;
+        userCountsMap.set(u.company_id, current);
+      });
+
+      const tariffCountsMap = new Map<number, number>();
+      (tariffCounts || []).forEach(t => {
+        tariffCountsMap.set(t.company_id, (tariffCountsMap.get(t.company_id) || 0) + 1);
+      });
+
+      const budgetCountsMap = new Map<number, number>();
+      (budgetCounts || []).forEach(b => {
+        budgetCountsMap.set(b.company_id, (budgetCountsMap.get(b.company_id) || 0) + 1);
+      });
+
+      const formattedCompanies = (issuers || []).map(issuer => {
+        const userStats = userCountsMap.get(issuer.company_id) || { total: 0, admin: 0, comercial: 0 };
         return {
           ...issuer,
-          id: issuer.company_id, // Usar company_id como id principal
-          uuid: issuer.id, // Guardar UUID del emisor
-          user_count: userCount || 0,
-          admin_count: adminCount || 0,
-          comercial_count: comercialCount || 0,
-          tariff_count: tariffCount || 0,
-          budget_count: budgetCount || 0,
+          id: issuer.company_id,
+          uuid: issuer.id,
+          user_count: userStats.total,
+          admin_count: userStats.admin,
+          comercial_count: userStats.comercial,
+          tariff_count: tariffCountsMap.get(issuer.company_id) || 0,
+          budget_count: budgetCountsMap.get(issuer.company_id) || 0,
         };
-      })
-    );
+      });
+
+      log.info("[getCompanies] Éxito (fallback):", formattedCompanies.length, "empresas");
+      return { success: true, data: formattedCompanies };
+    }
+
+    // Formatear resultado de RPC
+    const formattedCompanies = (companiesWithCounts || []).map((company: any) => ({
+      ...company,
+      id: company.company_id,
+      uuid: company.id,
+    }));
 
     log.info("[getCompanies] Éxito:", formattedCompanies.length, "empresas");
 
