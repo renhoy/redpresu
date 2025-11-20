@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   CircleUser,
   Users,
@@ -51,6 +52,15 @@ export function UserMenu({
   showSettings = false,
 }: UserMenuProps) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+
+  // Función helper para determinar si un item está activo
+  const isActive = (href: string) => {
+    if (href === "/dashboard") {
+      return pathname === "/dashboard";
+    }
+    return pathname.startsWith(href);
+  };
 
   const getRoleLabel = (role: string) => {
     switch (role) {
@@ -145,15 +155,15 @@ export function UserMenu({
         {/* Panel y Ayuda - Solo visible en móvil/tablet */}
         <div className="lg:hidden">
           <Link href="/dashboard">
-            <DropdownMenuItem className="cursor-pointer">
-              <Home className="mr-2 h-4 w-4" />
+            <DropdownMenuItem className={`cursor-pointer ${isActive("/dashboard") ? "bg-lime-50 text-lime-700" : ""}`}>
+              <Home className={`mr-2 h-4 w-4 ${isActive("/dashboard") ? "text-lime-700" : ""}`} />
               <span>Panel</span>
             </DropdownMenuItem>
           </Link>
 
           <Link href="/help">
-            <DropdownMenuItem className="cursor-pointer">
-              <HelpCircle className="mr-2 h-4 w-4" />
+            <DropdownMenuItem className={`cursor-pointer ${isActive("/help") ? "bg-lime-50 text-lime-700" : ""}`}>
+              <HelpCircle className={`mr-2 h-4 w-4 ${isActive("/help") ? "text-lime-700" : ""}`} />
               <span>Ayuda</span>
             </DropdownMenuItem>
           </Link>
@@ -162,8 +172,8 @@ export function UserMenu({
         </div>
 
         <Link href={userId ? `/users/${userId}/edit` : "/profile"}>
-          <DropdownMenuItem className="cursor-pointer">
-            <UserCircle className="mr-2 h-4 w-4" />
+          <DropdownMenuItem className={`cursor-pointer ${isActive("/profile") || (userId && isActive(`/users/${userId}/edit`)) ? "bg-lime-50 text-lime-700" : ""}`}>
+            <UserCircle className={`mr-2 h-4 w-4 ${isActive("/profile") || (userId && isActive(`/users/${userId}/edit`)) ? "text-lime-700" : ""}`} />
             <span>Mi Perfil</span>
           </DropdownMenuItem>
         </Link>
@@ -173,8 +183,16 @@ export function UserMenu({
           <Link
             href={userRole === "superadmin" ? "/companies" : "/companies/edit"}
           >
-            <DropdownMenuItem className={`cursor-pointer ${userRole === "superadmin" ? "text-lime-600 hover:text-lime-700 hover:bg-lime-50" : ""}`}>
-              <Building2 className={`mr-2 h-4 w-4 ${userRole === "superadmin" ? "text-lime-600" : ""}`} />
+            <DropdownMenuItem className={`cursor-pointer ${
+              userRole === "superadmin"
+                ? (isActive("/companies") ? "bg-lime-100 text-lime-700 font-medium" : "text-lime-600 hover:text-lime-700 hover:bg-lime-50")
+                : (isActive("/companies/edit") ? "bg-lime-50 text-lime-700" : "")
+            }`}>
+              <Building2 className={`mr-2 h-4 w-4 ${
+                userRole === "superadmin"
+                  ? (isActive("/companies") ? "text-lime-700" : "text-lime-600")
+                  : (isActive("/companies/edit") ? "text-lime-700" : "")
+              }`} />
               <span>{userRole === "superadmin" ? "Empresas" : "Empresa"}</span>
             </DropdownMenuItem>
           </Link>
@@ -183,8 +201,12 @@ export function UserMenu({
         {/* Mensajes de Contacto - Solo superadmin */}
         {userRole === "superadmin" && (
           <Link href="/contact-messages">
-            <DropdownMenuItem className="cursor-pointer text-lime-600 hover:text-lime-700 hover:bg-lime-50">
-              <Mail className="mr-2 h-4 w-4 text-lime-600" />
+            <DropdownMenuItem className={`cursor-pointer ${
+              isActive("/contact-messages")
+                ? "bg-lime-100 text-lime-700 font-medium"
+                : "text-lime-600 hover:text-lime-700 hover:bg-lime-50"
+            }`}>
+              <Mail className={`mr-2 h-4 w-4 ${isActive("/contact-messages") ? "text-lime-700" : "text-lime-600"}`} />
               <span>Mensajes</span>
             </DropdownMenuItem>
           </Link>
@@ -198,14 +220,22 @@ export function UserMenu({
               <p className="text-xs text-lime-600 font-semibold">Testing</p>
             </div>
             <Link href="/settings/subscriptions-testing">
-              <DropdownMenuItem className="cursor-pointer text-lime-600 hover:text-lime-700 hover:bg-lime-50">
-                <FlaskConical className="mr-2 h-4 w-4 text-lime-600" />
+              <DropdownMenuItem className={`cursor-pointer ${
+                isActive("/settings/subscriptions-testing")
+                  ? "bg-lime-100 text-lime-700 font-medium"
+                  : "text-lime-600 hover:text-lime-700 hover:bg-lime-50"
+              }`}>
+                <FlaskConical className={`mr-2 h-4 w-4 ${isActive("/settings/subscriptions-testing") ? "text-lime-700" : "text-lime-600"}`} />
                 <span>Suscripciones</span>
               </DropdownMenuItem>
             </Link>
             <Link href="/settings/mock-emails">
-              <DropdownMenuItem className="cursor-pointer text-lime-600 hover:text-lime-700 hover:bg-lime-50">
-                <MailCheck className="mr-2 h-4 w-4 text-lime-600" />
+              <DropdownMenuItem className={`cursor-pointer ${
+                isActive("/settings/mock-emails")
+                  ? "bg-lime-100 text-lime-700 font-medium"
+                  : "text-lime-600 hover:text-lime-700 hover:bg-lime-50"
+              }`}>
+                <MailCheck className={`mr-2 h-4 w-4 ${isActive("/settings/mock-emails") ? "text-lime-700" : "text-lime-600"}`} />
                 <span>Emails Mock</span>
               </DropdownMenuItem>
             </Link>
@@ -214,16 +244,16 @@ export function UserMenu({
         )}
 
         <Link href="/users">
-          <DropdownMenuItem className="cursor-pointer">
-            <Users className="mr-2 h-4 w-4" />
+          <DropdownMenuItem className={`cursor-pointer ${isActive("/users") ? "bg-lime-50 text-lime-700" : ""}`}>
+            <Users className={`mr-2 h-4 w-4 ${isActive("/users") ? "text-lime-700" : ""}`} />
             <span>Usuarios</span>
           </DropdownMenuItem>
         </Link>
 
         {showSubscriptions && (
           <Link href="/subscriptions">
-            <DropdownMenuItem className="cursor-pointer">
-              <CreditCard className="mr-2 h-4 w-4" />
+            <DropdownMenuItem className={`cursor-pointer ${isActive("/subscriptions") ? "bg-lime-50 text-lime-700" : ""}`}>
+              <CreditCard className={`mr-2 h-4 w-4 ${isActive("/subscriptions") ? "text-lime-700" : ""}`} />
               <span>Suscripción</span>
             </DropdownMenuItem>
           </Link>
@@ -231,8 +261,12 @@ export function UserMenu({
 
         {showSettings && (
           <Link href="/settings">
-            <DropdownMenuItem className="cursor-pointer text-lime-600 hover:text-lime-700 hover:bg-lime-50">
-              <Settings className="mr-2 h-4 w-4 text-lime-600" />
+            <DropdownMenuItem className={`cursor-pointer ${
+              isActive("/settings")
+                ? "bg-lime-100 text-lime-700 font-medium"
+                : "text-lime-600 hover:text-lime-700 hover:bg-lime-50"
+            }`}>
+              <Settings className={`mr-2 h-4 w-4 ${isActive("/settings") ? "text-lime-700" : "text-lime-600"}`} />
               <span>Configuración</span>
             </DropdownMenuItem>
           </Link>
@@ -240,9 +274,9 @@ export function UserMenu({
 
         <DropdownMenuSeparator />
 
-        {/* Salir */}
+        {/* Cerrar Sesión */}
         <DropdownMenuItem
-          className="cursor-pointer"
+          className="cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50 focus:text-red-700 focus:bg-red-50"
           onSelect={(e) => {
             e.preventDefault();
             // El LogoutButton maneja el click
@@ -252,7 +286,7 @@ export function UserMenu({
             variant="ghost"
             size="sm"
             showText={true}
-            className="px-0 -ml-[10px] h-auto font-normal hover:bg-transparent"
+            className="px-0 -ml-[10px] h-auto font-normal hover:bg-transparent text-red-600 hover:text-red-700"
           />
         </DropdownMenuItem>
       </DropdownMenuContent>

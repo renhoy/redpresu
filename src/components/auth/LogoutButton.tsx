@@ -65,7 +65,7 @@ export default function LogoutButton({
 
       {showText && (
         <span className={size === "icon" ? "sr-only" : "ml-2"}>
-          {isLoading ? "Salir..." : "Salir"}
+          {isLoading ? "Cerrando sesión..." : "Cerrar Sesión"}
         </span>
       )}
     </Button>
