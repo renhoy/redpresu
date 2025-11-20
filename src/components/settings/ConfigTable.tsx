@@ -6,6 +6,50 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Eye } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
+
+// Mapeo de keys a nombres en español
+const CONFIG_NAMES: Record<string, string> = {
+  app_name: "Nombre de la aplicación",
+  app_mode: "Modo de la aplicación",
+  multiempresa: "Modo multiempresa",
+  public_registration_enabled: "Registro público",
+  registration_requires_approval: "Requiere aprobación de superadmin",
+  subscriptions_enabled: "Suscripciones habilitadas",
+  subscription_plans: "Planes de suscripción",
+  subscription_grace_period_days: "Días de período de gracia",
+  default_empresa_id: "ID de empresa por defecto",
+  invitation_email_template: "Plantilla de email de invitación",
+  invitation_token_expiration_days: "Días de expiración del token de invitación",
+  default_tariff: "Tarifa por defecto",
+  iva_re_equivalences: "Equivalencias IVA/RE",
+  pdf_templates: "Plantillas PDF",
+  rapid_pdf_mode: "Modo PDF rápido",
+  contact_notification_emails: "Emails de notificación de contacto",
+  forms_legal_notice: "Aviso legal de formularios",
+  legal_page_content: "Contenido de página legal",
+};
+
+// Función helper para obtener el estado de un valor de configuración
+const getValueStatus = (value: unknown): string => {
+  if (typeof value === 'boolean') {
+    return value ? 'Activado' : 'Desactivado';
+  }
+  if (typeof value === 'string') {
+    return value;
+  }
+  if (typeof value === 'number') {
+    return String(value);
+  }
+  return 'Configurado';
+};
+
+// Función helper para formatear la descripción con nombre en negrita
+const getFormattedDescription = (key: string, value: unknown, description: string): string => {
+  const name = CONFIG_NAMES[key] || key;
+  const status = getValueStatus(value);
+  return `**${name} (${status})** ${description || ''}`;
+};
+
 import {
   Select,
   SelectContent,
@@ -197,8 +241,7 @@ export function ConfigTable({ config }: ConfigTableProps) {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-20">Acciones</TableHead>
-                <TableHead className="w-44">Clave</TableHead>
-                <TableHead className="w-auto">Descripción</TableHead>
+                <TableHead className="w-auto">Configuración</TableHead>
                 <TableHead className="w-72">Valor</TableHead>
               </TableRow>
             </TableHeader>
@@ -206,7 +249,7 @@ export function ConfigTable({ config }: ConfigTableProps) {
               {config.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={4}
+                    colSpan={3}
                     className="text-center text-muted-foreground py-8"
                   >
                     No hay configuración en esta categoría
@@ -254,14 +297,14 @@ export function ConfigTable({ config }: ConfigTableProps) {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="font-mono text-sm">
-                        <div className="break-all whitespace-normal">
-                          {item.key}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell className="text-sm">
                         <div className="break-words whitespace-normal">
-                          {item.description || "-"}
+                          <strong className="text-gray-900">
+                            {CONFIG_NAMES[item.key] || item.key} ({getValueStatus(item.value)})
+                          </strong>
+                          {item.description && (
+                            <span className="text-muted-foreground"> {item.description}</span>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>

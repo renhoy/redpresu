@@ -119,10 +119,9 @@ export default async function SettingsPage() {
         });
       }
 
-      // Filtrar y ordenar alfabéticamente las claves que existen
+      // Filtrar las claves que existen (mantener orden original)
       const items = filteredKeys
         .filter((key) => configMap[key]) // Solo claves que existen en BD
-        .sort() // Orden alfabético
         .map((key) => configMap[key]);
 
       return {
