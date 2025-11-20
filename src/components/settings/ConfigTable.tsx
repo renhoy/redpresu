@@ -30,15 +30,26 @@ const CONFIG_NAMES: Record<string, string> = {
 };
 
 // Función helper para obtener el estado de un valor de configuración
-const getValueStatus = (value: unknown): string => {
+const getValueStatus = (value: unknown, key?: string): string => {
   if (typeof value === 'boolean') {
     return value ? 'Activado' : 'Desactivado';
   }
   if (typeof value === 'string') {
+    // Si es HTML (contiene tags), no mostrar el contenido
+    if (value.includes('<') && value.includes('>')) {
+      return 'Configurado';
+    }
+    // Si es un string muy largo, truncar
+    if (value.length > 50) {
+      return 'Configurado';
+    }
     return value;
   }
   if (typeof value === 'number') {
     return String(value);
+  }
+  if (typeof value === 'object' && value !== null) {
+    return 'Configurado';
   }
   return 'Configurado';
 };
