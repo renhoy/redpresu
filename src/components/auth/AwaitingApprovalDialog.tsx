@@ -11,7 +11,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Clock } from "lucide-react";
+import { Clock, Loader2 } from "lucide-react";
+import { signOutAction } from "@/app/actions/auth";
 
 interface AwaitingApprovalDialogProps {
   showDialog: boolean;
@@ -20,6 +21,7 @@ interface AwaitingApprovalDialogProps {
 export function AwaitingApprovalDialog({ showDialog }: AwaitingApprovalDialogProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     if (showDialog) {
@@ -28,15 +30,29 @@ export function AwaitingApprovalDialog({ showDialog }: AwaitingApprovalDialogPro
     }
   }, [showDialog]);
 
-  const handleClose = () => {
-    setOpen(false);
-    // Redirigir a la página principal
-    router.replace("/");
+  const handleClose = async () => {
+    console.log("[AwaitingApprovalDialog] Iniciando cierre de sesión...");
+    setIsLoggingOut(true);
+
+    try {
+      // Cerrar sesión
+      await signOutAction();
+
+      // El signOutAction redirige automáticamente a "/"
+      console.log("[AwaitingApprovalDialog] Sesión cerrada - redirigiendo...");
+    } catch (error) {
+      console.error("[AwaitingApprovalDialog] Error al cerrar sesión:", error);
+      // Aún así redirigir
+      router.replace("/");
+    }
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogContent>
+    <AlertDialog open={open} onOpenChange={() => {}}>
+      <AlertDialogContent
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
         <AlertDialogHeader>
           <div className="mx-auto mb-4 w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center">
             <Clock className="h-8 w-8 text-amber-600" />
@@ -62,9 +78,17 @@ export function AwaitingApprovalDialog({ showDialog }: AwaitingApprovalDialogPro
         <AlertDialogFooter>
           <AlertDialogAction
             onClick={handleClose}
+            disabled={isLoggingOut}
             className="bg-lime-500 hover:bg-lime-600"
           >
-            Entendido
+            {isLoggingOut ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Cerrando sesión...
+              </>
+            ) : (
+              "Entendido"
+            )}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { checkAndStartPendingTour } from "@/lib/helpers/tour-helpers";
+import { CompleteProfileModal } from "@/components/auth/CompleteProfileModal";
+import { AwaitingApprovalDialog } from "@/components/auth/AwaitingApprovalDialog";
 import {
   Card,
   CardContent,
@@ -54,6 +57,11 @@ interface DashboardClientProps {
   userRole: string;
   hasBudgets?: boolean;
   helpArticles?: HelpArticleMeta[];
+  hasIncompleteProfile: boolean;
+  tipoEmisor: 'empresa' | 'autonomo' | null;
+  userName: string;
+  userEmail: string;
+  legalNotice: string;
 }
 
 const statusColors = {
@@ -81,10 +89,20 @@ export function DashboardClient({
   userRole,
   hasBudgets = true,
   helpArticles = [],
+  hasIncompleteProfile,
+  tipoEmisor,
+  userName,
+  userEmail,
+  legalNotice,
 }: DashboardClientProps) {
+  const router = useRouter();
   const [stats, setStats] = useState(initialStats);
   const [periodo, setPeriodo] = useState<Periodo>("mes");
   const [loading, setLoading] = useState(false);
+
+  // Estados para modales
+  const [showCompleteProfile, setShowCompleteProfile] = useState(hasIncompleteProfile);
+  const [showAwaitingApproval, setShowAwaitingApproval] = useState(false);
 
   // Detectar y ejecutar tour pendiente
   useEffect(() => {
@@ -110,6 +128,23 @@ export function DashboardClient({
       month: "2-digit",
       year: "numeric",
     });
+  };
+
+  const handleProfileComplete = (requiresApproval: boolean) => {
+    console.log('[DashboardClient] Perfil completado - requiresApproval:', requiresApproval);
+
+    // Cerrar modal de completar perfil
+    setShowCompleteProfile(false);
+
+    if (requiresApproval) {
+      // Mostrar diálogo de espera de aprobación
+      console.log('[DashboardClient] Mostrando diálogo de aprobación pendiente');
+      setShowAwaitingApproval(true);
+    } else {
+      // Recargar la página para refrescar el dashboard con los datos actualizados
+      console.log('[DashboardClient] Recargando página - usuario activo');
+      router.refresh();
+    }
   };
 
   return (
@@ -442,6 +477,22 @@ export function DashboardClient({
           </Card>
         </div>
       </div>
+
+      {/* Modal para completar perfil */}
+      {showCompleteProfile && tipoEmisor && (
+        <CompleteProfileModal
+          tipoEmisor={tipoEmisor}
+          userName={userName}
+          userEmail={userEmail}
+          legalNotice={legalNotice}
+          onComplete={handleProfileComplete}
+        />
+      )}
+
+      {/* Diálogo de espera de aprobación */}
+      {showAwaitingApproval && (
+        <AwaitingApprovalDialog showDialog={showAwaitingApproval} />
+      )}
     </div>
   );
 }

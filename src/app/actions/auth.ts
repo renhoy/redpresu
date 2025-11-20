@@ -267,6 +267,330 @@ export async function signOutAndRedirectToContact(): Promise<SignInResult> {
 }
 
 /**
+ * Server Action simplificado para registro con Supabase nativo
+ * Usa supabase.auth.signUp() que maneja automáticamente el envío de email de confirmación
+ *
+ * @param data - Datos básicos del usuario (nombre, email, contraseña, tipo)
+ * @returns Resultado con indicación de email enviado
+ */
+export async function simplifiedRegister(data: {
+  name: string;
+  email: string;
+  password: string;
+  tipo_emisor: 'empresa' | 'autonomo';
+}): Promise<{
+  success: boolean;
+  error?: string;
+  requiresEmailConfirmation?: boolean;
+}> {
+  try {
+    console.log('[simplifiedRegister] Iniciando registro simplificado...');
+    console.log('[simplifiedRegister] Email:', data.email);
+    console.log('[simplifiedRegister] Tipo:', data.tipo_emisor);
+
+    // 1. Validar entrada
+    if (!data.name || !data.email || !data.password || !data.tipo_emisor) {
+      return {
+        success: false,
+        error: 'Todos los campos son obligatorios',
+      };
+    }
+
+    // Validar longitud de contraseña
+    if (data.password.length < 6) {
+      return {
+        success: false,
+        error: 'La contraseña debe tener al menos 6 caracteres',
+      };
+    }
+
+    // Validar formato email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(data.email)) {
+      return {
+        success: false,
+        error: 'El formato del email no es válido',
+      };
+    }
+
+    // 2. Crear cliente de Supabase
+    const supabase = await createServerActionClient();
+
+    // 3. Usar signUp de Supabase (envía email de confirmación automáticamente)
+    const { data: authData, error: signUpError } = await supabase.auth.signUp({
+      email: data.email.toLowerCase().trim(),
+      password: data.password,
+      options: {
+        data: {
+          name: data.name,
+          tipo_emisor: data.tipo_emisor,
+        },
+        emailRedirectTo: `${await getAppUrl()}/login`,
+      },
+    });
+
+    if (signUpError) {
+      console.error('[simplifiedRegister] Error en signUp:', signUpError);
+
+      // Mapear errores comunes
+      let errorMessage = signUpError.message;
+
+      if (signUpError.message.includes('already registered')) {
+        errorMessage = 'Este email ya está registrado';
+      } else if (signUpError.message.includes('invalid email')) {
+        errorMessage = 'Email inválido';
+      } else if (signUpError.message.includes('password')) {
+        errorMessage = 'La contraseña no cumple con los requisitos';
+      }
+
+      return {
+        success: false,
+        error: errorMessage,
+      };
+    }
+
+    if (!authData.user) {
+      console.error('[simplifiedRegister] No se creó el usuario');
+      return {
+        success: false,
+        error: 'Error al crear el usuario',
+      };
+    }
+
+    console.log('[simplifiedRegister] Usuario creado exitosamente:', authData.user.id);
+    console.log('[simplifiedRegister] Email de confirmación enviado a:', data.email);
+
+    // 4. Supabase envía el email de confirmación automáticamente
+    // El usuario recibirá un email con un link de confirmación
+    // Cuando haga clic, su email será confirmado y podrá hacer login
+
+    return {
+      success: true,
+      requiresEmailConfirmation: true,
+    };
+  } catch (error) {
+    console.error('[simplifiedRegister] Error inesperado:', error);
+    return {
+      success: false,
+      error: 'Error inesperado al crear el registro',
+    };
+  }
+}
+
+/**
+ * Server Action para completar perfil de usuario ya logueado
+ * Se ejecuta cuando el usuario hace login y tiene issuer_id IS NULL
+ *
+ * @param profileData - Datos fiscales y de contacto
+ * @returns Resultado con indicación de si requiere aprobación
+ */
+export async function completeUserProfile(profileData: {
+  nif: string;
+  razon_social: string;
+  domicilio: string;
+  codigo_postal: string;
+  poblacion: string;
+  provincia: string;
+  irpf_percentage?: number;
+  telefono: string;
+  email_contacto: string;
+  web?: string;
+}): Promise<{
+  success: boolean;
+  error?: string;
+  requiresApproval?: boolean;
+}> {
+  try {
+    console.log('[completeUserProfile] Iniciando completar perfil...');
+
+    // 1. Obtener usuario autenticado
+    const supabase = await createServerActionClient();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      console.error('[completeUserProfile] Error obteniendo usuario:', userError);
+      return {
+        success: false,
+        error: 'Usuario no autenticado',
+      };
+    }
+
+    console.log('[completeUserProfile] Usuario autenticado:', user.id);
+
+    // 2. Validar datos de entrada
+    if (!profileData.nif || !profileData.razon_social) {
+      return {
+        success: false,
+        error: 'NIF y Razón Social son obligatorios',
+      };
+    }
+
+    // 3. Obtener datos del usuario de la BD (para verificar estado y obtener company_id)
+    const { data: userData, error: userDataError } = await supabaseAdmin
+      .from('users')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    if (userDataError || !userData) {
+      console.error('[completeUserProfile] Error obteniendo datos de usuario:', userDataError);
+      return {
+        success: false,
+        error: 'Error al obtener datos del usuario',
+      };
+    }
+
+    // 4. Verificar que el usuario no tenga ya un issuer_id
+    if (userData.issuer_id) {
+      console.log('[completeUserProfile] Usuario ya tiene issuer_id:', userData.issuer_id);
+      return {
+        success: false,
+        error: 'El perfil ya fue completado anteriormente',
+      };
+    }
+
+    // 5. Obtener tipo_emisor de user metadata
+    const tipo_emisor = user.user_metadata?.tipo_emisor as 'empresa' | 'autonomo';
+    if (!tipo_emisor) {
+      console.error('[completeUserProfile] No se encontró tipo_emisor en metadata');
+      return {
+        success: false,
+        error: 'Tipo de emisor no encontrado',
+      };
+    }
+
+    console.log('[completeUserProfile] Tipo emisor:', tipo_emisor);
+
+    // 6. Determinar company_id: usar el existente si hay, o crear uno nuevo
+    let companyId = userData.company_id;
+
+    if (!companyId) {
+      // Crear nueva empresa
+      console.log('[completeUserProfile] Creando nueva empresa...');
+      const { data: company, error: companyError } = await supabaseAdmin
+        .from('companies')
+        .insert({
+          name: profileData.razon_social,
+        })
+        .select()
+        .single();
+
+      if (companyError || !company) {
+        console.error('[completeUserProfile] Error creando empresa:', companyError);
+        return {
+          success: false,
+          error: 'Error al crear la empresa',
+        };
+      }
+
+      companyId = company.id;
+      console.log('[completeUserProfile] Empresa creada:', companyId);
+
+      // Actualizar user con company_id
+      await supabaseAdmin
+        .from('users')
+        .update({ company_id: companyId })
+        .eq('id', user.id);
+    } else {
+      console.log('[completeUserProfile] Usando company_id existente:', companyId);
+    }
+
+    // 7. Crear emisor
+    console.log('[completeUserProfile] Creando emisor...');
+    const { data: emisor, error: emisorError } = await supabaseAdmin
+      .from('emisores')
+      .insert({
+        tipo: tipo_emisor,
+        nif: profileData.nif,
+        razon_social: profileData.razon_social,
+        domicilio: profileData.domicilio,
+        codigo_postal: profileData.codigo_postal,
+        poblacion: profileData.poblacion,
+        provincia: profileData.provincia,
+        pais: 'España',
+        telefono: profileData.telefono,
+        email: profileData.email_contacto,
+        web: profileData.web || '',
+        irpf_percentage: profileData.irpf_percentage || null,
+        company_id: companyId,
+      })
+      .select()
+      .single();
+
+    if (emisorError || !emisor) {
+      console.error('[completeUserProfile] Error creando emisor:', emisorError);
+      return {
+        success: false,
+        error: `Error al crear el emisor: ${emisorError?.message || 'Error desconocido'}`,
+      };
+    }
+
+    console.log('[completeUserProfile] Emisor creado:', emisor.id);
+
+    // 8. Verificar si requiere aprobación
+    const requiresApproval = await getRegistrationRequiresApproval();
+    console.log('[completeUserProfile] Requiere aprobación:', requiresApproval);
+
+    // 9. Actualizar usuario con issuer_id y estado
+    const newStatus = requiresApproval ? 'awaiting_approval' : 'active';
+
+    console.log('\n');
+    console.log('═══════════════════════════════════════════════════════════════');
+    console.log('[completeUserProfile] ACTUALIZANDO USUARIO');
+    console.log('═══════════════════════════════════════════════════════════════');
+    console.log(`📋 Issuer ID: ${emisor.id}`);
+    console.log(`🔐 Nuevo Status: ${newStatus}`);
+    console.log(`👤 Usuario: ${userData.name} (${userData.email})`);
+    console.log('───────────────────────────────────────────────────────────────');
+
+    const { error: updateError } = await supabaseAdmin
+      .from('users')
+      .update({
+        issuer_id: emisor.id,
+        status: newStatus,
+      })
+      .eq('id', user.id);
+
+    if (updateError) {
+      console.error('[completeUserProfile] Error actualizando usuario:', updateError);
+      console.log('═══════════════════════════════════════════════════════════════\n');
+      return {
+        success: false,
+        error: 'Error al actualizar el perfil',
+      };
+    }
+
+    console.log('✅ Usuario actualizado exitosamente');
+    console.log('═══════════════════════════════════════════════════════════════\n');
+
+    // 10. Notificar al superadmin si requiere aprobación
+    if (requiresApproval) {
+      console.log('\n🔔 Usuario requiere aprobación - iniciando notificación...\n');
+      notifySuperadminNewRegistration(
+        userData.name,
+        userData.last_name || '',
+        userData.email
+      ).catch(error => {
+        console.error('[completeUserProfile] ❌ Error al notificar superadmin:', error);
+      });
+    } else {
+      console.log('\n✅ Usuario NO requiere aprobación - activación inmediata\n');
+    }
+
+    return {
+      success: true,
+      requiresApproval,
+    };
+  } catch (error) {
+    console.error('[completeUserProfile] Error inesperado:', error);
+    return {
+      success: false,
+      error: 'Error inesperado al completar el perfil',
+    };
+  }
+}
+
+/**
  * Interfaz para datos de registro
  */
 export interface RegisterData {

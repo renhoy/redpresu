@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { createRegistrationToken } from "@/app/actions/registration";
+import { simplifiedRegister } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -19,7 +19,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Building2, User } from "lucide-react";
 import { validateEmail } from "@/lib/helpers/email-validation";
 
-interface RegisterStep1Errors {
+interface RegisterErrors {
   name?: string;
   email?: string;
   password?: string;
@@ -35,13 +35,13 @@ export default function RegisterForm() {
     tipo: "empresa" as "empresa" | "autonomo",
   });
 
-  const [errors, setErrors] = useState<RegisterStep1Errors>({});
+  const [errors, setErrors] = useState<RegisterErrors>({});
   const [isLoading, setIsLoading] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState<string>("");
 
   const validateForm = (): boolean => {
-    const newErrors: RegisterStep1Errors = {};
+    const newErrors: RegisterErrors = {};
 
     // Validar nombre
     if (!formData.name.trim()) {
@@ -76,17 +76,17 @@ export default function RegisterForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("[RegisterForm PASO 1] Submit iniciado");
+    console.log("[RegisterForm] Submit iniciado");
 
     if (!validateForm()) {
-      console.log("[RegisterForm PASO 1] Validación falló");
+      console.log("[RegisterForm] Validación falló");
       return;
     }
 
     setIsLoading(true);
 
     try {
-      const result = await createRegistrationToken({
+      const result = await simplifiedRegister({
         name: formData.name.trim(),
         email: formData.email.trim(),
         password: formData.password,
@@ -100,14 +100,13 @@ export default function RegisterForm() {
         return;
       }
 
-      // PASO 1 completado exitosamente
-      console.log("[RegisterForm PASO 1] Token creado exitosamente");
-      console.log("[RegisterForm PASO 1] Enlace de verificación: /register/complete?token=" + result.data?.token);
+      // Registro completado exitosamente
+      console.log("[RegisterForm] Registro exitoso - Email de confirmación enviado");
 
       setRegisteredEmail(formData.email);
       setRegistrationSuccess(true);
     } catch (error) {
-      console.error("[RegisterForm PASO 1] Error inesperado:", error);
+      console.error("[RegisterForm] Error inesperado:", error);
       setErrors({
         general:
           error instanceof Error
@@ -164,7 +163,7 @@ export default function RegisterForm() {
     }
   };
 
-  // Si el PASO 1 fue exitoso, mostrar mensaje de confirmación de email
+  // Si el registro fue exitoso, mostrar mensaje de confirmación de email
   if (registrationSuccess && registeredEmail) {
     return (
       <div className="fixed inset-0 bg-gradient-to-b from-lime-50 to-white flex items-center justify-center p-4 z-50">
@@ -189,12 +188,18 @@ export default function RegisterForm() {
             </Alert>
 
             <div className="space-y-2 text-sm text-gray-600">
-              <p>Para completar tu registro:</p>
+              <p>Para activar tu cuenta:</p>
               <ol className="list-decimal list-inside space-y-1 ml-2">
                 <li>Revisa tu bandeja de entrada</li>
-                <li>Haz clic en el enlace de verificación</li>
-                <li>Completa los datos de tu empresa</li>
+                <li>Haz clic en el enlace de confirmación</li>
+                <li>Inicia sesión con tu email y contraseña</li>
               </ol>
+            </div>
+
+            <div className="pt-4">
+              <Link href="/login" className="w-full">
+                <Button className="w-full">Ir a iniciar sesión</Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
@@ -206,10 +211,10 @@ export default function RegisterForm() {
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl text-center">
-          Crear Cuenta - Paso 1 de 2
+          Crear Cuenta
         </CardTitle>
         <CardDescription className="text-center">
-          Datos básicos para crear tu cuenta
+          Ingresa tus datos para comenzar
         </CardDescription>
       </CardHeader>
 
