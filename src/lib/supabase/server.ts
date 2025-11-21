@@ -30,7 +30,7 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
   },
   // SECURITY (VULN-014): Timeouts para prevenir queries colgadas
   db: {
-    schema: process.env.SUPABASE_SCHEMA || "redpresu",
+    schema: process.env.SUPABASE_SCHEMA || "public",
   },
   global: {
     headers: {

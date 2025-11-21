@@ -7,7 +7,12 @@ export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
 
-  console.log('[auth/callback] Iniciando callback con code:', code ? 'presente' : 'ausente')
+  console.log('[auth/callback] ========================================')
+  console.log('[auth/callback] CALLBACK INICIADO')
+  console.log('[auth/callback] URL completa:', request.url)
+  console.log('[auth/callback] Code presente:', code ? 'SI' : 'NO')
+  console.log('[auth/callback] SUPABASE_SCHEMA:', process.env.SUPABASE_SCHEMA || 'NO DEFINIDO (usando public)')
+  console.log('[auth/callback] ========================================')
 
   if (code) {
     try {
@@ -34,30 +39,40 @@ export async function GET(request: NextRequest) {
         .single()
 
       if (!existingUser) {
-        console.log('[auth/callback] Creando registro en public.users...')
+        console.log('[auth/callback] Usuario NO existe en BD, creando...')
 
-        // Crear registro en redpresu.users con datos mínimos
-        // issuer_id se obtiene via JOIN con issuers.user_id (será null hasta completar perfil)
-        const { error: insertError } = await supabaseAdmin
+        const insertData = {
+          id: data.user.id,
+          name: data.user.user_metadata?.name || 'Usuario',
+          last_name: '',
+          email: data.user.email || '',
+          role: 'admin',
+          status: 'pending',
+          company_id: null,
+        }
+
+        console.log('[auth/callback] Datos a insertar:', JSON.stringify(insertData, null, 2))
+
+        // Crear registro en public.users con datos mínimos
+        const { data: insertedUser, error: insertError } = await supabaseAdmin
           .from('users')
-          .insert({
-            id: data.user.id,
-            name: data.user.user_metadata?.name || 'Usuario',
-            last_name: '',
-            email: data.user.email || '',
-            role: 'admin', // Por defecto, será admin de su propia empresa
-            status: 'pending', // Pendiente hasta completar perfil
-            company_id: null, // Se asignará cuando complete el perfil
-          })
+          .insert(insertData)
+          .select()
+          .single()
 
         if (insertError) {
-          console.error('[auth/callback] Error creando usuario en BD:', insertError)
+          console.error('[auth/callback] ❌ ERROR INSERTANDO USUARIO:')
+          console.error('[auth/callback] Código:', insertError.code)
+          console.error('[auth/callback] Mensaje:', insertError.message)
+          console.error('[auth/callback] Detalles:', insertError.details)
+          console.error('[auth/callback] Hint:', insertError.hint)
+          console.error('[auth/callback] Error completo:', JSON.stringify(insertError, null, 2))
           return NextResponse.redirect(new URL('/login?error=user_creation', request.url))
         }
 
-        console.log('[auth/callback] Usuario creado en BD exitosamente')
+        console.log('[auth/callback] ✅ Usuario creado exitosamente:', insertedUser?.id)
       } else {
-        console.log('[auth/callback] Usuario ya existe en BD')
+        console.log('[auth/callback] Usuario ya existe en BD:', existingUser.id)
       }
 
       // Redirigir a página de confirmación exitosa
