@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,7 +18,6 @@ interface AwaitingApprovalDialogProps {
 }
 
 export function AwaitingApprovalDialog({ showDialog }: AwaitingApprovalDialogProps) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -34,17 +32,14 @@ export function AwaitingApprovalDialog({ showDialog }: AwaitingApprovalDialogPro
     console.log("[AwaitingApprovalDialog] Iniciando cierre de sesión...");
     setIsLoggingOut(true);
 
-    try {
-      // Cerrar sesión
-      await signOutAction();
+    // Llamar a signOutAction - el redirect interno lanzará un error (comportamiento normal de Next.js)
+    // No usar try-catch porque interfiere con el redirect
+    const result = await signOutAction();
 
-      // El signOutAction redirige automáticamente a "/"
-      console.log("[AwaitingApprovalDialog] Sesión cerrada - redirigiendo...");
-    } catch (error) {
-      console.error("[AwaitingApprovalDialog] Error al cerrar sesión:", error);
-      // Aún así redirigir
-      router.replace("/");
+    if (!result.success) {
+      console.error("[AwaitingApprovalDialog] Error al cerrar sesión:", result.error);
     }
+    // El signOutAction redirige automáticamente a "/"
   };
 
   return (
@@ -69,8 +64,17 @@ export function AwaitingApprovalDialog({ showDialog }: AwaitingApprovalDialogPro
             </p>
             <p className="text-sm text-gray-600">
               Si tienes alguna pregunta, puedes contactarnos en{" "}
-              <a href="mailto:legal@redpresu.com" className="text-lime-600 hover:text-lime-700 underline">
-                legal@redpresu.com
+              <a href="mailto:soporte@redpresu.com" className="text-lime-600 hover:text-lime-700 underline">
+                soporte@redpresu.com
+              </a>{" "}
+              o a través del{" "}
+              <a
+                href="https://redpresu.com/contact"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-lime-600 hover:text-lime-700 underline"
+              >
+                formulario de contacto
               </a>
             </p>
           </AlertDialogDescription>
