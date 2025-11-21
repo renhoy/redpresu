@@ -135,10 +135,10 @@ export async function middleware(req: NextRequest) {
     }
 
     // Usuario autenticado intentando acceder a ruta pública (excepto home)
-    // Excepción: si viene con reason=inactive o awaiting_approval, permitir acceso al login para mostrar mensaje
+    // Excepción: si viene con reason=inactive o pendiente, permitir acceso al login para mostrar mensaje
     // En modo monoempresa, el home ya fue manejado arriba
     const reasonParam = req.nextUrl.searchParams.get('reason')
-    if (isAuthenticated && isPublicRoute && pathname !== '/' && reasonParam !== 'inactive' && reasonParam !== 'awaiting_approval') {
+    if (isAuthenticated && isPublicRoute && pathname !== '/' && reasonParam !== 'inactive' && reasonParam !== 'pendiente') {
       console.log(`[Middleware] Redirect autenticado: ${pathname} → /dashboard`)
       const redirectUrl = req.nextUrl.clone()
       redirectUrl.pathname = '/dashboard'
@@ -177,12 +177,12 @@ export async function middleware(req: NextRequest) {
       }
 
       // Verificar si el usuario está esperando aprobación
-      if (userStatus === 'awaiting_approval') {
+      if (userStatus === 'pendiente') {
         console.warn(`[Middleware] Usuario pendiente de aprobación detectado: ${session.user.email}`)
         // Redirigir al login con mensaje de aprobación pendiente
         const redirectUrl = req.nextUrl.clone()
         redirectUrl.pathname = '/login'
-        redirectUrl.searchParams.set('reason', 'awaiting_approval')
+        redirectUrl.searchParams.set('reason', 'pendiente')
         return NextResponse.redirect(redirectUrl)
       }
 

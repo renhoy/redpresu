@@ -106,7 +106,7 @@ export async function signInAction(email: string, password: string): Promise<Sig
     }
 
     // CRÍTICO: Verificar si el usuario está esperando aprobación
-    if (userData.status === 'awaiting_approval') {
+    if (userData.status === 'pendiente') {
       log.warn(`[Server Action] Intento de login con usuario pendiente de aprobación: ${data.user.email}`)
 
       // Cerrar sesión inmediatamente
@@ -115,7 +115,7 @@ export async function signInAction(email: string, password: string): Promise<Sig
       // Retornar error específico para mostrar mensaje de aprobación pendiente
       return {
         success: false,
-        error: 'AWAITING_APPROVAL' // Flag especial para mostrar mensaje de aprobación
+        error: 'PENDIENTE' // Flag especial para mostrar mensaje de aprobación
       }
     }
 
@@ -529,7 +529,7 @@ export async function completeUserProfile(profileData: {
 
     // 9. Actualizar usuario con estado
     // NOTA: issuer_id se obtiene via JOIN con issuers.user_id, no se guarda en users
-    const newStatus = requiresApproval ? 'awaiting_approval' : 'active';
+    const newStatus = requiresApproval ? 'pendiente' : 'active';
 
     console.log('\n');
     console.log('═══════════════════════════════════════════════════════════════');
@@ -830,10 +830,10 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
     const userRole = data.role || (data.issuer_id ? 'comercial' : 'admin')
 
     // Determinar el estado del usuario según configuración
-    // - Si registration_requires_approval está activado: awaiting_approval
+    // - Si registration_requires_approval está activado: pendiente
     // - Si no: pending (comportamiento actual)
     const requiresApproval = await getRegistrationRequiresApproval()
-    const userStatus = requiresApproval ? 'awaiting_approval' : 'pending'
+    const userStatus = requiresApproval ? 'pendiente' : 'pending'
 
     // 5. Crear registro en public.users
     // REGLA: Todos los superadmins deben tener company_id = 1
@@ -860,7 +860,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
         email: data.email.trim().toLowerCase(),
         role: userRole,
         company_id: finalCompanyId,
-        status: userStatus, // 'awaiting_approval' si requiere aprobación, 'pending' si no
+        status: userStatus, // 'pendiente' si requiere aprobación, 'pending' si no
         invited_by: null // Se asignará cuando acepte la invitación
       })
       .select()
@@ -898,7 +898,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
     log.info('[registerUser] Registro en users creado con rol:', userRole)
 
     // Notificar al superadmin si el registro requiere aprobación
-    if (userStatus === 'awaiting_approval') {
+    if (userStatus === 'pendiente') {
       log.info('[registerUser] Notificando al superadmin sobre nuevo registro pendiente')
       // No esperar la notificación - ejecutar en background
       notifySuperadminNewRegistration(

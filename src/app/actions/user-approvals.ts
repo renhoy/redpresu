@@ -50,11 +50,11 @@ export async function getPendingUsers(): Promise<{ success: boolean; users?: Pen
       return { success: false, error: 'Solo superadmin puede ver usuarios pendientes' }
     }
 
-    // Obtener usuarios con estado 'awaiting_approval'
+    // Obtener usuarios con estado 'pendiente'
     const { data: pendingUsers, error: queryError } = await supabaseAdmin
       .from('users')
       .select('id, name, last_name, email, role, company_id, created_at, companies(name)')
-      .eq('status', 'awaiting_approval')
+      .eq('status', 'pendiente')
       .order('created_at', { ascending: false })
 
     if (queryError) {
@@ -108,7 +108,7 @@ export async function approveUser(userId: string): Promise<ActionResult> {
       return { success: false, error: 'Usuario no encontrado' }
     }
 
-    if (targetUser.status !== 'awaiting_approval') {
+    if (targetUser.status !== 'pendiente') {
       return { success: false, error: 'El usuario no está pendiente de aprobación' }
     }
 
@@ -189,7 +189,7 @@ export async function rejectUser(userId: string, reason?: string): Promise<Actio
       return { success: false, error: 'Usuario no encontrado' }
     }
 
-    if (targetUser.status !== 'awaiting_approval') {
+    if (targetUser.status !== 'pendiente') {
       return { success: false, error: 'El usuario no está pendiente de aprobación' }
     }
 
@@ -256,11 +256,11 @@ export async function getPendingUsersCount(): Promise<{ success: boolean; count?
       return { success: false, count: 0 }
     }
 
-    // Contar usuarios con estado 'awaiting_approval'
+    // Contar usuarios con estado 'pendiente'
     const { count, error: countError } = await supabaseAdmin
       .from('users')
       .select('*', { count: 'exact', head: true })
-      .eq('status', 'awaiting_approval')
+      .eq('status', 'pendiente')
 
     if (countError) {
       log.error('[getPendingUsersCount] Error:', countError)

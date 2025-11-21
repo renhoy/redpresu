@@ -63,7 +63,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <InactiveUserDialog showDialog={reason === 'inactive'} />
 
         {/* Diálogo de usuario pendiente de aprobación */}
-        <AwaitingApprovalDialog showDialog={reason === 'awaiting_approval'} />
+        <AwaitingApprovalDialog showDialog={reason === 'pendiente'} />
       </div>
     </div>
   );

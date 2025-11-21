@@ -112,9 +112,9 @@ export default function LoginForm() {
         }
 
         // Verificar si es usuario pendiente de aprobación
-        if (result.error === 'AWAITING_APPROVAL') {
+        if (result.error === 'PENDIENTE') {
           console.log('[LoginForm] Usuario pendiente de aprobación, redirigiendo con query param');
-          router.push('/login?reason=awaiting_approval');
+          router.push('/login?reason=pendiente');
           return;
         }
 

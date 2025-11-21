@@ -372,7 +372,7 @@ export async function completeRegistration(
 
     // 6. Determinar el estado del usuario según configuración
     const requiresApproval = await getRegistrationRequiresApproval();
-    const userStatus = requiresApproval ? 'awaiting_approval' : 'active';
+    const userStatus = requiresApproval ? 'pendiente' : 'active';
 
     console.log('\n');
     console.log('═══════════════════════════════════════════════════════════════');
@@ -391,7 +391,7 @@ export async function completeRegistration(
         last_name: "", // No se recopila en PASO 1, se puede completar después
         email: tokenData.email,
         role: "admin", // El usuario que se registra es admin de su empresa
-        status: userStatus, // 'awaiting_approval' si requiere aprobación, 'active' si no
+        status: userStatus, // 'pendiente' si requiere aprobación, 'active' si no
         company_id: companyId,
         issuer_id: emisor.id,
       });
