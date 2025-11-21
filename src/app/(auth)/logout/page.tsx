@@ -4,34 +4,39 @@ import { redirect } from 'next/navigation'
 export default async function LogoutPage() {
   console.log('[LogoutPage] Iniciando logout del lado del servidor...')
 
-  // Obtener el store de cookies
-  const cookieStore = await cookies()
+  try {
+    // Obtener el store de cookies
+    const cookieStore = await cookies()
 
-  // Obtener todas las cookies
-  const allCookies = cookieStore.getAll()
+    // Obtener todas las cookies
+    const allCookies = cookieStore.getAll()
+    const supabaseCookies = allCookies.filter(c => c.name.startsWith('sb-'))
 
-  console.log('[LogoutPage] Todas las cookies:', allCookies.map(c => c.name))
+    console.log('[LogoutPage] Cookies de Supabase encontradas:', supabaseCookies.map(c => c.name))
 
-  // Eliminar todas las cookies de Supabase
-  for (const cookie of allCookies) {
-    if (cookie.name.startsWith('sb-')) {
+    // Eliminar todas las cookies de Supabase usando set con expiración en el pasado
+    for (const cookie of supabaseCookies) {
       console.log(`[LogoutPage] Eliminando cookie: ${cookie.name}`)
-      cookieStore.delete(cookie.name)
+      cookieStore.set(cookie.name, '', {
+        expires: new Date(0),
+        path: '/',
+      })
     }
+
+    // También eliminar las cookies estándar por si acaso
+    const standardCookies = ['sb-access-token', 'sb-refresh-token', 'sb-auth-token']
+    for (const cookieName of standardCookies) {
+      cookieStore.set(cookieName, '', {
+        expires: new Date(0),
+        path: '/',
+      })
+    }
+
+    console.log('[LogoutPage] Cookies eliminadas exitosamente')
+  } catch (error) {
+    console.error('[LogoutPage] Error eliminando cookies:', error)
   }
 
-  // También eliminar las cookies estándar
-  const standardCookies = ['sb-access-token', 'sb-refresh-token', 'sb-auth-token']
-  for (const cookieName of standardCookies) {
-    try {
-      cookieStore.delete(cookieName)
-    } catch {
-      // Ignorar si no existe
-    }
-  }
-
-  console.log('[LogoutPage] Cookies eliminadas, redirigiendo a /login')
-
-  // Redirigir al login
-  redirect('/login')
+  // Redirigir a la página principal
+  redirect('/')
 }
