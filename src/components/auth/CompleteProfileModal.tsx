@@ -16,7 +16,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Tooltip,
   TooltipContent,
@@ -206,7 +205,7 @@ export function CompleteProfileModal({
   return (
     <Dialog open={true} onOpenChange={() => {}}>
       <DialogContent
-        className="max-w-4xl w-[90vw] overflow-visible"
+        className="max-w-4xl w-[90vw] max-h-[90vh] overflow-y-auto"
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
@@ -517,16 +516,12 @@ export function CompleteProfileModal({
 
         {/* Información Legal */}
         {legalNotice && (
-          <Card className="mt-4">
-            <CardHeader className="py-2 px-4">
-              <CardTitle className="text-sm">Información Legal</CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 pb-3 pt-0">
-              <div className="text-xs text-muted-foreground max-h-28 overflow-y-auto prose prose-xs">
-                <div dangerouslySetInnerHTML={{ __html: legalNotice }} />
-              </div>
-            </CardContent>
-          </Card>
+          <div className="mt-4 pt-4 border-t">
+            <div
+              className="text-xs text-muted-foreground prose prose-xs max-w-none"
+              dangerouslySetInnerHTML={{ __html: legalNotice }}
+            />
+          </div>
         )}
       </DialogContent>
     </Dialog>
