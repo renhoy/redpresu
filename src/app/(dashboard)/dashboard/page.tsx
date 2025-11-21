@@ -3,7 +3,7 @@ import { getServerUser } from '@/lib/auth/server'
 import { getDashboardStats } from '@/app/actions/dashboard'
 import { userHasBudgets } from '@/app/actions/budgets'
 import { getAllHelpArticles, filterArticlesByRole } from '@/lib/helpers/markdown-helpers'
-import { getConfigValue } from '@/lib/helpers/config-helpers'
+import { getFormsLegalNotice } from '@/lib/helpers/config-helpers'
 import { DashboardClient } from '@/components/dashboard/DashboardClient'
 
 export default async function DashboardPage() {
@@ -17,10 +17,7 @@ export default async function DashboardPage() {
   const hasIncompleteProfile = !user.issuer_id
 
   // Obtener aviso legal para el modal
-  const legalNoticeResult = await getConfigValue('forms_legal_notice')
-  const legalNotice = legalNoticeResult.success
-    ? (legalNoticeResult.value as string)
-    : ''
+  const legalNotice = await getFormsLegalNotice()
 
   // Si el usuario tiene perfil incompleto, no cargar estadísticas (fallarían por company_id null)
   let stats = null
