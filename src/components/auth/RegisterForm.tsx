@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { simplifiedRegister } from "@/app/actions/auth";
+import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -78,21 +78,50 @@ export default function RegisterForm() {
     setIsLoading(true);
 
     try {
-      const result = await simplifiedRegister({
-        name: formData.name.trim(),
-        email: formData.email.trim(),
+      // IMPORTANTE: Hacer signUp desde el CLIENTE para que el code_verifier
+      // se guarde en localStorage y esté disponible en el callback
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+
+      console.log("[RegisterForm] Registrando con Supabase...");
+      console.log("[RegisterForm] Redirect URL:", `${appUrl}/auth/callback`);
+
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: formData.email.trim().toLowerCase(),
         password: formData.password,
+        options: {
+          data: {
+            name: formData.name.trim(),
+          },
+          emailRedirectTo: `${appUrl}/auth/callback`,
+        },
       });
 
-      if (!result.success) {
-        setErrors({
-          general: result.error || "Error desconocido durante el registro",
-        });
+      if (signUpError) {
+        console.error("[RegisterForm] Error de Supabase:", signUpError);
+
+        // Traducir errores comunes
+        let errorMessage = signUpError.message;
+        if (signUpError.message.includes("already registered")) {
+          errorMessage = "Este email ya está registrado. ¿Quieres iniciar sesión?";
+        } else if (signUpError.message.includes("valid email")) {
+          errorMessage = "Por favor, introduce un email válido";
+        } else if (signUpError.message.includes("at least")) {
+          errorMessage = "La contraseña debe tener al menos 6 caracteres";
+        }
+
+        setErrors({ general: errorMessage });
+        return;
+      }
+
+      // Verificar que se creó el usuario
+      if (!data.user) {
+        setErrors({ general: "Error al crear el usuario" });
         return;
       }
 
       // Registro completado exitosamente
       console.log("[RegisterForm] Registro exitoso - Email de confirmación enviado");
+      console.log("[RegisterForm] User ID:", data.user.id);
 
       setRegisteredEmail(formData.email);
       setRegistrationSuccess(true);
