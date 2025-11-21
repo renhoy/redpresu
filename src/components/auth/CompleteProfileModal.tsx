@@ -199,7 +199,7 @@ export function CompleteProfileModal({
   return (
     <Dialog open={true} onOpenChange={() => {}}>
       <DialogContent
-        className="max-w-4xl max-h-[80vh] overflow-y-auto"
+        className="max-w-4xl w-[90vw] overflow-visible"
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
@@ -560,18 +560,25 @@ export function CompleteProfileModal({
         </form>
 
         {/* Información Legal */}
-        {legalNotice && (
-          <Card className="mt-6">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Información Legal</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-xs text-muted-foreground max-h-32 overflow-y-auto prose prose-xs">
+        <Card className="mt-6">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Información Legal</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-xs text-muted-foreground max-h-40 overflow-y-auto">
+              {legalNotice ? (
                 <div dangerouslySetInnerHTML={{ __html: legalNotice }} />
-              </div>
-            </CardContent>
-          </Card>
-        )}
+              ) : (
+                <p>
+                  Al registrarte y completar tus datos fiscales, aceptas nuestros términos de servicio
+                  y política de privacidad. Tus datos serán tratados de acuerdo con la normativa vigente
+                  de protección de datos (RGPD). Para más información, consulta nuestra página de
+                  información legal.
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </DialogContent>
     </Dialog>
   );
