@@ -6,12 +6,18 @@ import type { NextRequest } from 'next/server'
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
+  const error = requestUrl.searchParams.get('error')
+  const errorCode = requestUrl.searchParams.get('error_code')
+  const errorDescription = requestUrl.searchParams.get('error_description')
 
   console.log('[auth/callback] ========================================')
   console.log('[auth/callback] CALLBACK INICIADO')
   console.log('[auth/callback] URL completa:', request.url)
+  console.log('[auth/callback] Todos los params:', Object.fromEntries(requestUrl.searchParams))
   console.log('[auth/callback] Code presente:', code ? 'SI' : 'NO')
-  console.log('[auth/callback] SUPABASE_SCHEMA:', process.env.SUPABASE_SCHEMA || 'NO DEFINIDO (usando public)')
+  console.log('[auth/callback] Error:', error || 'ninguno')
+  console.log('[auth/callback] Error code:', errorCode || 'ninguno')
+  console.log('[auth/callback] Error description:', errorDescription || 'ninguno')
   console.log('[auth/callback] ========================================')
 
   if (code) {
@@ -83,6 +89,12 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  console.log('[auth/callback] Sin código, redirigiendo a login')
+  // Si Supabase envió un error, mostrarlo
+  if (error) {
+    console.error('[auth/callback] Supabase envió error:', { error, errorCode, errorDescription })
+    return NextResponse.redirect(new URL(`/login?error=${error}&description=${errorDescription || ''}`, request.url))
+  }
+
+  console.log('[auth/callback] Sin código ni error, redirigiendo a login')
   return NextResponse.redirect(new URL('/login', request.url))
 }
