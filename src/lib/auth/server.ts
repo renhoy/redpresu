@@ -15,9 +15,13 @@ export async function getServerUser() {
   console.log('[getServerUser] Auth user found:', user.id, user.email)
 
   // Usar supabaseAdmin para query (bypasea RLS pero es seguro porque filtramos por user.id autenticado)
+  // Incluir issuer_id mediante LEFT JOIN con issuers
   const { data: userData, error: dbError } = await supabaseAdmin
     .from('users')
-    .select('*')
+    .select(`
+      *,
+      issuer:issuers!user_id(id)
+    `)
     .eq('id', user.id)
     .maybeSingle()
 
@@ -52,11 +56,17 @@ export async function getServerUser() {
     return null
   }
 
-  // Retornar solo datos de la tabla users + id y email del auth
+  // Extraer issuer_id del JOIN
+  const issuer_id = userData.issuer?.[0]?.id || null
+
+  // Retornar solo datos de la tabla users + id y email del auth + issuer_id del JOIN
   // Evitar spread de user.* para no sobreescribir campos con metadata de auth
+  const { issuer, ...userDataWithoutIssuer } = userData
+
   return {
     id: user.id,
     email: user.email,
-    ...userData
+    ...userDataWithoutIssuer,
+    issuer_id
   }
 }

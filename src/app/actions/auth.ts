@@ -438,9 +438,15 @@ export async function completeUserProfile(profileData: {
       };
     }
 
-    // 4. Verificar que el usuario no tenga ya un issuer_id
-    if (userData.issuer_id) {
-      console.log('[completeUserProfile] Usuario ya tiene issuer_id:', userData.issuer_id);
+    // 4. Verificar que el usuario no tenga ya un issuer creado
+    const { data: existingIssuer } = await supabaseAdmin
+      .from('issuers')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (existingIssuer) {
+      console.log('[completeUserProfile] Usuario ya tiene issuer:', existingIssuer.id);
       return {
         success: false,
         error: 'El perfil ya fue completado anteriormente',
@@ -484,50 +490,52 @@ export async function completeUserProfile(profileData: {
       console.log('[completeUserProfile] Usando company_id existente:', companyId);
     }
 
-    // 7. Crear emisor
-    console.log('[completeUserProfile] Creando emisor...');
-    const { data: emisor, error: emisorError } = await supabaseAdmin
-      .from('emisores')
+    // 7. Crear issuer
+    console.log('[completeUserProfile] Creando issuer...');
+    const { data: issuer, error: issuerError } = await supabaseAdmin
+      .from('issuers')
       .insert({
-        tipo: tipo_emisor,
-        nif: profileData.nif,
-        razon_social: profileData.razon_social,
-        domicilio: profileData.domicilio,
-        codigo_postal: profileData.codigo_postal,
-        poblacion: profileData.poblacion,
-        provincia: profileData.provincia,
-        pais: 'España',
-        telefono: profileData.telefono,
-        email: profileData.email_contacto,
-        web: profileData.web || '',
-        irpf_percentage: profileData.irpf_percentage || null,
+        user_id: user.id,
         company_id: companyId,
+        type: tipo_emisor,
+        name: profileData.razon_social,
+        nif: profileData.nif,
+        address: profileData.domicilio,
+        postal_code: profileData.codigo_postal,
+        locality: profileData.poblacion,
+        province: profileData.provincia,
+        country: 'España',
+        phone: profileData.telefono,
+        email: profileData.email_contacto,
+        web: profileData.web || null,
+        irpf_percentage: profileData.irpf_percentage || null,
       })
       .select()
       .single();
 
-    if (emisorError || !emisor) {
-      console.error('[completeUserProfile] Error creando emisor:', emisorError);
+    if (issuerError || !issuer) {
+      console.error('[completeUserProfile] Error creando issuer:', issuerError);
       return {
         success: false,
-        error: `Error al crear el emisor: ${emisorError?.message || 'Error desconocido'}`,
+        error: `Error al crear el emisor: ${issuerError?.message || 'Error desconocido'}`,
       };
     }
 
-    console.log('[completeUserProfile] Emisor creado:', emisor.id);
+    console.log('[completeUserProfile] Issuer creado:', issuer.id);
 
     // 8. Verificar si requiere aprobación
     const requiresApproval = await getRegistrationRequiresApproval();
     console.log('[completeUserProfile] Requiere aprobación:', requiresApproval);
 
-    // 9. Actualizar usuario con issuer_id y estado
+    // 9. Actualizar usuario con estado
+    // NOTA: issuer_id se obtiene via JOIN con issuers.user_id, no se guarda en users
     const newStatus = requiresApproval ? 'awaiting_approval' : 'active';
 
     console.log('\n');
     console.log('═══════════════════════════════════════════════════════════════');
     console.log('[completeUserProfile] ACTUALIZANDO USUARIO');
     console.log('═══════════════════════════════════════════════════════════════');
-    console.log(`📋 Issuer ID: ${emisor.id}`);
+    console.log(`📋 Issuer ID: ${issuer.id}`);
     console.log(`🔐 Nuevo Status: ${newStatus}`);
     console.log(`👤 Usuario: ${userData.name} (${userData.email})`);
     console.log('───────────────────────────────────────────────────────────────');
@@ -535,7 +543,6 @@ export async function completeUserProfile(profileData: {
     const { error: updateError } = await supabaseAdmin
       .from('users')
       .update({
-        issuer_id: emisor.id,
         status: newStatus,
       })
       .eq('id', user.id);

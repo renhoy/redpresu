@@ -36,7 +36,8 @@ export async function GET(request: NextRequest) {
       if (!existingUser) {
         console.log('[auth/callback] Creando registro en public.users...')
 
-        // Crear registro en public.users con datos mínimos
+        // Crear registro en redpresu.users con datos mínimos
+        // issuer_id se obtiene via JOIN con issuers.user_id (será null hasta completar perfil)
         const { error: insertError } = await supabaseAdmin
           .from('users')
           .insert({
@@ -47,7 +48,6 @@ export async function GET(request: NextRequest) {
             role: 'admin', // Por defecto, será admin de su propia empresa
             status: 'pending', // Pendiente hasta completar perfil
             company_id: null, // Se asignará cuando complete el perfil
-            // issuer_id se añadirá tras ejecutar migración 050, por defecto será null
           })
 
         if (insertError) {
