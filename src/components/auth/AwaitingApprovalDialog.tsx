@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,7 +18,6 @@ interface AwaitingApprovalDialogProps {
 }
 
 export function AwaitingApprovalDialog({ showDialog }: AwaitingApprovalDialogProps) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -35,23 +33,31 @@ export function AwaitingApprovalDialog({ showDialog }: AwaitingApprovalDialogPro
     setIsLoggingOut(true);
 
     try {
+      // Limpiar tokens de localStorage para evitar problemas de PKCE
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('sb-auth-token');
+        // Limpiar cualquier otro token de Supabase
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('sb-')) {
+            localStorage.removeItem(key);
+          }
+        });
+      }
+
       // Usar cliente de Supabase del navegador para cerrar sesión
-      const { error } = await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
 
       if (error) {
         console.error("[AwaitingApprovalDialog] Error al cerrar sesión:", error.message);
       } else {
         console.log("[AwaitingApprovalDialog] Sesión cerrada exitosamente");
       }
-
-      // Redirigir a la página principal
-      router.push("/");
-      router.refresh();
     } catch (error) {
       console.error("[AwaitingApprovalDialog] Error crítico:", error);
-      // Intentar redirigir de todos modos
-      router.push("/");
     }
+
+    // Usar window.location para asegurar una redirección limpia
+    window.location.href = "/";
   };
 
   return (
