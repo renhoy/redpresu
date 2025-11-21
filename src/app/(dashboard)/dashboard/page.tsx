@@ -51,6 +51,7 @@ export default async function DashboardPage() {
     <DashboardClient
       initialStats={stats}
       userRole={user.role}
+      userStatus={user.status}
       hasBudgets={hasBudgets}
       helpArticles={primerosPasosArticles}
       hasIncompleteProfile={hasIncompleteProfile}

@@ -10,15 +10,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Clock, Loader2 } from "lucide-react";
+import { Clock } from "lucide-react";
 
 interface AwaitingApprovalDialogProps {
   showDialog: boolean;
+  onClose?: () => void;
 }
 
-export function AwaitingApprovalDialog({ showDialog }: AwaitingApprovalDialogProps) {
+export function AwaitingApprovalDialog({ showDialog, onClose }: AwaitingApprovalDialogProps) {
   const [open, setOpen] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     if (showDialog) {
@@ -28,21 +28,9 @@ export function AwaitingApprovalDialog({ showDialog }: AwaitingApprovalDialogPro
   }, [showDialog]);
 
   const handleClose = () => {
-    console.log("[AwaitingApprovalDialog] Cerrando sesión...");
-    setIsLoggingOut(true);
-
-    // Limpiar tokens de localStorage para evitar problemas de PKCE
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('sb-auth-token');
-      Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('sb-')) {
-          localStorage.removeItem(key);
-        }
-      });
-    }
-
-    // Redirigir a la página de logout que maneja todo del lado del servidor
-    window.location.href = "/logout";
+    console.log("[AwaitingApprovalDialog] Cerrando diálogo");
+    setOpen(false);
+    onClose?.();
   };
 
   return (
@@ -83,17 +71,9 @@ export function AwaitingApprovalDialog({ showDialog }: AwaitingApprovalDialogPro
         <AlertDialogFooter>
           <AlertDialogAction
             onClick={handleClose}
-            disabled={isLoggingOut}
             className="bg-lime-500 hover:bg-lime-600"
           >
-            {isLoggingOut ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Cerrando sesión...
-              </>
-            ) : (
-              "Entendido"
-            )}
+            Entendido
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

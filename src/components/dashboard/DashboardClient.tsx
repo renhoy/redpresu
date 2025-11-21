@@ -55,6 +55,7 @@ interface DashboardClientProps {
     totalValue: string;
   } | null;
   userRole: string;
+  userStatus?: string;
   hasBudgets?: boolean;
   helpArticles?: HelpArticleMeta[];
   hasIncompleteProfile: boolean;
@@ -96,6 +97,7 @@ type Periodo = "hoy" | "semana" | "mes" | "año";
 export function DashboardClient({
   initialStats,
   userRole,
+  userStatus,
   hasBudgets = true,
   helpArticles = [],
   hasIncompleteProfile,
@@ -110,7 +112,8 @@ export function DashboardClient({
 
   // Estados para modales
   const [showCompleteProfile, setShowCompleteProfile] = useState(hasIncompleteProfile);
-  const [showAwaitingApproval, setShowAwaitingApproval] = useState(false);
+  // Mostrar dialog si el usuario tiene status 'pendiente' (esperando aprobación)
+  const [showAwaitingApproval, setShowAwaitingApproval] = useState(userStatus === 'pendiente');
 
   // Detectar y ejecutar tour pendiente
   useEffect(() => {
@@ -498,7 +501,10 @@ export function DashboardClient({
 
       {/* Diálogo de espera de aprobación */}
       {showAwaitingApproval && (
-        <AwaitingApprovalDialog showDialog={showAwaitingApproval} />
+        <AwaitingApprovalDialog
+          showDialog={showAwaitingApproval}
+          onClose={() => setShowAwaitingApproval(false)}
+        />
       )}
     </div>
   );
