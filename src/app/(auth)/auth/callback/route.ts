@@ -5,20 +5,27 @@ import type { NextRequest } from 'next/server'
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
-  const next = requestUrl.searchParams.get('next') ?? '/login'
+
+  console.log('[auth/callback] Iniciando callback con code:', code ? 'presente' : 'ausente')
 
   if (code) {
-    const supabase = await createServerActionClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    try {
+      const supabase = await createServerActionClient()
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
-    if (!error) {
-      console.log('[auth/callback] Email confirmado exitosamente')
-      return NextResponse.redirect(new URL(next, request.url))
+      if (error) {
+        console.error('[auth/callback] Error al confirmar email:', error)
+        return NextResponse.redirect(new URL('/login?error=confirmation', request.url))
+      }
+
+      console.log('[auth/callback] Email confirmado exitosamente para:', data.user?.email)
+      return NextResponse.redirect(new URL('/login', request.url))
+    } catch (error) {
+      console.error('[auth/callback] Error inesperado:', error)
+      return NextResponse.redirect(new URL('/login?error=unexpected', request.url))
     }
-
-    console.error('[auth/callback] Error al confirmar email:', error)
   }
 
-  // En caso de error o sin código, redirigir a login
+  console.log('[auth/callback] Sin código, redirigiendo a login')
   return NextResponse.redirect(new URL('/login', request.url))
 }

@@ -322,7 +322,7 @@ export async function simplifiedRegister(data: {
         data: {
           name: data.name,
         },
-        emailRedirectTo: `${await getAppUrl()}/auth/callback?next=/login`,
+        emailRedirectTo: `${await getAppUrl()}/auth/callback`,
       },
     });
 

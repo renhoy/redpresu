@@ -15,7 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2 } from "lucide-react";
+import { Loader2, User } from "lucide-react";
 import { validateEmail } from "@/lib/helpers/email-validation";
 
 interface RegisterErrors {
