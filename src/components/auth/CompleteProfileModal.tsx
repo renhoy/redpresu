@@ -75,61 +75,48 @@ export function CompleteProfileModal({
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-    // Validar NIF
     if (!formData.nif.trim()) {
       newErrors.nif = "El NIF es obligatorio";
     }
 
-    // Validar Razón Social
     if (!formData.razon_social.trim()) {
       newErrors.razon_social = "La razón social es obligatoria";
     }
 
-    // Validar domicilio
     if (!formData.domicilio.trim()) {
       newErrors.domicilio = "El domicilio es obligatorio";
     }
 
-    // Validar código postal
     if (!formData.codigo_postal.trim()) {
       newErrors.codigo_postal = "El código postal es obligatorio";
     } else if (!/^\d{5}$/.test(formData.codigo_postal)) {
       newErrors.codigo_postal = "Código postal inválido (debe tener 5 dígitos)";
     }
 
-    // Validar población
     if (!formData.poblacion.trim()) {
       newErrors.poblacion = "La población es obligatoria";
     }
 
-    // Validar provincia
     if (!formData.provincia.trim()) {
       newErrors.provincia = "La provincia es obligatoria";
     }
 
-    // Validar teléfono
     if (!formData.telefono.trim()) {
       newErrors.telefono = "El teléfono es obligatorio";
     }
 
-    // Validar email de contacto
     if (!formData.email_contacto.trim()) {
       newErrors.email_contacto = "El email de contacto es obligatorio";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email_contacto)) {
       newErrors.email_contacto = "Email de contacto inválido";
     }
 
-    // Validar IRPF para autónomos
     if (tipoEmisor === "autonomo") {
-      if (
-        formData.irpf_percentage < 0 ||
-        formData.irpf_percentage > 100
-      ) {
+      if (formData.irpf_percentage < 0 || formData.irpf_percentage > 100) {
         newErrors.irpf_percentage = "El IRPF debe estar entre 0 y 100";
       }
     }
 
-    // Validar privacidad
     if (!formData.privacyAccepted) {
       newErrors.general = "Debes aceptar la política de privacidad para continuar";
     }
@@ -176,8 +163,6 @@ export function CompleteProfileModal({
       console.log("[CompleteProfileModal] Requiere aprobación:", result.requiresApproval);
 
       toast.success("Perfil completado exitosamente");
-
-      // Llamar al callback con el estado de aprobación
       onComplete(result.requiresApproval || false);
     } catch (error) {
       console.error("[CompleteProfileModal] Error inesperado:", error);
@@ -202,7 +187,6 @@ export function CompleteProfileModal({
         [field]: value,
       }));
 
-      // Limpiar error del campo cuando el usuario empieza a escribir
       if (errors[field as keyof FormErrors]) {
         setErrors((prev) => ({
           ...prev,
@@ -214,7 +198,7 @@ export function CompleteProfileModal({
   return (
     <Dialog open={true} onOpenChange={() => {}}>
       <DialogContent
-        className="max-w-2xl max-h-[90vh] overflow-y-auto"
+        className="max-w-4xl overflow-visible"
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
@@ -234,6 +218,21 @@ export function CompleteProfileModal({
               <AlertDescription>{errors.general}</AlertDescription>
             </Alert>
           )}
+
+          {/* Datos del Administrador */}
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold">Datos del Administrador</h3>
+            <div className="bg-lime-50 p-4 rounded-lg grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Nombre</p>
+                <p className="font-medium">{userName}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Email</p>
+                <p className="font-medium">{userEmail}</p>
+              </div>
+            </div>
+          </div>
 
           {/* Tipo de Emisor - Tabs */}
           <div className="space-y-2">
@@ -256,77 +255,149 @@ export function CompleteProfileModal({
             </Tabs>
           </div>
 
-          {/* Información del usuario */}
-          <div className="bg-lime-50 p-4 rounded-lg space-y-1">
-            <p className="text-sm font-medium">Administrador: {userName}</p>
-            <p className="text-sm text-muted-foreground">Email: {userEmail}</p>
-          </div>
-
           {/* Datos fiscales */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Datos Fiscales</h3>
 
-            {/* NIF y Razón Social */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="nif">
-                  NIF / CIF <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="nif"
-                  type="text"
-                  placeholder="12345678A"
-                  value={formData.nif}
-                  onChange={handleInputChange("nif")}
-                  className={errors.nif ? "border-red-500" : ""}
-                  disabled={isLoading}
-                />
-                {errors.nif && (
-                  <p className="text-sm text-red-600">{errors.nif}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="razon_social">
-                  Razón Social <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="razon_social"
-                  type="text"
-                  placeholder="Mi Empresa S.L."
-                  value={formData.razon_social}
-                  onChange={handleInputChange("razon_social")}
-                  className={errors.razon_social ? "border-red-500" : ""}
-                  disabled={isLoading}
-                />
-                {errors.razon_social && (
-                  <p className="text-sm text-red-600">{errors.razon_social}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Domicilio */}
-            <div className="space-y-2">
-              <Label htmlFor="domicilio">
-                Domicilio Fiscal <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="domicilio"
-                type="text"
-                placeholder="Calle Principal, 123"
-                value={formData.domicilio}
-                onChange={handleInputChange("domicilio")}
-                className={errors.domicilio ? "border-red-500" : ""}
-                disabled={isLoading}
-              />
-              {errors.domicilio && (
-                <p className="text-sm text-red-600">{errors.domicilio}</p>
+            {/* Razón Social + IRPF (solo autónomo) + NIF */}
+            <div className="grid grid-cols-12 gap-4">
+              {tipoEmisor === "empresa" ? (
+                <>
+                  {/* Empresa: Razón Social (75%) + NIF (25%) */}
+                  <div className="col-span-9 space-y-2">
+                    <Label htmlFor="razon_social">
+                      Razón Social <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="razon_social"
+                      type="text"
+                      placeholder="Mi Empresa S.L."
+                      value={formData.razon_social}
+                      onChange={handleInputChange("razon_social")}
+                      className={errors.razon_social ? "border-red-500" : ""}
+                      disabled={isLoading}
+                    />
+                    {errors.razon_social && (
+                      <p className="text-sm text-red-600">{errors.razon_social}</p>
+                    )}
+                  </div>
+                  <div className="col-span-3 space-y-2">
+                    <Label htmlFor="nif">
+                      NIF / CIF <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="nif"
+                      type="text"
+                      placeholder="B12345678"
+                      value={formData.nif}
+                      onChange={handleInputChange("nif")}
+                      className={errors.nif ? "border-red-500" : ""}
+                      disabled={isLoading}
+                    />
+                    {errors.nif && (
+                      <p className="text-sm text-red-600">{errors.nif}</p>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Autónomo: Razón Social (50%) + IRPF (25%) + NIF (25%) */}
+                  <div className="col-span-6 space-y-2">
+                    <Label htmlFor="razon_social">
+                      Nombre Completo <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="razon_social"
+                      type="text"
+                      placeholder="Juan García López"
+                      value={formData.razon_social}
+                      onChange={handleInputChange("razon_social")}
+                      className={errors.razon_social ? "border-red-500" : ""}
+                      disabled={isLoading}
+                    />
+                    {errors.razon_social && (
+                      <p className="text-sm text-red-600">{errors.razon_social}</p>
+                    )}
+                  </div>
+                  <div className="col-span-3 space-y-2">
+                    <div className="flex items-center gap-1">
+                      <Label htmlFor="irpf_percentage">
+                        IRPF (%) <span className="text-red-500">*</span>
+                      </Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger type="button">
+                            <Info className="h-4 w-4 text-muted-foreground" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs">
+                              Porcentaje de retención de IRPF aplicable a tus facturas. Por defecto 15%.
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <Input
+                      id="irpf_percentage"
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      value={formData.irpf_percentage}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          irpf_percentage: parseFloat(e.target.value) || 0,
+                        }))
+                      }
+                      className={errors.irpf_percentage ? "border-red-500" : ""}
+                      disabled={isLoading}
+                    />
+                    {errors.irpf_percentage && (
+                      <p className="text-sm text-red-600">{errors.irpf_percentage}</p>
+                    )}
+                  </div>
+                  <div className="col-span-3 space-y-2">
+                    <Label htmlFor="nif">
+                      NIF <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="nif"
+                      type="text"
+                      placeholder="12345678A"
+                      value={formData.nif}
+                      onChange={handleInputChange("nif")}
+                      className={errors.nif ? "border-red-500" : ""}
+                      disabled={isLoading}
+                    />
+                    {errors.nif && (
+                      <p className="text-sm text-red-600">{errors.nif}</p>
+                    )}
+                  </div>
+                </>
               )}
             </div>
 
-            {/* Código Postal, Población, Provincia */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
+            {/* Domicilio (75%) + Código Postal (25%) */}
+            <div className="grid grid-cols-12 gap-4">
+              <div className="col-span-9 space-y-2">
+                <Label htmlFor="domicilio">
+                  Domicilio Fiscal <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="domicilio"
+                  type="text"
+                  placeholder="Calle Principal, 123"
+                  value={formData.domicilio}
+                  onChange={handleInputChange("domicilio")}
+                  className={errors.domicilio ? "border-red-500" : ""}
+                  disabled={isLoading}
+                />
+                {errors.domicilio && (
+                  <p className="text-sm text-red-600">{errors.domicilio}</p>
+                )}
+              </div>
+              <div className="col-span-3 space-y-2">
                 <Label htmlFor="codigo_postal">
                   Código Postal <span className="text-red-500">*</span>
                 </Label>
@@ -344,8 +415,11 @@ export function CompleteProfileModal({
                   <p className="text-sm text-red-600">{errors.codigo_postal}</p>
                 )}
               </div>
+            </div>
 
-              <div className="space-y-2">
+            {/* Población (75%) + Provincia (25%) */}
+            <div className="grid grid-cols-12 gap-4">
+              <div className="col-span-9 space-y-2">
                 <Label htmlFor="poblacion">
                   Población <span className="text-red-500">*</span>
                 </Label>
@@ -362,8 +436,7 @@ export function CompleteProfileModal({
                   <p className="text-sm text-red-600">{errors.poblacion}</p>
                 )}
               </div>
-
-              <div className="space-y-2">
+              <div className="col-span-3 space-y-2">
                 <Label htmlFor="provincia">
                   Provincia <span className="text-red-500">*</span>
                 </Label>
@@ -381,59 +454,15 @@ export function CompleteProfileModal({
                 )}
               </div>
             </div>
-
-            {/* IRPF (solo para autónomos) */}
-            {tipoEmisor === "autonomo" && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="irpf_percentage">
-                    IRPF (%) <span className="text-red-500">*</span>
-                  </Label>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger type="button">
-                        <Info className="h-4 w-4 text-muted-foreground" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="max-w-xs">
-                          Porcentaje de retención de IRPF aplicable a tus
-                          facturas. Por defecto 15%.
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-                <Input
-                  id="irpf_percentage"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  value={formData.irpf_percentage}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      irpf_percentage: parseFloat(e.target.value) || 0,
-                    }))
-                  }
-                  className={errors.irpf_percentage ? "border-red-500" : ""}
-                  disabled={isLoading}
-                />
-                {errors.irpf_percentage && (
-                  <p className="text-sm text-red-600">
-                    {errors.irpf_percentage}
-                  </p>
-                )}
-              </div>
-            )}
           </div>
 
           {/* Datos de contacto */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Datos de Contacto</h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
+            {/* Teléfono (25%) + Email (50%) + Web (25%) */}
+            <div className="grid grid-cols-12 gap-4">
+              <div className="col-span-3 space-y-2">
                 <Label htmlFor="telefono">
                   Teléfono <span className="text-red-500">*</span>
                 </Label>
@@ -450,8 +479,7 @@ export function CompleteProfileModal({
                   <p className="text-sm text-red-600">{errors.telefono}</p>
                 )}
               </div>
-
-              <div className="space-y-2">
+              <div className="col-span-6 space-y-2">
                 <Label htmlFor="email_contacto">
                   Email de Contacto <span className="text-red-500">*</span>
                 </Label>
@@ -468,22 +496,21 @@ export function CompleteProfileModal({
                   <p className="text-sm text-red-600">{errors.email_contacto}</p>
                 )}
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="web">Página Web (opcional)</Label>
-              <Input
-                id="web"
-                type="url"
-                placeholder="https://miempresa.com"
-                value={formData.web}
-                onChange={handleInputChange("web")}
-                className={errors.web ? "border-red-500" : ""}
-                disabled={isLoading}
-              />
-              {errors.web && (
-                <p className="text-sm text-red-600">{errors.web}</p>
-              )}
+              <div className="col-span-3 space-y-2">
+                <Label htmlFor="web">Web (opcional)</Label>
+                <Input
+                  id="web"
+                  type="url"
+                  placeholder="https://web.com"
+                  value={formData.web}
+                  onChange={handleInputChange("web")}
+                  className={errors.web ? "border-red-500" : ""}
+                  disabled={isLoading}
+                />
+                {errors.web && (
+                  <p className="text-sm text-red-600">{errors.web}</p>
+                )}
+              </div>
             </div>
           </div>
 
@@ -519,17 +546,27 @@ export function CompleteProfileModal({
           </div>
 
           {/* Botón de submit */}
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Completando perfil...
+                Guardando...
               </>
             ) : (
-              "Completar Perfil"
+              "Guardar"
             )}
           </Button>
         </form>
+
+        {/* Información Legal */}
+        {legalNotice && (
+          <div className="mt-6 pt-4 border-t">
+            <h4 className="text-sm font-semibold mb-2">Información Legal</h4>
+            <div className="text-xs text-muted-foreground bg-gray-50 p-3 rounded-lg max-h-32 overflow-y-auto">
+              <div dangerouslySetInnerHTML={{ __html: legalNotice }} />
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
