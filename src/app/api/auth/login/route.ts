@@ -55,13 +55,43 @@ export async function POST(request: NextRequest) {
     console.log('[API /auth/login] Usuario autenticado:', data.user.email)
 
     // Obtener datos del usuario
-    const { data: userData, error: userError } = await supabaseAdmin
+    let { data: userData, error: userError } = await supabaseAdmin
       .from('users')
       .select('*')
       .eq('id', data.user.id)
-      .single()
+      .maybeSingle()
 
-    if (userError || !userData) {
+    // Si el usuario no existe en public.users, crearlo
+    if (!userData) {
+      console.log('[API /auth/login] Usuario no existe en public.users, creando...')
+
+      const { data: newUser, error: createError } = await supabaseAdmin
+        .from('users')
+        .insert({
+          id: data.user.id,
+          name: data.user.user_metadata?.name || 'Usuario',
+          last_name: '',
+          email: data.user.email || '',
+          role: 'admin',
+          status: 'pending',
+          company_id: null,
+        })
+        .select()
+        .single()
+
+      if (createError) {
+        console.error('[API /auth/login] Error creando usuario:', createError)
+        return NextResponse.json(
+          { success: false, error: 'Error al crear datos del usuario' },
+          { status: 500 }
+        )
+      }
+
+      console.log('[API /auth/login] ✅ Usuario creado en public.users:', newUser.id)
+      userData = newUser
+    }
+
+    if (userError && userError.code !== 'PGRST116') {
       console.error('[API /auth/login] Error obteniendo usuario:', userError)
       return NextResponse.json(
         { success: false, error: 'Error al obtener datos del usuario' },
