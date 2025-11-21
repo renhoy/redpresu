@@ -11,7 +11,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Clock, Loader2 } from "lucide-react";
-import { supabase } from "@/lib/supabase/client";
 
 interface AwaitingApprovalDialogProps {
   showDialog: boolean;
@@ -36,7 +35,6 @@ export function AwaitingApprovalDialog({ showDialog }: AwaitingApprovalDialogPro
       // Limpiar tokens de localStorage para evitar problemas de PKCE
       if (typeof window !== 'undefined') {
         localStorage.removeItem('sb-auth-token');
-        // Limpiar cualquier otro token de Supabase
         Object.keys(localStorage).forEach(key => {
           if (key.startsWith('sb-')) {
             localStorage.removeItem(key);
@@ -44,11 +42,14 @@ export function AwaitingApprovalDialog({ showDialog }: AwaitingApprovalDialogPro
         });
       }
 
-      // Usar cliente de Supabase del navegador para cerrar sesión
-      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      // Llamar a la API route para cerrar sesión y limpiar cookies del servidor
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
 
-      if (error) {
-        console.error("[AwaitingApprovalDialog] Error al cerrar sesión:", error.message);
+      if (!response.ok) {
+        console.error("[AwaitingApprovalDialog] Error al cerrar sesión en servidor");
       } else {
         console.log("[AwaitingApprovalDialog] Sesión cerrada exitosamente");
       }
