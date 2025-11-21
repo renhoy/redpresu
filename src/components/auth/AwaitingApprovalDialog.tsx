@@ -27,38 +27,22 @@ export function AwaitingApprovalDialog({ showDialog }: AwaitingApprovalDialogPro
     }
   }, [showDialog]);
 
-  const handleClose = async () => {
-    console.log("[AwaitingApprovalDialog] Iniciando cierre de sesión...");
+  const handleClose = () => {
+    console.log("[AwaitingApprovalDialog] Cerrando sesión...");
     setIsLoggingOut(true);
 
-    try {
-      // Limpiar tokens de localStorage para evitar problemas de PKCE
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('sb-auth-token');
-        Object.keys(localStorage).forEach(key => {
-          if (key.startsWith('sb-')) {
-            localStorage.removeItem(key);
-          }
-        });
-      }
-
-      // Llamar a la API route para cerrar sesión y limpiar cookies del servidor
-      const response = await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
+    // Limpiar tokens de localStorage para evitar problemas de PKCE
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('sb-auth-token');
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('sb-')) {
+          localStorage.removeItem(key);
+        }
       });
-
-      if (!response.ok) {
-        console.error("[AwaitingApprovalDialog] Error al cerrar sesión en servidor");
-      } else {
-        console.log("[AwaitingApprovalDialog] Sesión cerrada exitosamente");
-      }
-    } catch (error) {
-      console.error("[AwaitingApprovalDialog] Error crítico:", error);
     }
 
-    // Usar window.location para asegurar una redirección limpia
-    window.location.href = "/";
+    // Redirigir a la página de logout que maneja todo del lado del servidor
+    window.location.href = "/logout";
   };
 
   return (

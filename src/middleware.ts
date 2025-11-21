@@ -115,7 +115,8 @@ export async function middleware(req: NextRequest) {
 
     // Definir rutas públicas que no requieren autenticación
     // IMPORTANTE: /auth incluye /auth/callback y /auth/confirmed para el flujo de confirmación de email
-    const publicRoutes = ['/', '/login', '/forgot-password', '/reset-password', '/signup', '/register', '/pricing', '/accept-invitation', '/contact', '/legal', '/api/auth/login', '/auth']
+    // /logout es especial - permite a usuarios autenticados cerrar sesión
+    const publicRoutes = ['/', '/login', '/logout', '/forgot-password', '/reset-password', '/signup', '/register', '/pricing', '/accept-invitation', '/contact', '/legal', '/api/auth/login', '/auth']
     const isPublicRoute = publicRoutes.some(path => {
       if (path === '/') {
         return pathname === '/'
@@ -134,11 +135,11 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(redirectUrl)
     }
 
-    // Usuario autenticado intentando acceder a ruta pública (excepto home)
+    // Usuario autenticado intentando acceder a ruta pública (excepto home y logout)
     // Excepción: si viene con reason=inactive o pendiente, permitir acceso al login para mostrar mensaje
     // En modo monoempresa, el home ya fue manejado arriba
     const reasonParam = req.nextUrl.searchParams.get('reason')
-    if (isAuthenticated && isPublicRoute && pathname !== '/' && reasonParam !== 'inactive' && reasonParam !== 'pendiente') {
+    if (isAuthenticated && isPublicRoute && pathname !== '/' && pathname !== '/logout' && reasonParam !== 'inactive' && reasonParam !== 'pendiente') {
       console.log(`[Middleware] Redirect autenticado: ${pathname} → /dashboard`)
       const redirectUrl = req.nextUrl.clone()
       redirectUrl.pathname = '/dashboard'
