@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { completeUserProfile } from "@/app/actions/auth";
+import { validateNIFField, validatePhoneField, validateEmailField } from "@/lib/helpers/validation-helpers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -76,12 +77,16 @@ export function CompleteProfileModal({
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!formData.nif.trim()) {
-      newErrors.nif = "El NIF es obligatorio";
+    // Validar NIF con helper
+    const nifValidation = validateNIFField(formData.nif);
+    if (!nifValidation.valid) {
+      newErrors.nif = nifValidation.error;
     }
 
     if (!formData.razon_social.trim()) {
-      newErrors.razon_social = "La razón social es obligatoria";
+      newErrors.razon_social = tipoEmisor === "empresa"
+        ? "La razón social es obligatoria"
+        : "El nombre completo es obligatorio";
     }
 
     if (!formData.domicilio.trim()) {
@@ -91,7 +96,7 @@ export function CompleteProfileModal({
     if (!formData.codigo_postal.trim()) {
       newErrors.codigo_postal = "El código postal es obligatorio";
     } else if (!/^\d{5}$/.test(formData.codigo_postal)) {
-      newErrors.codigo_postal = "Código postal inválido (debe tener 5 dígitos)";
+      newErrors.codigo_postal = "Código postal inválido (5 dígitos)";
     }
 
     if (!formData.poblacion.trim()) {
@@ -102,14 +107,16 @@ export function CompleteProfileModal({
       newErrors.provincia = "La provincia es obligatoria";
     }
 
-    if (!formData.telefono.trim()) {
-      newErrors.telefono = "El teléfono es obligatorio";
+    // Validar teléfono con helper
+    const phoneValidation = validatePhoneField(formData.telefono);
+    if (!phoneValidation.valid) {
+      newErrors.telefono = phoneValidation.error;
     }
 
-    if (!formData.email_contacto.trim()) {
-      newErrors.email_contacto = "El email de contacto es obligatorio";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email_contacto)) {
-      newErrors.email_contacto = "Email de contacto inválido";
+    // Validar email con helper
+    const emailValidation = validateEmailField(formData.email_contacto);
+    if (!emailValidation.valid) {
+      newErrors.email_contacto = emailValidation.error;
     }
 
     if (tipoEmisor === "autonomo") {
@@ -259,11 +266,11 @@ export function CompleteProfileModal({
                       placeholder="Razón Social*: Mi Empresa S.L."
                       value={formData.razon_social}
                       onChange={handleInputChange("razon_social")}
-                      className={errors.razon_social ? "border-red-500" : ""}
+                      className={errors.razon_social ? "border-destructive" : ""}
                       disabled={isLoading}
                     />
                     {errors.razon_social && (
-                      <p className="text-xs text-red-600 mt-1">{errors.razon_social}</p>
+                      <p className="text-sm text-destructive mt-1">{errors.razon_social}</p>
                     )}
                   </div>
                   <div className="col-span-3">
@@ -273,11 +280,11 @@ export function CompleteProfileModal({
                       placeholder="NIF/CIF*: B12345678"
                       value={formData.nif}
                       onChange={handleInputChange("nif")}
-                      className={errors.nif ? "border-red-500" : ""}
+                      className={errors.nif ? "border-destructive" : ""}
                       disabled={isLoading}
                     />
                     {errors.nif && (
-                      <p className="text-xs text-red-600 mt-1">{errors.nif}</p>
+                      <p className="text-sm text-destructive mt-1">{errors.nif}</p>
                     )}
                   </div>
                 </>
@@ -291,11 +298,11 @@ export function CompleteProfileModal({
                       placeholder="Nombre Completo*: Juan García López"
                       value={formData.razon_social}
                       onChange={handleInputChange("razon_social")}
-                      className={errors.razon_social ? "border-red-500" : ""}
+                      className={errors.razon_social ? "border-destructive" : ""}
                       disabled={isLoading}
                     />
                     {errors.razon_social && (
-                      <p className="text-xs text-red-600 mt-1">{errors.razon_social}</p>
+                      <p className="text-sm text-destructive mt-1">{errors.razon_social}</p>
                     )}
                   </div>
                   <div className="col-span-3">
@@ -314,7 +321,7 @@ export function CompleteProfileModal({
                             irpf_percentage: parseFloat(e.target.value) || 0,
                           }))
                         }
-                        className={errors.irpf_percentage ? "border-red-500 pr-8" : "pr-8"}
+                        className={errors.irpf_percentage ? "border-destructive pr-8" : "pr-8"}
                         disabled={isLoading}
                       />
                       <TooltipProvider>
@@ -331,7 +338,7 @@ export function CompleteProfileModal({
                       </TooltipProvider>
                     </div>
                     {errors.irpf_percentage && (
-                      <p className="text-xs text-red-600 mt-1">{errors.irpf_percentage}</p>
+                      <p className="text-sm text-destructive mt-1">{errors.irpf_percentage}</p>
                     )}
                   </div>
                   <div className="col-span-3">
@@ -341,11 +348,11 @@ export function CompleteProfileModal({
                       placeholder="NIF*: 12345678A"
                       value={formData.nif}
                       onChange={handleInputChange("nif")}
-                      className={errors.nif ? "border-red-500" : ""}
+                      className={errors.nif ? "border-destructive" : ""}
                       disabled={isLoading}
                     />
                     {errors.nif && (
-                      <p className="text-xs text-red-600 mt-1">{errors.nif}</p>
+                      <p className="text-sm text-destructive mt-1">{errors.nif}</p>
                     )}
                   </div>
                 </>
@@ -361,11 +368,11 @@ export function CompleteProfileModal({
                   placeholder="Domicilio Fiscal*: Calle Principal, 123"
                   value={formData.domicilio}
                   onChange={handleInputChange("domicilio")}
-                  className={errors.domicilio ? "border-red-500" : ""}
+                  className={errors.domicilio ? "border-destructive" : ""}
                   disabled={isLoading}
                 />
                 {errors.domicilio && (
-                  <p className="text-xs text-red-600 mt-1">{errors.domicilio}</p>
+                  <p className="text-sm text-destructive mt-1">{errors.domicilio}</p>
                 )}
               </div>
               <div className="col-span-3">
@@ -376,11 +383,11 @@ export function CompleteProfileModal({
                   maxLength={5}
                   value={formData.codigo_postal}
                   onChange={handleInputChange("codigo_postal")}
-                  className={errors.codigo_postal ? "border-red-500" : ""}
+                  className={errors.codigo_postal ? "border-destructive" : ""}
                   disabled={isLoading}
                 />
                 {errors.codigo_postal && (
-                  <p className="text-xs text-red-600 mt-1">{errors.codigo_postal}</p>
+                  <p className="text-sm text-destructive mt-1">{errors.codigo_postal}</p>
                 )}
               </div>
             </div>
@@ -394,11 +401,11 @@ export function CompleteProfileModal({
                   placeholder="Población*: Madrid"
                   value={formData.poblacion}
                   onChange={handleInputChange("poblacion")}
-                  className={errors.poblacion ? "border-red-500" : ""}
+                  className={errors.poblacion ? "border-destructive" : ""}
                   disabled={isLoading}
                 />
                 {errors.poblacion && (
-                  <p className="text-xs text-red-600 mt-1">{errors.poblacion}</p>
+                  <p className="text-sm text-destructive mt-1">{errors.poblacion}</p>
                 )}
               </div>
               <div className="col-span-3">
@@ -408,11 +415,11 @@ export function CompleteProfileModal({
                   placeholder="Provincia*: Madrid"
                   value={formData.provincia}
                   onChange={handleInputChange("provincia")}
-                  className={errors.provincia ? "border-red-500" : ""}
+                  className={errors.provincia ? "border-destructive" : ""}
                   disabled={isLoading}
                 />
                 {errors.provincia && (
-                  <p className="text-xs text-red-600 mt-1">{errors.provincia}</p>
+                  <p className="text-sm text-destructive mt-1">{errors.provincia}</p>
                 )}
               </div>
             </div>
@@ -426,11 +433,11 @@ export function CompleteProfileModal({
                   placeholder="Teléfono*: 912345678"
                   value={formData.telefono}
                   onChange={handleInputChange("telefono")}
-                  className={errors.telefono ? "border-red-500" : ""}
+                  className={errors.telefono ? "border-destructive" : ""}
                   disabled={isLoading}
                 />
                 {errors.telefono && (
-                  <p className="text-xs text-red-600 mt-1">{errors.telefono}</p>
+                  <p className="text-sm text-destructive mt-1">{errors.telefono}</p>
                 )}
               </div>
               <div className="col-span-6">
@@ -440,11 +447,11 @@ export function CompleteProfileModal({
                   placeholder="Email*: contacto@empresa.com"
                   value={formData.email_contacto}
                   onChange={handleInputChange("email_contacto")}
-                  className={errors.email_contacto ? "border-red-500" : ""}
+                  className={errors.email_contacto ? "border-destructive" : ""}
                   disabled={isLoading}
                 />
                 {errors.email_contacto && (
-                  <p className="text-xs text-red-600 mt-1">{errors.email_contacto}</p>
+                  <p className="text-sm text-destructive mt-1">{errors.email_contacto}</p>
                 )}
               </div>
               <div className="col-span-3">
@@ -454,11 +461,11 @@ export function CompleteProfileModal({
                   placeholder="Web: https://miweb.com"
                   value={formData.web}
                   onChange={handleInputChange("web")}
-                  className={errors.web ? "border-red-500" : ""}
+                  className={errors.web ? "border-destructive" : ""}
                   disabled={isLoading}
                 />
                 {errors.web && (
-                  <p className="text-xs text-red-600 mt-1">{errors.web}</p>
+                  <p className="text-sm text-destructive mt-1">{errors.web}</p>
                 )}
               </div>
             </div>
@@ -491,7 +498,7 @@ export function CompleteProfileModal({
                 política de privacidad
               </a>{" "}
               y el tratamiento de mis datos personales{" "}
-              <span className="text-red-500">*</span>
+              <span className="text-destructive">*</span>
             </Label>
           </div>
 
@@ -509,25 +516,18 @@ export function CompleteProfileModal({
         </form>
 
         {/* Información Legal */}
-        <Card className="mt-4">
-          <CardHeader className="py-2 px-4">
-            <CardTitle className="text-sm">Información Legal</CardTitle>
-          </CardHeader>
-          <CardContent className="px-4 pb-3 pt-0">
-            <div className="text-xs text-muted-foreground max-h-28 overflow-y-auto">
-              {legalNotice ? (
+        {legalNotice && (
+          <Card className="mt-4">
+            <CardHeader className="py-2 px-4">
+              <CardTitle className="text-sm">Información Legal</CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-3 pt-0">
+              <div className="text-xs text-muted-foreground max-h-28 overflow-y-auto prose prose-xs">
                 <div dangerouslySetInnerHTML={{ __html: legalNotice }} />
-              ) : (
-                <p>
-                  Al registrarte y completar tus datos fiscales, aceptas nuestros términos de servicio
-                  y política de privacidad. Tus datos serán tratados de acuerdo con la normativa vigente
-                  de protección de datos (RGPD). Para más información, consulta nuestra página de
-                  información legal.
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </DialogContent>
     </Dialog>
   );
