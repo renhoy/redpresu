@@ -44,6 +44,7 @@ interface FormErrors {
   telefono?: string;
   email_contacto?: string;
   web?: string;
+  privacy?: string;
   general?: string;
 }
 
@@ -125,7 +126,7 @@ export function CompleteProfileModal({
     }
 
     if (!formData.privacyAccepted) {
-      newErrors.general = "Debes aceptar la política de privacidad para continuar";
+      newErrors.privacy = "Debes aceptar la política de privacidad para continuar";
     }
 
     setErrors(newErrors);
@@ -471,34 +472,42 @@ export function CompleteProfileModal({
           </div>
 
           {/* Checkbox de privacidad */}
-          <div className="flex items-start space-x-2 pt-3 border-t">
-            <Checkbox
-              id="privacyAccepted"
-              checked={formData.privacyAccepted}
-              onCheckedChange={(checked) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  privacyAccepted: checked as boolean,
-                }))
-              }
-              disabled={isLoading}
-            />
-            <Label
-              htmlFor="privacyAccepted"
-              className="text-sm font-normal leading-relaxed cursor-pointer"
-            >
-              Acepto la{" "}
-              <a
-                href="/legal"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-lime-600 underline hover:text-lime-700"
+          <div className="space-y-1 pt-3 border-t">
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                id="privacyAccepted"
+                checked={formData.privacyAccepted}
+                onCheckedChange={(checked) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    privacyAccepted: checked as boolean,
+                  }));
+                  if (errors.privacy) {
+                    setErrors((prev) => ({ ...prev, privacy: undefined }));
+                  }
+                }}
+                disabled={isLoading}
+              />
+              <Label
+                htmlFor="privacyAccepted"
+                className="text-sm font-normal leading-relaxed cursor-pointer"
               >
-                política de privacidad
-              </a>{" "}
-              y el tratamiento de mis datos personales{" "}
-              <span className="text-destructive">*</span>
-            </Label>
+                Acepto la{" "}
+                <a
+                  href="/legal"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-lime-600 underline hover:text-lime-700"
+                >
+                  política de privacidad
+                </a>{" "}
+                y el tratamiento de mis datos personales{" "}
+                <span className="text-destructive">*</span>
+              </Label>
+            </div>
+            {errors.privacy && (
+              <p className="text-sm text-destructive ml-6">{errors.privacy}</p>
+            )}
           </div>
 
           {/* Botón de submit */}
