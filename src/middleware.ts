@@ -114,7 +114,8 @@ export async function middleware(req: NextRequest) {
     }
 
     // Definir rutas públicas que no requieren autenticación
-    const publicRoutes = ['/', '/login', '/forgot-password', '/reset-password', '/signup', '/register', '/pricing', '/accept-invitation', '/contact', '/legal', '/api/auth/login']
+    // IMPORTANTE: /auth incluye /auth/callback y /auth/confirmed para el flujo de confirmación de email
+    const publicRoutes = ['/', '/login', '/forgot-password', '/reset-password', '/signup', '/register', '/pricing', '/accept-invitation', '/contact', '/legal', '/api/auth/login', '/auth']
     const isPublicRoute = publicRoutes.some(path => {
       if (path === '/') {
         return pathname === '/'
@@ -281,7 +282,7 @@ export async function middleware(req: NextRequest) {
 
     // En caso de error, crear response limpia y redirect a login por seguridad
     const pathname = req.nextUrl.pathname
-    const publicRoutes = ['/', '/login', '/forgot-password', '/reset-password', '/signup', '/register', '/pricing', '/accept-invitation', '/contact', '/legal', '/api/auth/login']
+    const publicRoutes = ['/', '/login', '/forgot-password', '/reset-password', '/signup', '/register', '/pricing', '/accept-invitation', '/contact', '/legal', '/api/auth/login', '/auth']
     const isPublicRoute = publicRoutes.some(path => {
       if (path === '/') {
         return pathname === '/'
