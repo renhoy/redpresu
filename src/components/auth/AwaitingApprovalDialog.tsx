@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,13 +12,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Clock, Loader2 } from "lucide-react";
-import { signOutAction } from "@/app/actions/auth";
+import { createBrowserClient } from "@supabase/ssr";
 
 interface AwaitingApprovalDialogProps {
   showDialog: boolean;
 }
 
 export function AwaitingApprovalDialog({ showDialog }: AwaitingApprovalDialogProps) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -32,14 +34,29 @@ export function AwaitingApprovalDialog({ showDialog }: AwaitingApprovalDialogPro
     console.log("[AwaitingApprovalDialog] Iniciando cierre de sesión...");
     setIsLoggingOut(true);
 
-    // Llamar a signOutAction - el redirect interno lanzará un error (comportamiento normal de Next.js)
-    // No usar try-catch porque interfiere con el redirect
-    const result = await signOutAction();
+    try {
+      // Usar cliente de Supabase del navegador para cerrar sesión
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
 
-    if (!result.success) {
-      console.error("[AwaitingApprovalDialog] Error al cerrar sesión:", result.error);
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        console.error("[AwaitingApprovalDialog] Error al cerrar sesión:", error.message);
+      } else {
+        console.log("[AwaitingApprovalDialog] Sesión cerrada exitosamente");
+      }
+
+      // Redirigir a la página principal
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      console.error("[AwaitingApprovalDialog] Error crítico:", error);
+      // Intentar redirigir de todos modos
+      router.push("/");
     }
-    // El signOutAction redirige automáticamente a "/"
   };
 
   return (
@@ -69,9 +86,7 @@ export function AwaitingApprovalDialog({ showDialog }: AwaitingApprovalDialogPro
               </a>{" "}
               o a través del{" "}
               <a
-                href="https://redpresu.com/contact"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="/contact"
                 className="text-lime-600 hover:text-lime-700 underline"
               >
                 formulario de contacto
