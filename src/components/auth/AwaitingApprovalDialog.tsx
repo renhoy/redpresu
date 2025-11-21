@@ -12,7 +12,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Clock, Loader2 } from "lucide-react";
-import { createBrowserClient } from "@supabase/ssr";
+import { supabase } from "@/lib/supabase/client";
 
 interface AwaitingApprovalDialogProps {
   showDialog: boolean;
@@ -36,11 +36,6 @@ export function AwaitingApprovalDialog({ showDialog }: AwaitingApprovalDialogPro
 
     try {
       // Usar cliente de Supabase del navegador para cerrar sesión
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
-
       const { error } = await supabase.auth.signOut();
 
       if (error) {
