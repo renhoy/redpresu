@@ -22,26 +22,33 @@ export default async function DashboardPage() {
     ? (legalNoticeResult.value as string)
     : ''
 
-  // Obtener estadísticas iniciales (mes actual)
-  const stats = await getDashboardStats('mes')
+  // Si el usuario tiene perfil incompleto, no cargar estadísticas (fallarían por company_id null)
+  let stats = null
+  let hasBudgets = false
+  let primerosPasosArticles: any[] = []
 
-  if (!stats) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <p className="text-red-600">Error al cargar estadísticas</p>
+  if (!hasIncompleteProfile) {
+    // Obtener estadísticas iniciales (mes actual)
+    stats = await getDashboardStats('mes')
+
+    if (!stats) {
+      return (
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <p className="text-red-600">Error al cargar estadísticas</p>
+          </div>
         </div>
-      </div>
-    )
+      )
+    }
+
+    // Verificar si el usuario tiene presupuestos
+    hasBudgets = await userHasBudgets()
+
+    // Obtener artículos de ayuda de "Primeros pasos" filtrados por rol
+    const allArticles = await getAllHelpArticles()
+    const userArticles = filterArticlesByRole(allArticles, user.role)
+    primerosPasosArticles = userArticles.filter(a => a.category === 'Primeros pasos')
   }
-
-  // Verificar si el usuario tiene presupuestos
-  const hasBudgets = await userHasBudgets()
-
-  // Obtener artículos de ayuda de "Primeros pasos" filtrados por rol
-  const allArticles = await getAllHelpArticles()
-  const userArticles = filterArticlesByRole(allArticles, user.role)
-  const primerosPasosArticles = userArticles.filter(a => a.category === 'Primeros pasos')
 
   return (
     <DashboardClient

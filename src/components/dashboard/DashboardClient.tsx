@@ -53,7 +53,7 @@ interface DashboardClientProps {
     recentBudgets: Budget[];
     expiringBudgets: Budget[];
     totalValue: string;
-  };
+  } | null;
   userRole: string;
   hasBudgets?: boolean;
   helpArticles?: HelpArticleMeta[];
@@ -62,6 +62,16 @@ interface DashboardClientProps {
   userEmail: string;
   legalNotice: string;
 }
+
+const emptyStats = {
+  countsByStatus: {},
+  totalsByStatus: {},
+  monthCount: 0,
+  conversionRate: 0,
+  recentBudgets: [] as Budget[],
+  expiringBudgets: [] as Budget[],
+  totalValue: "0,00 €",
+};
 
 const statusColors = {
   borrador: "bg-black text-neutral-200",
@@ -94,7 +104,7 @@ export function DashboardClient({
   legalNotice,
 }: DashboardClientProps) {
   const router = useRouter();
-  const [stats, setStats] = useState(initialStats);
+  const [stats, setStats] = useState(initialStats || emptyStats);
   const [periodo, setPeriodo] = useState<Periodo>("mes");
   const [loading, setLoading] = useState(false);
 
