@@ -212,7 +212,7 @@ export function CompleteProfileModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Error general */}
           {errors.general && (
             <Alert variant="destructive">
@@ -221,113 +221,105 @@ export function CompleteProfileModal({
           )}
 
           {/* Datos del Administrador */}
-          <div className="space-y-2">
-            <h3 className="text-lg font-semibold">Datos del Administrador</h3>
-            <div className="bg-lime-50 p-4 rounded-lg grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Nombre</p>
-                <p className="font-medium">{userName}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Email</p>
-                <p className="font-medium">{userEmail}</p>
-              </div>
-            </div>
+          <div className="bg-lime-50 px-4 py-2 rounded-lg flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Administrador:</span>
+            <span className="font-medium">{userName}</span>
+            <span className="text-muted-foreground">({userEmail})</span>
           </div>
 
           {/* Tipo de Emisor - Tabs */}
-          <div className="space-y-2">
-            <Label>Tipo de Emisor <span className="text-red-500">*</span></Label>
-            <Tabs
-              value={tipoEmisor}
-              onValueChange={(value) => setTipoEmisor(value as "empresa" | "autonomo")}
-              className="w-full"
-            >
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="empresa" disabled={isLoading}>
-                  <Building2 className="h-4 w-4 mr-2" />
-                  Empresa
-                </TabsTrigger>
-                <TabsTrigger value="autonomo" disabled={isLoading}>
-                  <User className="h-4 w-4 mr-2" />
-                  Autónomo
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
+          <Tabs
+            value={tipoEmisor}
+            onValueChange={(value) => setTipoEmisor(value as "empresa" | "autonomo")}
+            className="w-full"
+          >
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="empresa" disabled={isLoading}>
+                <Building2 className="h-4 w-4 mr-2" />
+                Empresa
+              </TabsTrigger>
+              <TabsTrigger value="autonomo" disabled={isLoading}>
+                <User className="h-4 w-4 mr-2" />
+                Autónomo
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
 
           {/* Datos fiscales */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Datos Fiscales</h3>
-
+          <div className="space-y-3">
             {/* Razón Social + IRPF (solo autónomo) + NIF */}
-            <div className="grid grid-cols-12 gap-4">
+            <div className="grid grid-cols-12 gap-3">
               {tipoEmisor === "empresa" ? (
                 <>
                   {/* Empresa: Razón Social (75%) + NIF (25%) */}
-                  <div className="col-span-9 space-y-2">
-                    <Label htmlFor="razon_social">
-                      Razón Social <span className="text-red-500">*</span>
-                    </Label>
+                  <div className="col-span-9">
                     <Input
                       id="razon_social"
                       type="text"
-                      placeholder="Mi Empresa S.L."
+                      placeholder="Razón Social*: Mi Empresa S.L."
                       value={formData.razon_social}
                       onChange={handleInputChange("razon_social")}
                       className={errors.razon_social ? "border-red-500" : ""}
                       disabled={isLoading}
                     />
                     {errors.razon_social && (
-                      <p className="text-sm text-red-600">{errors.razon_social}</p>
+                      <p className="text-xs text-red-600 mt-1">{errors.razon_social}</p>
                     )}
                   </div>
-                  <div className="col-span-3 space-y-2">
-                    <Label htmlFor="nif">
-                      NIF / CIF <span className="text-red-500">*</span>
-                    </Label>
+                  <div className="col-span-3">
                     <Input
                       id="nif"
                       type="text"
-                      placeholder="B12345678"
+                      placeholder="NIF/CIF*: B12345678"
                       value={formData.nif}
                       onChange={handleInputChange("nif")}
                       className={errors.nif ? "border-red-500" : ""}
                       disabled={isLoading}
                     />
                     {errors.nif && (
-                      <p className="text-sm text-red-600">{errors.nif}</p>
+                      <p className="text-xs text-red-600 mt-1">{errors.nif}</p>
                     )}
                   </div>
                 </>
               ) : (
                 <>
-                  {/* Autónomo: Razón Social (50%) + IRPF (25%) + NIF (25%) */}
-                  <div className="col-span-6 space-y-2">
-                    <Label htmlFor="razon_social">
-                      Nombre Completo <span className="text-red-500">*</span>
-                    </Label>
+                  {/* Autónomo: Nombre (50%) + IRPF (25%) + NIF (25%) */}
+                  <div className="col-span-6">
                     <Input
                       id="razon_social"
                       type="text"
-                      placeholder="Juan García López"
+                      placeholder="Nombre Completo*: Juan García López"
                       value={formData.razon_social}
                       onChange={handleInputChange("razon_social")}
                       className={errors.razon_social ? "border-red-500" : ""}
                       disabled={isLoading}
                     />
                     {errors.razon_social && (
-                      <p className="text-sm text-red-600">{errors.razon_social}</p>
+                      <p className="text-xs text-red-600 mt-1">{errors.razon_social}</p>
                     )}
                   </div>
-                  <div className="col-span-3 space-y-2">
-                    <div className="flex items-center gap-1">
-                      <Label htmlFor="irpf_percentage">
-                        IRPF (%) <span className="text-red-500">*</span>
-                      </Label>
+                  <div className="col-span-3">
+                    <div className="relative">
+                      <Input
+                        id="irpf_percentage"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        placeholder="IRPF %*"
+                        value={formData.irpf_percentage}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            irpf_percentage: parseFloat(e.target.value) || 0,
+                          }))
+                        }
+                        className={errors.irpf_percentage ? "border-red-500 pr-8" : "pr-8"}
+                        disabled={isLoading}
+                      />
                       <TooltipProvider>
                         <Tooltip>
-                          <TooltipTrigger type="button">
+                          <TooltipTrigger type="button" className="absolute right-2 top-1/2 -translate-y-1/2">
                             <Info className="h-4 w-4 text-muted-foreground" />
                           </TooltipTrigger>
                           <TooltipContent>
@@ -338,41 +330,22 @@ export function CompleteProfileModal({
                         </Tooltip>
                       </TooltipProvider>
                     </div>
-                    <Input
-                      id="irpf_percentage"
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.01"
-                      value={formData.irpf_percentage}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          irpf_percentage: parseFloat(e.target.value) || 0,
-                        }))
-                      }
-                      className={errors.irpf_percentage ? "border-red-500" : ""}
-                      disabled={isLoading}
-                    />
                     {errors.irpf_percentage && (
-                      <p className="text-sm text-red-600">{errors.irpf_percentage}</p>
+                      <p className="text-xs text-red-600 mt-1">{errors.irpf_percentage}</p>
                     )}
                   </div>
-                  <div className="col-span-3 space-y-2">
-                    <Label htmlFor="nif">
-                      NIF <span className="text-red-500">*</span>
-                    </Label>
+                  <div className="col-span-3">
                     <Input
                       id="nif"
                       type="text"
-                      placeholder="12345678A"
+                      placeholder="NIF*: 12345678A"
                       value={formData.nif}
                       onChange={handleInputChange("nif")}
                       className={errors.nif ? "border-red-500" : ""}
                       disabled={isLoading}
                     />
                     {errors.nif && (
-                      <p className="text-sm text-red-600">{errors.nif}</p>
+                      <p className="text-xs text-red-600 mt-1">{errors.nif}</p>
                     )}
                   </div>
                 </>
@@ -380,32 +353,26 @@ export function CompleteProfileModal({
             </div>
 
             {/* Domicilio (75%) + Código Postal (25%) */}
-            <div className="grid grid-cols-12 gap-4">
-              <div className="col-span-9 space-y-2">
-                <Label htmlFor="domicilio">
-                  Domicilio Fiscal <span className="text-red-500">*</span>
-                </Label>
+            <div className="grid grid-cols-12 gap-3">
+              <div className="col-span-9">
                 <Input
                   id="domicilio"
                   type="text"
-                  placeholder="Calle Principal, 123"
+                  placeholder="Domicilio Fiscal*: Calle Principal, 123"
                   value={formData.domicilio}
                   onChange={handleInputChange("domicilio")}
                   className={errors.domicilio ? "border-red-500" : ""}
                   disabled={isLoading}
                 />
                 {errors.domicilio && (
-                  <p className="text-sm text-red-600">{errors.domicilio}</p>
+                  <p className="text-xs text-red-600 mt-1">{errors.domicilio}</p>
                 )}
               </div>
-              <div className="col-span-3 space-y-2">
-                <Label htmlFor="codigo_postal">
-                  Código Postal <span className="text-red-500">*</span>
-                </Label>
+              <div className="col-span-3">
                 <Input
                   id="codigo_postal"
                   type="text"
-                  placeholder="28001"
+                  placeholder="C.P.*: 28001"
                   maxLength={5}
                   value={formData.codigo_postal}
                   onChange={handleInputChange("codigo_postal")}
@@ -413,110 +380,92 @@ export function CompleteProfileModal({
                   disabled={isLoading}
                 />
                 {errors.codigo_postal && (
-                  <p className="text-sm text-red-600">{errors.codigo_postal}</p>
+                  <p className="text-xs text-red-600 mt-1">{errors.codigo_postal}</p>
                 )}
               </div>
             </div>
 
             {/* Población (75%) + Provincia (25%) */}
-            <div className="grid grid-cols-12 gap-4">
-              <div className="col-span-9 space-y-2">
-                <Label htmlFor="poblacion">
-                  Población <span className="text-red-500">*</span>
-                </Label>
+            <div className="grid grid-cols-12 gap-3">
+              <div className="col-span-9">
                 <Input
                   id="poblacion"
                   type="text"
-                  placeholder="Madrid"
+                  placeholder="Población*: Madrid"
                   value={formData.poblacion}
                   onChange={handleInputChange("poblacion")}
                   className={errors.poblacion ? "border-red-500" : ""}
                   disabled={isLoading}
                 />
                 {errors.poblacion && (
-                  <p className="text-sm text-red-600">{errors.poblacion}</p>
+                  <p className="text-xs text-red-600 mt-1">{errors.poblacion}</p>
                 )}
               </div>
-              <div className="col-span-3 space-y-2">
-                <Label htmlFor="provincia">
-                  Provincia <span className="text-red-500">*</span>
-                </Label>
+              <div className="col-span-3">
                 <Input
                   id="provincia"
                   type="text"
-                  placeholder="Madrid"
+                  placeholder="Provincia*: Madrid"
                   value={formData.provincia}
                   onChange={handleInputChange("provincia")}
                   className={errors.provincia ? "border-red-500" : ""}
                   disabled={isLoading}
                 />
                 {errors.provincia && (
-                  <p className="text-sm text-red-600">{errors.provincia}</p>
+                  <p className="text-xs text-red-600 mt-1">{errors.provincia}</p>
                 )}
               </div>
             </div>
-          </div>
-
-          {/* Datos de contacto */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Datos de Contacto</h3>
 
             {/* Teléfono (25%) + Email (50%) + Web (25%) */}
-            <div className="grid grid-cols-12 gap-4">
-              <div className="col-span-3 space-y-2">
-                <Label htmlFor="telefono">
-                  Teléfono <span className="text-red-500">*</span>
-                </Label>
+            <div className="grid grid-cols-12 gap-3">
+              <div className="col-span-3">
                 <Input
                   id="telefono"
                   type="tel"
-                  placeholder="912345678"
+                  placeholder="Teléfono*: 912345678"
                   value={formData.telefono}
                   onChange={handleInputChange("telefono")}
                   className={errors.telefono ? "border-red-500" : ""}
                   disabled={isLoading}
                 />
                 {errors.telefono && (
-                  <p className="text-sm text-red-600">{errors.telefono}</p>
+                  <p className="text-xs text-red-600 mt-1">{errors.telefono}</p>
                 )}
               </div>
-              <div className="col-span-6 space-y-2">
-                <Label htmlFor="email_contacto">
-                  Email de Contacto <span className="text-red-500">*</span>
-                </Label>
+              <div className="col-span-6">
                 <Input
                   id="email_contacto"
                   type="email"
-                  placeholder="contacto@empresa.com"
+                  placeholder="Email*: contacto@empresa.com"
                   value={formData.email_contacto}
                   onChange={handleInputChange("email_contacto")}
                   className={errors.email_contacto ? "border-red-500" : ""}
                   disabled={isLoading}
                 />
                 {errors.email_contacto && (
-                  <p className="text-sm text-red-600">{errors.email_contacto}</p>
+                  <p className="text-xs text-red-600 mt-1">{errors.email_contacto}</p>
                 )}
               </div>
-              <div className="col-span-3 space-y-2">
-                <Label htmlFor="web">Web (opcional)</Label>
+              <div className="col-span-3">
                 <Input
                   id="web"
                   type="url"
-                  placeholder="https://web.com"
+                  placeholder="Web: https://miweb.com"
                   value={formData.web}
                   onChange={handleInputChange("web")}
                   className={errors.web ? "border-red-500" : ""}
                   disabled={isLoading}
                 />
                 {errors.web && (
-                  <p className="text-sm text-red-600">{errors.web}</p>
+                  <p className="text-xs text-red-600 mt-1">{errors.web}</p>
                 )}
               </div>
             </div>
           </div>
 
           {/* Checkbox de privacidad */}
-          <div className="flex items-start space-x-2 pt-4 border-t">
+          <div className="flex items-start space-x-2 pt-3 border-t">
             <Checkbox
               id="privacyAccepted"
               checked={formData.privacyAccepted}
@@ -560,12 +509,12 @@ export function CompleteProfileModal({
         </form>
 
         {/* Información Legal */}
-        <Card className="mt-6">
-          <CardHeader className="pb-2">
+        <Card className="mt-4">
+          <CardHeader className="py-2 px-4">
             <CardTitle className="text-sm">Información Legal</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-xs text-muted-foreground max-h-40 overflow-y-auto">
+          <CardContent className="px-4 pb-3 pt-0">
+            <div className="text-xs text-muted-foreground max-h-28 overflow-y-auto">
               {legalNotice ? (
                 <div dangerouslySetInnerHTML={{ __html: legalNotice }} />
               ) : (
