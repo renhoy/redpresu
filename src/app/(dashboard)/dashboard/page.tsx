@@ -3,7 +3,7 @@ import { getServerUser } from '@/lib/auth/server'
 import { getDashboardStats } from '@/app/actions/dashboard'
 import { userHasBudgets } from '@/app/actions/budgets'
 import { getAllHelpArticles, filterArticlesByRole } from '@/lib/helpers/markdown-helpers'
-import { getConfigValue } from '@/app/actions/config'
+import { getConfigValue } from '@/lib/helpers/config-helpers'
 import { DashboardClient } from '@/components/dashboard/DashboardClient'
 
 export default async function DashboardPage() {
