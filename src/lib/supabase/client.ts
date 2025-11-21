@@ -22,7 +22,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     flowType: 'pkce'
   },
   db: {
-    schema: "redpresu"
+    schema: "public"
   },
   global: {
     headers: {
