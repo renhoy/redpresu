@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getServerUser } from "@/lib/auth/server";
 import { isDevelopmentMode, getAppName } from "@/lib/helpers/config-helpers";
 import LoginForm from "@/components/auth/LoginForm";
-import { InactiveUserDialog } from "@/components/auth/InactiveUserDialog";
+import { UserStatusDialog } from "@/components/auth/UserStatusDialog";
 import { FileText } from "lucide-react";
 
 interface LoginPageProps {
@@ -58,8 +58,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         {/* Formulario de login */}
         <LoginForm />
 
-        {/* Diálogo de usuario inactivo */}
-        <InactiveUserDialog showDialog={reason === 'inactive'} />
+        {/* Diálogo según estado del usuario */}
+        <UserStatusDialog reason={reason as 'inactive' | 'invited' | 'awaiting_approval' | null} />
       </div>
     </div>
   );

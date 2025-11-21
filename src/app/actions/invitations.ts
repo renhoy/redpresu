@@ -10,6 +10,7 @@ import { getAuthenticatedUser } from '@/lib/helpers/auth-helpers'
 import { withAuthenticatedAction } from '@/lib/helpers/action-wrapper'
 import { requireAdmin } from '@/lib/helpers/permission-helpers'
 import { validateEmailField } from '@/lib/helpers/validation-helpers'
+import { UserStatus } from '@/lib/types/database'
 
 /**
  * Interfaz para datos de invitación
@@ -90,16 +91,16 @@ export async function createUserInvitation(
 
     if (existingUser) {
       // Si el usuario ya está activo (tiene contraseña), no permitir invitación
-      if (existingUser.status === 'active' || existingUser.status === 'inactive') {
+      if (existingUser.status === UserStatus.ACTIVE || existingUser.status === UserStatus.INACTIVE) {
         return { error: 'Este usuario ya ha configurado su contraseña' }
       }
 
-      // Si está en pending, puede recibir invitación (no tiene contraseña aún)
-      if (existingUser.status !== 'pending') {
+      // Si está en 'invited', puede recibir nueva invitación (no tiene contraseña aún)
+      if (existingUser.status !== UserStatus.INVITED) {
         return { error: 'Este email ya está registrado en el sistema' }
       }
 
-      // Usuario está en pending: OK, continuar con invitación
+      // Usuario está en 'invited': OK, continuar con invitación
     }
 
     // Verificar si ya existe una invitación pendiente para este email
@@ -410,10 +411,10 @@ export async function acceptInvitation(
 
     let userId: string
 
-    if (existingUser && existingUser.status === 'pending') {
-      // FLUJO A: Usuario pre-creado por admin (status='pending')
+    if (existingUser && existingUser.status === UserStatus.INVITED) {
+      // FLUJO A: Usuario pre-creado por admin (status='invited')
       // Solo actualizamos su contraseña y lo activamos
-      log.info('[acceptInvitation] Usuario pre-creado encontrado, actualizando contraseña:', existingUser.id)
+      log.info('[acceptInvitation] Usuario invitado encontrado, actualizando contraseña:', existingUser.id)
 
       userId = existingUser.id
 
@@ -438,13 +439,13 @@ export async function acceptInvitation(
         }
       }
 
-      // Actualizar registro en users
+      // Actualizar registro en users (cambiar de 'invited' a 'active')
       const { error: updateUserError } = await supabaseAdmin
         .from('users')
         .update({
           name: name.trim(),
           last_name: lastName.trim(),
-          status: 'active',
+          status: UserStatus.ACTIVE,
           invited_by: invitation.inviter_id,
           updated_at: new Date().toISOString()
         })
@@ -490,7 +491,7 @@ export async function acceptInvitation(
 
       userId = authData.user.id
 
-      // Crear registro en redpresu.users
+      // Crear registro en users (invitación directa -> activo inmediato)
       const { error: userError } = await supabaseAdmin
         .from('users')
         .insert({
@@ -500,7 +501,7 @@ export async function acceptInvitation(
           email: invitation.email,
           role: 'comercial',
           company_id: inviterData.company_id,
-          status: 'active',
+          status: UserStatus.ACTIVE, // Invitaciones pasan directo a activo
           invited_by: invitation.inviter_id
         })
 

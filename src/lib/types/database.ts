@@ -7,11 +7,20 @@ export enum UserRole {
 }
 
 export enum UserStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  PENDING = 'pending',
-  PENDIENTE = 'pendiente',
-  REJECTED = 'rejected'
+  ACTIVE = 'active',              // Usuario con acceso total
+  INACTIVE = 'inactive',          // Desactivado por administrador
+  INVITED = 'invited',            // Creado por invitación, sin contraseña
+  PENDING = 'pending',            // Email verificado, perfil incompleto
+  AWAITING_APPROVAL = 'awaiting_approval'  // Perfil completo, esperando aprobación
+}
+
+// Labels en español para mostrar en frontend
+export const UserStatusLabels: Record<UserStatus, string> = {
+  [UserStatus.ACTIVE]: 'Activo',
+  [UserStatus.INACTIVE]: 'Inactivo',
+  [UserStatus.INVITED]: 'Invitado',
+  [UserStatus.PENDING]: 'Pendiente',
+  [UserStatus.AWAITING_APPROVAL]: 'En Espera'
 }
 
 export enum TariffStatus {
@@ -63,6 +72,10 @@ export interface User {
   name: string
   email: string
   status: string
+  requires_approval: boolean
+  last_reminder_sent_at: string | null
+  reminder_count: number
+  invited_by: string | null
   created_at: string
   updated_at: string
 }

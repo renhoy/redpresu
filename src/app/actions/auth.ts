@@ -829,11 +829,12 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
     // - Si no, y es usuario asignado a emisor existente: comercial por defecto
     const userRole = data.role || (data.issuer_id ? 'comercial' : 'admin')
 
-    // Determinar el estado del usuario según configuración
-    // - Si registration_requires_approval está activado: pendiente
-    // - Si no: pending (comportamiento actual)
+    // Determinar el estado del usuario
+    // - Usuarios creados por admin (registerUser) empiezan en 'invited' (sin contraseña)
+    // - Cuando acepten la invitación, pasarán a 'active'
+    // NOTA: El estado 'awaiting_approval' solo aplica para auto-registro, no para usuarios creados por admin
     const requiresApproval = await getRegistrationRequiresApproval()
-    const userStatus = requiresApproval ? 'pendiente' : 'pending'
+    const userStatus = 'invited' // Usuarios creados por admin siempre empiezan como 'invited'
 
     // 5. Crear registro en public.users
     // REGLA: Todos los superadmins deben tener company_id = 1
@@ -860,7 +861,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
         email: data.email.trim().toLowerCase(),
         role: userRole,
         company_id: finalCompanyId,
-        status: userStatus, // 'pendiente' si requiere aprobación, 'pending' si no
+        status: userStatus, // 'invited' - usuario creado por admin, debe aceptar invitación
         invited_by: null // Se asignará cuando acepte la invitación
       })
       .select()
@@ -897,19 +898,9 @@ export async function registerUser(data: RegisterData): Promise<RegisterResult> 
 
     log.info('[registerUser] Registro en users creado con rol:', userRole)
 
-    // Notificar al superadmin si el registro requiere aprobación
-    if (userStatus === 'pendiente') {
-      log.info('[registerUser] Notificando al superadmin sobre nuevo registro pendiente')
-      // No esperar la notificación - ejecutar en background
-      notifySuperadminNewRegistration(
-        data.name.trim(),
-        data.last_name.trim(),
-        data.email.trim().toLowerCase()
-      ).catch(error => {
-        log.error('[registerUser] Error al notificar superadmin:', error)
-        // No afectar el flujo de registro si falla la notificación
-      })
-    }
+    // NOTA: Los usuarios creados por admin (registerUser) tienen status 'invited'
+    // y no pasan por el flujo de aprobación. La notificación al superadmin
+    // solo aplica para auto-registro (completeRegistration) cuando requiresApproval=true
 
     // 6. Crear registro en public.issuers SOLO si:
     //    - No se proporcionó issuer_id Y

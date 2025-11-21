@@ -3,8 +3,9 @@
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { createServerActionClient } from '@/lib/supabase/helpers'
 import { log } from '@/lib/logger'
-import { sendUserApprovedEmail, sendUserRejectedEmail } from '@/lib/helpers/email-helpers'
+import { sendUserApprovedEmail } from '@/lib/email'
 import { getEmailNotificationsEnabled } from '@/lib/helpers/config-helpers'
+import { UserStatus } from '@/lib/types/database'
 
 export interface ActionResult {
   success: boolean
@@ -50,11 +51,11 @@ export async function getPendingUsers(): Promise<{ success: boolean; users?: Pen
       return { success: false, error: 'Solo superadmin puede ver usuarios pendientes' }
     }
 
-    // Obtener usuarios con estado 'pendiente'
+    // Obtener usuarios con estado 'awaiting_approval' (en espera de aprobación)
     const { data: pendingUsers, error: queryError } = await supabaseAdmin
       .from('users')
       .select('id, name, last_name, email, role, company_id, created_at, companies(name)')
-      .eq('status', 'pendiente')
+      .eq('status', UserStatus.AWAITING_APPROVAL)
       .order('created_at', { ascending: false })
 
     if (queryError) {
@@ -108,7 +109,7 @@ export async function approveUser(userId: string): Promise<ActionResult> {
       return { success: false, error: 'Usuario no encontrado' }
     }
 
-    if (targetUser.status !== 'pendiente') {
+    if (targetUser.status !== UserStatus.AWAITING_APPROVAL) {
       return { success: false, error: 'El usuario no está pendiente de aprobación' }
     }
 
@@ -116,7 +117,7 @@ export async function approveUser(userId: string): Promise<ActionResult> {
     const { error: updateError } = await supabaseAdmin
       .from('users')
       .update({
-        status: 'active',
+        status: UserStatus.ACTIVE,
         updated_at: new Date().toISOString()
       })
       .eq('id', userId)
@@ -128,12 +129,19 @@ export async function approveUser(userId: string): Promise<ActionResult> {
 
     log.info('[approveUser] Usuario aprobado exitosamente:', userId)
 
-    // Enviar email de notificación si está habilitado
+    // Enviar email de notificación usando Resend
     const emailEnabled = await getEmailNotificationsEnabled()
     if (emailEnabled) {
       try {
-        await sendUserApprovedEmail(targetUser.email, targetUser.name)
-        log.info('[approveUser] Email de aprobación enviado a:', targetUser.email)
+        const emailResult = await sendUserApprovedEmail({
+          to: targetUser.email,
+          userName: targetUser.name
+        })
+        if (emailResult.success) {
+          log.info('[approveUser] Email de aprobación enviado a:', targetUser.email)
+        } else {
+          log.warn('[approveUser] No se pudo enviar email:', emailResult.error)
+        }
       } catch (emailError) {
         log.error('[approveUser] Error al enviar email:', emailError)
         // No fallar si el email falla - el usuario ya fue aprobado
@@ -151,10 +159,11 @@ export async function approveUser(userId: string): Promise<ActionResult> {
 }
 
 /**
- * Rechaza un usuario pendiente (cambia estado a 'rejected')
+ * Rechaza un usuario pendiente (cambia estado a 'inactive')
  * Solo accesible para superadmin
+ * NOTA: El estado 'rejected' fue eliminado, ahora se usa 'inactive'
  */
-export async function rejectUser(userId: string, reason?: string): Promise<ActionResult> {
+export async function rejectUser(userId: string, _reason?: string): Promise<ActionResult> {
   try {
     log.info('[rejectUser] Rechazando usuario:', userId)
 
@@ -189,15 +198,15 @@ export async function rejectUser(userId: string, reason?: string): Promise<Actio
       return { success: false, error: 'Usuario no encontrado' }
     }
 
-    if (targetUser.status !== 'pendiente') {
+    if (targetUser.status !== UserStatus.AWAITING_APPROVAL) {
       return { success: false, error: 'El usuario no está pendiente de aprobación' }
     }
 
-    // Cambiar estado a 'rejected'
+    // Cambiar estado a 'inactive' (el estado 'rejected' fue eliminado)
     const { error: updateError } = await supabaseAdmin
       .from('users')
       .update({
-        status: 'rejected',
+        status: UserStatus.INACTIVE,
         updated_at: new Date().toISOString()
       })
       .eq('id', userId)
@@ -207,19 +216,10 @@ export async function rejectUser(userId: string, reason?: string): Promise<Actio
       return { success: false, error: 'Error al rechazar usuario' }
     }
 
-    log.info('[rejectUser] Usuario rechazado exitosamente:', userId)
+    log.info('[rejectUser] Usuario rechazado (inactivo) exitosamente:', userId)
 
-    // Enviar email de notificación si está habilitado
-    const emailEnabled = await getEmailNotificationsEnabled()
-    if (emailEnabled) {
-      try {
-        await sendUserRejectedEmail(targetUser.email, targetUser.name, reason)
-        log.info('[rejectUser] Email de rechazo enviado a:', targetUser.email)
-      } catch (emailError) {
-        log.error('[rejectUser] Error al enviar email:', emailError)
-        // No fallar si el email falla - el usuario ya fue rechazado
-      }
-    }
+    // TODO: Enviar email de rechazo si se implementa template
+    // Por ahora solo logueamos
 
     return {
       success: true,
@@ -256,11 +256,11 @@ export async function getPendingUsersCount(): Promise<{ success: boolean; count?
       return { success: false, count: 0 }
     }
 
-    // Contar usuarios con estado 'pendiente'
+    // Contar usuarios con estado 'awaiting_approval' (en espera de aprobación)
     const { count, error: countError } = await supabaseAdmin
       .from('users')
       .select('*', { count: 'exact', head: true })
-      .eq('status', 'pendiente')
+      .eq('status', UserStatus.AWAITING_APPROVAL)
 
     if (countError) {
       log.error('[getPendingUsersCount] Error:', countError)

@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { createServerActionClient } from "@/lib/supabase/helpers";
 import { getRegistrationRequiresApproval } from "@/lib/helpers/config-helpers";
 import { notifySuperadminNewRegistration } from "@/lib/helpers/notification-helpers";
+import { UserStatus } from "@/lib/types/database";
 import crypto from "crypto";
 
 /**
@@ -371,8 +372,10 @@ export async function completeRegistration(
     console.log("[completeRegistration] Emisor creado:", emisor.id);
 
     // 6. Determinar el estado del usuario según configuración
+    // IMPORTANTE: El valor de requires_approval se guarda en el momento del registro
+    // y NUNCA se modifica después, aunque la configuración global cambie
     const requiresApproval = await getRegistrationRequiresApproval();
-    const userStatus = requiresApproval ? 'pendiente' : 'active';
+    const userStatus = requiresApproval ? UserStatus.AWAITING_APPROVAL : UserStatus.ACTIVE;
 
     console.log('\n');
     console.log('═══════════════════════════════════════════════════════════════');
@@ -391,7 +394,8 @@ export async function completeRegistration(
         last_name: "", // No se recopila en PASO 1, se puede completar después
         email: tokenData.email,
         role: "admin", // El usuario que se registra es admin de su empresa
-        status: userStatus, // 'pendiente' si requiere aprobación, 'active' si no
+        status: userStatus, // 'awaiting_approval' si requiere aprobación, 'active' si no
+        requires_approval: requiresApproval, // Se guarda el valor del momento de registro
         company_id: companyId,
         issuer_id: emisor.id,
       });

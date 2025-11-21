@@ -136,10 +136,11 @@ export async function middleware(req: NextRequest) {
     }
 
     // Usuario autenticado intentando acceder a ruta pública (excepto home y logout)
-    // Excepción: si viene con reason=inactive, permitir acceso al login para mostrar mensaje
+    // Excepción: permitir acceso a login con reason para mostrar mensajes de estado
     // En modo monoempresa, el home ya fue manejado arriba
     const reasonParam = req.nextUrl.searchParams.get('reason')
-    if (isAuthenticated && isPublicRoute && pathname !== '/' && pathname !== '/logout' && reasonParam !== 'inactive') {
+    const allowedReasons = ['inactive', 'invited', 'awaiting_approval']
+    if (isAuthenticated && isPublicRoute && pathname !== '/' && pathname !== '/logout' && !allowedReasons.includes(reasonParam || '')) {
       console.log(`[Middleware] Redirect autenticado: ${pathname} → /dashboard`)
       const redirectUrl = req.nextUrl.clone()
       redirectUrl.pathname = '/dashboard'
@@ -166,23 +167,48 @@ export async function middleware(req: NextRequest) {
 
       console.log(`[Middleware] Verificando permisos - Path: ${pathname}, Rol: ${userRole} (desde BD), Status: ${userStatus}, MultiEmpresa: ${multiempresa}`)
 
-      // Verificar si el usuario está inactivo
+      // ============================================
+      // MANEJO DE ESTADOS DE USUARIO
+      // Estados: active, inactive, invited, pending, awaiting_approval
+      // ============================================
+
+      // INACTIVE: Usuario desactivado por administrador
       if (userStatus === 'inactive') {
-        console.warn(`[Middleware] Usuario inactivo detectado: ${session.user.email}`)
-        // Redirigir directamente al login con mensaje
+        console.warn(`[Middleware] Usuario INACTIVO detectado: ${session.user.email}`)
         const redirectUrl = req.nextUrl.clone()
         redirectUrl.pathname = '/login'
         redirectUrl.searchParams.set('reason', 'inactive')
-        // No usar createRedirectWithCookies aquí - queremos que pierda la sesión
         return NextResponse.redirect(redirectUrl)
       }
 
-      // Usuarios con status 'pendiente' pueden acceder al dashboard
-      // El DashboardClient mostrará el dialog de aprobación pendiente
-      if (userStatus === 'pendiente') {
-        console.warn(`[Middleware] Usuario pendiente de aprobación: ${session.user.email} - permitiendo acceso limitado`)
-        // NO redirigir - dejar que el dashboard maneje esto
+      // INVITED: Usuario invitado que aún no ha establecido contraseña
+      // No puede hacer login normal, debe usar el enlace de invitación
+      if (userStatus === 'invited') {
+        console.warn(`[Middleware] Usuario INVITADO detectado: ${session.user.email} - debe usar enlace de invitación`)
+        const redirectUrl = req.nextUrl.clone()
+        redirectUrl.pathname = '/login'
+        redirectUrl.searchParams.set('reason', 'invited')
+        return NextResponse.redirect(redirectUrl)
       }
+
+      // AWAITING_APPROVAL: Usuario que completó el registro pero está esperando aprobación
+      // No puede acceder al sistema hasta que un superadmin lo apruebe
+      if (userStatus === 'awaiting_approval') {
+        console.warn(`[Middleware] Usuario EN ESPERA de aprobación: ${session.user.email}`)
+        const redirectUrl = req.nextUrl.clone()
+        redirectUrl.pathname = '/login'
+        redirectUrl.searchParams.set('reason', 'awaiting_approval')
+        return NextResponse.redirect(redirectUrl)
+      }
+
+      // PENDING: Usuario con email verificado pero perfil incompleto
+      // Puede acceder al dashboard donde verá el modal para completar perfil
+      if (userStatus === 'pending') {
+        console.log(`[Middleware] Usuario PENDIENTE de completar perfil: ${session.user.email} - permitiendo acceso al dashboard`)
+        // NO redirigir - dejar que el dashboard muestre el modal de completar perfil
+      }
+
+      // ACTIVE: Usuario con acceso total - continúa normalmente
 
       // Verificar si la suscripción está INACTIVE (cuenta sancionada)
       // Solo verificar si suscripciones están habilitadas y es modo multiempresa
