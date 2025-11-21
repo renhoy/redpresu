@@ -6,7 +6,7 @@
 -- ═══════════════════════════════════════════════════════════════
 -- PASO 1: Eliminar el constraint actual
 -- ═══════════════════════════════════════════════════════════════
-ALTER TABLE redpresu.users DROP CONSTRAINT IF EXISTS users_status_check;
+ALTER TABLE public.users DROP CONSTRAINT IF EXISTS users_status_check;
 
 -- ═══════════════════════════════════════════════════════════════
 -- PASO 2: Crear el nuevo constraint con los estados adicionales
@@ -17,14 +17,14 @@ ALTER TABLE redpresu.users DROP CONSTRAINT IF EXISTS users_status_check;
 -- - pending: Usuario pendiente de completar perfil (login OAuth)
 -- - pendiente: Usuario pendiente de aprobación por superadmin
 -- - rejected: Usuario rechazado por superadmin
-ALTER TABLE redpresu.users
+ALTER TABLE public.users
 ADD CONSTRAINT users_status_check
 CHECK (status = ANY (ARRAY['active'::text, 'inactive'::text, 'pending'::text, 'pendiente'::text, 'rejected'::text]));
 
 -- ═══════════════════════════════════════════════════════════════
 -- PASO 3: Migrar datos existentes de awaiting_approval a pendiente
 -- ═══════════════════════════════════════════════════════════════
-UPDATE redpresu.users
+UPDATE public.users
 SET status = 'pendiente'
 WHERE status = 'awaiting_approval';
 
@@ -34,4 +34,4 @@ WHERE status = 'awaiting_approval';
 -- Ejecutar para verificar que el constraint se aplicó correctamente:
 -- SELECT conname, pg_get_constraintdef(oid)
 -- FROM pg_constraint
--- WHERE conrelid = 'redpresu.users'::regclass AND conname = 'users_status_check';
+-- WHERE conrelid = 'public.users'::regclass AND conname = 'users_status_check';

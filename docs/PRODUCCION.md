@@ -1,4 +1,4 @@
-# 🚀 Guía de Deployment a Producción - redpresu.com
+# 🚀 Guía de Deployment a Producción - public.com
 
 **Versión:** 2.0 - **100% GRATUITO** ✨
 **Fecha:** Noviembre 2025
@@ -27,14 +27,14 @@
 ## 🎯 Resumen Ejecutivo
 
 ### Objetivo
-Desplegar **redpresu.com** en producción **sin costos** (excepto dominio) con máxima seguridad y facilidad de actualización.
+Desplegar **public.com** en producción **sin costos** (excepto dominio) con máxima seguridad y facilidad de actualización.
 
 ### Stack GRATUITO Recomendado
 - **Hosting:** Vercel (Next.js nativo) - **$0/mes**
 - **Base de datos:** Supabase Cloud - **$0/mes**
 - **DNS/SSL:** Cloudflare - **$0/mes**
 - **CI/CD:** GitHub Actions (incluido)
-- **Dominio:** redpresu.com (ya comprado)
+- **Dominio:** public.com (ya comprado)
 
 ### Tiempo de Setup
 - ⏱️ **Primera instalación:** 30-45 minutos
@@ -127,65 +127,20 @@ Database Password: [tu contraseña]
 1. En Supabase Dashboard → **SQL Editor**
 2. Click en **"New query"**
 
-### 2.2 Crear Schema `redpresu`
-
-```sql
--- Crear schema
-CREATE SCHEMA IF NOT EXISTS redpresu;
-
--- Dar permisos
-GRANT ALL ON SCHEMA redpresu TO postgres;
-GRANT ALL ON SCHEMA redpresu TO anon;
-GRANT ALL ON SCHEMA redpresu TO authenticated;
-GRANT ALL ON SCHEMA redpresu TO service_role;
-
--- Verificar
-SELECT schema_name FROM information_schema.schemata;
-```
-
-Click en **"Run"** (Ctrl/Cmd + Enter)
-
-### 2.3 Importar Schema Completo
-
-**Opción A: Desde archivo local**
-
-1. En tu Mac, abrir el archivo completo del schema:
-   ```bash
-   cat docs/migrations/SCHEMA_REDPRESU.sql
-   ```
-
-2. Copiar TODO el contenido del schema exportado
-
-3. En Supabase SQL Editor:
-   - Pegar el SQL completo
-   - Click en "Run"
-   - Verificar que no haya errores
-
-**Opción B: Ejecutar migraciones una por una**
-
-```bash
-# En tu Mac local, conectar a Supabase
-export DATABASE_URL="postgresql://postgres:[PASSWORD]@db.[PROJECT_ID].supabase.co:5432/postgres"
-
-# Ejecutar migraciones
-psql $DATABASE_URL < deployment/seed_initial_data.sql
-psql $DATABASE_URL < deployment/seed_demo_issuer.sql
-```
-
-### 2.4 Insertar Datos Iniciales
+### 2.2 Insertar Datos Iniciales
 
 ```sql
 -- Ejecutar en SQL Editor de Supabase
 -- Contenido de deployment/seed_initial_data.sql
 
 -- Verificar que se crearon las configs
-SELECT * FROM redpresu.config ORDER BY category, key;
+SELECT * FROM public.config ORDER BY category, key;
 
 -- Verificar empresas
-SELECT * FROM redpresu.companies;
+SELECT * FROM public.companies;
 ```
 
-### 2.5 Configurar Row Level Security (RLS)
+### 2.3 Configurar Row Level Security (RLS)
 
 Supabase requiere RLS para seguridad. Verifica que las políticas estén activas:
 
@@ -193,15 +148,15 @@ Supabase requiere RLS para seguridad. Verifica que las políticas estén activas
 -- Verificar RLS en tablas principales
 SELECT tablename, rowsecurity
 FROM pg_tables
-WHERE schemaname = 'redpresu';
+WHERE schemaname = 'public';
 
 -- Si alguna tabla tiene rowsecurity = false, activarlo:
--- ALTER TABLE redpresu.users ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE redpresu.companies ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE public.companies ENABLE ROW LEVEL SECURITY;
 -- etc.
 ```
 
-### 2.6 Crear Usuario Superadmin Inicial
+### 2.4 Crear Usuario Superadmin Inicial
 
 ```sql
 -- IMPORTANTE: Cambiar email y password
@@ -227,8 +182,8 @@ INSERT INTO auth.users (
     'authenticated'
 );
 
--- Crear entrada en redpresu.users
-INSERT INTO redpresu.users (
+-- Crear entrada en public.users
+INSERT INTO public.users (
     id,
     email,
     name,
@@ -241,8 +196,8 @@ SELECT
     email,
     'Administrador',
     'superadmin',
-    (SELECT id FROM redpresu.companies LIMIT 1),
-    'ACTIVE'
+    (SELECT id FROM public.companies LIMIT 1),
+    'active'
 FROM auth.users
 WHERE email = 'admin@redpresu.com';
 ```
@@ -304,14 +259,14 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJI...
 # APP
 # ===================================
 NODE_ENV=production
-NEXT_PUBLIC_APP_URL=https://redpresu.com
+NEXT_PUBLIC_APP_URL=https://public.com
 
 # ===================================
 # AUTH
 # ===================================
 # Generar con: openssl rand -base64 32
 NEXTAUTH_SECRET=TU_SECRET_AQUI_DE_32_CHARS
-NEXTAUTH_URL=https://redpresu.com
+NEXTAUTH_URL=https://public.com
 
 # ===================================
 # STRIPE (si lo usas)
@@ -325,7 +280,7 @@ STRIPE_WEBHOOK_SECRET=whsec_xxxxx
 # EMAIL (Resend - Free tier)
 # ===================================
 RESEND_API_KEY=re_xxxxx
-EMAIL_FROM=noreply@redpresu.com
+EMAIL_FROM=noreply@public.com
 ```
 
 **⚠️ IMPORTANTE:** Copiar valores EXACTOS de Supabase Dashboard → Settings → API
@@ -334,13 +289,13 @@ EMAIL_FROM=noreply@redpresu.com
 
 1. Click en **"Deploy"**
 2. Esperar 2-3 minutos
-3. Vercel te dará una URL: `https://redpresu.vercel.app`
+3. Vercel te dará una URL: `https://public.vercel.app`
 
 ### 3.5 Verificar Deployment
 
 ```bash
 # Desde tu navegador
-https://redpresu.vercel.app
+https://public.vercel.app
 
 # Debe cargar la página de login
 # Probar login con el usuario superadmin que creaste
@@ -355,7 +310,7 @@ https://redpresu.vercel.app
 1. En Vercel Dashboard → Tu proyecto **"redpresu"**
 2. **Settings** → **Domains**
 3. Click **"Add"**
-4. Escribir: `redpresu.com`
+4. Escribir: `public.com`
 5. Click **"Add"**
 6. Vercel te mostrará los registros DNS necesarios
 
@@ -405,13 +360,13 @@ Minimum TLS Version: 1.2
 ```bash
 # Esperar 5 minutos para propagación DNS
 # Verificar SSL
-curl -I https://redpresu.com
+curl -I https://public.com
 
 # Debe devolver: HTTP/2 200
 # Debe mostrar certificado válido
 
 # Abrir en navegador
-https://redpresu.com
+https://public.com
 ```
 
 ---
@@ -438,7 +393,7 @@ Secret key: sk_live_xxxxx
 **Stripe Dashboard → Developers → Webhooks → Add endpoint:**
 
 ```
-Endpoint URL: https://redpresu.com/api/webhooks/stripe
+Endpoint URL: https://public.com/api/webhooks/stripe
 
 Events to send:
 ✅ checkout.session.completed
@@ -497,7 +452,7 @@ Recurring: Monthly
 
 ```sql
 -- Actualizar subscription_plans en BD
-UPDATE redpresu.config
+UPDATE public.config
 SET value = jsonb_set(
     jsonb_set(
         value,
@@ -510,7 +465,7 @@ SET value = jsonb_set(
 WHERE key = 'subscription_plans';
 
 -- Activar suscripciones
-UPDATE redpresu.config
+UPDATE public.config
 SET value = 'true'::jsonb
 WHERE key = 'subscriptions_enabled';
 ```
@@ -522,13 +477,13 @@ WHERE key = 'subscriptions_enabled';
 1. Ir a [resend.com](https://resend.com)
 2. Sign up (Free: 3000 emails/mes)
 3. **API Keys** → Create API Key
-4. **Domains** → Add Domain → `redpresu.com`
+4. **Domains** → Add Domain → `public.com`
 5. Agregar registros DNS en Cloudflare (Resend te los muestra)
 
 **Actualizar en Vercel:**
 ```bash
 RESEND_API_KEY=re_xxxxx
-EMAIL_FROM=noreply@redpresu.com
+EMAIL_FROM=noreply@public.com
 ```
 
 ---
@@ -688,7 +643,7 @@ Si prefieres tener control total y no depender de límites gratuitos, puedes usa
 **Solución:**
 1. Verificar en Cloudflare que CNAME apunte a `cname.vercel-dns.com`
 2. Verificar que Proxy Status esté en "DNS only" (nube gris)
-3. Usar `dig redpresu.com` para ver propagación DNS
+3. Usar `dig public.com` para ver propagación DNS
 4. Limpiar cache de Cloudflare: **Caching → Configuration → Purge Everything**
 
 ### Problema: "Rate limit exceeded" en Vercel
@@ -715,14 +670,14 @@ SELECT
   tablename,
   pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) AS size
 FROM pg_tables
-WHERE schemaname = 'redpresu'
+WHERE schemaname = 'public'
 ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 
 -- Limpiar datos antiguos (ejemplo: auditoría)
-DELETE FROM redpresu.rules_audit_log WHERE created_at < NOW() - INTERVAL '90 days';
+DELETE FROM public.rules_audit_log WHERE created_at < NOW() - INTERVAL '90 days';
 
 -- Vacuumar tabla
-VACUUM FULL redpresu.rules_audit_log;
+VACUUM FULL public.rules_audit_log;
 ```
 
 **O upgrade a Supabase Pro ($25/mes) para 8GB**
@@ -747,10 +702,10 @@ VACUUM FULL redpresu.rules_audit_log;
 
 ```bash
 # Security Headers
-https://securityheaders.com/?q=redpresu.com
+https://securityheaders.com/?q=public.com
 
 # SSL Test
-https://www.ssllabs.com/ssltest/analyze.html?d=redpresu.com
+https://www.ssllabs.com/ssltest/analyze.html?d=public.com
 
 # Performance
 https://pagespeed.web.dev/
@@ -788,7 +743,7 @@ https://web.dev/measure/
 ## 🎉 ¡Listo para Producción!
 
 Ahora tienes:
-- ✅ Aplicación desplegada en `redpresu.com`
+- ✅ Aplicación desplegada en `public.com`
 - ✅ SSL/HTTPS automático
 - ✅ Base de datos configurada
 - ✅ Actualizaciones automáticas con git push
