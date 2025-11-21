@@ -15,15 +15,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Building2, User } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { validateEmail } from "@/lib/helpers/email-validation";
 
 interface RegisterErrors {
   name?: string;
   email?: string;
   password?: string;
-  tipo?: string;
   general?: string;
 }
 
@@ -32,7 +30,6 @@ export default function RegisterForm() {
     name: "",
     email: "",
     password: "",
-    tipo: "empresa" as "empresa" | "autonomo",
   });
 
   const [errors, setErrors] = useState<RegisterErrors>({});
@@ -65,11 +62,6 @@ export default function RegisterForm() {
       newErrors.password = "La contraseña debe tener al menos 6 caracteres";
     }
 
-    // Validar tipo
-    if (!formData.tipo) {
-      newErrors.tipo = "Debes seleccionar un tipo de emisor";
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -90,7 +82,6 @@ export default function RegisterForm() {
         name: formData.name.trim(),
         email: formData.email.trim(),
         password: formData.password,
-        tipo_emisor: formData.tipo,
       });
 
       if (!result.success) {
@@ -149,20 +140,6 @@ export default function RegisterForm() {
       }
     };
 
-  const handleTabChange = (value: "empresa" | "autonomo") => {
-    setFormData((prev) => ({
-      ...prev,
-      tipo: value,
-    }));
-
-    if (errors.tipo) {
-      setErrors((prev) => ({
-        ...prev,
-        tipo: undefined,
-      }));
-    }
-  };
-
   // Si el registro fue exitoso, mostrar mensaje de confirmación de email
   if (registrationSuccess && registeredEmail) {
     return (
@@ -214,7 +191,7 @@ export default function RegisterForm() {
           Crear Cuenta
         </CardTitle>
         <CardDescription className="text-center">
-          Ingresa tus datos para comenzar
+          Datos del Administrador
         </CardDescription>
       </CardHeader>
 
@@ -226,29 +203,6 @@ export default function RegisterForm() {
               <AlertDescription>{errors.general}</AlertDescription>
             </Alert>
           )}
-
-          {/* Tipo de Emisor - Tabs */}
-          <div className="space-y-2">
-            <Tabs
-              value={formData.tipo}
-              onValueChange={handleTabChange}
-              className="w-full"
-            >
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="empresa" disabled={isLoading}>
-                  <Building2 className="h-4 w-4 mr-2" />
-                  Empresa
-                </TabsTrigger>
-                <TabsTrigger value="autonomo" disabled={isLoading}>
-                  <User className="h-4 w-4 mr-2" />
-                  Autónomo
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-            {errors.tipo && (
-              <p className="text-sm text-red-600">{errors.tipo}</p>
-            )}
-          </div>
 
           {/* Nombre de usuario */}
           <div className="space-y-2">

@@ -58,7 +58,6 @@ interface DashboardClientProps {
   hasBudgets?: boolean;
   helpArticles?: HelpArticleMeta[];
   hasIncompleteProfile: boolean;
-  tipoEmisor: 'empresa' | 'autonomo' | null;
   userName: string;
   userEmail: string;
   legalNotice: string;
@@ -90,7 +89,6 @@ export function DashboardClient({
   hasBudgets = true,
   helpArticles = [],
   hasIncompleteProfile,
-  tipoEmisor,
   userName,
   userEmail,
   legalNotice,
@@ -479,9 +477,8 @@ export function DashboardClient({
       </div>
 
       {/* Modal para completar perfil */}
-      {showCompleteProfile && tipoEmisor && (
+      {showCompleteProfile && (
         <CompleteProfileModal
-          tipoEmisor={tipoEmisor}
           userName={userName}
           userEmail={userEmail}
           legalNotice={legalNotice}

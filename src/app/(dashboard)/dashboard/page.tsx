@@ -5,7 +5,6 @@ import { userHasBudgets } from '@/app/actions/budgets'
 import { getAllHelpArticles, filterArticlesByRole } from '@/lib/helpers/markdown-helpers'
 import { getConfigValue } from '@/app/actions/config'
 import { DashboardClient } from '@/components/dashboard/DashboardClient'
-import { createServerActionClient } from '@/lib/supabase/helpers'
 
 export default async function DashboardPage() {
   const user = await getServerUser()
@@ -16,14 +15,6 @@ export default async function DashboardPage() {
 
   // Verificar si el usuario tiene perfil incompleto (issuer_id IS NULL)
   const hasIncompleteProfile = !user.issuer_id
-
-  // Si tiene perfil incompleto, obtener tipo_emisor de metadata
-  let tipoEmisor: 'empresa' | 'autonomo' | null = null
-  if (hasIncompleteProfile) {
-    const supabase = await createServerActionClient()
-    const { data: { user: authUser } } = await supabase.auth.getUser()
-    tipoEmisor = authUser?.user_metadata?.tipo_emisor as 'empresa' | 'autonomo' || null
-  }
 
   // Obtener aviso legal para el modal
   const legalNoticeResult = await getConfigValue('forms_legal_notice')
@@ -59,7 +50,6 @@ export default async function DashboardPage() {
       hasBudgets={hasBudgets}
       helpArticles={primerosPasosArticles}
       hasIncompleteProfile={hasIncompleteProfile}
-      tipoEmisor={tipoEmisor}
       userName={user.name}
       userEmail={user.email}
       legalNotice={legalNotice}

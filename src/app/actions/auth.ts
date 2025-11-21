@@ -277,7 +277,6 @@ export async function simplifiedRegister(data: {
   name: string;
   email: string;
   password: string;
-  tipo_emisor: 'empresa' | 'autonomo';
 }): Promise<{
   success: boolean;
   error?: string;
@@ -286,10 +285,9 @@ export async function simplifiedRegister(data: {
   try {
     console.log('[simplifiedRegister] Iniciando registro simplificado...');
     console.log('[simplifiedRegister] Email:', data.email);
-    console.log('[simplifiedRegister] Tipo:', data.tipo_emisor);
 
     // 1. Validar entrada
-    if (!data.name || !data.email || !data.password || !data.tipo_emisor) {
+    if (!data.name || !data.email || !data.password) {
       return {
         success: false,
         error: 'Todos los campos son obligatorios',
@@ -323,9 +321,8 @@ export async function simplifiedRegister(data: {
       options: {
         data: {
           name: data.name,
-          tipo_emisor: data.tipo_emisor,
         },
-        emailRedirectTo: `${await getAppUrl()}/login`,
+        emailRedirectTo: `${await getAppUrl()}/auth/callback?next=/login`,
       },
     });
 
@@ -385,6 +382,7 @@ export async function simplifiedRegister(data: {
  * @returns Resultado con indicación de si requiere aprobación
  */
 export async function completeUserProfile(profileData: {
+  tipo_emisor: 'empresa' | 'autonomo';
   nif: string;
   razon_social: string;
   domicilio: string;
@@ -418,10 +416,10 @@ export async function completeUserProfile(profileData: {
     console.log('[completeUserProfile] Usuario autenticado:', user.id);
 
     // 2. Validar datos de entrada
-    if (!profileData.nif || !profileData.razon_social) {
+    if (!profileData.tipo_emisor || !profileData.nif || !profileData.razon_social) {
       return {
         success: false,
-        error: 'NIF y Razón Social son obligatorios',
+        error: 'Tipo de emisor, NIF y Razón Social son obligatorios',
       };
     }
 
@@ -449,16 +447,7 @@ export async function completeUserProfile(profileData: {
       };
     }
 
-    // 5. Obtener tipo_emisor de user metadata
-    const tipo_emisor = user.user_metadata?.tipo_emisor as 'empresa' | 'autonomo';
-    if (!tipo_emisor) {
-      console.error('[completeUserProfile] No se encontró tipo_emisor en metadata');
-      return {
-        success: false,
-        error: 'Tipo de emisor no encontrado',
-      };
-    }
-
+    const tipo_emisor = profileData.tipo_emisor;
     console.log('[completeUserProfile] Tipo emisor:', tipo_emisor);
 
     // 6. Determinar company_id: usar el existente si hay, o crear uno nuevo

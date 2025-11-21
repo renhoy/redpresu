@@ -21,11 +21,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Loader2, Info } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, Info, Building2, User } from "lucide-react";
 import { toast } from "sonner";
 
 interface CompleteProfileModalProps {
-  tipoEmisor: "empresa" | "autonomo";
   userName: string;
   userEmail: string;
   legalNotice: string;
@@ -47,7 +47,6 @@ interface FormErrors {
 }
 
 export function CompleteProfileModal({
-  tipoEmisor,
   userName,
   userEmail,
   legalNotice,
@@ -55,6 +54,7 @@ export function CompleteProfileModal({
 }: CompleteProfileModalProps) {
   const router = useRouter();
 
+  const [tipoEmisor, setTipoEmisor] = useState<"empresa" | "autonomo">("empresa");
   const [formData, setFormData] = useState({
     nif: "",
     razon_social: "",
@@ -62,7 +62,7 @@ export function CompleteProfileModal({
     codigo_postal: "",
     poblacion: "",
     provincia: "",
-    irpf_percentage: tipoEmisor === "autonomo" ? 15 : 0,
+    irpf_percentage: 15,
     telefono: "",
     email_contacto: userEmail,
     web: "",
@@ -151,6 +151,7 @@ export function CompleteProfileModal({
 
     try {
       const result = await completeUserProfile({
+        tipo_emisor: tipoEmisor,
         nif: formData.nif.trim(),
         razon_social: formData.razon_social.trim(),
         domicilio: formData.domicilio.trim(),
@@ -219,7 +220,7 @@ export function CompleteProfileModal({
       >
         <DialogHeader>
           <DialogTitle className="text-2xl">
-            Completa tu Perfil
+            {tipoEmisor === "empresa" ? "Datos de Empresa" : "Datos de Autónomo"}
           </DialogTitle>
           <DialogDescription>
             Para continuar, necesitamos algunos datos adicionales
@@ -234,13 +235,31 @@ export function CompleteProfileModal({
             </Alert>
           )}
 
+          {/* Tipo de Emisor - Tabs */}
+          <div className="space-y-2">
+            <Label>Tipo de Emisor <span className="text-red-500">*</span></Label>
+            <Tabs
+              value={tipoEmisor}
+              onValueChange={(value) => setTipoEmisor(value as "empresa" | "autonomo")}
+              className="w-full"
+            >
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="empresa" disabled={isLoading}>
+                  <Building2 className="h-4 w-4 mr-2" />
+                  Empresa
+                </TabsTrigger>
+                <TabsTrigger value="autonomo" disabled={isLoading}>
+                  <User className="h-4 w-4 mr-2" />
+                  Autónomo
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
           {/* Información del usuario */}
           <div className="bg-lime-50 p-4 rounded-lg space-y-1">
-            <p className="text-sm font-medium">Usuario: {userName}</p>
+            <p className="text-sm font-medium">Administrador: {userName}</p>
             <p className="text-sm text-muted-foreground">Email: {userEmail}</p>
-            <p className="text-sm text-muted-foreground">
-              Tipo: {tipoEmisor === "empresa" ? "Empresa" : "Autónomo"}
-            </p>
           </div>
 
           {/* Datos fiscales */}
