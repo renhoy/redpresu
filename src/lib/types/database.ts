@@ -58,7 +58,8 @@ export interface Subscription {
 export interface User {
   id: string
   role: string
-  company_id: number
+  company_id: number | null
+  issuer_id: string | null
   name: string
   email: string
   status: string

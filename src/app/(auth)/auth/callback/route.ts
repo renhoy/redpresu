@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
             role: 'admin', // Por defecto, será admin de su propia empresa
             status: 'pending', // Pendiente hasta completar perfil
             company_id: null, // Se asignará cuando complete el perfil
-            issuer_id: null, // Se asignará cuando complete el perfil
+            // issuer_id se añadirá tras ejecutar migración 050, por defecto será null
           })
 
         if (insertError) {
